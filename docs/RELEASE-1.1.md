@@ -67,9 +67,10 @@ Pack: `contrib/xcoin/package-linux.sh` → `dist/xcoin-1.1.0-linux-x86_64.tar.gz
 - Sign in with X is required to send, receive, claim a root, and issue
   assets. No session → no main asset. Lottery is **X Verified** (blue
   check) plus a running wallet.
-- Live X OAuth uses the one operator Client ID baked into the wallet
-  (`XOAUTH_EMBEDDED_CLIENT_ID` / `xoauthclientid=`). The GUI has no
-  Client ID paste field. Users click **Sign in with X**.
+- Live X OAuth uses the operator Client ID in the package `xcoin.conf`
+  (`xoauthclientid=` / `-xoauthclientid=`). The GUI has no Client ID
+  paste field. Users click **Sign in with X**. Empty Client ID → Sign
+  in says the operator has not baked one; it does not fake success.
   `-regtest` mock `users/me` covers tests (`-xoauthmock=NFTRVN:verified`).
 - Honest nodes emit `XPL1` and split when the winner is in a known pool.
   A cheating producer can omit `XPL1`. Keep pool secrets private.

@@ -14,6 +14,7 @@
 #include "xoauth.h"
 #include "xsession.h"
 #include "net.h"
+#include "util.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -79,6 +80,7 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     , shareNodeChk(0)
     , nodeSharePanel(0)
     , nodeEndpointLabel(0)
+    , nodeStatusLabel(0)
 {
     applyTheme();
 
@@ -111,8 +113,8 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
 
     // Count only. Never list other people's addresses here — every xcoin-qt is already a node.
     // A user's node IP is their choice to provide. Off by default; never show automatically.
-    // Joining a mesh still uses addnode= in xcoin.conf (operator docs).
-    peersLabel = new QLabel("Connecting…");
+    // New wallets join when the package (or datadir) xcoin.conf has addnode=host:38443.
+    peersLabel = new QLabel("Starting this node…");
     peersLabel->setObjectName("xtag");
     peersLabel->setAlignment(Qt::AlignHCenter);
     peersLabel->setWordWrap(true);
@@ -157,7 +159,9 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
 
     QLabel* credHint = new QLabel(
         "Sign in with X opens your browser. Come back here when it finishes. "
-        "Home shows this wallet linked to @handle. A typed handle cannot claim verified status.");
+        "There is no Client ID field here. The operator bakes xoauthclientid= in the "
+        "xcoin.conf in this wallet folder (callback http://127.0.0.1:18791/callback). "
+        "A typed handle cannot claim verified status.");
     credHint->setObjectName("xhint");
     credHint->setWordWrap(true);
     root->addWidget(credHint);
@@ -316,10 +320,15 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     nodeHead->setObjectName("xsection");
     root->addWidget(nodeHead);
 
+    nodeStatusLabel = new QLabel;
+    nodeStatusLabel->setObjectName("xcard");
+    nodeStatusLabel->setWordWrap(true);
+    root->addWidget(nodeStatusLabel);
+
     shareNodeChk = new QCheckBox("Provide my node IP");
     shareNodeChk->setObjectName("xcheck");
     shareNodeChk->setCursor(Qt::PointingHandCursor);
-    shareNodeChk->setToolTip("Optional. Off by default. Your node IP is yours to provide — never shown automatically, and other people's IPs are never listed.");
+    shareNodeChk->setToolTip("Off by default. Turn on to see the host:38443 address others must put in the download as addnode=. Other people's IPs are never listed.");
     root->addWidget(shareNodeChk);
 
     nodeSharePanel = new QWidget;
@@ -328,8 +337,9 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     nodeLay->setSpacing(10);
 
     QLabel* nodeHint = new QLabel(
-        "Optional. Copy the address you want to give out. Other people's IPs are never listed. "
-        "Joining a mesh still uses addnode= in xcoin.conf.");
+        "This is the address others must use. They do not find you through GitHub. "
+        "Before you open the repo, put addnode=<host:port> in the public Windows and Linux "
+        "package xcoin.conf. Other people's IPs are never listed.");
     nodeHint->setObjectName("xhint");
     nodeHint->setWordWrap(true);
     nodeLay->addWidget(nodeHint);
@@ -342,8 +352,8 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
 
     QHBoxLayout* giveRow = new QHBoxLayout;
     nodeIpEdit = new QLineEdit;
-    nodeIpEdit->setPlaceholderText("host:38443 — type the address you want to give out");
-    copyNodeBtn = new QPushButton("Copy my node address");
+    nodeIpEdit->setPlaceholderText("host:38443 — type the address others should add, if the detected one is wrong");
+    copyNodeBtn = new QPushButton("Copy addnode line");
     copyNodeBtn->setObjectName("xghost");
     copyNodeBtn->setCursor(Qt::PointingHandCursor);
     giveRow->addWidget(nodeIpEdit, 1);
@@ -490,16 +500,57 @@ void XHome::refresh()
         balanceLabel->setText("Balance\n(open or create a wallet from File)");
     }
 
-    if (clientModel) {
-        const int n = clientModel->getNumConnections();
-        if (n <= 0)
-            peersLabel->setText("Connecting…");
-        else if (n == 1)
-            peersLabel->setText("Connected to 1 peer");
-        else
-            peersLabel->setText(QString("Connected to %1 peers").arg(n));
+    const bool hasJoin = !gArgs.GetArgs("-addnode").empty()
+        || !gArgs.GetArgs("-seednode").empty()
+        || (!gArgs.GetArgs("-connect").empty() && gArgs.GetArg("-connect", "0") != "0");
+    int listenPort = GetListenPort();
+    if (listenPort <= 0)
+        listenPort = GetParams().GetDefaultPort();
+    const bool listening = fListen;
+    int nPeers = 0;
+    if (clientModel)
+        nPeers = clientModel->getNumConnections();
+
+    if (!clientModel) {
+        peersLabel->setText("Starting this node…");
+    } else if (nPeers <= 0 && !hasJoin) {
+        peersLabel->setText(
+            QString("You are the first node. Opening this wallet started it and it is listening on P2P port %1. "
+                    "Other wallets do not find you through GitHub.")
+                .arg(listenPort));
+    } else if (nPeers <= 0 && hasJoin) {
+        peersLabel->setText(
+            QString("This node is running. Connecting to the seed in this package (port %1)…")
+                .arg(listenPort));
+    } else if (nPeers == 1) {
+        peersLabel->setText("Connected to 1 peer");
     } else {
-        peersLabel->setText("Connecting…");
+        peersLabel->setText(QString("Connected to %1 peers").arg(nPeers));
+    }
+
+    if (nodeStatusLabel) {
+        QString listenLine;
+        if (listening)
+            listenLine = QString("Listen is on. Port %1.").arg(listenPort);
+        else
+            listenLine = QString("Listen is off. Other wallets cannot connect here.");
+        if (nPeers <= 0 && !hasJoin) {
+            nodeStatusLabel->setText(
+                listenLine + "\n"
+                "You are the first node. This running wallet is the seed.\n"
+                "Provide my node IP (off by default) is the switch that shows the address others must add. "
+                "Turn it on only when you want to copy host:" + QString::number(listenPort) +
+                " into the public package as addnode=. It does not publish your IP by itself.");
+        } else if (nPeers <= 0 && hasJoin) {
+            nodeStatusLabel->setText(
+                listenLine + "\n"
+                "This package already has a seed (addnode). No terminal. "
+                "Provide my node IP stays off unless you want to share this computer's address too.");
+        } else {
+            nodeStatusLabel->setText(
+                listenLine + "\n"
+                "Provide my node IP stays off unless you want to share this computer's address.");
+        }
     }
 
     if (shareNodeChk && shareNodeChk->isChecked())
@@ -669,8 +720,12 @@ void XHome::fillNodeShareWidgets()
         return;
     const QString detected = localListenEndpoint();
     nodeEndpointLabel->setText(QString(
-        "This machine's listen endpoint\n%1\n\n"
-        "Copy this, or type the IP you want to give out (public, VPN, or LAN).")
+        "This is the address others must use\n%1\n\n"
+        "Put this line in the public Windows and Linux package xcoin.conf, "
+        "then open the GitHub repo:\n\n"
+        "addnode=%1\n\n"
+        "If that host is only a LAN name, type the public or VPN address instead. "
+        "This screen does not invent an IP.")
         .arg(detected));
     if (nodeIpEdit->text().trimmed().isEmpty()) {
         QSettings settings;
@@ -715,10 +770,12 @@ void XHome::onCopyNodeAddress()
             "Type the address you want to give out, or wait for the node to bind.");
         return;
     }
+    if (!text.startsWith(QLatin1String("addnode="), Qt::CaseInsensitive))
+        text = QString("addnode=%1").arg(text);
     QSettings settings;
-    settings.setValue("xhomeShareNodeIpText", text);
+    settings.setValue("xhomeShareNodeIpText", nodeIpEdit ? nodeIpEdit->text().trimmed() : QString());
     QApplication::clipboard()->setText(text);
-    statusLabel->setText("Copied your node address. Give it only if you choose to.");
+    statusLabel->setText("Copied " + text + ". Put it in the public package xcoin.conf. This did not publish your IP.");
 }
 
 void XHome::onSignIn()

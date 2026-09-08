@@ -4,8 +4,15 @@
 
 This repository stays **private** until the **September 12, 2026**
 window (and until you say go). There is no public GitHub Release and
-no DNS seed until then. Invited people add a seed by hand on port
-**38443**.
+no DNS seed until then.
+
+Launch night for the operator is in [README.md](../README.md): wait
+until **12 September 2026 around 9:00 PM ET**, then double-click the
+**real** wallet (not Practice). Do not open the real wallet before
+then. Do not compile that night. Opening that wallet starts the first
+node. It listens on **38443**. That running wallet is the seed.
+Other wallets do not find you through GitHub — they need
+`addnode=<host>:38443` already in the public package `xcoin.conf`.
 
 ## Birth of the chain
 
@@ -32,18 +39,22 @@ Height 0 is unspendable. Spendable coins start at height 1.
 
 ## Go-live order (when you say go)
 
-```bash
-./autogen.sh
-./configure --with-gui=qt5 --disable-bench --disable-tests --with-incompatible-bdb
-make -j$(nproc)
-contrib/xcoin/freeze-genesis.sh          # patches nTime + hash, rebuilds
-src/qt/xcoin-qt                          # Sign in with X, X Verified, running
-# first payday ≈ one minute later (getblockchaininfo / getblock)
-contrib/xcoin/package-linux.sh           # private tarball 1.1.0
-```
+Operator path (no compile): [README.md](../README.md) launch night.
 
-Then: make the GitHub repo public, tell operators `addnode=<seed>:38443`.
-Do **not** add public DNS seeds until you intend a public mesh.
+1. Double-click **X Coin Wallet** / **X Coin Wallet.exe**. Keep it running.
+2. Sign in with X. Claim the free root.
+3. Home → **Provide my node IP** (off until you turn it on) → copy
+   `addnode=host:38443`.
+4. Put that line in the public Windows and Linux package `xcoin.conf`.
+5. Make the GitHub repo public (GitHub settings — this tree cannot
+   flip visibility by itself).
+
+Do **not** add public DNS seeds. Do not invent a host or a Client ID.
+
+Developer-only genesis freeze (not the launch-night double-click):
+`contrib/xcoin/freeze-genesis.sh` is documented for a source rebuild
+so explorer timestamps match first connect. The shipped 1.0.1 wallet
+is what you double-click on launch night.
 
 ## Related
 

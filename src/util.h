@@ -194,6 +194,16 @@ void ClearDatadirCache();
 
 fs::path GetConfigFile(const std::string &confPath);
 
+/** Absolute path of this process (Windows module path, Linux /proc/self/exe). */
+fs::path GetExecutablePath();
+
+/**
+ * Package-folder xcoin.conf next to the wallet binary, or one directory up
+ * (Linux layout: bin/xcoin-qt and ../xcoin.conf). Empty if none exists.
+ * Does not invent a host or Client ID.
+ */
+fs::path FindPackageConfigFile(const fs::path& exePath);
+
 #ifndef WIN32
 
 fs::path GetPidFile();
@@ -230,6 +240,16 @@ public:
     void ParseParameters(int argc, const char *const argv[]);
 
     void ReadConfigFile(const std::string &confPath);
+
+    /**
+     * Read one conf file from an absolute (or already-resolved) path.
+     * skipJoinPeers: do not apply addnode/seednode/connect (practice isolation).
+     * packageSafe: ignore datadir/conf/regtest/testnet/packageconf from this file.
+     */
+    void ReadConfigFileFromPath(const fs::path& path, bool skipJoinPeers = false, bool packageSafe = false);
+
+    /** Extra defaults from the wallet folder's xcoin.conf (see -packageconf). */
+    void ReadPackageConfigFile();
 
     /**
      * Return a vector of strings of the given argument

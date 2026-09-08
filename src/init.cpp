@@ -488,6 +488,7 @@ std::string HelpMessage(HelpMessageMode mode)
 
     strUsage += HelpMessageGroup(_("Connection options:"));
     strUsage += HelpMessageOpt("-addnode=<ip>", _("Add a node to connect to and attempt to keep the connection open (see the `addnode` RPC command help for more info)"));
+    strUsage += HelpMessageOpt("-packageconf=<file>", _("Read extra defaults from this package xcoin.conf (addnode, xoauthclientid). Default: xcoin.conf next to the wallet, or one folder up. Use -packageconf=0 to disable. Does not invent a host or Client ID."));
     strUsage += HelpMessageOpt("-banscore=<n>", strprintf(_("Threshold for disconnecting misbehaving peers (default: %u)"), DEFAULT_BANSCORE_THRESHOLD));
     strUsage += HelpMessageOpt("-bantime=<n>", strprintf(_("Number of seconds to keep misbehaving peers from reconnecting (default: %u)"), DEFAULT_MISBEHAVING_BANTIME));
     strUsage += HelpMessageOpt("-bind=<addr>", _("Bind to given address and always listen on it. Use [host]:port notation for IPv6"));
@@ -602,7 +603,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-whitelistforcerelay", strprintf(_("Force relay of transactions from whitelisted peers even if they violate local relay policy (default: %d)"), DEFAULT_WHITELISTFORCERELAY));
 
     strUsage += HelpMessageGroup(_("Lottery / Sign in with X:"));
-    strUsage += HelpMessageOpt("-xoauthclientid=<id>", _("Operator-only X OAuth 2.0 client id (PKCE). Bake in xcoin.conf; not a user paste field. Callback http://127.0.0.1:18791/callback."));
+    strUsage += HelpMessageOpt("-xoauthclientid=<id>", _("Operator-only X OAuth 2.0 client id (PKCE). Bake in the xcoin.conf shipped in the Windows and Linux wallet folders; not a user paste field. Callback http://127.0.0.1:18791/callback."));
     strUsage += HelpMessageOpt("-xoauthclientsecret=<secret>", _("Optional confidential-client secret. Public PKCE apps omit this."));
     strUsage += HelpMessageOpt("-xoauthcallbackport=<n>", _("Loopback callback port for Sign in with X (default: 18791). Register http://127.0.0.1:<n>/callback in the X developer portal."));
     strUsage += HelpMessageOpt("-xoauthmock=<handle|json>", _("REGTEST ONLY. Mock GET /2/users/me. handle[:userid][:verified|:unverified] or JSON with verified/verified_type. NFTRVN defaults to verified=true"));
