@@ -1,16 +1,16 @@
-TOR SUPPORT IN RAVEN
+TOR SUPPORT IN X COIN
 ======================
 
-It is possible to run Raven as a Tor hidden service, and connect to such services.
+It is possible to run X Coin as a Tor hidden service, and connect to such services.
 
 The following directions assume you have a Tor proxy running on port 9050. Many distributions default to having a SOCKS proxy listening on port 9050, but others may not. In particular, the Tor Browser Bundle defaults to listening on port 9150. See [Tor Project FAQ:TBBSocksPort](https://www.torproject.org/docs/faq.html.en#TBBSocksPort) for how to properly
 configure Tor.
 
 
-1. Run raven behind a Tor proxy
+1. Run xcoind behind a Tor proxy
 ---------------------------------
 
-The first step is running Raven behind a Tor proxy. This will already make all
+The first step is running X Coin behind a Tor proxy. This will already make all
 outgoing connections be anonymized, but more is possible.
 
 	-proxy=ip:port  Set the proxy server. If SOCKS5 is selected (default), this proxy
@@ -31,27 +31,26 @@ outgoing connections be anonymized, but more is possible.
 
 In a typical situation, this suffices to run behind a Tor proxy:
 
-	./raven -proxy=127.0.0.1:9050
+	./xcoind -proxy=127.0.0.1:9050
 
 
-2. Run a raven hidden server
+2. Run an xcoind hidden server
 ------------------------------
 
 If you configure your Tor system accordingly, it is possible to make your node also
 reachable from the Tor network. Add these lines to your /etc/tor/torrc (or equivalent
 config file):
 
-	HiddenServiceDir /var/lib/tor/raven-service/
-	HiddenServicePort 8767 127.0.0.1:8767
-	HiddenServicePort 18767 127.0.0.1:18767
+	HiddenServiceDir /var/lib/tor/xcoin-service/
+	HiddenServicePort 38443 127.0.0.1:38443
 
-The directory can be different of course, but (both) port numbers should be equal to
-your xcoind's P2P listen port (8767 by default).
+The directory can be different of course, but the port number should be equal to
+your xcoind P2P listen port (38443 by default).
 
-	-externalip=X   You can tell raven about its publicly reachable address using
+	-externalip=X   You can tell xcoind about its publicly reachable address using
 	                this option, and this can be a .onion address. Given the above
 	                configuration, you can find your onion address in
-	                /var/lib/tor/raven-service/hostname. Onion addresses are given
+	                /var/lib/tor/xcoin-service/hostname. Onion addresses are given
 	                preference for your node to advertise itself with, for connections
 	                coming from unroutable addresses (such as 127.0.0.1, where the
 	                Tor proxy typically runs).
@@ -81,12 +80,12 @@ as well, use `discover` instead:
 
 	./xcoind ... -discover
 
-and open port 8767 on your firewall (or use -upnp).
+and open port 38443 on your firewall (or use -upnp).
 
 If you only want to use Tor to reach onion addresses, but not use it as a proxy
 for normal IPv4/IPv6 communication, use:
 
-	./raven -onion=127.0.0.1:9050 -externalip=57qr3yd1nyntf5k.onion -discover
+	./xcoind -onion=127.0.0.1:9050 -externalip=57qr3yd1nyntf5k.onion -discover
 
 3. Automatically listen on Tor
 --------------------------------
@@ -118,7 +117,7 @@ Tor configuration.
 4. Privacy recommendations
 ---------------------------
 
-- Do not add anything but raven ports to the hidden service created in section 2.
+- Do not add anything but X Coin ports to the hidden service created in section 2.
   If you run a web service too, create a new hidden service for that.
   Otherwise it is trivial to link them, which may reduce privacy. Hidden
   services created automatically (as in section 3) always have only one port

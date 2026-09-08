@@ -130,3 +130,4 @@ CMakeLists.txt
 # local smoke output
 smoke-regtest-datadir/
 smoke-gossip-datadir/
+smoke-eligibility-datadir/
