@@ -196,6 +196,9 @@ run_smoke smoke-sabotage "$ROOT/contrib/xcoin/smoke-sabotage.sh"
 echo "== extra: node start, wallet, send/receive, 26+32 handles, typed handle =="
 run_smoke smoke-extra "$ROOT/contrib/xcoin/smoke-extra.sh"
 
+echo "== harder abuse: bots, typed handle, invite list, session mismatch, multi-verified, duplicate handle =="
+run_smoke smoke-abuse "$ROOT/contrib/xcoin/smoke-abuse.sh"
+
 echo "== README download links (Releases, not Code → Download ZIP) =="
 if python3 - "$ROOT/README.md" <<'PY'
 import re, sys
@@ -559,6 +562,90 @@ else
   record PASS isolation-home-wallet "no ~/.xcoin/wallet.dat"
 fi
 
+echo "== GitHub homepage README (default branch, what a person sees without picking a branch) =="
+if command -v gh >/dev/null 2>&1; then
+  if gh api repos/NiftyRaven/x-coin --jq .default_branch >/tmp/xcoin-default-branch.txt 2>/tmp/xcoin-default-branch.err; then
+    DEF_BRANCH="$(cat /tmp/xcoin-default-branch.txt)"
+    echo "default_branch=$DEF_BRANCH"
+    if gh api repos/NiftyRaven/x-coin/readme --jq .content 2>/tmp/xcoin-homepage-readme.err | base64 -d >/tmp/xcoin-homepage-readme.md; then
+      if python3 - /tmp/xcoin-homepage-readme.md <<'PY'
+import re, sys
+text = open(sys.argv[1], encoding="utf-8").read()
+body = text.lstrip()
+if not body.startswith("# X Coin"):
+    print("homepage README must start with # X Coin")
+    sys.exit(1)
+links = re.findall(r"\[[^\]]*\]\((https://github.com/NiftyRaven/x-coin/releases/download/v1\.0\.0/[^)]+)\)", text)
+need = [
+    "https://github.com/NiftyRaven/x-coin/releases/download/v1.0.0/X-Coin-1.0.0-Windows.zip",
+    "https://github.com/NiftyRaven/x-coin/releases/download/v1.0.0/X-Coin-1.0.0-Linux-x86_64.tar.gz",
+]
+if links[:2] != need:
+    print("homepage first release download links were %r" % (links[:4],))
+    sys.exit(1)
+if "Code → Download ZIP" not in text and "Code -> Download ZIP" not in text:
+    print("homepage README must warn against Code → Download ZIP")
+    sys.exit(1)
+# Launch blocker: the first screen must not tell a person to compile.
+head = "\n".join(text.splitlines()[:80])
+if re.search(r"(?im)^## Build\b", head) or "apt-get install" in head:
+    print("homepage README still leads with compile instructions")
+    sys.exit(1)
+print("HOMEPAGE_README_OK")
+PY
+      then
+        record PASS github-homepage-readme "default branch ($DEF_BRANCH) README leads with the two Releases downloads"
+      else
+        record FAIL github-homepage-readme "default branch ($DEF_BRANCH) README is not download-first (visit Git without picking a branch)"
+      fi
+    else
+      record FAIL github-homepage-readme "could not read default-branch README ($(cat /tmp/xcoin-homepage-readme.err | tr '\n' ' '))"
+    fi
+  else
+    record SKIP github-homepage-readme "gh api default_branch failed ($(cat /tmp/xcoin-default-branch.err | tr '\n' ' '))"
+  fi
+else
+  record SKIP github-homepage-readme "gh not installed"
+fi
+
+echo "== GitHub Release v1.0.0 (non-draft, both wallet assets) =="
+if command -v gh >/dev/null 2>&1; then
+  if python3 - <<'PY'
+import json, subprocess, sys
+raw = subprocess.check_output(
+    ["gh", "api", "repos/NiftyRaven/x-coin/releases/tags/v1.0.0"],
+    text=True,
+)
+j = json.loads(raw)
+if j.get("draft") is True:
+    print("v1.0.0 is still a draft")
+    sys.exit(1)
+if j.get("prerelease") is True:
+    print("v1.0.0 is marked prerelease")
+    sys.exit(1)
+names = {a.get("name") for a in j.get("assets") or []}
+need = {"X-Coin-1.0.0-Windows.zip", "X-Coin-1.0.0-Linux-x86_64.tar.gz"}
+if not need.issubset(names):
+    print("missing assets, have %r" % sorted(names))
+    sys.exit(1)
+sizes = {a["name"]: a.get("size") for a in j.get("assets") or []}
+if sizes.get("X-Coin-1.0.0-Windows.zip", 0) < 1_000_000:
+    print("Windows zip too small: %s" % sizes.get("X-Coin-1.0.0-Windows.zip"))
+    sys.exit(1)
+if sizes.get("X-Coin-1.0.0-Linux-x86_64.tar.gz", 0) < 1_000_000:
+    print("Linux tar.gz too small: %s" % sizes.get("X-Coin-1.0.0-Linux-x86_64.tar.gz"))
+    sys.exit(1)
+print("RELEASE_OK draft=%s assets=%s" % (j.get("draft"), sorted(need)))
+PY
+  then
+    record PASS github-release-v1 "published, not draft; Windows zip + Linux tar.gz attached"
+  else
+    record FAIL github-release-v1 "v1.0.0 missing, draft, or missing wallet assets"
+  fi
+else
+  record SKIP github-release-v1 "gh not installed"
+fi
+
 status_of() {
   awk -F '\t' -v n="$1" '$2==n{print $1; found=1} END{if(!found) print "ABSENT"}' "$LOGDIR/summary.tsv"
 }
@@ -608,7 +695,7 @@ cov_row() {
   echo
   echo "| Asked | Result |"
   echo "| --- | --- |"
-  cov_row "Existing smokes including pool on regtest" "smoke-regtest smoke-xsession smoke-eligibility smoke-pool smoke-gossip smoke-gui smoke-benchmark smoke-isolation smoke-sabotage"
+  cov_row "Existing smokes including pool on regtest" "smoke-regtest smoke-xsession smoke-eligibility smoke-pool smoke-gossip smoke-gui smoke-benchmark smoke-isolation smoke-sabotage smoke-extra smoke-abuse"
   cov_row "Node start" "smoke-regtest smoke-extra"
   cov_row "Wallet create on throwaway regtest datadir" "smoke-extra linux-package-practice-datadir"
   cov_row "Send/receive on regtest" "smoke-extra smoke-benchmark"
@@ -621,6 +708,14 @@ cov_row() {
   cov_row "Windows zip layout (labeled starts at top of first folder)" "windows-package-layout windows-package-top-level"
   cov_row "Windows wine start" "windows-wine-regtest windows-wine-practice windows-wine-wallet-start"
   cov_row "README first section is Releases download links" "readme-release-links"
+  cov_row "Bot / unverified account cannot lottery" "smoke-abuse smoke-eligibility"
+  cov_row "Typed handle cannot claim Verified X or someone else's root" "smoke-abuse smoke-xsession smoke-extra"
+  cov_row "Two distinct verified wallets both eligible; send/receive" "smoke-abuse smoke-extra"
+  cov_row "Same verified handle on two wallets (duplicate / spoof) rejected" "smoke-abuse"
+  cov_row "Operator invite list cannot exclude a verified wallet" "smoke-abuse smoke-eligibility"
+  cov_row "Session file / mock mismatch cannot send" "smoke-abuse smoke-xsession"
+  cov_row "GitHub default-branch README is download-first" "github-homepage-readme"
+  cov_row "GitHub Release v1.0.0 is published with both wallet assets" "github-release-v1"
   echo
   echo "## Packages"
   echo
@@ -658,6 +753,92 @@ cov_row() {
   echo "\`RavenGUI\`. Native asset identifier name \`RVN\` in \`addressindex.h\` still"
   echo "means ticker **XFER**."
 } > "$REPORT"
+
+BENCH="${BENCH:-$ROOT/docs/LAUNCH-BENCHMARK.md}"
+hp="$(status_of github-homepage-readme)"
+rel="$(status_of github-release-v1)"
+visit="NO"
+if [[ "$hp" == "PASS" && "$rel" == "PASS" ]]; then
+  visit="YES — a person with repo access who opens https://github.com/NiftyRaven/x-coin (no branch picker) sees the two Releases download links first, is told not to use Code → Download ZIP, and can double-click the labeled starts. Unauthenticated visitors still 404 because the repository is private."
+elif [[ "$hp" == "FAIL" ]]; then
+  visit="NO — launch blocker: the default-branch README is not download-first. Fix NFTRVN homepage README (or switch the default branch) before calling this visit-Git-download-double-click ready."
+elif [[ "$rel" == "FAIL" ]]; then
+  visit="NO — launch blocker: GitHub Release v1.0.0 is missing, draft, or missing wallet assets."
+else
+  visit="UNCLEAR — homepage or release check did not pass in this run (see table)."
+fi
+{
+  echo "# X Coin 1.0 launch-readiness benchmark"
+  echo
+  echo "**Nifty Raven** (@NFTRVN on X) — display name and handle only."
+  echo
+  echo "Runner: \`contrib/xcoin/run-release-audit.sh\` (${RUN_UTC})."
+  echo "This is a fresh run, not a copy of an earlier table."
+  echo
+  echo "Verdict: visit GitHub, download, double-click without compiling — **${visit}**"
+  echo
+  echo "Totals: **$pass passed**, **$fail failed**, **$skip skipped**."
+  echo
+  echo "Detail table: [RELEASE-AUDIT.md](RELEASE-AUDIT.md)."
+  echo
+  echo "## What a person does"
+  echo
+  echo "1. Open the repository (default branch, no branch picker)."
+  echo "2. Click **Download Windows wallet** or **Download Linux wallet** (GitHub Release v1.0.0)."
+  echo "3. Extract. The labeled start is in that first folder."
+  echo "4. Double-click **X Coin Wallet** / **X Coin Wallet.exe**. Practice is the other labeled start and always \`-regtest\`."
+  echo "5. Do **not** use **Code → Download ZIP** and do **not** compile."
+  echo
+  echo "## Anti-abuse / lottery / Sign in with X (regtest mock)"
+  echo
+  echo "| Status | Case |"
+  echo "| --- | --- |"
+  cov_row "Bot / unverified = zero lottery chance; can still receive" "smoke-abuse smoke-eligibility"
+  cov_row "Typed handle cannot claim Verified X or someone else's root" "smoke-abuse smoke-xsession smoke-extra"
+  cov_row "Unsigned sendraw / handle steal rejected" "smoke-sabotage"
+  cov_row "Bob cannot spend Alice; stolen session does not import keys" "smoke-isolation"
+  cov_row "Two distinct verified handles, two wallets, send/receive" "smoke-abuse smoke-extra"
+  cov_row "Same verified handle on two wallets: observer keeps one live binding" "smoke-abuse"
+  cov_row "Operator invite list cannot exclude a verified wallet" "smoke-abuse smoke-eligibility"
+  cov_row "Tampered xsession.json / foreign session file cannot send" "smoke-abuse"
+  echo
+  echo "Live OAuth was not run (no X Client ID callback in this VM). Every mock path above was."
+  echo
+  echo "## Node / wallet / send / receive / pool / lottery"
+  echo
+  echo "| Status | Case |"
+  echo "| --- | --- |"
+  cov_row "Full benchmark (mesh, send visible without an explorer)" "smoke-benchmark"
+  cov_row "Pool create / join / leave" "smoke-pool smoke-extra"
+  cov_row "26- and 32-character handles" "smoke-extra"
+  cov_row "Linux ELF double-click Practice [regtest]" "linux-no-terminal-start linux-package-practice-start"
+  cov_row "Windows zip labeled starts + wine start" "windows-package-layout windows-package-top-level windows-wine-practice windows-wine-wallet-start"
+  cov_row "Practice never writes the main ledger or ~/.xcoin/wallet.dat" "linux-package-practice-datadir isolation-home-wallet"
+  echo
+  echo "## Could not run"
+  echo
+  echo "- **Live Sign in with X (real OAuth against api.x.com).** No X developer Client ID or loopback callback in this environment. Coverage is \`-regtest\` \`mockxsignin\` / \`-xoauthmock\` / JSON \`users/me\` payloads, plus HMAC session-file tamper."
+  echo "- **A physical Windows PC double-click.** This VM used zip layout, PE imports, and wine64 + Xvfb. Labeled starts did write throwaway \`datadir/regtest\` only."
+  echo "- **Mainnet node / launch wallet.dat.** Not started and not touched, on purpose. Isolated \`-regtest\` practice coins are not main XFER."
+  echo "- **Unauthenticated GitHub visit.** The repository is private, so a logged-out browser 404s. Download-first only applies to someone who can see the repo."
+  echo "- **Public DNS seeds / explorer.** Absent on purpose (private until 12 September 2026)."
+  skipped_any=0
+  while IFS=$'\t' read -r st name note; do
+    if [[ "$st" == "SKIP" ]]; then
+      if [[ "$skipped_any" -eq 0 ]]; then
+        echo "- **Skipped in this run:**"
+        skipped_any=1
+      fi
+      echo "  - \`$name\`: ${note}"
+    fi
+  done < "$LOGDIR/summary.tsv"
+  echo
+  echo "## Kept on purpose (not renamed)"
+  echo
+  echo "\`OP_RVN_ASSET\`, \`rvnq\` / \`rvnt\`, BIP39 word raven, MIT/SPDX copyright,"
+  echo "genesis coinbase string, C++ names such as \`RavenGUI\`."
+} > "$BENCH"
 echo "wrote $REPORT"
+echo "wrote $BENCH"
 echo "PASS=$pass FAIL=$fail SKIP=$skip"
 exit $(( fail > 0 ? 1 : 0 ))
