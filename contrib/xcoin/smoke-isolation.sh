@@ -68,31 +68,23 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "== start Alice (funded) and Bob (empty wallet.dat) =="
+echo "== start Alice (funded) first so lottery coinbases stay in her wallet =="
 "$XCOIND" -regtest -datadir="$A_DIR" -server -daemon -listen=1 -port=28643 \
   -rpcport=28642 -connect=0 -dnsseed=0 -txindex=1 \
   -xoauthmock=alice -xallowlist="$ALLOW"
 wait_rpc A_CLI
-
-"$XCOIND" -regtest -datadir="$B_DIR" -server -daemon -listen=0 -port=28653 \
-  -rpcport=28652 -addnode=127.0.0.1:28643 -dnsseed=0 -txindex=1 \
-  -xoauthmock=bob -xallowlist="$ALLOW"
-wait_rpc B_CLI
 
 CHAIN="$("${A_CLI[@]}" getblockchaininfo)"
 echo "$CHAIN" | grep -q '"currency": "XFER"'
 echo "$CHAIN" | grep -q '"name": "X Coin"'
 
 ADDR_A="$("${A_CLI[@]}" getnewaddress)"
-ADDR_B="$("${B_CLI[@]}" getnewaddress)"
-[[ "$ADDR_A" == y* && "$ADDR_B" == y* ]]
+[[ "$ADDR_A" == y* ]]
 echo "alice recv $ADDR_A"
-echo "bob recv $ADDR_B"
 
 echo "== Alice mines maturity + claims root ALICE =="
 "${A_CLI[@]}" generatetoaddress 110 "$ADDR_A" >/dev/null
 wait_height A_CLI 110
-wait_height B_CLI 110
 
 LINK="$("${A_CLI[@]}" linkxaccount)"
 echo "$LINK"
@@ -108,6 +100,18 @@ if j.get("asset") != "ALICE":
 BAL_A="$("${A_CLI[@]}" getbalance)"
 echo "alice balance $BAL_A"
 python3 -c "import sys; b=float('$BAL_A'); sys.exit(0 if b>100 else 1)"
+
+echo "== start Bob (empty wallet.dat) and sync the same tip =="
+# Bob is signed in but not allowlisted, so he is not a lottery winner.
+# Starting him after Alice's generates keeps coinbases out of his wallet.
+"$XCOIND" -regtest -datadir="$B_DIR" -server -daemon -listen=0 -port=28653 \
+  -rpcport=28652 -addnode=127.0.0.1:28643 -dnsseed=0 -txindex=1 \
+  -xoauthmock=bob
+wait_rpc B_CLI
+wait_height B_CLI 110
+ADDR_B="$("${B_CLI[@]}" getnewaddress)"
+[[ "$ADDR_B" == y* ]]
+echo "bob recv $ADDR_B"
 
 echo "== Bob signed in as bob cannot spend Alice =="
 BAL_B="$("${B_CLI[@]}" getbalance)"
