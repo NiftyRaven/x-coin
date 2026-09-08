@@ -39,6 +39,13 @@
 #include "wallet/wallet.h"
 #include "wallet/walletdb.h"
 
+static void EnsureSignedInWithX()
+{
+    std::string err;
+    if (!xsession::RequireSession(err))
+        throw JSONRPCError(RPC_WALLET_ERROR, err);
+}
+
 void CheckRestrictedAssetTransferInputs(const CWalletTx& transaction, const std::string& asset_name) {
     // Do a validity check before commiting the transaction
     if (IsAssetNameAnRestricted(asset_name)) {
@@ -456,6 +463,7 @@ UniValue issue(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -620,6 +628,7 @@ UniValue issueunique(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -1175,6 +1184,7 @@ UniValue transfer(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 

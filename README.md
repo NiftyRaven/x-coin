@@ -85,8 +85,10 @@ that name were merely on an allowlist.
 
 The wallet runs OAuth 2.0 PKCE, then **GET /2/users/me**. Only that
 username and X user id are stored, with an HMAC proof in the datadir
-(`xsession.json` + `xsession.key`). `linkxaccount` and lottery
-eligibility require that proof. `linkxaccount otherperson` is rejected
+(`xsession.json` + `xsession.key`). **Authentication is the key to
+asset ownership** — it proves it is you. Send, receive, and claiming a
+root require that proof. Only **X-Verified** (allowlisted) signed-in
+handles are lottery-eligible. `linkxaccount otherperson` is rejected
 when the session is someone else.
 
 Operator setup: paste your X app Client ID (saved as `xoauthclientid=`
@@ -115,7 +117,8 @@ src/xcoin-cli stop
 A 26-character X handle maps 1:1 to a 26-character root (max root name:
 **32**). See [docs/ASSETS.md](docs/ASSETS.md).
 
-You do not need a linked X handle to receive or send XFER.
+You must Sign in with X to send or receive. Lottery additionally requires
+an X-Verified allowlisted handle.
 
 Stop the GUI from the File menu, or `src/xcoin-cli stop` if the node is the daemon.
 

@@ -145,19 +145,18 @@ The GUI **Sign in with X** button runs OAuth 2.0 PKCE (authorization
 code). After the loopback callback, the wallet calls
 `GET /2/users/me` and stores **only** that response: X user id,
 username, expiry, and an HMAC proof (`xsession.json` + datadir secret
-`xsession.key`). Lottery identity and `linkxaccount` require that
-proof. `linkxaccount otherperson` is rejected when the session is not
-`otherperson`.
+`xsession.key`). **Send and receive** require that proof — authentication
+is what proves the wallet is yours. `linkxaccount otherperson` is
+rejected when the session is not `otherperson`.
 
 The allowlist is the second gate (blue-check / X Premium, confirmed
-offline). Both must be true:
+offline). Lottery eligibility requires both:
 
 1. A valid Sign in with X session on this node (user id + username).
 2. That username is on the shared allowlist (`-xallowlist=`,
    `-xverified=`, `addxverified`, or `~/.xcoin/verified-x-accounts.txt`).
 
 Typed `-xaccount=` is ignored unless a session already matches it.
-Unlinked wallets still send and receive XFER.
 
 Setup: [docs/XSIGNIN.md](../docs/XSIGNIN.md). Example owner handle:
 **NFTRVN**.

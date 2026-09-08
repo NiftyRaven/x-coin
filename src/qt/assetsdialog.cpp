@@ -675,7 +675,11 @@ void AssetsDialog::processSendCoinsReturn(const WalletModel::SendCoinsReturn &se
     // all others are used only in WalletModel::prepareTransaction()
     switch(sendCoinsReturn.status)
     {
-        case WalletModel::InvalidAddress:
+        case WalletModel::SessionRequired:
+        msgParams.first = tr("Sign in with X required to transfer assets. Authentication proves ownership.");
+        msgParams.second = CClientUIInterface::MSG_ERROR;
+        break;
+    case WalletModel::InvalidAddress:
             msgParams.first = tr("The recipient address is not valid. Please recheck.");
             break;
         case WalletModel::InvalidAmount:

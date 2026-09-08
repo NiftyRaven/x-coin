@@ -55,6 +55,13 @@ void ApplyStartupArgs();
 void BindLotteryFromSession();
 
 /**
+ * True if this node has a valid Sign in with X session.
+ * Required to send, receive, and prove asset ownership.
+ * Lottery eligibility is session plus the X-Verified allowlist.
+ */
+bool RequireSession(std::string& err);
+
+/**
  * True if `handle` is the signed-in username.
  * Fails closed: no session, expired session, or mismatch → false.
  */

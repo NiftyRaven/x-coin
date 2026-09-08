@@ -289,6 +289,16 @@ void BindLotteryFromSession()
     LogPrintf("xsession: no signed-in X session; this node is not lottery-eligible\n");
 }
 
+bool RequireSession(std::string& err)
+{
+    Session s;
+    if (!LoadSession(s, err)) {
+        err = "Sign in with X required to send, receive, or own assets; a typed handle is not enough";
+        return false;
+    }
+    return true;
+}
+
 bool RequireHandle(const std::string& handleIn, std::string& err)
 {
     std::string handle;

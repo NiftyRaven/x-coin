@@ -8,6 +8,7 @@
 #include "ravenunits.h"
 #include "walletmodel.h"
 #include "walletview.h"
+#include "xsession.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -32,7 +33,7 @@ XSend::XSend(WalletView* walletViewIn, QWidget* parent)
     title->setObjectName("xsection");
     root->addWidget(title);
 
-    QLabel* tag = new QLabel("Paste an X Coin address and an amount. No CLI.");
+    QLabel* tag = new QLabel("Sign in with X, then paste an address and an amount. Authentication proves it is you.");
     tag->setObjectName("xhint");
     tag->setWordWrap(true);
     root->addWidget(tag);
@@ -101,6 +102,10 @@ void XSend::setAddress(const QString& addr)
 
 void XSend::refresh()
 {
+    if (!xsession::HasValidSession()) {
+        balanceLabel->setText("Sign in with X required to send.");
+        return;
+    }
     if (!walletModel) {
         balanceLabel->setText("Balance\n(open a wallet)");
         return;
@@ -122,6 +127,10 @@ void XSend::onPaste()
 
 void XSend::onSend()
 {
+    if (!xsession::HasValidSession()) {
+        QMessageBox::warning(this, "X-Coin", "Sign in with X required to send. Authentication proves it is you.");
+        return;
+    }
     const QString dest = addrEdit->text().trimmed();
     const QString amt = amountEdit->text().trimmed();
     if (dest.isEmpty() || amt.isEmpty()) {

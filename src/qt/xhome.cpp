@@ -261,7 +261,8 @@ void XHome::refresh()
             .arg(uid));
         signInBtn->setText("Signed in with X");
     } else {
-        sessionLabel->setText("Not signed in.\nSign in with X is required to claim a root or enter the lottery. "
+        sessionLabel->setText("Not signed in.\nSign in with X is required to send, receive, and own assets. "
+                              "It proves it is you. Only X-Verified handles enter the lottery. "
                               "Typing someone else's handle does nothing.");
         signInBtn->setText("Sign in with X");
     }
@@ -277,7 +278,7 @@ void XHome::refresh()
     if (l.read(rpc("getlotteryinfo").toStdString()) && l.isObject()) {
         const bool elig = l["local_eligible"].isTrue();
         const QString handle = QString::fromStdString(l["local_xaccount"].getValStr());
-        lotteryLabel->setText(QString("Lottery\nEligible: %1\nNext draw: block %2 (one block per minute slot)\nYour handle: %3\nActive nodes: %4")
+        lotteryLabel->setText(QString("Lottery (X-Verified only)\nEligible: %1\nNext draw: block %2 (one block per minute slot)\nYour handle: %3\nActive nodes: %4")
             .arg(elig ? "yes" : "no")
             .arg(QString::fromStdString(l["next_draw_height"].getValStr().empty()
                                             ? l["height"].getValStr()

@@ -7,6 +7,7 @@
 #include "addresstablemodel.h"
 #include "walletmodel.h"
 #include "walletview.h"
+#include "xsession.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -30,7 +31,7 @@ XReceive::XReceive(WalletView* walletViewIn, QWidget* parent)
     title->setObjectName("xsection");
     root->addWidget(title);
 
-    QLabel* tag = new QLabel("Share this address. Anyone can send you XFER — no X sign-in required to receive.");
+    QLabel* tag = new QLabel("Sign in with X first. Your receive address is yours because the session proves it is you.");
     tag->setObjectName("xhint");
     tag->setWordWrap(true);
     root->addWidget(tag);
@@ -86,6 +87,11 @@ void XReceive::setWalletModel(WalletModel* model)
 void XReceive::refresh()
 {
     currentAddress.clear();
+    if (!xsession::HasValidSession()) {
+        addressLabel->setText("(sign in with X to receive)");
+        hintLabel->setText("Authentication is required to receive. It proves this address belongs to you.");
+        return;
+    }
     if (!walletModel || !walletModel->getAddressTableModel()) {
         addressLabel->setText("(open a wallet)");
         return;
@@ -110,7 +116,7 @@ void XReceive::onCopy()
         refresh();
     }
     if (currentAddress.isEmpty()) {
-        QMessageBox::warning(this, "X-Coin", "No address yet. Create or open a wallet first.");
+        QMessageBox::warning(this, "X-Coin", "Sign in with X first, then open a wallet.");
         return;
     }
     QApplication::clipboard()->setText(currentAddress);
@@ -119,6 +125,10 @@ void XReceive::onCopy()
 
 void XReceive::onNewAddress()
 {
+    if (!xsession::HasValidSession()) {
+        QMessageBox::warning(this, "X-Coin", "Sign in with X required to receive.");
+        return;
+    }
     if (!walletModel || !walletModel->getAddressTableModel()) return;
     currentAddress = walletModel->getAddressTableModel()->addRow(AddressTableModel::Receive, "Receive", "");
     addressLabel->setText(currentAddress);
