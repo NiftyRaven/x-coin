@@ -4,8 +4,8 @@
 
 Ticker **XFER**. Subunit **xferon** (1 XFER = 100,000,000 xferons).
 
-Nifty Raven (@NFTRVN on X)  
-Anonymous public release. Handle and display name only.
+**Nifty Raven** (@NFTRVN on X)  
+Anonymous public identity — display name and handle only.
 
 ---
 
