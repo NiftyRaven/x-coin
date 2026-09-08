@@ -105,6 +105,8 @@ grep -qi "impersonation\|cannot use\|signed in as" /tmp/xcoin-xsession-imp.err
 
 echo "== session handle alice can provision the root =="
 ADDR="$("${CLI[@]}" getnewaddress)"
+# Identity root burn is 0 but the assignment tx still pays a relay fee.
+"${CLI[@]}" generatetoaddress 110 "$ADDR" >/dev/null
 LINK="$("${CLI[@]}" linkxaccount alice "$ADDR")"
 echo "$LINK"
 echo "$LINK" | python3 -c '
