@@ -177,6 +177,10 @@ QT_MOC_CPP = \
   qt/moc_walletframe.cpp \
   qt/moc_walletmodel.cpp \
   qt/moc_walletview.cpp \
+  qt/moc_xhome.cpp \
+  qt/moc_xoauth.cpp \
+  qt/moc_xreceive.cpp \
+  qt/moc_xsend.cpp \
   qt/moc_assetsdialog.cpp \
   qt/moc_createassetdialog.cpp \
   qt/moc_reissueassetdialog.cpp \
@@ -277,7 +281,11 @@ RAVEN_QT_H = \
   qt/walletmodeltransaction.h \
   qt/walletview.h \
   qt/winshutdownmonitor.h \
-  qt/mnemonicdialog.h
+  qt/mnemonicdialog.h \
+  qt/xhome.h \
+  qt/xoauth.h \
+  qt/xreceive.h \
+  qt/xsend.h
 
 RES_ICONS = \
   qt/res/icons/add.png \
@@ -458,7 +466,11 @@ RAVEN_QT_WALLET_CPP = \
   qt/walletmodel.cpp \
   qt/walletmodeltransaction.cpp \
   qt/walletview.cpp \
-  qt/mnemonicdialog.cpp
+  qt/mnemonicdialog.cpp \
+  qt/xhome.cpp \
+  qt/xoauth.cpp \
+  qt/xreceive.cpp \
+  qt/xsend.cpp
 
 RAVEN_QT_CPP = $(RAVEN_QT_BASE_CPP)
 if TARGET_WINDOWS

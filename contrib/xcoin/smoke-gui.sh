@@ -62,7 +62,7 @@ trap cleanup EXIT
 
 "$DAEMON" -regtest -datadir="$DATADIR" -daemon -server -listen=0 \
   -rpcport="$RPCPORT" -port="$P2PPORT" \
-  -xaccount=NFTRVN -xverified=NFTRVN >/tmp/xcoin-gui-precreate.log 2>&1 || true
+  -xoauthmock=NFTRVN -xverified=NFTRVN >/tmp/xcoin-gui-precreate.log 2>&1 || true
 up=0
 for _ in $(seq 1 80); do
   if "$CLI" "${CLI_ARGS[@]}" getlotteryinfo >/dev/null 2>&1; then
@@ -93,7 +93,7 @@ fi
 
 "$QT" -regtest -datadir="$DATADIR" \
   -splash=0 -rpcport="$RPCPORT" -port="$P2PPORT" \
-  -xaccount=NFTRVN -xverified=NFTRVN \
+  -xoauthmock=NFTRVN -xverified=NFTRVN \
   >/tmp/xcoin-qt-smoke.log 2>&1 &
 QT_PID=$!
 

@@ -9,7 +9,9 @@ This is a **private** release. Do not make the repository public.
 ## What shipped
 
 - **Desktop GUI** `xcoin-qt` — X theme (black / white / sharp X mark).
-  Overview, Send, Receive, Assets, lottery status. Same node/wallet as CLI.
+  Home (Sign in with X, lottery, claim root, issue sub/unique), Receive
+  (address + Copy), Send (paste + amount + Send), Activity. Same
+  node/wallet as CLI. No CLI required for the happy path.
 - **CLI** `xcoind` / `xcoin-cli` still work.
 - Handle → root mapping: X handles `[A-Za-z0-9_]` length 1–32; **26-character
   handles map 1:1** (no truncation). Root names max **32** characters.
@@ -53,16 +55,21 @@ src/qt/xcoin-qt -regtest        # local practice
 
 Running-GUI captures (regtest) are in [docs/gui/](gui/):
 
-- `overview.png` — balances, lottery card, NFTRVN asset list
+- `home.png` — Sign in with X, lottery, claim root
+- `overview.png` — Home (legacy name kept)
 - `send.png`
-- `receive.png`
-- `assets.png` — Transfer Assets with NFTRVN
-- `lottery.png` — lottery card / header
+- `receive.png` — address + Copy
+- `assets.png` — Transfer Assets (Advanced)
+- `lottery.png` — lottery card on Home
 - `about.png` — Help → About (Nifty Raven @NFTRVN, 1.0)
+
+Brand stills: [assets/brand/](../assets/brand/).
 
 ## Known limits
 
-- No X.com OAuth inside the wallet. Operators confirm handles offline.
+- Live X OAuth needs a developer Client ID (`xoauthclientid=`). This VM
+  cannot complete a live login; `-regtest` mock `users/me` covers tests.
+  See [XSIGNIN.md](XSIGNIN.md).
 - No mobile app. No public DNS seeds. No exchange listing.
 - Restricted assets stay removed.
 - Internal C++ names (`RavenGUI`, `OP_RVN_ASSET`, copyright headers) stay;
@@ -76,10 +83,11 @@ Running-GUI captures (regtest) are in [docs/gui/](gui/):
 ## Tests
 
 ```bash
+contrib/xcoin/smoke-xsession.sh    # typed handle rejected; session accepted
 contrib/xcoin/smoke-regtest.sh
 contrib/xcoin/smoke-gossip.sh
 contrib/xcoin/smoke-eligibility.sh
-contrib/xcoin/smoke-gui.sh          # headless Qt + screenshot helper
+contrib/xcoin/smoke-gui.sh          # headless Qt
 ```
 
 `smoke-regtest.sh` includes `linkxaccount` of a 26-character handle.

@@ -76,7 +76,7 @@ echo "$INFO2" | python3 -c '
 import json,sys
 j=json.load(sys.stdin)
 if j.get("local_eligible") is not False:
-    sys.exit("allowlist without -xaccount must stay ineligible")
+    sys.exit("allowlist without a Sign in with X session must stay ineligible")
 if j.get("verified_accounts", 0) < 1:
     sys.exit("addxverified did not stick")
 '
@@ -86,7 +86,7 @@ rm -f "$DATADIR/regtest/verified-x-accounts.txt"
 sleep 0.5
 
 echo "== linked but not allowlisted is not eligible =="
-start_node -xaccount=ghost
+start_node -xoauthmock=ghost
 INFO3="$("${CLI[@]}" getlotteryinfo)"
 echo "$INFO3"
 echo "$INFO3" | python3 -c '
@@ -137,6 +137,7 @@ if "${CLI[@]}" registeractivenode "$ADDR" botter >/dev/null 2>&1; then
   exit 1
 fi
 "${CLI[@]}" addxverified botter >/dev/null
+"${CLI[@]}" mockxsignin botter >/dev/null
 "${CLI[@]}" registeractivenode "$ADDR" botter >/dev/null
 COUNT="$("${CLI[@]}" getactivenodes | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')"
 [[ "$COUNT" -ge 2 ]]

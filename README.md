@@ -13,8 +13,8 @@ Release 1.0: [docs/RELEASE-1.0.md](docs/RELEASE-1.0.md).
 ## How to use the wallet
 
 **Release 1.0 ships a desktop GUI:** `xcoin-qt`. It talks to the same
-node and `wallet.dat` as the CLI. There is **no** mobile app and **no**
-X.com login.
+node and `wallet.dat` as the CLI. **Sign in with X** is required to
+claim a free root and to become lottery-eligible.
 
 Default datadir `~/.xcoin`, config `xcoin.conf`, P2P **38443**, RPC **38442**.
 Mainnet addresses start with **X**.
@@ -74,9 +74,27 @@ Local-only practice (regtest):
 src/qt/xcoin-qt -regtest
 ```
 
-The Overview page shows **XFER balances**, **lottery status**, and **assets**.
-Send / Receive / Assets are the other tabs. Help → About credits **Nifty Raven
-(@NFTRVN on X)** only.
+The Home screen is **Sign in with X**, lottery status, and your root
+asset. Receive / Send / Activity are the other tabs. Help → About credits
+**Nifty Raven (@NFTRVN on X)** only.
+
+### Sign in with X (stops impersonation)
+
+A typed handle is not an identity. Anyone could type `@someoneelse` if
+that name were merely on an allowlist.
+
+The wallet runs OAuth 2.0 PKCE, then **GET /2/users/me**. Only that
+username and X user id are stored, with an HMAC proof in the datadir
+(`xsession.json` + `xsession.key`). `linkxaccount` and lottery
+eligibility require that proof. `linkxaccount otherperson` is rejected
+when the session is someone else.
+
+Operator setup: paste your X app Client ID (saved as `xoauthclientid=`
+in `xcoin.conf`). Callback:
+`http://127.0.0.1:18791/callback`. Full steps: [docs/XSIGNIN.md](docs/XSIGNIN.md).
+
+Regtest only: `-xoauthmock=handle` or RPC `mockxsignin` injects a fake
+`users/me` payload so tests can prove typed names are rejected.
 
 ### 4. CLI (same wallet)
 
@@ -86,7 +104,8 @@ src/xcoin-cli getwalletinfo
 src/xcoin-cli getnewaddress
 src/xcoin-cli sendtoaddress <their-X-address> 1.5
 src/xcoin-cli addxverified NFTRVN
-src/xcoin-cli linkxaccount NFTRVN
+src/xcoin-cli mockxsignin NFTRVN          # regtest only
+src/xcoin-cli linkxaccount                # uses the signed-in session
 src/xcoin-cli getmainasset NFTRVN
 src/xcoin-cli issue NFTRVN/NOTE 1
 src/xcoin-cli getlotteryinfo

@@ -17,7 +17,7 @@ rm -rf "$DATADIR"
 mkdir -p "$DATADIR"
 
 "$XCOIND" -regtest -datadir="$DATADIR" -server -daemon -listen=0 \
-  -xaccount=smoke1 -xverified=smoke1 -xverified=smoke2 -xverified=NFTRVN
+    -xoauthmock=smoke1 -xverified=smoke1 -xverified=smoke2 -xverified=NFTRVN
 cleanup() {
   "${CLI[@]}" stop >/dev/null 2>&1 || true
   for _ in $(seq 1 50); do
@@ -80,6 +80,7 @@ echo "$VA1" | grep -q '"isvalid": true'
 echo "== register second verified payout + generate past maturity =="
 "${CLI[@]}" listxverified | grep -q smoke1
 "${CLI[@]}" listxverified | grep -q smoke2
+"${CLI[@]}" mockxsignin smoke2 >/dev/null
 "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
 "${CLI[@]}" generatetoaddress 110 "$ADDR1" >/dev/null
 HEIGHT="$("${CLI[@]}" getblockcount)"
@@ -94,6 +95,7 @@ if "${CLI[@]}" issue TESTASSET 1000 >/tmp/xcoin-issue-root.err 2>&1; then
   exit 1
 fi
 grep -qi "main asset\|cannot create\|root" /tmp/xcoin-issue-root.err
+"${CLI[@]}" mockxsignin smoke1 >/dev/null
 LINK="$("${CLI[@]}" linkxaccount smoke1 "$ADDR1")"
 echo "$LINK"
 echo "$LINK" | grep -q '"asset"'
@@ -113,11 +115,12 @@ echo "$GETMAIN"
 echo "$GETMAIN" | grep -q "$MAIN"
 
 echo "== owner handle NFTRVN (allowlist + free root + eligibility) =="
-# Offline-verified owner handle. No X.com API — operator allowlist only.
+# Session username from mock users/me — not a typed claim.
 "${CLI[@]}" addxverified NFTRVN >/dev/null
 "${CLI[@]}" listxverified | grep -qi NFTRVN
 ADDR_N="$("${CLI[@]}" getnewaddress)"
 echo "nftrvn dest $ADDR_N"
+"${CLI[@]}" mockxsignin NFTRVN >/dev/null
 LINK_N="$("${CLI[@]}" linkxaccount NFTRVN "$ADDR_N")"
 echo "$LINK_N"
 echo "$LINK_N" | python3 -c '
@@ -150,6 +153,7 @@ LONG_HANDLE="abcdefghijabcdefghijabcdef"
 [[ ${#LONG_HANDLE} -eq 26 ]]
 "${CLI[@]}" addxverified "$LONG_HANDLE" >/dev/null
 ADDR_L="$("${CLI[@]}" getnewaddress)"
+"${CLI[@]}" mockxsignin "$LONG_HANDLE" >/dev/null
 LINK_L="$("${CLI[@]}" linkxaccount "$LONG_HANDLE" "$ADDR_L")"
 echo "$LINK_L"
 echo "$LINK_L" | python3 -c '
@@ -173,6 +177,7 @@ echo "== two-winner window (regtest halving interval 150) =="
 # Height 149: still 1 winner, full 5000 subsidy. Height 150: 2 winners, 2500 subsidy.
 NEED=$((149 - HEIGHT))
 if [[ "$NEED" -gt 0 ]]; then
+  "${CLI[@]}" mockxsignin smoke2 >/dev/null
   "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
   "${CLI[@]}" generatetoaddress "$NEED" "$ADDR1" >/dev/null
 fi
@@ -188,6 +193,7 @@ if len(pays) != 1:
 if abs(sum(o["value"] for o in pays) - 5000) > 1e-6:
     sys.exit("height 149 subsidy must be 5000")
 '
+"${CLI[@]}" mockxsignin smoke2 >/dev/null
 "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
 "${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
 H150="$("${CLI[@]}" getblockhash 150)"
@@ -227,6 +233,7 @@ print("active", len(nodes), "handles", [n.get("xaccount") for n in nodes])
 '
 TXPAY="$("${CLI[@]}" sendtoaddress "$ADDR_UNLINKED" 25)"
 echo "paid unlinked $TXPAY"
+"${CLI[@]}" mockxsignin smoke2 >/dev/null
 "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
 "${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
 UTXO1="$("${CLI[@]}" listunspent 1 9999999 "[\"$ADDR_UNLINKED\"]")"
@@ -241,6 +248,7 @@ if abs(s - 25) > 1e-6:
 '
 TXSPEND="$("${CLI[@]}" sendfromaddress "$ADDR_UNLINKED" "$ADDR1" 10)"
 echo "unlinked spent $TXSPEND"
+"${CLI[@]}" mockxsignin smoke2 >/dev/null
 "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
 "${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
 UTXO2="$("${CLI[@]}" listunspent 1 9999999 "[\"$ADDR_UNLINKED\"]")"

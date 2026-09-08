@@ -26,9 +26,9 @@ bob
 EOF
 
 "$XCOIND" -regtest -datadir="$A_DIR" -server -daemon -listen=1 -port=28443 -rpcport=28442 -connect=0 -dnsseed=0 \
-  -xaccount=alice -xallowlist="$ALLOW"
+  -xoauthmock=alice -xallowlist="$ALLOW"
 "$XCOIND" -regtest -datadir="$B_DIR" -server -daemon -listen=0 -port=28453 -rpcport=28452 -addnode=127.0.0.1:28443 -dnsseed=0 \
-  -xaccount=bob -xallowlist="$ALLOW"
+  -xoauthmock=bob -xallowlist="$ALLOW"
 cleanup() {
   "${A_CLI[@]}" stop >/dev/null 2>&1 || true
   "${B_CLI[@]}" stop >/dev/null 2>&1 || true

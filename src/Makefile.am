@@ -263,6 +263,7 @@ libraven_server_a_SOURCES = \
   merkleblock.cpp \
   miner.cpp \
   lottery.cpp \
+  xsession.cpp \
   net.cpp \
   net_processing.cpp \
   noui.cpp \

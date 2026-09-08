@@ -15,6 +15,7 @@
 #include "txmempool.h"
 #include "util.h"
 #include "validation.h"
+#include "xsession.h"
 
 #ifdef ENABLE_WALLET
 #include "rpc/protocol.h"
@@ -291,6 +292,8 @@ bool AssignLinkedUserMainAsset(const std::string& xHandleOrId, const std::string
     std::string handle;
     uint64_t userId = 0;
     if (!NormalizeXAccountId(xHandleOrId, handle, userId, err))
+        return false;
+    if (!xsession::RequireHandle(handle, err))
         return false;
 
     std::string existing;

@@ -71,7 +71,7 @@ There are no DNS seeds in-tree. For a private mesh:
    ```bash
    src/xcoind -listen=1 -port=38443 -server \
      -rpcuser=xcoin -rpcpassword=change-me \
-     -xaccount=SeedHandle -xallowlist=/shared/verified-x-accounts.txt
+     -xallowlist=/shared/verified-x-accounts.txt
    ```
 
 3. Tell every other operator to join with **either**:
@@ -100,19 +100,19 @@ the same file. Unlinked nodes still sync/relay but do not win or produce.
 1. Seed operator: confirm each operator’s X handle is verified, then write
    `verified-x-accounts.txt` (see [LOTTERY.md](LOTTERY.md)).
 2. Confirm each handle **offline** (open `https://x.com/<handle>`, check the
-   verified / Premium badge). Do **not** invent a bot, OAuth app, or live API key.
-3. Share that file (scp, gist, HTTPS). Each operator sets `xaccount=` to
+   verified / Premium badge) for the allowlist. Then each operator **Signs
+   in with X** on their node (see [XSIGNIN.md](XSIGNIN.md)). Do not type
+   someone else's handle into `linkxaccount`.
+3. Share that file (scp, gist, HTTPS). Each operator signs in as
    **their** handle and points at the file.
 
 The owner handle for this private test is **`NFTRVN`**. Add it to the
-allowlist, then `linkxaccount NFTRVN` assigns the free root `NFTRVN`.
+allowlist, sign in as NFTRVN, then claim the free root `NFTRVN`.
 
 ```bash
 # xcoin.conf
-xaccount=YourHandle
+xoauthclientid=YOUR_CLIENT_ID
 xallowlist=/shared/verified-x-accounts.txt
-# or copy into the datadir:
-#   ~/.xcoin/verified-x-accounts.txt
 ```
 
 ```bash
@@ -135,7 +135,7 @@ src/xcoin-cli loadxverified
 ./configure --without-gui --disable-bench --disable-tests --with-incompatible-bdb
 make -j$(nproc)
 src/xcoind -server -addnode=<seed-ip>:38443 \
-  -xaccount=YourHandle -xallowlist=/shared/verified-x-accounts.txt
+  -xallowlist=/shared/verified-x-accounts.txt
 src/xcoin-cli getblockchaininfo
 src/xcoin-cli getlotteryinfo
 src/xcoin-cli getactivenodes

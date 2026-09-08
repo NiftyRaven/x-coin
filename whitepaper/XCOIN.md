@@ -29,9 +29,10 @@ Users cannot create new roots. Under their root they may issue
 **sub-assets** (100 XFER burn) and **uniques** (5 XFER burn). Restricted
 assets are removed.
 
-This paper is the product specification. The running wallet is the core
-node (`xcoind` / `xcoin-cli`). There is no separate mobile or X-app
-wallet yet, and the node does not log into X.com.
+This paper is the product specification. The running wallet is the GUI
+(`xcoin-qt`) plus the core node (`xcoind` / `xcoin-cli`). There is no
+separate mobile wallet. **Sign in with X** is how a node binds a real
+X user id; consensus still does not call X.com on every block.
 
 ## 1. Purpose
 
@@ -47,8 +48,7 @@ That implies:
   children under that identity.
 - Block production that does not require ASICs, pools, or a public
   hashrate market.
-- Eligibility tied to a **verified X handle**, not to a live API key
-  inside the node.
+- Eligibility tied to a **signed-in X user id**, not to a typed handle.
 
 X Coin is not a mining network and not an exchange. It is a private,
 fair-launched chain whose first users are operators who already know
@@ -132,28 +132,35 @@ hashing) so tests do not wait on the clock.
 
 Full algorithm: [docs/LOTTERY.md](../docs/LOTTERY.md).
 
-## 4. Verified X, without logging into X
+## 4. Sign in with X (what stops impersonation)
 
-Consensus does not call X.com. The node is not an OAuth client.
+Consensus still does not call X.com on every block. The allowlist is
+still an operator-shared list of verified handles.
 
-Honest operators share one **allowlist** of X-verified handles
-(blue-check / X Premium). A node is lottery-eligible only when both
-are true:
+**Signing in is what stops impersonation.** A typed string in
+`linkxaccount` or `-xaccount=` is not enough. Anyone could type another
+person's handle if that handle were only checked against an allowlist.
 
-1. It has a linked handle (`-xaccount=` / `xcoin.conf`).
-2. That handle is on the shared allowlist (`-xallowlist=`,
+The GUI **Sign in with X** button runs OAuth 2.0 PKCE (authorization
+code). After the loopback callback, the wallet calls
+`GET /2/users/me` and stores **only** that response: X user id,
+username, expiry, and an HMAC proof (`xsession.json` + datadir secret
+`xsession.key`). Lottery identity and `linkxaccount` require that
+proof. `linkxaccount otherperson` is rejected when the session is not
+`otherperson`.
+
+The allowlist is the second gate (blue-check / X Premium, confirmed
+offline). Both must be true:
+
+1. A valid Sign in with X session on this node (user id + username).
+2. That username is on the shared allowlist (`-xallowlist=`,
    `-xverified=`, `addxverified`, or `~/.xcoin/verified-x-accounts.txt`).
 
-Operators confirm a handle **offline**: open `https://x.com/<handle>`,
-check the badge, write the handle (no `@`) into the file, share the
-file. Example owner handle for this release: **NFTRVN**.
+Typed `-xaccount=` is ignored unless a session already matches it.
+Unlinked wallets still send and receive XFER.
 
-Unlinked wallets still send and receive XFER. Linking is required to
-enter the lottery and to be assigned a root asset.
-
-This is an operator-shared list, not a bonded public identity. Gossiped
-handles are not signatures. Fine on a trusted private mesh; not a
-proof against impersonation on an open internet.
+Setup: [docs/XSIGNIN.md](../docs/XSIGNIN.md). Example owner handle:
+**NFTRVN**.
 
 ## 5. Assets: tokenize the world, and yourself
 

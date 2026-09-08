@@ -10,9 +10,10 @@ main/root asset, free**. That asset *is* the user. Users cannot `issue` a new
 root. One X account → one main asset.
 
 ```
+# GUI: Sign in with X, then Allowlist my handle, then Claim my root asset
 xcoin-cli addxverified NFTRVN         # operator allowlist (offline-verified)
-xcoin-cli linkxaccount NFTRVN         # assign the free identity root
-# or: xcoind -xaccount=NFTRVN … then linkxaccount
+xcoin-cli mockxsignin NFTRVN          # regtest only (mock GET /2/users/me)
+xcoin-cli linkxaccount                # assign the free identity root from the session
 ```
 
 `AssignLinkedUserMainAsset(xHandleOrId, dest)` is the C++ hook. The existing
@@ -21,7 +22,8 @@ verified-X link path (`registeractivenode` after allowlist) calls it; so does
 
 The owner’s X handle for this private test is **`NFTRVN`**. That handle
 derives the root name `NFTRVN`. Operators confirm the public profile
-offline (see [LOTTERY.md](LOTTERY.md)); the node never calls X.com.
+offline (see [LOTTERY.md](LOTTERY.md) and [XSIGNIN.md](XSIGNIN.md)).
+Signing in is what stops impersonation; the allowlist is the second gate.
 
 ## Naming
 

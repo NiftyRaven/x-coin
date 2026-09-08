@@ -326,8 +326,8 @@ void RavenGUI::createActions()
 
     QActionGroup *tabGroup = new QActionGroup(this);
 
-    overviewAction = new QAction(platformStyle->SingleColorIconOnOff(":/icons/overview_selected", ":/icons/overview"), tr("&Overview"), this);
-    overviewAction->setStatusTip(tr("Show general overview of wallet"));
+    overviewAction = new QAction(platformStyle->SingleColorIconOnOff(":/icons/overview_selected", ":/icons/overview"), tr("&Home"), this);
+    overviewAction->setStatusTip(tr("Sign in with X, lottery, and your asset"));
     overviewAction->setToolTip(overviewAction->statusTip());
     overviewAction->setCheckable(true);
     overviewAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_1));
@@ -347,7 +347,7 @@ void RavenGUI::createActions()
     sendCoinsMenuAction->setToolTip(sendCoinsMenuAction->statusTip());
 
     receiveCoinsAction = new QAction(platformStyle->SingleColorIconOnOff(":/icons/receiving_addresses_selected", ":/icons/receiving_addresses"), tr("&Receive"), this);
-    receiveCoinsAction->setStatusTip(tr("Request payments (generates QR codes and xcoin: URIs)"));
+    receiveCoinsAction->setStatusTip(tr("Show your address and copy it"));
     receiveCoinsAction->setToolTip(receiveCoinsAction->statusTip());
     receiveCoinsAction->setCheckable(true);
     receiveCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_3));
@@ -358,7 +358,7 @@ void RavenGUI::createActions()
     receiveCoinsMenuAction->setStatusTip(receiveCoinsAction->statusTip());
     receiveCoinsMenuAction->setToolTip(receiveCoinsMenuAction->statusTip());
 
-    historyAction = new QAction(platformStyle->SingleColorIconOnOff(":/icons/history_selected", ":/icons/history"), tr("&Transactions"), this);
+    historyAction = new QAction(platformStyle->SingleColorIconOnOff(":/icons/history_selected", ":/icons/history"), tr("&Activity"), this);
     historyAction->setStatusTip(tr("Browse transaction history"));
     historyAction->setToolTip(historyAction->statusTip());
     historyAction->setCheckable(true);
@@ -367,8 +367,8 @@ void RavenGUI::createActions()
     tabGroup->addAction(historyAction);
 
     /** XCOIN START */
-    createAssetAction = new QAction(platformStyle->SingleColorIconOnOff(":/icons/asset_create_selected", ":/icons/asset_create"), tr("&Create Assets"), this);
-    createAssetAction->setStatusTip(tr("Create new assets"));
+    createAssetAction = new QAction(platformStyle->SingleColorIconOnOff(":/icons/asset_create_selected", ":/icons/asset_create"), tr("&Issue (advanced)"), this);
+    createAssetAction->setStatusTip(tr("Classic asset issuer (advanced)"));
     createAssetAction->setToolTip(createAssetAction->statusTip());
     createAssetAction->setCheckable(true);
     createAssetAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
@@ -478,8 +478,8 @@ void RavenGUI::createActions()
     verifyMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/verify"), tr("&Verify message..."), this);
     verifyMessageAction->setStatusTip(tr("Verify messages to ensure they were signed with specified X Coin addresses"));
 
-    openRPCConsoleAction = new QAction(platformStyle->TextColorIcon(":/icons/debugwindow"), tr("&Debug Window"), this);
-    openRPCConsoleAction->setStatusTip(tr("Open debugging and diagnostic console"));
+    openRPCConsoleAction = new QAction(platformStyle->TextColorIcon(":/icons/debugwindow"), tr("&RPC console (advanced)"), this);
+    openRPCConsoleAction->setStatusTip(tr("Open the RPC console. New users do not need this."));
     // initially disable the debug window menu item
     openRPCConsoleAction->setEnabled(false);
 
@@ -565,11 +565,24 @@ void RavenGUI::createMenuBar()
     }
     settings->addAction(optionsAction);
 
+    QMenu *advanced = appMenuBar->addMenu(tr("&Advanced"));
+    if(walletFrame)
+    {
+        QAction *balancesAction = new QAction(tr("&Balances (legacy)"), this);
+        connect(balancesAction, SIGNAL(triggered()), this, SLOT(gotoBalancesPage()));
+        advanced->addAction(balancesAction);
+        advanced->addAction(createAssetAction);
+        advanced->addAction(transferAssetAction);
+        advanced->addAction(manageAssetAction);
+        advanced->addSeparator();
+        advanced->addAction(openRPCConsoleAction);
+        advanced->addAction(openWalletRepairAction);
+    }
+
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
     if(walletFrame)
     {
         help->addAction(openRPCConsoleAction);
-        help->addAction(openWalletRepairAction);
     }
     help->addAction(showHelpMessageAction);
     help->addSeparator();
@@ -588,9 +601,9 @@ void RavenGUI::createToolBars()
         // Create the background and the vertical tool bar
         QWidget* toolbarWidget = new QWidget();
 
-        QString widgetStyleSheet = ".QWidget {background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 %1, stop: 1 %2);}";
+        QString widgetStyleSheet = ".QWidget {background-color: #000000;}";
 
-        toolbarWidget->setStyleSheet(widgetStyleSheet.arg(platformStyle->LightBlueColor().name(), platformStyle->DarkBlueColor().name()));
+        toolbarWidget->setStyleSheet(widgetStyleSheet);
 
         labelToolbar = new QLabel();
         labelToolbar->setContentsMargins(0,0,0,50);
@@ -620,12 +633,9 @@ void RavenGUI::createToolBars()
             m_toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         }
         m_toolbar->addAction(overviewAction);
-        m_toolbar->addAction(sendCoinsAction);
         m_toolbar->addAction(receiveCoinsAction);
+        m_toolbar->addAction(sendCoinsAction);
         m_toolbar->addAction(historyAction);
-        m_toolbar->addAction(createAssetAction);
-        m_toolbar->addAction(transferAssetAction);
-        m_toolbar->addAction(manageAssetAction);
 //        m_toolbar->addAction(messagingAction);
 //        m_toolbar->addAction(votingAction);
         restrictedAssetAction->setVisible(false);
@@ -1113,6 +1123,11 @@ void RavenGUI::gotoOverviewPage()
 {
     overviewAction->setChecked(true);
     if (walletFrame) walletFrame->gotoOverviewPage();
+}
+
+void RavenGUI::gotoBalancesPage()
+{
+    if (walletFrame) walletFrame->gotoBalancesPage();
 }
 
 void RavenGUI::gotoHistoryPage()

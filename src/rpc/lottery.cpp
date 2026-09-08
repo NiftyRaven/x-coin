@@ -13,6 +13,7 @@
 #include "util.h"
 #include "utilstrencodings.h"
 #include "validation.h"
+#include "xsession.h"
 
 #ifdef ENABLE_WALLET
 #include "wallet/wallet.h"
@@ -77,6 +78,7 @@ UniValue getlotteryinfo(const JSONRPCRequest& request)
 
     UniValue ret(UniValue::VOBJ);
     ret.push_back(Pair("height", nextHeight));
+    ret.push_back(Pair("next_draw_height", nextHeight));
     ret.push_back(Pair("slot", draw.slot));
     ret.push_back(Pair("slot_seconds", (int64_t)lottery::SLOT_SECONDS));
     ret.push_back(Pair("winner_count", draw.winnerCount));
@@ -151,12 +153,9 @@ UniValue registeractivenode(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() > 3)
         throw std::runtime_error(
             "registeractivenode ( payout xaccount xuserid )\n"
-            "\nRecord a heartbeat for an active node. Requires a verified X identity.\n"
-            "With no arguments, heartbeats this node using -xaccount / -xuserid.\n"
-            "A payout without xaccount uses the local linked handle (one X account = one node).\n"
-            "Pass a different allowlisted xaccount to register another verified identity.\n"
-            "Heartbeats also gossip to peers as `xhb` (timestamp + script + X identity).\n"
-            "Unlinked or unverified registrations are rejected.\n"
+            "\nRecord a heartbeat for an active node. Requires a Sign in with X session.\n"
+            "The handle must match the signed-in username. Typed foreign handles are rejected.\n"
+            "With no arguments, heartbeats this node's signed-in identity.\n"
             "\nArguments:\n"
             "1. payout    (string, optional) X Coin address or script hex. Default: local payout script.\n"
             "2. xaccount  (string, optional) X handle. Default: this node's -xaccount.\n"
@@ -182,6 +181,13 @@ UniValue registeractivenode(const JSONRPCRequest& request)
         if (!lottery::NormalizeXHandle(request.params[1].get_str(), x.handle, err))
             throw JSONRPCError(RPC_INVALID_PARAMETER, err);
     }
+    if (x.handle.empty())
+        x.handle = xsession::SignedInHandle();
+    if (!request.params[1].isNull() || !x.handle.empty()) {
+        std::string serr;
+        if (!xsession::RequireHandle(x.handle, serr))
+            throw JSONRPCError(RPC_INVALID_PARAMETER, serr);
+    }
     if (request.params.size() > 2 && !request.params[2].isNull()) {
         if (!request.params[2].isNum() && !request.params[2].isStr())
             throw JSONRPCError(RPC_INVALID_PARAMETER, "xuserid must be a number");
@@ -191,10 +197,15 @@ UniValue registeractivenode(const JSONRPCRequest& request)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "xuserid must be >= 0");
         x.userId = (uint64_t)uid;
     }
+    if (x.userId == 0) {
+        const std::string sid = xsession::SignedInUserId();
+        if (!sid.empty())
+            x.userId = (uint64_t)atoi64(sid);
+    }
 
     if (x.handle.empty())
         throw JSONRPCError(RPC_INVALID_PARAMETER,
-                           "no X account linked; set -xaccount=handle in xcoin.conf or pass xaccount");
+                           "Sign in with X required; typed handles cannot become lottery-eligible");
     if (!lottery::GetAllowlist().Contains(x.handle, x.userId))
         throw JSONRPCError(RPC_INVALID_PARAMETER,
                            "X account is not on the verified allowlist (addxverified / -xverified / allowlist file)");
@@ -224,6 +235,52 @@ UniValue registeractivenode(const JSONRPCRequest& request)
         }
     }
 #endif
+    return ret;
+}
+
+UniValue getxsession(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 0)
+        throw std::runtime_error(
+            "getxsession\n"
+            "\nReturn the local Sign in with X session (user id + username from users/me).\n"
+        );
+    UniValue ret(UniValue::VOBJ);
+    xsession::Session s;
+    std::string err;
+    const bool ok = xsession::LoadSession(s, err);
+    ret.push_back(Pair("signed_in", ok));
+    if (ok) {
+        ret.push_back(Pair("username", s.username));
+        ret.push_back(Pair("id", s.userId));
+        ret.push_back(Pair("user_id", s.userId));
+        ret.push_back(Pair("expires", s.expiresAt));
+    } else {
+        ret.push_back(Pair("error", err));
+    }
+    return ret;
+}
+
+UniValue mockxsignin(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 1)
+        throw std::runtime_error(
+            "mockxsignin \"payload\"\n"
+            "\nREGTEST ONLY. Inject a mock GET /2/users/me payload and write a session proof.\n"
+            "payload is JSON {\"data\":{\"id\":\"…\",\"username\":\"…\"}} or handle[:userid].\n"
+        );
+    if (!xsession::IsRegtest())
+        throw JSONRPCError(RPC_MISC_ERROR, "mockxsignin is only available on -regtest");
+    std::string err;
+    UniValue parsed;
+    if (!xsession::ApplyUsersMePayload(request.params[0].get_str(), err, &parsed))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, err);
+    UniValue ret(UniValue::VOBJ);
+    ret.push_back(Pair("ok", true));
+    ret.push_back(Pair("username", xsession::SignedInHandle()));
+    ret.push_back(Pair("id", xsession::SignedInUserId()));
+    if (parsed.isObject())
+        ret.push_back(Pair("users_me", parsed));
     return ret;
 }
 
@@ -351,6 +408,8 @@ static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
     { "lottery",            "getlotteryinfo",         &getlotteryinfo,         {} },
     { "lottery",            "getactivenodes",         &getactivenodes,         {} },
+    { "lottery",            "getxsession",            &getxsession,            {} },
+    { "lottery",            "mockxsignin",            &mockxsignin,            {"payload"} },
     { "lottery",            "registeractivenode",     &registeractivenode,     {"payout", "xaccount", "xuserid"} },
     { "lottery",            "addxverified",           &addxverified,           {"handle", "userid"} },
     { "lottery",            "removexverified",        &removexverified,        {"handle"} },
