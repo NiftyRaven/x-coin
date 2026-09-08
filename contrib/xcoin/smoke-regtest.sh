@@ -179,6 +179,7 @@ NEED=$((149 - HEIGHT))
 if [[ "$NEED" -gt 0 ]]; then
   "${CLI[@]}" mockxsignin smoke2 >/dev/null
   "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
+  "${CLI[@]}" mockxsignin smoke1 >/dev/null
   "${CLI[@]}" generatetoaddress "$NEED" "$ADDR1" >/dev/null
 fi
 H149="$("${CLI[@]}" getblockhash 149)"
@@ -195,6 +196,8 @@ if abs(sum(o["value"] for o in pays) - 5000) > 1e-6:
 '
 "${CLI[@]}" mockxsignin smoke2 >/dev/null
 "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
+# Keep @smoke1 on the local payout script so @smoke2 stays on ADDR2.
+"${CLI[@]}" mockxsignin smoke1 >/dev/null
 "${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
 H150="$("${CLI[@]}" getblockhash 150)"
 TX0="$("${CLI[@]}" getblock "$H150" true | python3 -c 'import json,sys; print(json.load(sys.stdin)["tx"][0])')"

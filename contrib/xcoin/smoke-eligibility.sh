@@ -139,6 +139,9 @@ fi
 "${CLI[@]}" addxverified botter >/dev/null
 "${CLI[@]}" mockxsignin botter >/dev/null
 "${CLI[@]}" registeractivenode "$ADDR" botter >/dev/null
+# Restore the local session so HeartbeatLocal does not remap @botter
+# onto the local payout script (one handle → one node id).
+"${CLI[@]}" mockxsignin ghost >/dev/null
 COUNT="$("${CLI[@]}" getactivenodes | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')"
 [[ "$COUNT" -ge 2 ]]
 
