@@ -8,10 +8,15 @@
  * chainparams.cpp calls vSeeds.clear() / vFixedSeeds.clear() on every
  * network. The sentinels exist only so this header still compiles.
  */
-static SeedSpec6 pnSeed6_main[] = {
+#ifdef __GNUC__
+#define XCOIN_UNUSED_SEED __attribute__((unused))
+#else
+#define XCOIN_UNUSED_SEED
+#endif
+static XCOIN_UNUSED_SEED SeedSpec6 pnSeed6_main[] = {
     {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 0}
 };
-static SeedSpec6 pnSeed6_test[] = {
+static XCOIN_UNUSED_SEED SeedSpec6 pnSeed6_test[] = {
     {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 0}
 };
 #endif // RAVEN_CHAINPARAMSSEEDS_H
