@@ -1,144 +1,184 @@
 # X Coin
 
-**A peer-to-peer coin for users on X**
+**Ticker XFER.** Subunit **xferon** (1 XFER = 100,000,000 xferons).
 
-Ticker **XFER**. Subunit **xferon** (1 XFER = 100,000,000 xferons).
+Nifty Raven (@NFTRVN on X)
 
-**Nifty Raven** (@NFTRVN on X)  
-Anonymous public identity — display name and handle only.
+September 2026
 
 ---
 
 ## Abstract
 
-X Coin is a simple peer-to-peer electronic cash and asset system aimed at
-people who already have an identity on X. It is the primary transfer coin
-for that use: send value, hold it, and optionally tokenize yourself and
-the things you issue.
+X Coin is a peer-to-peer electronic cash and native-asset ledger for
+people who already have an identity on X. It is designed for one job:
+transfer value, hold it, and optionally tokenize the holder and what
+they issue.
 
-There is **no mining**. Every minute a lottery among **X Verified
-active nodes** chooses who produces the block and who shares that
-minute’s subsidy. **X Verified** is X’s blue check / X Premium (and
-business / government org checks) from `GET /2/users/me` — not an
-operator invite list. On each subsidy **halving**, one more winner is
-added that minute (1 → 2 → 3 …).
+There is no mining. Block production is a **minute lottery** among
+nodes that are signed in as **X Verified** — X’s blue check / X Premium
+(and business or government organization checks) as reported by
+`GET /2/users/me`. Unverified accounts have no lottery chance. Each
+subsidy halving adds one more winner that minute.
 
-Wallets may optionally **pool**: tickets stay one per verified running
-member; a win is split evenly across every member payout address
-(verified or not). Pool id and password stay with the creator to share.
+Launch is a **fair launch**: no premine, no founder allocation, no IPO.
+Height 0 is genesis, not a payday. Spendable lifetime supply is about
+**21 billion XFER**.
 
-Launch is **fair**: no premine, no founder allocation, no IPO. Height 0
-is not a payday. Spendable lifetime supply is about **21 billion XFER**.
+Sign in with X is required to send, receive, and claim the **one free
+root identity asset** assigned to each signed-in X account. The
+12-word BIP39 seed that creates wallet keys is unchanged and is not
+replaced by that sign-in.
 
-Each signed-in X handle is assigned **one free root identity asset**.
-Users cannot create new roots. Under their root they may issue
-**sub-assets** (100 XFER burn) and **uniques** (5 XFER burn). Restricted
-assets are removed. Lottery still requires **X Verified**.
+This paper is the product specification. Mechanics that operators and
+implementers need in full are in the technical annexes cited at the
+end.
 
-This paper is the product specification. The running wallet is the GUI
-(`xcoin-qt`) plus the core node (`xcoind` / `xcoin-cli`). There is no
-separate mobile wallet. **Sign in with X** is how a node binds a real
-X account; consensus still does not call X.com on every block. Access
-tokens never hit disk. The GUI shows **@handle** only. P2P lottery
-heartbeats carry the handle with user id **0** — login stays local.
+## 1. Motivation
 
-## 1. Purpose
+Most public coins optimize for hashpower or for a general
+smart-contract machine. X Coin optimizes for transfer between people
+who already live on X.
 
-Most coins optimize for hashpower or for a general smart-contract
-machine. X Coin optimizes for one job: **transfer between people who
-already live on X**.
+That implies four design choices:
 
-That implies:
+1. A native coin (XFER) that anyone with a signed-in wallet can receive
+   and send without asking an issuer.
+2. A native asset layer in which a person *is* a token and can issue
+   children under that identity.
+3. Block production that does not require ASICs, mining pools, or a
+   public hashrate market.
+4. Lottery eligibility tied to a **signed-in X Verified account**, not
+   to a typed handle and not to an operator invite list.
 
-- A native coin (XFER) that anyone can receive and send without asking
-  permission from an issuer.
-- A native asset layer so a person can *be* a token and can issue
-  children under that identity.
-- Block production that does not require ASICs, mining pools, or a public
-  hashrate market.
-- Eligibility tied to a **signed-in X Verified account**, not to a typed
-  handle and not to an operator invite list.
+X Coin is not an exchange and not a hosted wallet on X.com. It is its
+own UTXO ledger. As of this writing the chain remains private until
+**12 September 2026**.
 
-X Coin is not a mining network and not an exchange. It is a private,
-fair-launched chain whose first users are operators who already know
-each other on X.
-
-## 2. Units and supply
+## 2. Design at a glance
 
 | | |
 | --- | --- |
 | Name | X Coin |
 | Ticker | XFER |
 | Subunit | xferon (1e8 per XFER) |
-| Address (main) | version 76, `X…` |
-| Config / datadir | `xcoin.conf` / `~/.xcoin` |
+| Production | Minute lottery. No Proof-of-Work. |
+| Eligible set | X Verified, signed-in, running nodes |
+| Halvings | Subsidy halves; winner count that minute increases by one |
+| Pools | Optional. Tickets = verified running members. Win split evenly. |
+| Launch | Fair. No premine. No founder allocation. |
+| Spendable supply | 20,999,994,999.727 XFER (~21 billion) |
+| Identity | Sign in with X. One free root per signed-in account. |
+| Keys | 12-word BIP39 / BIP44. Sign-in does not replace the seed. |
+| Addresses (main) | Version 76, `X…` |
 | P2P / RPC (main) | 38443 / 38442 |
+| DNS seeds | None. Peers join with `addnode` / `seednode`. |
+| Wallets | Desktop GUI on Linux and Windows (`xcoin-qt`). Practice is always `-regtest`. |
+| License | MIT |
 
-Subsidy at height 1 is **5000 XFER**, halved every 2,100,000 blocks
-(every 150 blocks on regtest). Height 0 pays nothing; the genesis
-coinbase is never added to the UTXO set.
+Consensus does not call X.com on every block. Sign in with X binds a
+real X account to a node’s data directory once. After that, lottery
+gossip carries the public `@handle` only.
 
-Genesis **nTime is the lottery clock**, frozen in the binary at go-live
-(`contrib/xcoin/freeze-genesis.sh`). Connecting a node does **not**
-rewrite height 0 by itself. Height 1 is the first payday: it is
-produced when an **X Verified** eligible node is running in the minute
-after that freeze. Explorers show those header timestamps as the birth
-of the chain. A lone node already stores genesis; other people seeing
-the same tip still need `addnode`. Do not start mainnet hours after
-the freeze — the producer will not backfill more than two hours of
-missed minutes. Go-live: [docs/GO-LIVE.md](../docs/GO-LIVE.md).
+## 3. Fair launch and supply
 
-Winner count that minute is `1 + floor(height / halvingInterval)`.
-The subsidy is split as evenly as possible across those winners; fees
-go to the first winner.
+X Coin starts with an empty spendable set.
 
-Integer right-shifts eventually dust the last units. Spendable lifetime
-supply is **20,999,994,999.727 XFER** — about 21 billion, minus unpaid
-genesis and shift dust. `MAX_MONEY` is a 21 billion XFER sanity cap, not
-an extra mint.
+**Height 0** is genesis. The genesis coinbase is serialized in the
+block and is never added to the UTXO set. It is not a payday, not a
+hidden allocation, and not a founder output. **Height 1** is the first
+subsidy: 5000 XFER, produced in the first lottery minute after genesis
+when an X Verified eligible node is running.
 
-Fair launch: no premine, no founder output, no hidden allocation. The
-people who produce blocks are the people who run **X Verified** eligible
-nodes that minute. Unverified accounts have zero lottery chance. An
-optional lottery pool does not mint extra tickets; it only splits a win
-among members who know the pool id and password.
-
-## 3. Lottery, not mining
-
-Proof-of-Work is removed as the production mechanism. `CheckProofOfWork`
-does not grind. There is no `-gen` miner.
-
-### Slot
-
-Height `h` maps to lottery minute
+The genesis timestamp is the lottery clock. Height `h` maps to minute
 
 ```
 slot = floor(genesisTime / 60) + h
 ```
 
-One height, one slot, one coinbase. You cannot skip-pay or double-pay a
-height on one chain.
+Explorers will show that timestamp as the birth of the chain. Connecting
+a node does not rewrite height 0.
+
+Subsidy is halved every **2,100,000** blocks (about four years at one
+block per minute; every 150 blocks on regtest). Integer right-shifts
+eventually dust the last units. Spendable lifetime supply is
+**20,999,994,999.727 XFER** — about 21 billion, minus unpaid genesis
+and shift dust. `MAX_MONEY` is a 21 billion XFER sanity cap used by
+validation. It is not an extra mint.
+
+There is no premine, no founder allocation, and no operator-reserved
+supply. Coins that exist are coins that lottery winners produced after
+height 0, plus whatever later holders transferred. An optional lottery
+pool does not mint extra tickets; it only splits a win among members
+who know the pool id and password.
+
+This paper does not give investment, legal, or tax advice. XFER is a
+protocol unit. Whether, where, or how it is listed is outside the
+ledger.
+
+## 4. Lottery, not mining
+
+Proof-of-Work is not the production mechanism. `CheckProofOfWork` does
+not grind. There is no hash-rate market and no `-gen` miner.
+
+Full algorithm: [docs/LOTTERY.md](../docs/LOTTERY.md).
+
+### Slot and subsidy
+
+One height, one slot, one coinbase. A chain cannot skip-pay or
+double-pay a height.
+
+Winner count that minute is
+
+```
+winnerCount(h) = 1 + floor(h / nSubsidyHalvingInterval)
+```
+
+On mainnet that is one winner through height 2,099,999; two winners
+from 2,100,000; three from 4,200,000; and so on. If the active set is
+smaller than `winnerCount`, every active node wins. The subsidy is
+split as evenly as possible across those winners; transaction fees go
+to the first winner.
 
 ### Active set
 
 A node is **active** if it has heartbeated an **X Verified** identity
-within the last 180 seconds. Node id is `Hash160(payout script)`. Peers
-gossip compact-signed heartbeats (`xhb`) after `verack` and about every
-30 seconds: timestamp, payout script, **@handle**, user id **0**,
-verified bit, compact payout signature. The numeric X user id and OAuth
-tokens never go on the wire. Heartbeats that are unsigned, unverified,
-or that try to rebind a live handle are ignored.
+within the last 180 seconds. Node id is `Hash160` of the payout script.
+Peers gossip compact-signed heartbeats (`xhb`) after `verack` and about
+every 30 seconds: timestamp, payout script, `@handle`, user id **0**,
+verified bit, and a compact payout signature.
+
+The numeric X user id and OAuth tokens never go on the wire. Heartbeats
+that are unsigned, unverified, or that try to rebind a live handle are
+ignored.
+
+**X Verified** is what X itself reports on `GET /2/users/me`
+(`verified` / `verified_type`): the blue check / X Premium, plus
+business and government organization checks.
+[About the blue check](https://help.x.com/en/managing-your-account/about-x-bluecheck)
+per [X’s verification policy](https://help.x.com/en/rules-and-policies/verification-policy).
+It is not an operator invite list.
+
+Lottery eligibility on this node is all three of:
+
+1. A valid Sign in with X session (user id + username + proof).
+2. That session reports X Verified (`verified == true`).
+3. This wallet is running (local payout + heartbeat).
+
+A signed-in handle that is not X Verified can still send and receive.
+It has **zero lottery chance**. A verified running wallet cannot be
+excluded from the draw.
 
 ### Seed and winners
 
 ```
 seed = SHA256( prevBlockHash || LE64(slot) )
-winnerCount(h) = 1 + floor(h / nSubsidyHalvingInterval)
 ```
 
 Winners are drawn from the sorted active ids with a partial
 Fisher–Yates shuffle driven by `SHA256(seed || LE32(i))`. The first
-selected winner may produce the block.
+selected winner may produce the block. Honest nodes that agree on the
+tip and the slot therefore agree on the draw.
 
 The coinbase must:
 
@@ -149,115 +189,122 @@ The coinbase must:
    first output). **Pooled:** if the producer also writes `XPL1`, that
    winner’s share is split evenly across every member payout address
    listed for that pool (verified or not). Peers validate the split
-   from `XPL1` alone — they do not need the password.
+   from `XPL1` alone; they do not need the password.
 
-A mismatch is an invalid block. Empty committed set is invalid. A
-cheating producer can omit `XPL1` and pay only themselves; honest
-`xcoin-qt` / `xcoind` always emit `XPL1` when the winner is in a pool
-this node knows. Keep pool id + password private if you do not want
-extra members.
+A mismatch is an invalid block. An empty committed set is invalid.
+
+On mainnet and testnet the producer waits until wall-clock slot ≥
+height slot and emits at most one block per minute when this node
+wins. On regtest, `generatetoaddress` assembles a block on demand
+(still without hashing) so tests do not wait on the clock.
 
 ### Optional pools
 
-Create, join, and leave from Home (buttons) or RPC. The creator sets a
-**pool id** and **password** and shares them only if they want someone
-else in.
+Wallets may create, join, or leave a pool from Home or RPC. The
+creator sets a **pool id** and **password** and shares them only if
+they want someone else in.
 
 | | |
 | --- | --- |
-| Tickets | One per **X Verified** running member. Unverified members add none. |
-| Win | Even split across **every** member address, verified or not. |
-| Public | Pool **name** and member **addresses** only. No password. Pool id is shown only on a wallet that created or joined. |
-| Wire | Signed `xpl` adverts. Password never gossiped. Last member leaving dissolves the pool on that node. |
+| Tickets | One per X Verified running member. Unverified members add none. |
+| Win | Even split across every member address, verified or not. |
+| Public | Pool name and member addresses only. The password is never shown after submit and is never gossiped. Pool id is shown only on a wallet that created or joined. |
+| Wire | Signed `xpl` adverts. Last member leaving dissolves the pool on that node. |
 
-Full algorithm: [docs/LOTTERY.md](../docs/LOTTERY.md).
+Honest `xcoin-qt` / `xcoind` always emit `XPL1` when the winner is in a
+pool this node knows. A modified producer can omit `XPL1` and pay only
+itself. Keep pool id and password private if extra members are not
+wanted.
 
-On main and testnet the producer thread waits until wall-clock slot ≥
-height slot and emits at most one block per minute when this node wins.
-On regtest, `generatetoaddress` assembles a block on demand (still no
-hashing) so tests do not wait on the clock.
+## 5. Identity: Sign in with X and the seed
 
-## 4. Sign in with X (what stops impersonation)
+X Coin uses two layers. Both are required for a working wallet. Neither
+substitutes for the other.
 
-Consensus still does not call X.com on every block. **X Verified** is
-what X itself reports on `GET /2/users/me` (`verified` /
-`verified_type`): the blue check / X Premium, plus business and
-government org checks.
-[About the blue check](https://help.x.com/en/managing-your-account/about-x-bluecheck)
-per [X’s verification policy](https://help.x.com/en/rules-and-policies/verification-policy).
-The operator invite list (`addxverified`) is **not** X Verified.
+| Layer | What it is | What it is not |
+| --- | --- | --- |
+| 12-word BIP39 seed | Private keys in `wallet.dat`. Unchanged 12-word generation (BIP44, mainnet coin type **3844**). | Not an X login. Not replaced by Sign in with X. |
+| Sign in with X | Proof that this data directory is linked to one X account. | Not a hosted X.com wallet. Not a replacement for the seed. |
 
-**Signing in is what stops impersonation.** A typed string in
-`linkxaccount` or `-xaccount=` is not enough. Anyone could type another
-person's handle if that handle were only checked against an allowlist.
+Setup: [docs/XSIGNIN.md](../docs/XSIGNIN.md). Keys: [docs/WALLET.md](../docs/WALLET.md).
+
+**Signing in is what stops impersonation.** A typed string is not an
+identity. Anyone could type another person’s handle if that handle were
+only checked against a list.
 
 The GUI **Sign in with X** button runs OAuth 2.0 PKCE (authorization
-code). After the loopback callback, the wallet calls
+code) against a loopback callback. After approval, the wallet calls
 `GET /2/users/me?user.fields=verified,verified_type` and stores **that**
 response: X user id, username, expiry, `verified`, `verified_type`, and
-an HMAC proof (`xsession.json` + datadir secret
+an HMAC proof (`xsession.json` plus a per-datadir secret
 `xsession.key`). Access tokens are held in RAM for that `users/me` call
-and then wiped — never written. **Send and receive** require the HMAC
-proof — authentication is what proves the wallet is yours. Home shows
-**this wallet is linked to @handle** and whether X Verified is true. It
-does not show your X user id, tokens, or session files. Create / join a
-lottery pool from Home if you want; the password is never shown after
-you submit it.
-`linkxaccount otherperson` is
-rejected when the session is not `otherperson`. This proof does not
-replace the 12-word BIP39 seed.
+and then wiped. They are never written to disk.
 
-Lottery eligibility is **session plus X Verified** (`verified==true`)
-plus a running wallet. Unverified accounts have **zero chance**. The
-invite list cannot exclude a verified wallet:
+Users never paste a Client ID. The operator bakes `xoauthclientid=`
+into the shipped package `xcoin.conf` once. An empty Client ID does not
+fake success; Sign in with X tells the user the operator has not baked
+one. There is no GUI paste box for it.
 
-1. A valid Sign in with X session on this node (user id + username).
-2. `users/me` reports X Verified (blue / business / government).
-3. This wallet is running (local payout + heartbeat).
+The GUI shows **@handle** and whether X Verified is true. It does not
+show the X user id, tokens, or session file paths. `linkxaccount` for
+another person’s handle is rejected when the session is not that
+person. Typed `-xaccount=` is ignored unless a session already matches
+it.
 
-Typed `-xaccount=` is ignored unless a session already matches it.
+A valid session proof is required to create a receive address, send,
+claim the free root, and issue under that root. Coins can still arrive
+at an already-known address. RPC still needs the cookie or
+`rpcpassword`; sign-in is not a substitute for RPC authentication.
 
-Setup: [docs/XSIGNIN.md](../docs/XSIGNIN.md). Example owner handle:
-**NFTRVN**.
+A copy of this data directory (`xsession.key` and `xsession.json`) is
+a copy of **this node’s session**, not of another wallet’s keys. A
+copy of `wallet.dat` or of the 12 words is a copy of the keys. The
+HMAC is per-datadir. Signing in as Alice on Bob’s empty wallet does
+not import Alice’s coins.
 
-## 5. Assets: tokenize the world, and yourself
+## 6. Assets
 
 The user **is** a main asset.
 
-A wallet **without** Sign in with X cannot create a main/root asset.
+A wallet without Sign in with X cannot create a main (root) asset.
 `issue` of a new root is rejected at RPC and at consensus. The only
-valid root is the protocol assignment from `linkxaccount` after a
-valid session: zero burn, `OP_RETURN` `XID1` plus the normalized
-handle. That assignment does **not** require a blue check. One X
-account → one main asset. Lottery still needs **X Verified**.
+valid root is the protocol assignment after a valid session: zero burn,
+`OP_RETURN` `XID1` plus the normalized handle. That assignment does
+**not** require a blue check. One X account → one main asset. Lottery
+still requires X Verified.
 
-Subs and uniques are issued **under that signed-in account’s root**
-(`NAME/CHILD`, `NAME#tag`) and require owning `NAME!` plus the same
-session. Users cannot invent a second main.
+The dummy prevout used to claim an empty-wallet root is not a spendable
+coin and is not a premine.
 
-The root name is the handle, uppercased, in `A-Z 0-9 . _` (length
-3–**32**). A 26-character X handle maps 1:1 (no truncation).
-`NFTRVN` → asset `NFTRVN` plus owner token `NFTRVN!`.
+The root name is the handle, uppercased, in `A-Z 0-9 . _`, up to
+**32** characters. A 26-character X handle maps 1:1 and is never
+truncated. Short handles are padded; a leading or trailing `_` is
+substituted so it remains a valid asset name without colliding with the
+stripped form. Reserved product names (`XFER`, `XCOIN`) are not
+assignable.
 
-Under a root the owner may issue:
+Under that root the owner may issue sub-assets and uniques. They must
+own `NAME!` and hold the same session. Users cannot invent a second
+main.
 
-| Kind | Example | Burn |
+| Kind | Example form | Burn |
 | --- | --- | --- |
-| Sub | `NFTRVN/NOTE` | 100 XFER |
-| Unique | `NFTRVN#ONE` | 5 XFER |
+| Root (protocol on X-link) | `HANDLE` + owner token `HANDLE!` | 0 XFER |
+| Sub | `HANDLE/CHILD` | 100 XFER |
+| Unique | `HANDLE#tag` | 5 XFER |
 | Reissue (if reissuable) | same name | 100 XFER |
 
 Identity roots are not reissuable. Restricted, qualifier, tag, and
 freeze assets are **removed** — no create, transfer, RPC, or
 activation.
 
-A signed-in session is required to create a receive address or send.
-Coins can still arrive at an already-known address. Linking is
-required to *issue* under your root.
-
 Details: [docs/ASSETS.md](../docs/ASSETS.md).
 
-## 6. Network identity
+## 7. Network
+
+This is X Coin’s own ledger: own genesis, own UTXO set, own assets,
+own lottery. It is not the imported upstream chain and not a snapshot
+of that chain.
 
 | | Main | Testnet | Regtest |
 | --- | --- | --- | --- |
@@ -266,107 +313,128 @@ Details: [docs/ASSETS.md](../docs/ASSETS.md).
 | RPC | 38442 | 48442 | 28442 |
 | Data dir (Unix) | `~/.xcoin` | `~/.xcoin/testnet1` | `~/.xcoin/regtest` |
 
-There are no public DNS seeds in-tree. A private mesh uses `addnode` /
-`seednode`. Do not publish this repository.
-
-This is **X Coin’s own ledger** (own genesis, UTXO, assets, lottery) —
-not Ravencoin’s chain and not an imported snapshot. A lone node already
-stores it. Other people seeing the same tip need two or more peers on
-port 38443. Wallet **Activity** / `listtransactions` show sends and
-receives on this node; peers see mempool and blocks. There is no public
-explorer and nothing appears on Ravencoin explorers.
+There are no public DNS seeds. A mesh uses `addnode` / `seednode` on
+port **38443**. A lone eligible node can produce and store the ledger.
+Other people seeing the same tip still need two or more peers.
 
 User agent is `XCoin`. Signed messages use `X Coin Signed Message:\n`.
+Mainnet P2PKH addresses start with **X**.
 
-Third-party **block explorers**, **asset explorers**, and **wallets**
-can speak the same Bitcoin-family RPC (`getblock`, `getrawtransaction`
-with `-txindex=1`, `listassets`, `getassetdata`, `issue`, `transfer`).
-There is no in-tree explorer URL. A third-party wallet still cannot
-mint a main asset without Sign in with X on that node; subs are issued
-under that session’s root. How to wire one:
+Third-party block explorers, asset explorers, and wallets can speak
+the same Bitcoin-family RPC (`getblock`, `getrawtransaction` with
+`-txindex=1`, `listassets`, `getassetdata`, `issue`, `transfer`). There
+is no in-tree explorer URL. A third-party wallet still cannot mint a
+main asset without Sign in with X on that node; subs are issued under
+that session’s root. How to wire one:
 [docs/THIRD-PARTY.md](../docs/THIRD-PARTY.md).
 
-## 7. The wallet (honest status)
+## 8. Wallets
 
-The wallet **is** the buttons-first desktop GUI that ships with the node:
+The wallet is the desktop GUI that ships with the node.
 
-- `xcoin-qt` — desktop GUI (X theme: black / white / sharp). This is
-  the wallet people run.
-- `xcoind` — daemon, lottery producer, wallet
-- `xcoin-cli` — RPC
+- `xcoin-qt` — desktop GUI. This is the wallet people run.
+- `xcoind` — daemon, lottery producer, wallet.
+- `xcoin-cli` — RPC.
 
 **Linux x86_64** and **Windows x86_64** packages are folders you open.
-Each package has two labeled starts: the real wallet (no `-regtest`) and
-**Practice**, which always passes `-regtest`. Practice writes only the
-regtest datadir (`~/.xcoin/regtest` on Linux, `%APPDATA%\XCoin\regtest`
-on Windows) and never the main ledger or the main `wallet.dat`. The
-practice window title includes **[regtest]**. Practice coins are not
-main XFER.
+Each package has two labeled starts: the real wallet (no `-regtest`)
+and **Practice**, which always passes `-regtest`. Practice writes only
+the regtest data directory (`~/.xcoin/regtest` on Linux,
+`%APPDATA%\XCoin\regtest` on Windows) and never the main ledger or the
+main `wallet.dat`. The practice window title includes **[regtest]**.
+Practice coins are not main XFER.
 
-There is **no** new mobile wallet and **no** X-app wallet. Sign in with
-X is OAuth in `xcoin-qt` / the node (PKCE → `users/me` → datadir proof).
-It is an identity gate on this node, not a hosted X.com wallet and not
-a replacement for the seed. **Sign in with X is required** to send,
-receive, and claim the one free root per signed-in X account.
+There is no mobile wallet and no in-app X.com wallet. Sign in with X
+is OAuth in `xcoin-qt` / the node. Download packaged wallets from
+[GitHub Releases](https://github.com/NiftyRaven/x-coin/releases).
 
-**12-word BIP39 / BIP44 generation is unchanged** and still required
-to create or restore keys. Seed = keys. X session = proof that this
-datadir is linked to that X account. [docs/WALLET.md](../docs/WALLET.md).
+Creating an address, sending XFER, linking a handle, claiming the
+root, and creating or joining a lottery pool are Home buttons (or
+RPC against `wallet.dat`). Home includes **POOL** and optional
+**Provide my node IP** (off by default). Peer IPs stay hidden unless
+that box is turned on.
 
-Creating an address, sending XFER, linking a handle, and creating or
-joining a lottery pool are Home buttons or RPC against `wallet.dat`.
-Send and receive require the session proof. Home has **POOL** (create /
-join / leave / copy pool id) and optional **Provide my node IP** (off
-by default).
+Inherited core behavior remains: UTXO wallet, BIP39 12-word HD seed,
+`wallet.dat`, `encryptwallet` / `backupwallet`, fee estimates, P2P,
+mempool, and the asset script format.
 
-What this release changed on top of that core:
+## 9. Privacy and limits
 
-- Product name, ports, magic, datadir, binaries
-- Lottery instead of mining; optional lottery pools from Home
-- Sign in with X session + X Verified (blue check) and `linkxaccount`
-  (tokens RAM-only; GUI @handle only; P2P user id 0)
-- One free root per signed-in X account; user roots forbidden;
-  restricted assets removed; handles up to 32 characters (a 26-character
-  handle maps 1:1)
-- Linux and Windows folders with real / Practice starts
-- Optional **Provide my node IP** on Home (off by default)
+X Coin is a small UTXO-plus-lottery mesh. It is not an anonymity
+network.
 
-What is still inherited core behavior: UTXO wallet, BIP39 12-word HD
-seed, `wallet.dat`, `encryptwallet` / `backupwallet`, fee estimates,
-P2P, mempool, the asset script format. How to use it (which file to
-open — do not compile): [README.md](../README.md).
+**What the protocol keeps local**
 
-## 8. Risks (accepted for private launch)
+- OAuth access tokens never hit disk.
+- Session files are this data directory only (mode `0600`) and are not
+  gossiped.
+- P2P heartbeats carry the public `@handle`, never the numeric X user
+  id, never a token, never the HMAC proof.
+- The GUI shows `@handle` and verified yes/no.
 
-- Unverified `users/me` has zero lottery chance; a verified running
-  wallet cannot be excluded. Gossip `xVerified` is compact-signed by
-  the payout key; a modified client can still lie.
-- `xhb` is compact-signed by the payout key. A live handle cannot be
-  rebound. Residual: first-seen after restart unless you pin a payout;
-  eclipse of a node that only talks to attacker peers.
-- A cheating producer can omit `XPL1` and skip a pool split. Honest
-  nodes always split when they know the pool. Keep id + password private.
+**What it does not hide**
+
+- Lottery identity is the public handle. Peers who see `xhb` see who
+  is competing that minute.
+- The ledger is a public UTXO set among connected peers. Amounts and
+  asset names in confirmed transactions are visible to those peers and
+  to any explorer that indexes them.
+
+**Limits that remain**
+
+- Gossip `xVerified` is compact-signed by the payout key. Honest
+  wallets set that bit only from `users/me`. A modified client can
+  still assert it on the wire. Consensus checks that a coinbase matches
+  the *committed* active set, not “the true mesh.”
+- A live handle cannot be rebound. Residual: first-seen after restart
+  unless a payout is pinned; eclipse of a node that only talks to
+  attacker peers.
+- A cheating producer can omit `XPL1` and skip a pool split.
 - Clock skew can delay a slot; height still maps 1:1.
-- No public explorer URL, no DNS seeds, no exchange listing until go-live.
-  RPC is enough for a third party to stand up an explorer or wallet:
-  [docs/THIRD-PARTY.md](../docs/THIRD-PARTY.md).
-  Go-live birth clock: [docs/GO-LIVE.md](../docs/GO-LIVE.md).
-  Private-test audit: [docs/AUDIT.md](../docs/AUDIT.md).
-  Threat model: [docs/SECURITY.md](../docs/SECURITY.md).
+- There are no checkpoints and no public DNS seeds. An eclipsed node
+  follows the heaviest *valid* chain its peers feed it. Connect to a
+  known seed.
 
-Treat the lottery as specified here. Do not reintroduce Proof-of-Work
-as the production path.
+Threat model: [docs/SECURITY.md](../docs/SECURITY.md). Treat the
+lottery as specified here. Do not reintroduce Proof-of-Work as the
+production path.
 
-## 9. Author
+## 10. Provenance and license
 
-**Nifty Raven** — @NFTRVN on X.
+Consensus code descends from open upstream and is released under the
+**MIT** license. See [COPYING](../COPYING). Copyright headers in
+source files still apply.
 
-This is an anonymous public identity: display name and handle only.
-There is no legal name, email, employer, or phone attached to this
-release.
+X Coin is a hard fork of that tree with its own genesis, magic, ports,
+address versions, lottery, and identity rules. It is not a rebrand of
+the imported network and not an imported UTXO snapshot.
 
-## 10. License
+A short list of leftover wire names and internal identifiers — kept
+for compatibility, not as product branding — is in
+[docs/FORK.md](../docs/FORK.md).
 
-MIT. See [COPYING](../COPYING). Consensus code descends from open
-upstream; copyright headers in source files still apply. Historical
-opcode names and legal notes: [docs/FORK.md](../docs/FORK.md).
+## 11. Conclusion
+
+X Coin is a fair-launched UTXO ledger whose native unit is XFER, whose
+block producers are X Verified running nodes chosen each minute by a
+deterministic lottery, and whose identity layer binds a wallet to a
+real X account without replacing the BIP39 seed.
+
+No premine. No founder allocation. No mining. One free root per
+signed-in X account. Desktop wallets on Linux and Windows.
+
+The running node enforces these rules. Algorithms this paper
+summarizes are specified in the annexes below.
+
+## Further reading
+
+| Document | Contents |
+| --- | --- |
+| [docs/LOTTERY.md](../docs/LOTTERY.md) | Lottery algorithm, coinbase rules, pools, RPCs |
+| [docs/XSIGNIN.md](../docs/XSIGNIN.md) | Sign in with X, session proof, privacy of login |
+| [docs/WALLET.md](../docs/WALLET.md) | BIP39 seed vs X session |
+| [docs/ASSETS.md](../docs/ASSETS.md) | Roots, subs, uniques, naming |
+| [docs/FORK.md](../docs/FORK.md) | Upstream attribution, leftover names |
+| [docs/GO-LIVE.md](../docs/GO-LIVE.md) | Birth timestamp and go-live order |
+| [docs/THIRD-PARTY.md](../docs/THIRD-PARTY.md) | Explorers and external wallets |
+| [docs/SECURITY.md](../docs/SECURITY.md) | Threat model |
