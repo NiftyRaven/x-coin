@@ -1311,6 +1311,7 @@ UniValue transferfromaddresses(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -1464,6 +1465,7 @@ UniValue transferfromaddress(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -1608,6 +1610,7 @@ UniValue reissue(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -2373,6 +2376,7 @@ UniValue issuequalifierasset(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -2529,6 +2533,7 @@ UniValue issuerestrictedasset(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -2676,6 +2681,7 @@ UniValue reissuerestrictedasset(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -2815,6 +2821,7 @@ UniValue transferqualifier(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 

@@ -265,6 +265,7 @@ UniValue getaccountaddress(const JSONRPCRequest& request)
             + HelpExampleRpc("getaccountaddress", "\"myaccount\"")
         );
 
+    EnsureSignedInWithX();
     LOCK2(cs_main, pwallet->cs_wallet);
 
     // Parse the account first so we don't generate a key if there's an error
@@ -296,6 +297,7 @@ UniValue getrawchangeaddress(const JSONRPCRequest& request)
             + HelpExampleRpc("getrawchangeaddress", "")
        );
 
+    EnsureSignedInWithX();
     LOCK2(cs_main, pwallet->cs_wallet);
 
     if (!pwallet->IsLocked()) {

@@ -102,6 +102,11 @@ if "${CLI[@]}" registeractivenode >/dev/null 2>&1; then
   exit 1
 fi
 
+echo "== signed-in but not X-Verified can still receive =="
+RECV="$("${CLI[@]}" getnewaddress)"
+[[ "$RECV" == y* && "$RECV" != R* && "$RECV" != n* ]] || { echo "FAIL: signed-in ghost must be able to receive, got $RECV" >&2; exit 1; }
+echo "  receive $RECV (session proves it is you; lottery still closed)"
+
 echo "== addxverified makes the linked node eligible =="
 "${CLI[@]}" addxverified ghost >/dev/null
 INFO4="$("${CLI[@]}" getlotteryinfo)"

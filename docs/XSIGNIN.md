@@ -21,9 +21,12 @@ After a successful sign-in:
 
 Proof message: `xcoin-xsession|{id}|{username}|{exp}`.
 
-`getnewaddress`, `sendtoaddress`, `linkxaccount`, `registeractivenode`,
-and lottery identity require a valid proof. Lottery also requires the
-X-Verified allowlist. `linkxaccount otherperson` is rejected if the
+`getnewaddress`, `getaccountaddress`, `sendtoaddress`, `issue` /
+`transfer` / `reissue`, `linkxaccount`, `registeractivenode`, and
+lottery identity require a valid proof. **Authentication is the key
+to asset ownership — it proves it is you.** Lottery also requires the
+X-Verified allowlist. A signed-in handle that is not X-Verified can
+still send and receive. `linkxaccount otherperson` is rejected if the
 session is not `otherperson`. Typed `-xaccount=` is ignored without a
 matching session.
 

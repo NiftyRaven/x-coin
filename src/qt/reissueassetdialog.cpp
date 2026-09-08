@@ -30,6 +30,7 @@
 #include "wallet/coincontrol.h"
 #include "policy/fees.h"
 #include "wallet/fees.h"
+#include "xsession.h"
 
 #include <QGraphicsDropShadowEffect>
 #include <QModelIndex>
@@ -908,6 +909,10 @@ void ReissueAssetDialog::onAddressNameChanged(QString address)
 
 void ReissueAssetDialog::onReissueAssetClicked()
 {
+    if (!xsession::HasValidSession()) {
+        showMessage(tr("Sign in with X required to reissue assets. Authentication proves ownership."));
+        return;
+    }
     if (!model || !asset) {
         return;
     }

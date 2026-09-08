@@ -77,6 +77,18 @@ if "${CLI[@]}" sendtoaddress ySmokeNoSession111111111111111111 1 >/tmp/xcoin-xse
   exit 1
 fi
 grep -qi "sign in with x\|session" /tmp/xcoin-xsession-send.err
+if "${CLI[@]}" getaccountaddress "" >/tmp/xcoin-xsession-acct.err 2>&1; then
+  echo "getaccountaddress must fail without a session" >&2
+  cat /tmp/xcoin-xsession-acct.err >&2
+  exit 1
+fi
+grep -qi "sign in with x\|session" /tmp/xcoin-xsession-acct.err
+if "${CLI[@]}" transfer ALICE 1 ySmokeNoSession111111111111111111 >/tmp/xcoin-xsession-xfer.err 2>&1; then
+  echo "transfer must fail without a session" >&2
+  cat /tmp/xcoin-xsession-xfer.err >&2
+  exit 1
+fi
+grep -qi "sign in with x\|session" /tmp/xcoin-xsession-xfer.err
 
 echo "== typed linkxaccount nftrvn is rejected without session =="
 if "${CLI[@]}" linkxaccount nftrvn >/tmp/xcoin-xsession-link.err 2>&1; then

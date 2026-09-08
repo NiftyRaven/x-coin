@@ -29,6 +29,7 @@
 #include "createassetdialog.h"
 #include "reissueassetdialog.h"
 #include "guiconstants.h"
+#include "xsession.h"
 
 #include <QGraphicsDropShadowEffect>
 #include <QFontMetrics>
@@ -332,6 +333,11 @@ void AssetsDialog::on_sendButton_clicked()
 {
     if(!model || !model->getOptionsModel())
         return;
+    if (!xsession::HasValidSession()) {
+        QMessageBox::warning(this, tr("X-Coin"),
+                             tr("Sign in with X required to transfer assets. Authentication proves ownership."));
+        return;
+    }
 
     QList<SendAssetsRecipient> recipients;
     bool valid = true;
