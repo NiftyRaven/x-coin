@@ -65,6 +65,8 @@ echo "$INFO" | grep -q '"local_xaccount": "smoke1"'
 echo "$INFO" | grep -q '"local_eligible": true'
 CHAIN="$("${CLI[@]}" getblockchaininfo)"
 echo "$CHAIN" | grep -q '"chain": "regtest"'
+echo "$CHAIN" | grep -q '"name": "X Coin"'
+echo "$CHAIN" | grep -q '"currency": "XFER"'
 echo "$CHAIN" | grep -q '"blocks": 0'
 
 ADDR1="$("${CLI[@]}" getnewaddress)"

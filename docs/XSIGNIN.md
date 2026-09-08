@@ -77,11 +77,15 @@ The node never pretends login succeeded without a real access token
 
 1. Create / open wallet (first-run **12-word BIP39** mnemonic — still required).
 2. **Sign in with X** (binds this node to your X account; does not replace the seed).
-3. **Allowlist my handle** (operator) then **Claim my root asset**.
-4. **Receive** (address + Copy) / **Send** (paste address, amount, Send).
-5. Issue sub / unique from Home. Lottery status is on Home.
+3. Paste **Client ID** → **Save Client ID**.
+4. **Allowlist my handle** (operator) then **Claim my root asset**.
+5. **Receive** (address + Copy) / **Send** (paste address, amount, Send).
+6. **Activity** (history). Issue sub / unique from Home. Lottery status is on Home.
+7. Home shows **this wallet is yours / linked to @handle**. Transfer assets is a Home button (and the left tab).
 
-RPC console is under **Advanced**.
+This wallet + this X session = you. Another user cannot send from inside
+your wallet. RPC console is under **Advanced** (not required for the
+happy path).
 
 ## Regtest (no live X login)
 

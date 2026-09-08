@@ -132,6 +132,9 @@ smoke-regtest-datadir/
 smoke-gossip-datadir/
 smoke-eligibility-datadir/
 smoke-gui-datadir/
+smoke-xsession-datadir/
+smoke-benchmark-datadir/
+smoke-isolation-datadir/
 gui-demo-datadir/
 
 # built GUI (keep src/qt/xcoin-qt out of git)

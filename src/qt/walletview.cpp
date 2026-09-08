@@ -120,6 +120,8 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     connect(overviewPage, SIGNAL(assetReissueClicked(QModelIndex)), manageAssetsPage, SLOT(focusReissueAsset(QModelIndex)));
     connect(xHome, SIGNAL(gotoReceive()), this, SLOT(gotoReceiveCoinsPage()));
     connect(xHome, SIGNAL(gotoSend()), this, SLOT(gotoSendCoinsPage()));
+    connect(xHome, SIGNAL(gotoActivity()), this, SLOT(gotoHistoryPage()));
+    connect(xHome, SIGNAL(gotoAssets()), this, SLOT(gotoAssetsPage()));
     /** RNV END */
 }
 

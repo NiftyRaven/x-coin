@@ -10,10 +10,12 @@ This is a **private** release. Do not make the repository public.
 
 - **Desktop GUI** `xcoin-qt` — X theme (black / white / sharp X mark).
   Home (this wallet linked to @handle + X user id, lottery, claim root,
-  issue sub/unique), Receive (address + Copy), Send (paste + amount +
-  Send), Activity. Same node/wallet as CLI. No CLI required for the
-  happy path. **12-word BIP39 create/restore is unchanged** — Sign in
-  with X does not replace the seed ([WALLET.md](WALLET.md)).
+  issue sub/unique, Receive / Send / Activity / Transfer assets),
+  Receive (address + Copy), Send (paste + amount + Send), Activity.
+  Same node/wallet as CLI. No CLI required for the happy path.
+  **This wallet + this X session = you** — another user cannot send
+  from inside your wallet. **12-word BIP39 create/restore is unchanged**
+  — Sign in with X does not replace the seed ([WALLET.md](WALLET.md)).
 - **CLI** `xcoind` / `xcoin-cli` still work.
 - Handle → root mapping: X handles `[A-Za-z0-9_]` length 1–32; **26-character
   handles map 1:1** (no truncation). Root names max **32** characters.
@@ -74,6 +76,7 @@ Brand stills: [assets/brand/](../assets/brand/).
 - Live X OAuth needs a developer Client ID (`xoauthclientid=`). This VM
   cannot complete a live login; `-regtest` mock `users/me` covers tests.
 - No mobile app. No public DNS seeds. No exchange listing.
+  DEX criteria (ready to *apply* vs ready to *trade*): [DEX.md](DEX.md).
 - Restricted assets stay removed.
 - Internal C++ names (`RavenGUI`, `OP_RVN_ASSET`, copyright headers) stay;
   catalog: [FORK.md](FORK.md).
@@ -92,6 +95,7 @@ contrib/xcoin/smoke-gossip.sh
 contrib/xcoin/smoke-eligibility.sh
 contrib/xcoin/smoke-gui.sh          # headless Qt (sets XDG_RUNTIME_DIR)
 contrib/xcoin/smoke-benchmark.sh    # lone ledger + 3-node visible send
+contrib/xcoin/smoke-isolation.sh    # Bob cannot spend Alice's wallet.dat
 ```
 
 `smoke-regtest.sh` includes `linkxaccount` of a 26-character handle.
@@ -99,3 +103,4 @@ contrib/xcoin/smoke-benchmark.sh    # lone ledger + 3-node visible send
 than one node” on a private mesh (no public explorer).
 
 Private-test audit: [AUDIT.md](AUDIT.md).
+DEX listing criteria (do not apply while private): [DEX.md](DEX.md).

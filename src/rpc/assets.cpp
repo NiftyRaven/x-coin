@@ -1157,7 +1157,9 @@ UniValue transfer(const JSONRPCRequest& request)
         throw std::runtime_error(
                 "transfer \"asset_name\" qty \"to_address\" \"message\" expire_time \"change_address\" \"asset_change_address\"\n"
                 + AssetActivationWarning() +
-                "\nTransfers a quantity of an owned asset to a given address"
+                "\nTransfers a quantity of an asset owned by this wallet.dat to a given address.\n"
+                "Sign in with X is required. The session does not import another user's assets.\n"
+                "You cannot transfer Alice's assets from Bob's wallet by signing in as @alice or typing her handle."
 
                 "\nArguments:\n"
                 "1. \"asset_name\"               (string, required) name of asset\n"

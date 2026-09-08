@@ -488,7 +488,9 @@ UniValue sendtoaddress(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 7)
         throw std::runtime_error(
             "sendtoaddress \"address\" amount ( \"comment\" \"comment_to\" subtractfeefromamount conf_target \"estimate_mode\")\n"
-            "\nSend an amount to a given address.\n"
+            "\nSend an amount to a given address from this wallet.dat only (XFER).\n"
+            "Sign in with X is required. The session does not import another user's keys.\n"
+            "Another signed-in identity on this node cannot spend UTXOs that live in a different wallet file.\n"
             + HelpRequiringPassphrase(pwallet) +
             "\nArguments:\n"
             "1. \"address\"            (string, required) The X Coin address to send to.\n"

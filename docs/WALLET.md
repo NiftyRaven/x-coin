@@ -33,6 +33,12 @@ Authentication is the key to **asset ownership on this node** — it
 proves it is you. It is not a claim that the keys are “encrypted to X”.
 The seed still controls the keys.
 
+**This wallet + this X session = you.** Another user cannot send from
+inside your wallet. Sign in with X does not import someone else's keys.
+You cannot open Alice's assets from Bob's `wallet.dat` by typing
+`@alice` or by signing in as Alice on Bob's empty datadir. Smoke:
+[contrib/xcoin/smoke-isolation.sh](../contrib/xcoin/smoke-isolation.sh).
+
 Lottery eligibility is session **plus** the X-Verified allowlist.
 Every signed-in user can send and receive.
 

@@ -101,10 +101,10 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     keysLabel->setObjectName("xcard");
     keysLabel->setWordWrap(true);
     keysLabel->setText(
-        "Keys and identity are different.\n"
-        "12-word BIP39 seed — still required. It creates and restores the keys (unchanged HD wallet).\n"
-        "Sign in with X — session proof in this datadir (xsession.json + xsession.key). It binds send, receive, and ownership to your X account on this node.\n"
-        "Neither replaces the other. A typed handle cannot steal this.");
+        "This wallet + this X session = you. Another user cannot send from inside your wallet.\n"
+        "12-word BIP39 seed — still required. It creates and restores the keys in this wallet.dat.\n"
+        "Sign in with X — session proof in this datadir (xsession.json + xsession.key). It gates send, receive, and own on this node. It does not import someone else's keys.\n"
+        "Spend only keys in this wallet.dat. Signing in as @alice on Bob's empty wallet cannot spend Alice's UTXOs. A typed handle cannot steal this.");
     root->addWidget(keysLabel);
 
     QHBoxLayout* authRow = new QHBoxLayout;
@@ -196,15 +196,32 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     QHBoxLayout* money = new QHBoxLayout;
     QPushButton* recv = new QPushButton("Receive");
     QPushButton* send = new QPushButton("Send");
+    QPushButton* activity = new QPushButton("Activity");
+    QPushButton* assets = new QPushButton("Transfer assets");
     recv->setObjectName("xprimary");
     send->setObjectName("xprimary");
+    activity->setObjectName("xghost");
+    assets->setObjectName("xghost");
     recv->setMinimumHeight(44);
     send->setMinimumHeight(44);
+    activity->setMinimumHeight(44);
+    assets->setMinimumHeight(44);
     recv->setCursor(Qt::PointingHandCursor);
     send->setCursor(Qt::PointingHandCursor);
+    activity->setCursor(Qt::PointingHandCursor);
+    assets->setCursor(Qt::PointingHandCursor);
     money->addWidget(recv);
     money->addWidget(send);
+    money->addWidget(activity);
+    money->addWidget(assets);
     root->addLayout(money);
+
+    QLabel* moneyHint = new QLabel(
+        "Receive, Send, Activity, and Transfer assets are all in this window — no terminal. "
+        "Send and transfer spend only keys in this wallet.dat.");
+    moneyHint->setObjectName("xhint");
+    moneyHint->setWordWrap(true);
+    root->addWidget(moneyHint);
 
     statusLabel = new QLabel;
     statusLabel->setObjectName("xhint");
@@ -227,6 +244,8 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     connect(uniqBtn, SIGNAL(clicked()), this, SLOT(onIssueUnique()));
     connect(recv, SIGNAL(clicked()), this, SIGNAL(gotoReceive()));
     connect(send, SIGNAL(clicked()), this, SIGNAL(gotoSend()));
+    connect(activity, SIGNAL(clicked()), this, SIGNAL(gotoActivity()));
+    connect(assets, SIGNAL(clicked()), this, SIGNAL(gotoAssets()));
     connect(oauth, SIGNAL(signedIn(QString,QString)), this, SLOT(onOAuthSuccess(QString,QString)));
     connect(oauth, SIGNAL(failed(QString)), this, SLOT(onOAuthFailed(QString)));
     connect(oauth, SIGNAL(status(QString)), this, SLOT(onOAuthStatus(QString)));
@@ -288,7 +307,8 @@ void XHome::refresh()
             "The session proof in this datadir is what links this wallet to that X account:\n"
             "%3\n"
             "%4\n\n"
-            "Send, receive, and own require that proof. A typed handle cannot steal this.\n"
+            "Send, receive, and own require that proof. Another signed-in identity cannot spend this wallet.dat.\n"
+            "You cannot open someone else's coins or assets just by typing their @handle.\n"
             "The 12-word seed still controls the keys. Sign in with X is the identity proof on this node.")
             .arg(handle)
             .arg(uid)
@@ -302,6 +322,7 @@ void XHome::refresh()
             "Sign in with X to bind this node to your X account.\n\n"
             "Send, receive, and own require a session proof (xsession.json + xsession.key) "
             "written only after Sign in with X. A typed handle cannot steal this.\n"
+            "This wallet + this X session = you. Another user cannot send from inside your wallet.\n"
             "The 12-word seed still controls the keys. Sign in with X is the identity gate, not a replacement for the seed.\n"
             "Only X-Verified handles enter the lottery. Every signed-in user can send and receive.");
         signInBtn->setText("Sign in with X");

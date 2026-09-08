@@ -1,6 +1,7 @@
 # X Coin private launch checklist
 
 Wallet how-to: [README.md](../README.md). Paper: [whitepaper/XCOIN.md](../whitepaper/XCOIN.md).
+DEX listing criteria (private; do not submit a listing): [DEX.md](DEX.md).
 
 This is the operator runbook for a **private launch**. There is no public
 seed DNS and no exchange listing. Lottery eligibility uses a **shared
@@ -263,9 +264,14 @@ it); do not `pkill -f xcoin-qt`.
 
 ```bash
 contrib/xcoin/smoke-benchmark.sh
+contrib/xcoin/smoke-isolation.sh
 ```
 
 Three regtest nodes: lone A already has a ledger; B (signed-in) and C
 (unsigned observer) connect; A sends to B; B sees the tx
 (`listtransactions` / `gettransaction`); all three share one best block;
 C inspects the same tx with `getrawtransaction` / `getblock`.
+
+`smoke-isolation.sh` is two wallets: Bob cannot `sendtoaddress` /
+`transfer` Alice’s coins or assets; Alice’s session on Bob’s empty
+`wallet.dat` still cannot spend Alice’s UTXOs.

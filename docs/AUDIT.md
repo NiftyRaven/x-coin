@@ -98,6 +98,10 @@ different address prefixes (`X` / `y` vs `R` / `n`).
 
 - First-run BIP39 12-word still creates keys. OAuth does not replace
   the seed. `xsession.json` is identity proof, not a key.
+- Spend only keys in **this** `wallet.dat`. Another signed-in identity
+  cannot send from inside your wallet. Signing in as @alice on Bob's
+  empty wallet does not import Alice's UTXOs. Proof:
+  `contrib/xcoin/smoke-isolation.sh`.
 - Txs on this mesh are visible to every connected peer (normal UTXO
   gossip). They are not on Ravencoin explorers.
 
@@ -121,4 +125,5 @@ contrib/xcoin/smoke-regtest.sh
 contrib/xcoin/smoke-gossip.sh
 contrib/xcoin/smoke-gui.sh          # sets XDG_RUNTIME_DIR; do not pkill -f xcoin-qt
 contrib/xcoin/smoke-benchmark.sh    # lone ledger + 3-node visible send
+contrib/xcoin/smoke-isolation.sh    # two wallets: Bob cannot spend Alice
 ```

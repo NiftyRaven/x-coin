@@ -105,14 +105,15 @@ void XSend::refresh()
     if (!xsession::HasValidSession()) {
         tagLabel->setText("This wallet is not linked yet. Sign in with X on Home. A typed handle cannot send.");
         balanceLabel->setText("Sign in with X required to send.\n"
-                              "The session proof (xsession.json + xsession.key) is the identity gate. "
-                              "The 12-word seed still controls the keys.");
+                              "This wallet + this X session = you. Another user cannot send from inside your wallet.\n"
+                              "The session proof is the identity gate. Spend only keys in this wallet.dat.");
         return;
     }
     const QString handle = QString::fromStdString(xsession::SignedInHandle());
     const QString uid = QString::fromStdString(xsession::SignedInUserId());
     tagLabel->setText(QString("Sending from the wallet linked to @%1 (X user id %2). "
-                              "Session proof in this datadir is required. A typed handle cannot send as you.")
+                              "This wallet + this X session = you. Spend only keys in this wallet.dat. "
+                              "Signing in as someone else does not import their coins. A typed handle cannot send as you.")
         .arg(handle).arg(uid));
     if (!walletModel) {
         balanceLabel->setText("Balance\n(open a wallet)");

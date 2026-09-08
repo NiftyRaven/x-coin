@@ -32,6 +32,8 @@ public:
 Q_SIGNALS:
     void gotoReceive();
     void gotoSend();
+    void gotoActivity();
+    void gotoAssets();
 
 public Q_SLOTS:
     void refresh();

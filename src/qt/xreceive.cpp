@@ -92,6 +92,7 @@ void XReceive::refresh()
                           "A typed handle cannot create a receive address.");
         addressLabel->setText("(sign in with X to receive)");
         hintLabel->setText("Receive requires the session proof in this datadir (xsession.json + xsession.key). "
+                           "This wallet + this X session = you. Another user cannot create a receive address in your wallet. "
                            "The 12-word seed still controls the keys; Sign in with X is the identity gate.");
         return;
     }
@@ -114,9 +115,9 @@ void XReceive::refresh()
     if (currentAddress.isEmpty())
         currentAddress = m->addRow(AddressTableModel::Receive, "Receive", "");
     addressLabel->setText(currentAddress.isEmpty() ? QString("(could not create address)") : currentAddress);
-    hintLabel->setText(QString("This address is yours because this node holds a Sign in with X proof for @%1 "
-                              "(xsession.json + xsession.key). A typed handle cannot steal it. "
-                              "Copy and send this to the payer.")
+    hintLabel->setText(QString("This address is yours because this wallet.dat holds the keys and this node holds a "
+                              "Sign in with X proof for @%1 (xsession.json + xsession.key). "
+                              "Another user cannot receive into your wallet by typing your handle. Copy and send this to the payer.")
         .arg(QString::fromStdString(xsession::SignedInHandle())));
 }
 
