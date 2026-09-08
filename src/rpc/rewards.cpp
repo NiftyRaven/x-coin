@@ -318,10 +318,10 @@ UniValue distributereward(const JSONRPCRequest& request) {
                 "}\n"
 
                 "\nExamples:\n"
-                + HelpExampleCli("distributereward", "\"TRONCO\" 12345 \"RVN\" 1000")
+                + HelpExampleCli("distributereward", "\"TRONCO\" 12345 \"XFER\" 1000")
                 + HelpExampleCli("distributereward", "\"PHATSTACKS\" 12345 \"DIVIDENDS\" 1000 \"mwN7xC3yomYdvJuVXkVC7ymY9wNBjWNduD,n4Rf18edydDaRBh7t6gHUbuByLbWEoWUTg\"")
                 + HelpExampleRpc("distributereward", "\"TRONCO\" 34987 \"DIVIDENDS\" 100000")
-                + HelpExampleRpc("distributereward", "\"PHATSTACKS\" 34987 \"RVN\" 100000 \"mwN7xC3yomYdvJuVXkVC7ymY9wNBjWNduD,n4Rf18edydDaRBh7t6gHUbuByLbWEoWUTg\"")
+                + HelpExampleRpc("distributereward", "\"PHATSTACKS\" 34987 \"XFER\" 100000 \"mwN7xC3yomYdvJuVXkVC7ymY9wNBjWNduD,n4Rf18edydDaRBh7t6gHUbuByLbWEoWUTg\"")
         );
 
     if (!fAssetIndex) {
@@ -345,7 +345,7 @@ UniValue distributereward(const JSONRPCRequest& request) {
     std::string asset_name(request.params[0].get_str());
     int snapshot_height = request.params[1].get_int();
     std::string distribution_asset_name(request.params[2].get_str());
-    CAmount distribution_amount = AmountFromValue(request.params[3], (distribution_asset_name == "RVN"));
+    CAmount distribution_amount = AmountFromValue(request.params[3], (distribution_asset_name == RVN || distribution_asset_name == "XFER"));
     std::string exception_addresses;
     if (request.params.size() > 4) {
         exception_addresses = request.params[4].get_str();
@@ -357,7 +357,7 @@ UniValue distributereward(const JSONRPCRequest& request) {
     if (request.params.size() > 5) {
         change_address = request.params[5].get_str();
         if (!change_address.empty() && !IsValidDestinationString(change_address))
-            throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid change address: Use a valid RVN address"));
+            throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid change address: Use a valid X Coin address"));
     }
 
     AssetType ownershipAssetType;
@@ -373,7 +373,7 @@ UniValue distributereward(const JSONRPCRequest& request) {
         throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid snapshot_height: block height should be less than or equal to the current active chain height"));
     }
 
-    if (distribution_asset_name != "RVN") {
+    if (distribution_asset_name != RVN && distribution_asset_name != "XFER") {
         if (!IsAssetNameValid(distribution_asset_name, distributionAssetType))
             throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid distribution_asset_name: Please use a valid asset name"));
 
@@ -432,10 +432,10 @@ UniValue getdistributestatus(const JSONRPCRequest& request) {
                 "5. \"exception_addresses\"        (string, optional) Ownership addresses that should be excluded\n"
 
                 "\nExamples:\n"
-                + HelpExampleCli("getdistributestatus", "\"TRONCO\" 12345 \"RVN\" 1000")
+                + HelpExampleCli("getdistributestatus", "\"TRONCO\" 12345 \"XFER\" 1000")
                 + HelpExampleCli("getdistributestatus", "\"PHATSTACKS\" 12345 \"DIVIDENDS\" 1000 \"mwN7xC3yomYdvJuVXkVC7ymY9wNBjWNduD,n4Rf18edydDaRBh7t6gHUbuByLbWEoWUTg\"")
                 + HelpExampleRpc("getdistributestatus", "\"TRONCO\" 34987 \"DIVIDENDS\" 100000")
-                + HelpExampleRpc("getdistributestatus", "\"PHATSTACKS\" 34987 \"RVN\" 100000 \"mwN7xC3yomYdvJuVXkVC7ymY9wNBjWNduD,n4Rf18edydDaRBh7t6gHUbuByLbWEoWUTg\"")
+                + HelpExampleRpc("getdistributestatus", "\"PHATSTACKS\" 34987 \"XFER\" 100000 \"mwN7xC3yomYdvJuVXkVC7ymY9wNBjWNduD,n4Rf18edydDaRBh7t6gHUbuByLbWEoWUTg\"")
         );
 
     if (!fAssetIndex) {
@@ -448,7 +448,7 @@ UniValue getdistributestatus(const JSONRPCRequest& request) {
     std::string asset_name(request.params[0].get_str());
     int snapshot_height = request.params[1].get_int();
     std::string distribution_asset_name(request.params[2].get_str());
-    CAmount distribution_amount = AmountFromValue(request.params[3], (distribution_asset_name == "RVN"));
+    CAmount distribution_amount = AmountFromValue(request.params[3], (distribution_asset_name == RVN || distribution_asset_name == "XFER"));
     std::string exception_addresses;
     if (request.params.size() > 4) {
         exception_addresses = request.params[4].get_str();

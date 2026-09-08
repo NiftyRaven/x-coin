@@ -84,6 +84,10 @@ for dirpath, _, files in os.walk(os.path.join(root, "src/qt")):
     for f in files:
         if f.endswith((".cpp", ".h", ".ui")):
             paths.append(os.path.join(dirpath, f))
+for dirpath, _, files in os.walk(os.path.join(root, "src/rpc")):
+    for f in files:
+        if f.endswith((".cpp", ".h")):
+            paths.append(os.path.join(dirpath, f))
 
 allow_line = re.compile(
     r"OP_RVN_ASSET|RVN_[RVTQNO]|rvnq|rvnt|BIP39|"
@@ -99,7 +103,10 @@ ui_bad = re.compile(
     r'tr\("[^"]*\b(Raven|Ravencoin|RVN)\b[^"]*"\)|'
     r'QMessageBox[^;]*\b(Raven|Ravencoin)\b|'
     r'"Invalid Raven|'
-    r'Raven can no longer',
+    r'Raven can no longer|'
+    r'Not valid RVN address|'
+    r'valid RVN address|'
+    r'the RVN address',
     re.I,
 )
 plain_bad = re.compile(r'\b(Ravencoin Core|raven-qt\.exe|Raven is a free|the original Raven client)\b')

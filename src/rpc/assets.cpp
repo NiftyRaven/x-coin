@@ -172,7 +172,7 @@ UniValue UpdateAddressTag(const JSONRPCRequest &request, const int8_t &flag)
         if (!change_address.empty()) {
            CTxDestination change_dest = DecodeDestination(change_address);
            if (!IsValidDestination(change_dest)) {
-               throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Raven change address: ") + change_address);
+               throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid X Coin change address: ") + change_address);
            }
         }
     }
@@ -272,7 +272,7 @@ UniValue UpdateAddressRestriction(const JSONRPCRequest &request, const int8_t &f
         if (!change_address.empty()) {
            CTxDestination change_dest = DecodeDestination(change_address);
            if (!IsValidDestination(change_dest)) {
-               throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Raven change address: ") + change_address);
+               throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid X Coin change address: ") + change_address);
            }
         }
     }
@@ -369,7 +369,7 @@ UniValue UpdateGlobalRestrictedAsset(const JSONRPCRequest &request, const int8_t
         if (!change_address.empty()) {
            CTxDestination change_dest = DecodeDestination(change_address);
            if (!IsValidDestination(change_dest)) {
-               throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Raven change address: ") + change_address);
+               throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid X Coin change address: ") + change_address);
            }
         }
     }
@@ -2042,7 +2042,7 @@ UniValue listtagsforaddress(const JSONRPCRequest &request)
     // Check to make sure the given from address is valid
     CTxDestination dest = DecodeDestination(address);
     if (!IsValidDestination(dest))
-        throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Not valid RVN address: ") + address);
+        throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Not a valid X Coin address: ") + address);
 
     std::vector<std::string> qualifiers;
 
@@ -2135,7 +2135,7 @@ UniValue listaddressrestrictions(const JSONRPCRequest& request)
     // Check to make sure the given from address is valid
     CTxDestination dest = DecodeDestination(address);
     if (!IsValidDestination(dest))
-        throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Not valid RVN address: ") + address);
+        throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Not a valid X Coin address: ") + address);
 
     std::vector<std::string> restrictions;
 
@@ -2232,7 +2232,7 @@ UniValue checkaddresstag(const JSONRPCRequest& request)
                 "\nChecks to see if an address has the given tag\n"
 
                 "\nArguments:\n"
-                "1. \"address\"          (string, required) the RVN address to search\n"
+                "1. \"address\"          (string, required) the X Coin address to search\n"
                 "1. \"tag_name\"         (string, required) the tag to search\n"
 
                 "\nResult:\n"
@@ -2259,7 +2259,7 @@ UniValue checkaddresstag(const JSONRPCRequest& request)
     // Check to make sure the given from address is valid
     CTxDestination dest = DecodeDestination(address);
     if (!IsValidDestination(dest))
-        throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Not valid RVN address: ") + address);
+        throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Not a valid X Coin address: ") + address);
 
     return passets->CheckForAddressQualifier(qualifier_name, address);
 }
@@ -2273,7 +2273,7 @@ UniValue checkaddressrestriction(const JSONRPCRequest& request)
                 "\nChecks to see if an address has been frozen by the given restricted asset\n"
 
                 "\nArguments:\n"
-                "1. \"address\"          (string, required) the RVN address to search\n"
+                "1. \"address\"          (string, required) the X Coin address to search\n"
                 "1. \"restricted_name\"   (string, required) the restricted asset to search\n"
 
                 "\nResult:\n"
@@ -2299,7 +2299,7 @@ UniValue checkaddressrestriction(const JSONRPCRequest& request)
     // Check to make sure the given from address is valid
     CTxDestination dest = DecodeDestination(address);
     if (!IsValidDestination(dest))
-        throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Not valid RVN address: ") + address);
+        throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Not a valid X Coin address: ") + address);
 
     return passets->CheckForAddressRestriction(restricted_name, address);
 }
