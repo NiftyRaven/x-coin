@@ -155,6 +155,7 @@ dist/*/
 # local smoke / audit output
 smoke-pool-datadir/
 smoke-extra-datadir/
+smoke-abuse-datadir/
 audit-logs/
 audit-pkg/
 audit-extra-datadir/
