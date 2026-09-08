@@ -480,14 +480,14 @@ libraven_cli_a_SOURCES = \
 nodist_libraven_util_a_SOURCES = $(srcdir)/obj/build.h
 #
 
-# xcoind binary (sources remain xcoind.cpp from upstream) #
-xcoind_SOURCES = xcoind.cpp
+# xcoind binary (sources remain ravend.cpp; installed name is xcoind) #
+xcoind_SOURCES = ravend.cpp
 xcoind_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
 xcoind_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 xcoind_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-xcoind_SOURCES += xcoind-res.rc
+xcoind_SOURCES += ravend-res.rc
 endif
 
 xcoind_LDADD = \
@@ -507,13 +507,13 @@ xcoind_LDADD = \
 xcoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
 
 # xcoin-cli binary #
-xcoin_cli_SOURCES = xcoin-cli.cpp
+xcoin_cli_SOURCES = raven-cli.cpp
 xcoin_cli_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES) $(EVENT_CFLAGS)
 xcoin_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 xcoin_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-xcoin_cli_SOURCES += xcoin-cli-res.rc
+xcoin_cli_SOURCES += raven-cli-res.rc
 endif
 
 xcoin_cli_LDADD = \
@@ -526,13 +526,13 @@ xcoin_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
 
 # xcoin-tx binary #
-xcoin_tx_SOURCES = xcoin-tx.cpp
+xcoin_tx_SOURCES = raven-tx.cpp
 xcoin_tx_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
 xcoin_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 xcoin_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-xcoin_tx_SOURCES += xcoin-tx-res.rc
+xcoin_tx_SOURCES += raven-tx-res.rc
 endif
 
 xcoin_tx_LDADD = \
