@@ -65,7 +65,7 @@ Hashes are X16R of that block (not the imported genesis and not PoW-ground).
 seeds are empty — publish a seed with `addnode` / `seednode`. Fair launch:
 no IPO, no premine, no founder allocation. Height 0 is unspendable / not a
 payday. Spendable lifetime subsidy is **20,999,994,999.727 XFER**.
-`generatetoaddress` is regtest-only. Unlinked addresses can send and receive XFER.
+`generatetoaddress` is regtest-only. Send and receive require a Sign in with X session.
 
 **Address prefixes:** main P2PKH version **76** (`X…`), P2SH **139** (`x…`);
 test/regtest P2PKH **140** (`y…`). Asset burn addresses were regenerated

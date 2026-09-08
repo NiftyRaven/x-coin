@@ -211,9 +211,9 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 - **xhb impersonation:** gossip carries a handle, not a signature binding that
   handle to a script. A malicious peer can claim an allowlisted handle.
   Consensus still binds coinbase to committed **scripts**, not handles.
-- **Unlinked wallets:** X-link is **not** required to hold, receive, or send
-  XFER (or to receive/transfer assets sent to you). Linking is lottery
-  eligibility (and, when the sibling assigner lands, being given a main asset).
+- **Unsigned-in wallets:** Sign in with X is required to send, receive,
+  and prove asset ownership. Lottery additionally requires the handle
+  to be X-Verified on the operator allowlist.
 - Clock skew can delay a slot; height still maps 1:1 (`slot = genesisSlot + h`).
   You cannot skip or double-pay a height on one chain. Catch-up produces one
   height per loop when wall-clock is ahead; `generatetoaddress` is regtest-only

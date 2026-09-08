@@ -84,9 +84,10 @@ assets. Restricted-only RPCs and the Qt Restricted tab are gone.
 `issue` of a new root is rejected with a clear error. Consensus rejects a
 500-XFER root burn and accepts only a zero-burn root that includes `XID1`.
 
-Unlinked wallets can still **receive, hold, and transfer** XFER and any
-asset sent to them. Linking is required to be assigned a main asset and to
-*issue* a sub/unique under it — not to hold or spend.
+Wallets without a Sign in with X session cannot **send or receive**.
+Authentication proves it is you and is the key to asset ownership.
+A node can still sync. Lottery needs a signed-in **X-Verified**
+allowlisted handle. Issue of a sub/unique also requires that session.
 
 ## Smoke
 

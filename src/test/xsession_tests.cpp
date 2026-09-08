@@ -30,6 +30,8 @@ BOOST_AUTO_TEST_CASE(typed_handle_rejected_session_accepted)
 {
     xsession::ClearSession();
     std::string err;
+    BOOST_CHECK(!xsession::RequireSession(err));
+    BOOST_CHECK(err.find("Sign in with X") != std::string::npos);
     BOOST_CHECK(!xsession::RequireHandle("nftrvn", err));
     BOOST_CHECK(err.find("Sign in with X") != std::string::npos);
 
@@ -41,6 +43,7 @@ BOOST_AUTO_TEST_CASE(typed_handle_rejected_session_accepted)
     BOOST_CHECK(!xsession::RequireHandle("nftrvn", err));
     BOOST_CHECK(err.find("impersonation") != std::string::npos || err.find("cannot use") != std::string::npos);
 
+    BOOST_CHECK(xsession::RequireSession(err));
     BOOST_CHECK(xsession::RequireHandle("alice", err));
     BOOST_CHECK(xsession::RequireHandle("ALICE", err));
 }

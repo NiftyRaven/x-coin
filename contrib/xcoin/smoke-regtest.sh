@@ -215,54 +215,42 @@ if len(ops) < 1:
 CHAIN2="$("${CLI[@]}" getblockchaininfo)"
 echo "$CHAIN2" | grep -q '"blocks": 150'
 
-echo "== unlinked send / receive (no X account required) =="
-# ADDR_UNLINKED is never registered and has no X handle. Linking is only
-# for lottery eligibility / protocol main-asset assignment — not for XFER.
-ADDR_UNLINKED="$("${CLI[@]}" getnewaddress)"
-echo "unlinked $ADDR_UNLINKED"
-NODES_BEFORE="$("${CLI[@]}" getactivenodes)"
-echo "$NODES_BEFORE" | python3 -c '
-import json, os, sys
-addr = os.environ.get("ADDR_UNLINKED", "")
-# script hex of a P2PKH is not listed as xaccount; just ensure we did not register it
-nodes = json.load(sys.stdin)
-for n in nodes:
-    if n.get("xaccount") in ("", None) and n.get("local") is False:
-        pass
-print("active", len(nodes), "handles", [n.get("xaccount") for n in nodes])
-'
-TXPAY="$("${CLI[@]}" sendtoaddress "$ADDR_UNLINKED" 25)"
-echo "paid unlinked $TXPAY"
+echo "== signed-in send / receive (session required) =="
+"${CLI[@]}" mockxsignin smoke1 >/dev/null
+ADDR_PAY="$("${CLI[@]}" getnewaddress)"
+echo "signed-in dest $ADDR_PAY"
+TXPAY="$("${CLI[@]}" sendtoaddress "$ADDR_PAY" 25)"
+echo "paid $TXPAY"
 "${CLI[@]}" mockxsignin smoke2 >/dev/null
 "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
 "${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
-UTXO1="$("${CLI[@]}" listunspent 1 9999999 "[\"$ADDR_UNLINKED\"]")"
-echo "unlinked utxos after pay $UTXO1"
+UTXO1="$("${CLI[@]}" listunspent 1 9999999 "[\"$ADDR_PAY\"]")"
+echo "utxos after pay $UTXO1"
 echo "$UTXO1" | python3 -c '
 import json, sys
 u = json.load(sys.stdin)
 s = sum(x.get("amount", 0) for x in u)
-print("unlinked balance", s)
+print("signed-in receive balance", s)
 if abs(s - 25) > 1e-6:
-    sys.exit("unlinked address must hold the 25 XFER it was paid")
+    sys.exit("signed-in address must hold the 25 XFER it was paid")
 '
-TXSPEND="$("${CLI[@]}" sendfromaddress "$ADDR_UNLINKED" "$ADDR1" 10)"
-echo "unlinked spent $TXSPEND"
+TXSPEND="$("${CLI[@]}" sendfromaddress "$ADDR_PAY" "$ADDR1" 10)"
+echo "signed-in spent $TXSPEND"
 "${CLI[@]}" mockxsignin smoke2 >/dev/null
 "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
 "${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
-UTXO2="$("${CLI[@]}" listunspent 1 9999999 "[\"$ADDR_UNLINKED\"]")"
-echo "unlinked utxos after spend $UTXO2"
+UTXO2="$("${CLI[@]}" listunspent 1 9999999 "[\"$ADDR_PAY\"]")"
+echo "utxos after spend $UTXO2"
 echo "$UTXO2" | python3 -c '
 import json, sys
 u = json.load(sys.stdin)
 s = sum(x.get("amount", 0) for x in u)
-print("unlinked balance after spend", s)
+print("balance after spend", s)
 if s >= 25 - 1e-6:
-    sys.exit("unlinked address must have spent (balance still >= 25)")
+    sys.exit("address must have spent (balance still >= 25)")
 if s < 10:
-    sys.exit("expected change to remain on the unlinked address")
+    sys.exit("expected change to remain")
 '
-echo "unlinked send/receive: ok"
+echo "signed-in send/receive: ok"
 
 echo "smoke-regtest: ok"

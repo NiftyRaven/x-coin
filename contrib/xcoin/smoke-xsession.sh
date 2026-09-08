@@ -64,6 +64,20 @@ if j.get("signed_in") is not False:
     sys.exit("expected signed_in=false")
 '
 
+echo "== send/receive require a session =="
+if "${CLI[@]}" getnewaddress >/tmp/xcoin-xsession-recv.err 2>&1; then
+  echo "getnewaddress must fail without a session" >&2
+  cat /tmp/xcoin-xsession-recv.err >&2
+  exit 1
+fi
+grep -qi "sign in with x\|session" /tmp/xcoin-xsession-recv.err
+if "${CLI[@]}" sendtoaddress ySmokeNoSession111111111111111111 1 >/tmp/xcoin-xsession-send.err 2>&1; then
+  echo "sendtoaddress must fail without a session" >&2
+  cat /tmp/xcoin-xsession-send.err >&2
+  exit 1
+fi
+grep -qi "sign in with x\|session" /tmp/xcoin-xsession-send.err
+
 echo "== typed linkxaccount nftrvn is rejected without session =="
 if "${CLI[@]}" linkxaccount nftrvn >/tmp/xcoin-xsession-link.err 2>&1; then
   echo "linkxaccount nftrvn must fail without a session" >&2
@@ -95,6 +109,9 @@ if j.get("username") != "alice":
 if str(j.get("user_id") or j.get("id")) != "99":
     sys.exit("session must store X user id")
 '
+RECV="$("${CLI[@]}" getnewaddress)"
+echo "session receive $RECV"
+[[ "$RECV" == y* ]]
 
 if "${CLI[@]}" linkxaccount nftrvn >/tmp/xcoin-xsession-imp.err 2>&1; then
   echo "linkxaccount nftrvn must fail when signed in as alice" >&2

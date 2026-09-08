@@ -67,9 +67,10 @@ Brand stills: [assets/brand/](../assets/brand/).
 
 ## Known limits
 
+- Sign in with X is required to send, receive, and own assets. Lottery
+  is X-Verified (allowlist) only. See [XSIGNIN.md](XSIGNIN.md).
 - Live X OAuth needs a developer Client ID (`xoauthclientid=`). This VM
   cannot complete a live login; `-regtest` mock `users/me` covers tests.
-  See [XSIGNIN.md](XSIGNIN.md).
 - No mobile app. No public DNS seeds. No exchange listing.
 - Restricted assets stay removed.
 - Internal C++ names (`RavenGUI`, `OP_RVN_ASSET`, copyright headers) stay;

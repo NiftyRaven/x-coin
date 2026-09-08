@@ -56,10 +56,10 @@ Subsidy starts at height 1 via the lottery. Spendable lifetime supply is
 integer right-shift; ~21 billion minus unpaid genesis and `>>=` dust).
 `MAX_MONEY` is 21,000,000,000 XFER (sanity cap, not the minted total).
 
-**Unlinked users can transact.** Linking X is required for lottery
-eligibility (and for being assigned a main asset). It is **not** required to
-hold, receive, or send XFER. `sendtoaddress` / P2P / mempool / validation do
-not check for an X handle.
+**Sign in with X is required to send and receive.** Authentication
+proves it is you and is the key to asset ownership. Lottery eligibility
+additionally requires an X-Verified (allowlisted) handle. A node
+without a session can still sync and relay.
 
 ## Publish a seed node
 

@@ -4,9 +4,11 @@
 
 Private test only. Do not publish this chain.
 
-Signing in is what stops impersonation. A typed handle is not an
-identity. The wallet uses OAuth 2.0 PKCE, then `GET /2/users/me`, and
-binds **that** user id + username to this node's datadir.
+Signing in is what stops impersonation and **proves asset ownership**.
+A typed handle is not an identity. The wallet uses OAuth 2.0 PKCE, then
+`GET /2/users/me`, and binds **that** user id + username to this node's
+datadir. Send and receive require that session. Only X-Verified
+(allowlisted) signed-in handles enter the lottery.
 
 ## What the node stores
 
@@ -19,10 +21,11 @@ After a successful sign-in:
 
 Proof message: `xcoin-xsession|{id}|{username}|{exp}`.
 
-`linkxaccount`, `registeractivenode`, and lottery eligibility require a
-valid proof. `linkxaccount otherperson` is rejected if the session is
-not `otherperson`. Typed `-xaccount=` is ignored without a matching
-session.
+`getnewaddress`, `sendtoaddress`, `linkxaccount`, `registeractivenode`,
+and lottery identity require a valid proof. Lottery also requires the
+X-Verified allowlist. `linkxaccount otherperson` is rejected if the
+session is not `otherperson`. Typed `-xaccount=` is ignored without a
+matching session.
 
 The node never pretends login succeeded without a real access token
 (or, on `-regtest` only, a mock `users/me` payload).
