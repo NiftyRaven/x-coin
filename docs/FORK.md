@@ -62,10 +62,13 @@ X Coin / XFER: Ravencoin hard-fork, assets kept, lottery not mining. 2026-09-08
 Do **not** edit that string. Changing it would change the genesis hash.
 Hashes are X16R of that block (not the imported genesis and not PoW-ground).
 `nMinimumChainWork` and `defaultAssumeValid` are zero; checkpoints and DNS
-seeds are empty — publish a seed with `addnode` / `seednode`. Fair launch:
+seeds are empty — publish a seed with `addnode` / `seednode`. This is **X
+Coin’s own ledger** (own genesis / UTXO / assets / lottery), not an
+imported Ravencoin snapshot. A lone node already stores that ledger;
+other people seeing the same tip need ≥2 peers. Fair launch:
 no IPO, no premine, no founder allocation. Height 0 is unspendable / not a
 payday. Spendable lifetime subsidy is **20,999,994,999.727 XFER**.
-`generatetoaddress` is regtest-only. Unlinked addresses can send and receive XFER.
+`generatetoaddress` is regtest-only. Send and receive require a Sign in with X session.
 
 **Address prefixes:** main P2PKH version **76** (`X…`), P2SH **139** (`x…`);
 test/regtest P2PKH **140** (`y…`). Asset burn addresses were regenerated
@@ -144,9 +147,11 @@ See also `assets/asset_metadata_spec.md` for the wire format.
 - Asset BIP9 windows inherited from v4.8.0 are expired on the new main
   genesis; height-0 force-on covers assets, messaging, transfer-script size,
   enforce-value, coinbase-asset checks, and transfer-overflow.
-- DNS seeds, explorers, X OAuth / live API keys, mobile — out of scope.
-  Verified-X eligibility is a shared allowlist, not an X API client.
-  See [LAUNCH.md](LAUNCH.md).
+- Public DNS seeds, public explorers, live X API keys, mobile — out of
+  scope. Verified-X eligibility is a shared allowlist. Sign in with X
+  is in-tree (OAuth PKCE + `users/me`). Leftover imported IPs were
+  removed from `chainparamsseeds.h`; arrays stay unused.
+  See [LAUNCH.md](LAUNCH.md) and [AUDIT.md](AUDIT.md).
 
 ## Build
 

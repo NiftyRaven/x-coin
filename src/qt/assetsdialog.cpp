@@ -29,6 +29,7 @@
 #include "createassetdialog.h"
 #include "reissueassetdialog.h"
 #include "guiconstants.h"
+#include "xsession.h"
 
 #include <QGraphicsDropShadowEffect>
 #include <QFontMetrics>
@@ -332,6 +333,11 @@ void AssetsDialog::on_sendButton_clicked()
 {
     if(!model || !model->getOptionsModel())
         return;
+    if (!xsession::HasValidSession()) {
+        QMessageBox::warning(this, tr("X-Coin"),
+                             tr("Sign in with X required to transfer assets. Authentication proves ownership."));
+        return;
+    }
 
     QList<SendAssetsRecipient> recipients;
     bool valid = true;
@@ -675,7 +681,11 @@ void AssetsDialog::processSendCoinsReturn(const WalletModel::SendCoinsReturn &se
     // all others are used only in WalletModel::prepareTransaction()
     switch(sendCoinsReturn.status)
     {
-        case WalletModel::InvalidAddress:
+        case WalletModel::SessionRequired:
+        msgParams.first = tr("Sign in with X required to transfer assets. Authentication proves ownership.");
+        msgParams.second = CClientUIInterface::MSG_ERROR;
+        break;
+    case WalletModel::InvalidAddress:
             msgParams.first = tr("The recipient address is not valid. Please recheck.");
             break;
         case WalletModel::InvalidAmount:

@@ -8,13 +8,15 @@ active nodes; halvings add winners. Fair launch, no premine. ~21 billion
 XFER. One free root identity asset per verified X handle.
 
 Whitepaper: [whitepaper/XCOIN.md](whitepaper/XCOIN.md).  
-Release 1.0: [docs/RELEASE-1.0.md](docs/RELEASE-1.0.md).
+Release 1.0: [docs/RELEASE-1.0.md](docs/RELEASE-1.0.md).  
+Private-test audit: [docs/AUDIT.md](docs/AUDIT.md).  
+DEX listing criteria (private; do not apply): [docs/DEX.md](docs/DEX.md).
 
 ## How to use the wallet
 
 **Release 1.0 ships a desktop GUI:** `xcoin-qt`. It talks to the same
-node and `wallet.dat` as the CLI. There is **no** mobile app and **no**
-X.com login.
+node and `wallet.dat` as the CLI. **Sign in with X** is required to
+claim a free root and to become lottery-eligible.
 
 Default datadir `~/.xcoin`, config `xcoin.conf`, P2P **38443**, RPC **38442**.
 Mainnet addresses start with **X**.
@@ -74,9 +76,43 @@ Local-only practice (regtest):
 src/qt/xcoin-qt -regtest
 ```
 
-The Overview page shows **XFER balances**, **lottery status**, and **assets**.
-Send / Receive / Assets are the other tabs. Help → About credits **Nifty Raven
-(@NFTRVN on X)** only.
+The Home screen shows **this wallet is yours / linked to @handle** after
+Sign in with X, plus lottery status and your root asset. Receive / Send /
+Activity / Transfer assets are buttons on Home (and the left tabs).
+**Activity** is this node’s wallet history (`listtransactions`).
+**This wallet + this X session = you.** Spend only keys in this
+`wallet.dat`. Another signed-in identity cannot send from inside your
+wallet; signing in as someone else does not import their coins.
+Peers on this private mesh see the same mempool and blocks. There is no
+public explorer and nothing appears on Ravencoin explorers — XFER lives
+on **this** ledger only (own genesis, not an imported snapshot). A
+single node already stores that ledger; other people seeing the same
+tip need `addnode` on port **38443**. Help → About credits **Nifty
+Raven (@NFTRVN on X)** only.
+
+First run still asks for a **12-word BIP39 seed** (create or restore).
+That did not change. Sign in with X is a separate identity proof on this
+node. See [docs/WALLET.md](docs/WALLET.md).
+
+### Sign in with X (stops impersonation)
+
+A typed handle is not an identity. Anyone could type `@someoneelse` if
+that name were merely on an allowlist.
+
+The wallet runs OAuth 2.0 PKCE, then **GET /2/users/me**. Only that
+username and X user id are stored, with an HMAC proof in the datadir
+(`xsession.json` + `xsession.key`). **Authentication is the key to
+asset ownership** — it proves it is you. Send, receive, and claiming a
+root require that proof. Only **X-Verified** (allowlisted) signed-in
+handles are lottery-eligible. `linkxaccount otherperson` is rejected
+when the session is someone else.
+
+Operator setup: paste your X app Client ID (saved as `xoauthclientid=`
+in `xcoin.conf`). Callback:
+`http://127.0.0.1:18791/callback`. Full steps: [docs/XSIGNIN.md](docs/XSIGNIN.md).
+
+Regtest only: `-xoauthmock=handle` or RPC `mockxsignin` injects a fake
+`users/me` payload so tests can prove typed names are rejected.
 
 ### 4. CLI (same wallet)
 
@@ -86,7 +122,8 @@ src/xcoin-cli getwalletinfo
 src/xcoin-cli getnewaddress
 src/xcoin-cli sendtoaddress <their-X-address> 1.5
 src/xcoin-cli addxverified NFTRVN
-src/xcoin-cli linkxaccount NFTRVN
+src/xcoin-cli mockxsignin NFTRVN          # regtest only
+src/xcoin-cli linkxaccount                # uses the signed-in session
 src/xcoin-cli getmainasset NFTRVN
 src/xcoin-cli issue NFTRVN/NOTE 1
 src/xcoin-cli getlotteryinfo
@@ -96,7 +133,8 @@ src/xcoin-cli stop
 A 26-character X handle maps 1:1 to a 26-character root (max root name:
 **32**). See [docs/ASSETS.md](docs/ASSETS.md).
 
-You do not need a linked X handle to receive or send XFER.
+You must Sign in with X to send or receive. Lottery additionally requires
+an X-Verified allowlisted handle.
 
 Stop the GUI from the File menu, or `src/xcoin-cli stop` if the node is the daemon.
 

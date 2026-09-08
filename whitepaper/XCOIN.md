@@ -29,9 +29,10 @@ Users cannot create new roots. Under their root they may issue
 **sub-assets** (100 XFER burn) and **uniques** (5 XFER burn). Restricted
 assets are removed.
 
-This paper is the product specification. The running wallet is the core
-node (`xcoind` / `xcoin-cli`). There is no separate mobile or X-app
-wallet yet, and the node does not log into X.com.
+This paper is the product specification. The running wallet is the GUI
+(`xcoin-qt`) plus the core node (`xcoind` / `xcoin-cli`). There is no
+separate mobile wallet. **Sign in with X** is how a node binds a real
+X user id; consensus still does not call X.com on every block.
 
 ## 1. Purpose
 
@@ -47,8 +48,7 @@ That implies:
   children under that identity.
 - Block production that does not require ASICs, pools, or a public
   hashrate market.
-- Eligibility tied to a **verified X handle**, not to a live API key
-  inside the node.
+- Eligibility tied to a **signed-in X user id**, not to a typed handle.
 
 X Coin is not a mining network and not an exchange. It is a private,
 fair-launched chain whose first users are operators who already know
@@ -132,28 +132,36 @@ hashing) so tests do not wait on the clock.
 
 Full algorithm: [docs/LOTTERY.md](../docs/LOTTERY.md).
 
-## 4. Verified X, without logging into X
+## 4. Sign in with X (what stops impersonation)
 
-Consensus does not call X.com. The node is not an OAuth client.
+Consensus still does not call X.com on every block. The allowlist is
+still an operator-shared list of verified handles.
 
-Honest operators share one **allowlist** of X-verified handles
-(blue-check / X Premium). A node is lottery-eligible only when both
-are true:
+**Signing in is what stops impersonation.** A typed string in
+`linkxaccount` or `-xaccount=` is not enough. Anyone could type another
+person's handle if that handle were only checked against an allowlist.
 
-1. It has a linked handle (`-xaccount=` / `xcoin.conf`).
-2. That handle is on the shared allowlist (`-xallowlist=`,
+The GUI **Sign in with X** button runs OAuth 2.0 PKCE (authorization
+code). After the loopback callback, the wallet calls
+`GET /2/users/me` and stores **only** that response: X user id,
+username, expiry, and an HMAC proof (`xsession.json` + datadir secret
+`xsession.key`). **Send and receive** require that proof — authentication
+is what proves the wallet is yours. Home shows **this wallet is linked
+to @handle** plus the X user id. `linkxaccount otherperson` is
+rejected when the session is not `otherperson`. This proof does not
+replace the 12-word BIP39 seed.
+
+The allowlist is the second gate (blue-check / X Premium, confirmed
+offline). Lottery eligibility requires both:
+
+1. A valid Sign in with X session on this node (user id + username).
+2. That username is on the shared allowlist (`-xallowlist=`,
    `-xverified=`, `addxverified`, or `~/.xcoin/verified-x-accounts.txt`).
 
-Operators confirm a handle **offline**: open `https://x.com/<handle>`,
-check the badge, write the handle (no `@`) into the file, share the
-file. Example owner handle for this release: **NFTRVN**.
+Typed `-xaccount=` is ignored unless a session already matches it.
 
-Unlinked wallets still send and receive XFER. Linking is required to
-enter the lottery and to be assigned a root asset.
-
-This is an operator-shared list, not a bonded public identity. Gossiped
-handles are not signatures. Fine on a trusted private mesh; not a
-proof against impersonation on an open internet.
+Setup: [docs/XSIGNIN.md](../docs/XSIGNIN.md). Example owner handle:
+**NFTRVN**.
 
 ## 5. Assets: tokenize the world, and yourself
 
@@ -180,9 +188,9 @@ Identity roots are not reissuable. Restricted, qualifier, tag, and
 freeze assets are **removed** — no create, transfer, RPC, or
 activation.
 
-Anyone can still receive, hold, and transfer XFER and any asset sent
-to them. Linking is required to *issue* under your root, not to hold
-or spend.
+A signed-in session is required to create a receive address or send.
+Coins can still arrive at an already-known address. Linking is
+required to *issue* under your root.
 
 Details: [docs/ASSETS.md](../docs/ASSETS.md).
 
@@ -198,6 +206,13 @@ Details: [docs/ASSETS.md](../docs/ASSETS.md).
 There are no public DNS seeds in-tree. A private mesh uses `addnode` /
 `seednode`. Do not publish this repository.
 
+This is **X Coin’s own ledger** (own genesis, UTXO, assets, lottery) —
+not Ravencoin’s chain and not an imported snapshot. A lone node already
+stores it. Other people seeing the same tip need two or more peers on
+port 38443. Wallet **Activity** / `listtransactions` show sends and
+receives on this node; peers see mempool and blocks. There is no public
+explorer and nothing appears on Ravencoin explorers.
+
 User agent is `XCoin`. Signed messages use `X Coin Signed Message:\n`.
 
 ## 7. The wallet (honest status)
@@ -209,22 +224,31 @@ The wallet **is** the core wallet that ships with the node:
 - `xcoin-qt` — desktop GUI (X theme: black / white / sharp). This is
   the 1.0 wallet. CLI remains supported.
 
-There is **no** new mobile wallet, **no** X-app wallet, and **no**
-X.com OAuth login inside the node. Creating an address, sending XFER,
-and linking a handle are RPC or Qt operations against the core
-wallet file in `~/.xcoin`.
+There is **no** new mobile wallet and **no** X-app wallet. Sign in with
+X is OAuth in `xcoin-qt` / the node (PKCE → `users/me` → datadir proof).
+It is an identity gate on this node, not a hosted X.com wallet and not
+a replacement for the seed.
+
+**12-word BIP39 / BIP44 generation is unchanged** and still required
+to create or restore keys. Seed = keys. X session = proof that this
+datadir is linked to that X account. [docs/WALLET.md](../docs/WALLET.md).
+
+Creating an address, sending XFER, and linking a handle are RPC or Qt
+operations against the core `wallet.dat` in `~/.xcoin`. Send and
+receive require the session proof.
 
 What this release changed on top of that core:
 
 - Product name, ports, magic, datadir, binaries
 - Lottery instead of mining
-- Verified-X allowlist and `linkxaccount`
+- Sign in with X session + verified-X allowlist and `linkxaccount`
 - One free root per handle; user roots forbidden; restricted assets
   removed
 
-What is still inherited core behavior: UTXO wallet, `wallet.dat`,
-`encryptwallet` / `backupwallet`, fee estimates, P2P, mempool, the
-asset script format. How to use it: [README.md](../README.md).
+What is still inherited core behavior: UTXO wallet, BIP39 12-word HD
+seed, `wallet.dat`, `encryptwallet` / `backupwallet`, fee estimates,
+P2P, mempool, the asset script format. How to use it:
+[README.md](../README.md).
 
 ## 8. Risks (accepted for private launch)
 
@@ -233,6 +257,7 @@ asset script format. How to use it: [README.md](../README.md).
   script.
 - Clock skew can delay a slot; height still maps 1:1.
 - No public explorer, no DNS seeds, no exchange listing.
+  Private-test audit: [docs/AUDIT.md](../docs/AUDIT.md).
 
 Treat the lottery as specified here. Do not reintroduce Proof-of-Work
 as the production path.

@@ -10,6 +10,7 @@
 
 #include "base58.h"
 #include "wallet/wallet.h"
+#include "xsession.h"
 
 
 #include <QFont>
@@ -363,6 +364,10 @@ QString AddressTableModel::addRow(const QString &type, const QString &label, con
     }
     else if(type == Receive)
     {
+        if (!xsession::HasValidSession()) {
+            editStatus = WALLET_UNLOCK_FAILURE;
+            return QString();
+        }
         // Generate a new address to associate with given label
         CPubKey newKey;
         if(!wallet->GetKeyFromPool(newKey))

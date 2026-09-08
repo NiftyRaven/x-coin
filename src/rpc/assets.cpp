@@ -8,6 +8,7 @@
 #include "assets/assetdb.h"
 #include "assets/xaccount.h"
 #include "lottery.h"
+#include "xsession.h"
 #include <map>
 #include "tinyformat.h"
 //#include <rpc/server.h>
@@ -37,6 +38,13 @@
 #include "wallet/feebumper.h"
 #include "wallet/wallet.h"
 #include "wallet/walletdb.h"
+
+static void EnsureSignedInWithX()
+{
+    std::string err;
+    if (!xsession::RequireSession(err))
+        throw JSONRPCError(RPC_WALLET_ERROR, err);
+}
 
 void CheckRestrictedAssetTransferInputs(const CWalletTx& transaction, const std::string& asset_name) {
     // Do a validity check before commiting the transaction
@@ -455,6 +463,7 @@ UniValue issue(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -619,6 +628,7 @@ UniValue issueunique(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -1147,7 +1157,9 @@ UniValue transfer(const JSONRPCRequest& request)
         throw std::runtime_error(
                 "transfer \"asset_name\" qty \"to_address\" \"message\" expire_time \"change_address\" \"asset_change_address\"\n"
                 + AssetActivationWarning() +
-                "\nTransfers a quantity of an owned asset to a given address"
+                "\nTransfers a quantity of an asset owned by this wallet.dat to a given address.\n"
+                "Sign in with X is required. The session does not import another user's assets.\n"
+                "You cannot transfer Alice's assets from Bob's wallet by signing in as @alice or typing her handle."
 
                 "\nArguments:\n"
                 "1. \"asset_name\"               (string, required) name of asset\n"
@@ -1174,6 +1186,7 @@ UniValue transfer(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -1300,6 +1313,7 @@ UniValue transferfromaddresses(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -1453,6 +1467,7 @@ UniValue transferfromaddress(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -1597,6 +1612,7 @@ UniValue reissue(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -2362,6 +2378,7 @@ UniValue issuequalifierasset(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -2518,6 +2535,7 @@ UniValue issuerestrictedasset(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -2665,6 +2683,7 @@ UniValue reissuerestrictedasset(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -2804,6 +2823,7 @@ UniValue transferqualifier(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -3036,10 +3056,12 @@ UniValue linkxaccount(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() > 2)
         throw std::runtime_error(
             "linkxaccount ( xaccount to_address )\n"
-            "\nAssign this verified X account its free main/root identity asset.\n"
+            "\nAssign this signed-in X account its free main/root identity asset.\n"
             "Users cannot issue a new root; only this protocol assignment may create one (0 XFER burn).\n"
-            "Idempotent: if the handle already has a main asset, returns that name.\n"
-            "Default xaccount is -xaccount=. The handle must be on the verified allowlist.\n"
+            "The handle MUST match the Sign in with X session (OAuth users/me). Typed handles\n"
+            "that are not the signed-in username are rejected.\n"
+            "Default xaccount is the signed-in username.\n"
+            "The handle must also be on the verified allowlist.\n"
             "\nArguments:\n"
             "1. xaccount    (string, optional) X handle. Default: -xaccount\n"
             "2. to_address  (string, optional) destination for NAME and NAME!. Default: new wallet address\n"
@@ -3064,11 +3086,11 @@ UniValue linkxaccount(const JSONRPCRequest& request)
 
     ObserveSafeMode();
 
-    std::string spec = gArgs.GetArg("-xaccount", "");
-    if (!request.params[0].isNull())
+    std::string spec = xsession::SignedInHandle();
+    if (!request.params[0].isNull() && !request.params[0].get_str().empty())
         spec = request.params[0].get_str();
     if (spec.empty())
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "no X account; pass xaccount or set -xaccount=");
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Sign in with X required (no session; typed handles are not enough)");
 
     std::string dest;
     if (request.params.size() > 1 && !request.params[1].isNull())
@@ -3078,6 +3100,8 @@ UniValue linkxaccount(const JSONRPCRequest& request)
     uint64_t userId = 0;
     std::string nerr;
     if (!NormalizeXAccountId(spec, handle, userId, nerr))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, nerr);
+    if (!xsession::RequireHandle(handle, nerr))
         throw JSONRPCError(RPC_INVALID_PARAMETER, nerr);
     if (!lottery::GetAllowlist().Contains(handle, userId))
         throw JSONRPCError(RPC_INVALID_PARAMETER,

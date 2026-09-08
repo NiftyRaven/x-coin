@@ -42,6 +42,9 @@ rpcport=$RPCPORT
 port=$P2PPORT
 EOF
 
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/runtime-ubuntu}"
+mkdir -p "$XDG_RUNTIME_DIR"
+
 need_xvfb=0
 if [[ -z "${DISPLAY:-}" ]]; then
   need_xvfb=1
@@ -62,7 +65,7 @@ trap cleanup EXIT
 
 "$DAEMON" -regtest -datadir="$DATADIR" -daemon -server -listen=0 \
   -rpcport="$RPCPORT" -port="$P2PPORT" \
-  -xaccount=NFTRVN -xverified=NFTRVN >/tmp/xcoin-gui-precreate.log 2>&1 || true
+  -xoauthmock=NFTRVN -xverified=NFTRVN >/tmp/xcoin-gui-precreate.log 2>&1 || true
 up=0
 for _ in $(seq 1 80); do
   if "$CLI" "${CLI_ARGS[@]}" getlotteryinfo >/dev/null 2>&1; then
@@ -93,7 +96,7 @@ fi
 
 "$QT" -regtest -datadir="$DATADIR" \
   -splash=0 -rpcport="$RPCPORT" -port="$P2PPORT" \
-  -xaccount=NFTRVN -xverified=NFTRVN \
+  -xoauthmock=NFTRVN -xverified=NFTRVN \
   >/tmp/xcoin-qt-smoke.log 2>&1 &
 QT_PID=$!
 
@@ -115,6 +118,18 @@ INFO="$("$CLI" "${CLI_ARGS[@]}" getlotteryinfo)"
 echo "$INFO"
 echo "$INFO" | grep -q '"currency": "XFER"'
 echo "$INFO" | grep -q '"local_xaccount": "nftrvn"'
+SESS="$("$CLI" "${CLI_ARGS[@]}" getxsession)"
+echo "$SESS"
+echo "$SESS" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("signed_in") is not True or j.get("linked") is not True:
+    sys.exit("GUI smoke expects a linked Sign in with X session")
+if j.get("username") != "nftrvn":
+    sys.exit("expected username nftrvn, got %r" % j.get("username"))
+if "xsession.json" not in str(j.get("session_file","")):
+    sys.exit("getxsession must name xsession.json")
+'
 
 echo "GUI smoke: ok (xcoin-qt pid $QT_PID)"
 if [[ "${KEEP_GUI:-0}" != "1" ]]; then

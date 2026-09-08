@@ -24,7 +24,12 @@
 #include "createassetdialog.h"
 #include "reissueassetdialog.h"
 #include "restrictedassetsdialog.h"
+#include "xhome.h"
+#include "xreceive.h"
+#include "xsend.h"
+#include "rpcconsole.h"
 #include <validation.h>
+#include <univalue.h>
 
 #include "ui_interface.h"
 
@@ -67,10 +72,16 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     createAssetsPage = new CreateAssetDialog(platformStyle);
     manageAssetsPage = new ReissueAssetDialog(platformStyle);
     restrictedAssetsPage = new RestrictedAssetsDialog(platformStyle);
+    xHome = new XHome(this);
+    xReceive = new XReceive(this);
+    xSend = new XSend(this);
 
     usedSendingAddressesPage = new AddressBookPage(platformStyle, AddressBookPage::ForEditing, AddressBookPage::SendingTab, this);
     usedReceivingAddressesPage = new AddressBookPage(platformStyle, AddressBookPage::ForEditing, AddressBookPage::ReceivingTab, this);
 
+    addWidget(xHome);
+    addWidget(xReceive);
+    addWidget(xSend);
     addWidget(overviewPage);
     addWidget(transactionsPage);
     addWidget(receiveCoinsPage);
@@ -107,6 +118,10 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     connect(overviewPage, SIGNAL(assetIssueSubClicked(QModelIndex)), createAssetsPage, SLOT(focusSubAsset(QModelIndex)));
     connect(overviewPage, SIGNAL(assetIssueUniqueClicked(QModelIndex)), createAssetsPage, SLOT(focusUniqueAsset(QModelIndex)));
     connect(overviewPage, SIGNAL(assetReissueClicked(QModelIndex)), manageAssetsPage, SLOT(focusReissueAsset(QModelIndex)));
+    connect(xHome, SIGNAL(gotoReceive()), this, SLOT(gotoReceiveCoinsPage()));
+    connect(xHome, SIGNAL(gotoSend()), this, SLOT(gotoSendCoinsPage()));
+    connect(xHome, SIGNAL(gotoActivity()), this, SLOT(gotoHistoryPage()));
+    connect(xHome, SIGNAL(gotoAssets()), this, SLOT(gotoAssetsPage()));
     /** RNV END */
 }
 
@@ -156,6 +171,7 @@ void WalletView::setClientModel(ClientModel *_clientModel)
 
     overviewPage->setClientModel(_clientModel);
     sendCoinsPage->setClientModel(_clientModel);
+    xHome->setClientModel(_clientModel);
 }
 
 void WalletView::setWalletModel(WalletModel *_walletModel)
@@ -167,6 +183,9 @@ void WalletView::setWalletModel(WalletModel *_walletModel)
     overviewPage->setWalletModel(_walletModel);
     receiveCoinsPage->setModel(_walletModel);
     sendCoinsPage->setModel(_walletModel);
+    xHome->setWalletModel(_walletModel);
+    xReceive->setWalletModel(_walletModel);
+    xSend->setWalletModel(_walletModel);
     usedReceivingAddressesPage->setModel(_walletModel ? _walletModel->getAddressTableModel() : nullptr);
     usedSendingAddressesPage->setModel(_walletModel ? _walletModel->getAddressTableModel() : nullptr);
 
@@ -233,6 +252,8 @@ void WalletView::processNewTransaction(const QModelIndex& parent, int start, int
     overviewPage->showAssets();
     transactionView->showAssets();
     Q_EMIT checkAssets();
+    if (xHome)
+        xHome->refresh();
 
     assetsPage->processNewTransaction();
     createAssetsPage->updateAssetList();
@@ -241,6 +262,14 @@ void WalletView::processNewTransaction(const QModelIndex& parent, int start, int
 }
 
 void WalletView::gotoOverviewPage()
+{
+    if (xHome)
+        xHome->refresh();
+    setCurrentWidget(xHome);
+    Q_EMIT checkAssets();
+}
+
+void WalletView::gotoBalancesPage()
 {
     setCurrentWidget(overviewPage);
     Q_EMIT checkAssets();
@@ -253,12 +282,19 @@ void WalletView::gotoHistoryPage()
 
 void WalletView::gotoReceiveCoinsPage()
 {
-    setCurrentWidget(receiveCoinsPage);
+    if (xReceive)
+        xReceive->refresh();
+    setCurrentWidget(xReceive);
 }
 
 void WalletView::gotoSendCoinsPage(QString addr)
 {
-    setCurrentWidget(sendCoinsPage);
+    if (xSend) {
+        if (!addr.isEmpty())
+            xSend->setAddress(addr);
+        xSend->refresh();
+    }
+    setCurrentWidget(xSend);
 
     if (!addr.isEmpty())
         sendCoinsPage->setAddress(addr);
@@ -450,5 +486,33 @@ void WalletView::gotoManageAssetsPage()
 void WalletView::gotoRestrictedAssetsPage()
 {
     setCurrentWidget(restrictedAssetsPage);
+}
+
+QString WalletView::callRpc(const QString& method, const QStringList& args) const
+{
+    std::string cmd = method.toStdString();
+    for (int i = 0; i < args.size(); ++i) {
+        const QString a = args.at(i);
+        cmd += " ";
+        if (a.startsWith("[") || a.startsWith("{"))
+            cmd += a.toStdString();
+        else {
+            QString q = a;
+            q.replace("\\", "\\\\");
+            q.replace("\"", "\\\"");
+            cmd += "\"";
+            cmd += q.toStdString();
+            cmd += "\"";
+        }
+    }
+    std::string result;
+    try {
+        RPCConsole::RPCExecuteCommandLine(result, cmd);
+    } catch (const UniValue& e) {
+        return QString::fromStdString(e.write(2));
+    } catch (const std::exception& e) {
+        return QString::fromStdString(e.what());
+    }
+    return QString::fromStdString(result);
 }
 /** XCOIN END */

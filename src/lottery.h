@@ -24,8 +24,9 @@ class CValidationState;
  * X Coin lottery consensus.
  *
  * Design (see docs/LOTTERY.md):
- *  - A node is lottery-eligible only if it links an X account (-xaccount)
- *    that appears on the operator-shared verified allowlist.
+ *  - A node is lottery-eligible only if it has a Sign in with X session
+ *    (OAuth PKCE / users/me) whose username is on the operator-shared
+ *    verified allowlist. Typed -xaccount= is not enough.
  *  - Eligible nodes heartbeat a payable script plus that X identity.
  *    Node id = Hash160(script). Heartbeats missing a verified link are
  *    ignored for the active set (one X account → one active node).
@@ -136,7 +137,7 @@ bool NormalizeXHandle(const std::string& in, std::string& out, std::string& err)
 /** Parse "handle" or "handle:userid" / "handle,userid". */
 bool ParseXAccountSpec(const std::string& in, XAccount& out, std::string& err);
 
-/** Load -xaccount / -xuserid / -xallowlist / -xverified and the datadir file. */
+/** Load allowlist + Sign in with X session (not a typed handle). */
 void InitEligibility();
 
 /** Persist or create a stable local payout script in the data directory. */

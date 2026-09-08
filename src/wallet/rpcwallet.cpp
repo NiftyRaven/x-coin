@@ -28,6 +28,7 @@
 #include "wallet/feebumper.h"
 #include "wallet/wallet.h"
 #include "wallet/walletdb.h"
+#include "xsession.h"
 
 #include <init.h>  // For StartShutdown
 
@@ -177,6 +178,13 @@ UniValue getmywords(const JSONRPCRequest& request)
 }
 
 
+static void EnsureSignedInWithX()
+{
+    std::string err;
+    if (!xsession::RequireSession(err))
+        throw JSONRPCError(RPC_WALLET_ERROR, err);
+}
+
 UniValue getnewaddress(const JSONRPCRequest& request)
 {
     CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
@@ -198,6 +206,8 @@ UniValue getnewaddress(const JSONRPCRequest& request)
             + HelpExampleCli("getnewaddress", "")
             + HelpExampleRpc("getnewaddress", "")
         );
+
+    EnsureSignedInWithX();
 
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -255,6 +265,7 @@ UniValue getaccountaddress(const JSONRPCRequest& request)
             + HelpExampleRpc("getaccountaddress", "\"myaccount\"")
         );
 
+    EnsureSignedInWithX();
     LOCK2(cs_main, pwallet->cs_wallet);
 
     // Parse the account first so we don't generate a key if there's an error
@@ -286,6 +297,7 @@ UniValue getrawchangeaddress(const JSONRPCRequest& request)
             + HelpExampleRpc("getrawchangeaddress", "")
        );
 
+    EnsureSignedInWithX();
     LOCK2(cs_main, pwallet->cs_wallet);
 
     if (!pwallet->IsLocked()) {
@@ -476,7 +488,9 @@ UniValue sendtoaddress(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() < 2 || request.params.size() > 7)
         throw std::runtime_error(
             "sendtoaddress \"address\" amount ( \"comment\" \"comment_to\" subtractfeefromamount conf_target \"estimate_mode\")\n"
-            "\nSend an amount to a given address.\n"
+            "\nSend an amount to a given address from this wallet.dat only (XFER).\n"
+            "Sign in with X is required. The session does not import another user's keys.\n"
+            "Another signed-in identity on this node cannot spend UTXOs that live in a different wallet file.\n"
             + HelpRequiringPassphrase(pwallet) +
             "\nArguments:\n"
             "1. \"address\"            (string, required) The X Coin address to send to.\n"
@@ -503,6 +517,7 @@ UniValue sendtoaddress(const JSONRPCRequest& request)
             + HelpExampleRpc("sendtoaddress", "\"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\", 0.1, \"donation\", \"seans outpost\"")
         );
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -588,6 +603,7 @@ UniValue sendfromaddress(const JSONRPCRequest& request)
             + HelpExampleRpc("sendfromaddress", "\"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\" \"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\", 0.1, \"donation\", \"seans outpost\"")
         );
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -1084,6 +1100,7 @@ UniValue sendfrom(const JSONRPCRequest& request)
             + HelpExampleRpc("sendfrom", "\"tabby\", \"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\", 0.01, 6, \"donation\", \"seans outpost\"")
         );
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -1169,6 +1186,7 @@ UniValue sendmany(const JSONRPCRequest& request)
             + HelpExampleRpc("sendmany", "\"\", \"{\\\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\\\":0.01,\\\"1353tsE8YMTA4EuV7dgUXGjNFf9KpVvKHz\\\":0.02}\", 6, \"testing\"")
         );
 
+    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 

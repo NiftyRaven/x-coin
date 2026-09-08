@@ -9,6 +9,7 @@
 #include "amount.h"
 
 #include <QStackedWidget>
+#include <QStringList>
 
 class RavenGUI;
 class ClientModel;
@@ -24,6 +25,9 @@ class AssetsDialog;
 class CreateAssetDialog;
 class ReissueAssetDialog;
 class RestrictedAssetsDialog;
+class XHome;
+class XReceive;
+class XSend;
 
 QT_BEGIN_NAMESPACE
 class QModelIndex;
@@ -59,6 +63,9 @@ public:
 
     void showOutOfSyncWarning(bool fShow);
 
+    /** Run a wallet/node RPC from a button (no terminal). */
+    QString callRpc(const QString& method, const QStringList& args = QStringList()) const;
+
 private:
     ClientModel *clientModel;
     WalletModel *walletModel;
@@ -81,11 +88,16 @@ private:
     CreateAssetDialog *createAssetsPage;
     ReissueAssetDialog *manageAssetsPage;
     RestrictedAssetsDialog *restrictedAssetsPage;
+    XHome *xHome;
+    XReceive *xReceive;
+    XSend *xSend;
     /** XCOIN END */
 
 public Q_SLOTS:
-    /** Switch to overview (home) page */
+    /** Switch to home (Sign in with X) page */
     void gotoOverviewPage();
+    /** Legacy balances overview */
+    void gotoBalancesPage();
     /** Switch to history (transactions) page */
     void gotoHistoryPage();
     /** Switch to receive coins page */

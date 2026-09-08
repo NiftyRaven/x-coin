@@ -601,9 +601,13 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-whitelistrelay", strprintf(_("Accept relayed transactions received from whitelisted peers even when not relaying transactions (default: %d)"), DEFAULT_WHITELISTRELAY));
     strUsage += HelpMessageOpt("-whitelistforcerelay", strprintf(_("Force relay of transactions from whitelisted peers even if they violate local relay policy (default: %d)"), DEFAULT_WHITELISTFORCERELAY));
 
-    strUsage += HelpMessageGroup(_("Lottery options:"));
-    strUsage += HelpMessageOpt("-xaccount=<handle>", _("Link this node to an X handle. Required for lottery eligibility and used by linkxaccount to assign the free main/root identity asset"));
-    strUsage += HelpMessageOpt("-xuserid=<id>", _("Optional numeric X user id for the linked account"));
+    strUsage += HelpMessageGroup(_("Lottery / Sign in with X:"));
+    strUsage += HelpMessageOpt("-xoauthclientid=<id>", _("X (Twitter) OAuth 2.0 client id for Sign in with X (PKCE). Never typed as someone else's handle."));
+    strUsage += HelpMessageOpt("-xoauthclientsecret=<secret>", _("Optional confidential-client secret. Public PKCE apps omit this."));
+    strUsage += HelpMessageOpt("-xoauthcallbackport=<n>", _("Loopback callback port for Sign in with X (default: 18791). Register http://127.0.0.1:<n>/callback in the X developer portal."));
+    strUsage += HelpMessageOpt("-xoauthmock=<handle|json>", _("REGTEST ONLY. Inject a mock GET /2/users/me payload and write a local session proof"));
+    strUsage += HelpMessageOpt("-xaccount=<handle>", _("Deprecated typed handle. Ignored unless a Sign in with X session already matches it."));
+    strUsage += HelpMessageOpt("-xuserid=<id>", _("Optional numeric X user id (informational; session id wins)"));
     strUsage += HelpMessageOpt("-xallowlist=<file>", _("Load verified X accounts from a text file (handle [userid] per line). Honest operators list only X-verified / blue-check accounts"));
     strUsage += HelpMessageOpt("-xverified=<handle>", _("Add a verified X handle to the allowlist (repeatable; handle or handle:userid)"));
 

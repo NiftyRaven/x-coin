@@ -18,6 +18,7 @@
 #include "util.h"
 #include "utilstrencodings.h"
 #include "validation.h"
+#include "xsession.h"
 
 #ifdef ENABLE_WALLET
 #include "wallet/wallet.h"
@@ -323,26 +324,8 @@ void InitEligibility()
             LogPrintf("lottery: -xverified=%s: %s\n", spec, err);
     }
 
-    XAccount local;
-    std::string err;
-    if (gArgs.IsArgSet("-xaccount")) {
-        if (!NormalizeXHandle(gArgs.GetArg("-xaccount", ""), local.handle, err))
-            LogPrintf("lottery: -xaccount: %s\n", err);
-    }
-    const int64_t uidArg = gArgs.GetArg("-xuserid", 0);
-    if (uidArg > 0)
-        local.userId = (uint64_t)uidArg;
-    GetRegistry().SetLocalXAccount(local);
-
-    if (local.handle.empty()) {
-        LogPrintf("lottery: no -xaccount; this node will sync/relay but is not lottery-eligible\n");
-    } else if (!allow.Contains(local.handle, local.userId)) {
-        LogPrintf("lottery: -xaccount=%s is not on the verified allowlist; sync/relay only\n",
-                  local.handle);
-    } else {
-        LogPrintf("lottery: linked verified X account %s (userid=%llu); lottery-eligible\n",
-                  local.handle, (unsigned long long)local.userId);
-    }
+    xsession::ApplyStartupArgs();
+    xsession::BindLotteryFromSession();
 }
 
 uint160 IdFromScript(const CScript& script)

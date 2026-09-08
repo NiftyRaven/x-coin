@@ -25,27 +25,28 @@ Genesis (height 0) is not a lottery block and is not a payday. The serialized ge
 
 Consensus does **not** call X.com on every block. Honest operators share one
 explicit allowlist of **X-verified** (blue-check / X Premium verified)
-accounts. That is how bots and anonymous process spam are excluded for the
-private launch. There is no X OAuth product and no live API key is required.
+accounts. **Sign in with X** is what stops impersonation: the handle that
+gets a free root and lottery eligibility comes from `GET /2/users/me`,
+not from a typed string. See [XSIGNIN.md](XSIGNIN.md).
 
 ### Offline handle verification (private test)
 
-Operators verify handles **without** calling the X.com API:
+Operators verify handles **without** calling the X.com API for the
+allowlist:
 
 1. Open the public profile `https://x.com/<handle>` in a browser.
 2. Confirm it is the intended person and shows an X Premium / verified badge.
 3. Write the handle (no `@`) into the shared allowlist file.
 4. Every honest node loads that same file (`-xallowlist=` or
    `~/.xcoin/verified-x-accounts.txt`).
-5. The operator sets `-xaccount=<handle>` and runs `linkxaccount` to receive
-   the free root.
+5. The operator **Signs in with X** on that node, then Claims the root.
+   Typed `-xaccount=` is ignored.
 
 The owner handle for this private test is **`NFTRVN`**.
 
 A node is lottery-eligible only when **both** are true:
 
-1. It has a linked X account (`-xaccount=handle` in `xcoin.conf` / flags;
-   optional `-xuserid=`).
+1. It has a valid Sign in with X session (user id + username + proof).
 2. That account is on the operator-shared verified allowlist.
 
 Unlinked or unverified heartbeats are **ignored** for the active set. The
@@ -53,12 +54,19 @@ local producer refuses to produce if this node is not linked+verified.
 
 ### Link an X account (every operator)
 
+Sign in with X in `xcoin-qt` (or, on `-regtest` only, `-xoauthmock=` /
+`mockxsignin`). Then:
+
 ```bash
-# xcoin.conf  (or flags)
-xaccount=YourHandle
-# optional numeric X user id
-xuserid=123456789
+src/xcoin-cli addxverified YourHandle   # operator allowlist
+src/xcoin-cli linkxaccount              # uses the session username
+src/xcoin-cli getxsession
+src/xcoin-cli getlotteryinfo            # local_eligible must be true
 ```
+
+Typed `linkxaccount OtherHandle` is rejected unless that is the signed-in
+username. Headless seed: sign in once on this datadir (GUI), then run
+`xcoind` against the same `~/.xcoin`.
 
 ### Publish the verified allowlist (seed / operator)
 
@@ -107,7 +115,7 @@ the last **180 seconds**.
 - The producer thread heartbeats that script every second **only if** the
   local node is linked+verified.
 - `registeractivenode` records a heartbeat for the local script or a supplied
-  **address / script hex**, using the local `-xaccount` unless another
+  **address / script hex**, using the signed-in session handle unless another
   allowlisted handle is passed. Unlinked/unverified registrations are rejected.
 - Peers gossip `xhb` messages (`int64 timestamp` + `CScript` + X handle +
   user id) after `verack` and about every 30 seconds. Heartbeats missing a
@@ -175,7 +183,11 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 - **Main / test:** the producer thread heartbeats, waits until wall-clock slot
   ≥ height slot, and if this node is a winner it calls `CreateNewBlock` and
   `ProcessNewBlock`. There is **no** nonce grind. `CheckProofOfWork` is a
-  no-op.
+  no-op. `fMiningRequiresPeers` is false: a **lone eligible node** can
+  produce and store the ledger. Other people seeing the same tip still
+  need `addnode` / `seednode`. More eligible heartbeats make the lottery
+  among active nodes more meaningful; they are not required for the
+  chain to exist.
 - **Regtest:** the producer only heartbeats. Use `generatetoaddress` /
   `generate` to assemble blocks on demand (still no PoW). The destination
   script is heartbeated so it is in the active set.
@@ -203,9 +215,9 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 - **xhb impersonation:** gossip carries a handle, not a signature binding that
   handle to a script. A malicious peer can claim an allowlisted handle.
   Consensus still binds coinbase to committed **scripts**, not handles.
-- **Unlinked wallets:** X-link is **not** required to hold, receive, or send
-  XFER (or to receive/transfer assets sent to you). Linking is lottery
-  eligibility (and, when the sibling assigner lands, being given a main asset).
+- **Unsigned-in wallets:** Sign in with X is required to send, receive,
+  and prove asset ownership. Lottery additionally requires the handle
+  to be X-Verified on the operator allowlist.
 - Clock skew can delay a slot; height still maps 1:1 (`slot = genesisSlot + h`).
   You cannot skip or double-pay a height on one chain. Catch-up produces one
   height per loop when wall-clock is ahead; `generatetoaddress` is regtest-only

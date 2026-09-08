@@ -1,10 +1,35 @@
 # X Coin private launch checklist
 
 Wallet how-to: [README.md](../README.md). Paper: [whitepaper/XCOIN.md](../whitepaper/XCOIN.md).
+DEX listing criteria (private; do not submit a listing): [DEX.md](DEX.md).
 
 This is the operator runbook for a **private launch**. There is no public
 seed DNS and no exchange listing. Lottery eligibility uses a **shared
 verified-X allowlist** (no live X API keys required).
+
+## Ledger, visibility, and how many nodes
+
+Answered from consensus / wallet / P2P code (see [AUDIT.md](AUDIT.md)):
+
+1. **Transactions are visible on this node and to peers on this mesh.
+   They are not on a public explorer and not on Ravencoin explorers.**
+   GUI **Activity** lists wallet history. RPC: `listtransactions`,
+   `gettransaction`, `getrawtransaction`, `getblock`. There is no
+   in-tree explorer (`DEFAULT_THIRD_PARTY_BROWSERS` is empty). Peers
+   see mempool and blocks over P2P. Different genesis / magic / ports
+   mean Ravencoin explorers cannot show XFER.
+
+2. **A lone node already has a ledger.** One `xcoind` / `xcoin-qt`
+   stores genesis and can extend the chain (regtest `generatetoaddress`;
+   main lottery producer when this node is eligible — 
+   `fMiningRequiresPeers` is false). A *network* of other people seeing
+   the same tip needs ≥2 peers (`addnode` / `seednode`, port **38443**).
+   Lottery among active nodes is more meaningful with more than one
+   eligible heartbeat; a lone eligible node still produces.
+
+3. **Own ledger, like Ravencoin has its own.** This is a hard fork with
+   its own genesis, UTXO, assets (`XID1`, 32-char roots), and lottery.
+   No imported snapshot. Users’ XFER lives here only. Hashes: below.
 
 ## Frozen identity
 
@@ -56,10 +81,10 @@ Subsidy starts at height 1 via the lottery. Spendable lifetime supply is
 integer right-shift; ~21 billion minus unpaid genesis and `>>=` dust).
 `MAX_MONEY` is 21,000,000,000 XFER (sanity cap, not the minted total).
 
-**Unlinked users can transact.** Linking X is required for lottery
-eligibility (and for being assigned a main asset). It is **not** required to
-hold, receive, or send XFER. `sendtoaddress` / P2P / mempool / validation do
-not check for an X handle.
+**Sign in with X is required to send and receive.** Authentication
+proves it is you and is the key to asset ownership. Lottery eligibility
+additionally requires an X-Verified (allowlisted) handle. A node
+without a session can still sync and relay.
 
 ## Publish a seed node
 
@@ -71,7 +96,7 @@ There are no DNS seeds in-tree. For a private mesh:
    ```bash
    src/xcoind -listen=1 -port=38443 -server \
      -rpcuser=xcoin -rpcpassword=change-me \
-     -xaccount=SeedHandle -xallowlist=/shared/verified-x-accounts.txt
+     -xallowlist=/shared/verified-x-accounts.txt
    ```
 
 3. Tell every other operator to join with **either**:
@@ -100,19 +125,19 @@ the same file. Unlinked nodes still sync/relay but do not win or produce.
 1. Seed operator: confirm each operator’s X handle is verified, then write
    `verified-x-accounts.txt` (see [LOTTERY.md](LOTTERY.md)).
 2. Confirm each handle **offline** (open `https://x.com/<handle>`, check the
-   verified / Premium badge). Do **not** invent a bot, OAuth app, or live API key.
-3. Share that file (scp, gist, HTTPS). Each operator sets `xaccount=` to
+   verified / Premium badge) for the allowlist. Then each operator **Signs
+   in with X** on their node (see [XSIGNIN.md](XSIGNIN.md)). Do not type
+   someone else's handle into `linkxaccount`.
+3. Share that file (scp, gist, HTTPS). Each operator signs in as
    **their** handle and points at the file.
 
 The owner handle for this private test is **`NFTRVN`**. Add it to the
-allowlist, then `linkxaccount NFTRVN` assigns the free root `NFTRVN`.
+allowlist, sign in as NFTRVN, then claim the free root `NFTRVN`.
 
 ```bash
 # xcoin.conf
-xaccount=YourHandle
+xoauthclientid=YOUR_CLIENT_ID
 xallowlist=/shared/verified-x-accounts.txt
-# or copy into the datadir:
-#   ~/.xcoin/verified-x-accounts.txt
 ```
 
 ```bash
@@ -135,7 +160,7 @@ src/xcoin-cli loadxverified
 ./configure --without-gui --disable-bench --disable-tests --with-incompatible-bdb
 make -j$(nproc)
 src/xcoind -server -addnode=<seed-ip>:38443 \
-  -xaccount=YourHandle -xallowlist=/shared/verified-x-accounts.txt
+  -xallowlist=/shared/verified-x-accounts.txt
 src/xcoin-cli getblockchaininfo
 src/xcoin-cli getlotteryinfo
 src/xcoin-cli getactivenodes
@@ -202,9 +227,10 @@ Coinbase is immature for 100 blocks — generate ~110 on regtest before
   proof.
 - **Clock skew / catch-up:** main/test wait for wall-clock slot ≥ height slot.
   Height still maps 1:1; no skip-pay or double-pay of a slot in consensus.
-- **No DNS seeds / explorers / audit** — you are the network.
+- **No DNS seeds / public explorers** — you are the network. Private-test
+  audit: [AUDIT.md](AUDIT.md).
 - Upstream `make check` still hard-codes imported genesis hashes; do not treat
-  a red `make check` as a launch blocker. Use the regtest smoke instead.
+  a red `make check` as a launch blocker. Use the smokes instead.
 
 ## Smoke (regtest)
 
@@ -215,7 +241,7 @@ contrib/xcoin/smoke-regtest.sh
 Exercises `getlotteryinfo`, genesis unspendable, on-demand blocks, a
 single-winner 5000 XFER coinbase at height 149, a two-winner 2500 XFER split
 at height 150, protocol main / sub / unique when `linkxaccount` is present
-(including owner handle **NFTRVN**), and **unlinked** `sendtoaddress` /
+(including owner handle **NFTRVN**), and **signed-in** `sendtoaddress` /
 `sendfromaddress`.
 
 ```bash
@@ -226,8 +252,26 @@ Two regtest nodes: after `addnode`, both `getactivenodes` lists match (P2P `xhb`
 
 ```bash
 contrib/xcoin/smoke-eligibility.sh
+contrib/xcoin/smoke-xsession.sh
+contrib/xcoin/smoke-gui.sh
 ```
 
 Unlinked node is not eligible; `registeractivenode` is rejected until the
 handle is linked **and** allowlisted. Linked+allowlisted identities appear
-in the active set.
+in the active set. `smoke-xsession.sh` proves typed handles cannot send /
+receive / claim. `smoke-gui.sh` needs `XDG_RUNTIME_DIR` (the script sets
+it); do not `pkill -f xcoin-qt`.
+
+```bash
+contrib/xcoin/smoke-benchmark.sh
+contrib/xcoin/smoke-isolation.sh
+```
+
+Three regtest nodes: lone A already has a ledger; B (signed-in) and C
+(unsigned observer) connect; A sends to B; B sees the tx
+(`listtransactions` / `gettransaction`); all three share one best block;
+C inspects the same tx with `getrawtransaction` / `getblock`.
+
+`smoke-isolation.sh` is two wallets: Bob cannot `sendtoaddress` /
+`transfer` Alice’s coins or assets; Alice’s session on Bob’s empty
+`wallet.dat` still cannot spend Alice’s UTXOs.

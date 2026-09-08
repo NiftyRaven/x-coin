@@ -18,6 +18,7 @@
 #include "myrestrictedassettablemodel.h"
 
 #include "base58.h"
+#include "xsession.h"
 #include "chain.h"
 #include "keystore.h"
 #include "validation.h"
@@ -204,6 +205,9 @@ bool WalletModel::validateAddress(const QString &address)
 
 WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransaction &transaction, const CCoinControl& coinControl)
 {
+    if (!xsession::HasValidSession())
+        return SessionRequired;
+
     CAmount total = 0;
     bool fSubtractFeeFromAmount = false;
     QList<SendCoinsRecipient> recipients = transaction.getRecipients();
@@ -315,6 +319,9 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 
 WalletModel::SendCoinsReturn WalletModel::sendCoins(WalletModelTransaction &transaction)
 {
+    if (!xsession::HasValidSession())
+        return SessionRequired;
+
     QByteArray transaction_array; /* store serialized transaction */
 
     {
@@ -385,6 +392,9 @@ WalletModel::SendCoinsReturn WalletModel::sendCoins(WalletModelTransaction &tran
 
 WalletModel::SendCoinsReturn WalletModel::sendAssets(CWalletTx& tx, QList<SendAssetsRecipient>& recipients, CReserveKey& reservekey)
 {
+    if (!xsession::HasValidSession())
+        return SessionRequired;
+
     QByteArray transaction_array; /* store serialized transaction */
 
     {

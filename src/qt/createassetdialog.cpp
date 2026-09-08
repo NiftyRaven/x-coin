@@ -28,6 +28,7 @@
 #include <policy/policy.h>
 #include "assets/assettypes.h"
 #include "assettablemodel.h"
+#include "xsession.h"
 
 #include <QGraphicsDropShadowEffect>
 #include <QModelIndex>
@@ -776,6 +777,10 @@ void CreateAssetDialog::onIPFSHashChanged(QString hash)
 
 void CreateAssetDialog::onCreateAssetClicked()
 {
+    if (!xsession::HasValidSession()) {
+        showMessage(tr("Sign in with X required to issue assets. Authentication proves ownership."));
+        return;
+    }
     if (type == IntFromAssetType(AssetType::ROOT)) {
         showMessage(tr("Users cannot create main assets. Link a verified X account (linkxaccount) to be assigned one free identity root."));
         return;

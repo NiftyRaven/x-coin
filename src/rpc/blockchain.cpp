@@ -934,6 +934,7 @@ UniValue getblock(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
         throw std::runtime_error(
             "getblock \"blockhash\" ( verbosity ) \n"
+            "\nX Coin (XFER) block. Combined with getrawtransaction (-txindex) this is the explorer-less inspect path.\n"
             "\nIf verbosity is 0, returns a string that is serialized, hex-encoded data for block 'hash'.\n"
             "If verbosity is 1, returns an Object with information about block <hash>.\n"
             "If verbosity is 2, returns an Object with information about block <hash> and information about each transaction. \n"
@@ -1414,10 +1415,13 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() != 0)
         throw std::runtime_error(
             "getblockchaininfo\n"
-            "Returns an object containing various state info regarding blockchain processing.\n"
+            "Returns an object containing various state info regarding X Coin (XFER) blockchain processing.\n"
+            "This is X Coin's own genesis / magic / ports — not Ravencoin. Ticker is XFER.\n"
             "\nResult:\n"
             "{\n"
             "  \"chain\": \"xxxx\",        (string) current network name as defined in BIP70 (main, test, regtest)\n"
+            "  \"name\": \"X Coin\",       (string) product name\n"
+            "  \"currency\": \"XFER\",     (string) listing ticker (base coin; identity assets are not the pair ticker)\n"
             "  \"blocks\": xxxxxx,         (numeric) the current number of blocks processed in the server\n"
             "  \"headers\": xxxxxx,        (numeric) the current number of headers we have validated\n"
             "  \"bestblockhash\": \"...\", (string) the hash of the currently best block\n"
@@ -1466,6 +1470,8 @@ UniValue getblockchaininfo(const JSONRPCRequest& request)
 
     UniValue obj(UniValue::VOBJ);
     obj.push_back(Pair("chain", GetParams().NetworkIDString()));
+    obj.push_back(Pair("name", "X Coin"));
+    obj.push_back(Pair("currency", CURRENCY_UNIT));
     obj.push_back(Pair("blocks",                (int)chainActive.Height()));
     obj.push_back(Pair("headers",               pindexBestHeader ? pindexBestHeader->nHeight : -1));
     obj.push_back(Pair("bestblockhash",         chainActive.Tip()->GetBlockHash().GetHex()));

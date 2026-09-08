@@ -9,7 +9,13 @@ This is a **private** release. Do not make the repository public.
 ## What shipped
 
 - **Desktop GUI** `xcoin-qt` — X theme (black / white / sharp X mark).
-  Overview, Send, Receive, Assets, lottery status. Same node/wallet as CLI.
+  Home (this wallet linked to @handle + X user id, lottery, claim root,
+  issue sub/unique, Receive / Send / Activity / Transfer assets),
+  Receive (address + Copy), Send (paste + amount + Send), Activity.
+  Same node/wallet as CLI. No CLI required for the happy path.
+  **This wallet + this X session = you** — another user cannot send
+  from inside your wallet. **12-word BIP39 create/restore is unchanged**
+  — Sign in with X does not replace the seed ([WALLET.md](WALLET.md)).
 - **CLI** `xcoind` / `xcoin-cli` still work.
 - Handle → root mapping: X handles `[A-Za-z0-9_]` length 1–32; **26-character
   handles map 1:1** (no truncation). Root names max **32** characters.
@@ -53,17 +59,24 @@ src/qt/xcoin-qt -regtest        # local practice
 
 Running-GUI captures (regtest) are in [docs/gui/](gui/):
 
-- `overview.png` — balances, lottery card, NFTRVN asset list
+- `home.png` — linked wallet (@handle + X user id) on Home
+- `overview.png` — Home (legacy name kept)
 - `send.png`
-- `receive.png`
-- `assets.png` — Transfer Assets with NFTRVN
-- `lottery.png` — lottery card / header
+- `receive.png` — address + Copy
+- `assets.png` — Transfer Assets (Advanced)
+- `lottery.png` — lottery card on Home
 - `about.png` — Help → About (Nifty Raven @NFTRVN, 1.0)
+
+Brand stills: [assets/brand/](../assets/brand/).
 
 ## Known limits
 
-- No X.com OAuth inside the wallet. Operators confirm handles offline.
+- Sign in with X is required to send, receive, and own assets. Lottery
+  is X-Verified (allowlist) only. See [XSIGNIN.md](XSIGNIN.md).
+- Live X OAuth needs a developer Client ID (`xoauthclientid=`). This VM
+  cannot complete a live login; `-regtest` mock `users/me` covers tests.
 - No mobile app. No public DNS seeds. No exchange listing.
+  DEX criteria (ready to *apply* vs ready to *trade*): [DEX.md](DEX.md).
 - Restricted assets stay removed.
 - Internal C++ names (`RavenGUI`, `OP_RVN_ASSET`, copyright headers) stay;
   catalog: [FORK.md](FORK.md).
@@ -76,10 +89,18 @@ Running-GUI captures (regtest) are in [docs/gui/](gui/):
 ## Tests
 
 ```bash
+contrib/xcoin/smoke-xsession.sh    # typed handle rejected; session accepted
 contrib/xcoin/smoke-regtest.sh
 contrib/xcoin/smoke-gossip.sh
 contrib/xcoin/smoke-eligibility.sh
-contrib/xcoin/smoke-gui.sh          # headless Qt + screenshot helper
+contrib/xcoin/smoke-gui.sh          # headless Qt (sets XDG_RUNTIME_DIR)
+contrib/xcoin/smoke-benchmark.sh    # lone ledger + 3-node visible send
+contrib/xcoin/smoke-isolation.sh    # Bob cannot spend Alice's wallet.dat
 ```
 
 `smoke-regtest.sh` includes `linkxaccount` of a 26-character handle.
+`smoke-benchmark.sh` answers “are txs visible?” and “own ledger + more
+than one node” on a private mesh (no public explorer).
+
+Private-test audit: [AUDIT.md](AUDIT.md).
+DEX listing criteria (do not apply while private): [DEX.md](DEX.md).

@@ -29,6 +29,7 @@
 #include "ui_restrictedfreezeaddress.h"
 #include "sendcoinsdialog.h"
 #include "myrestrictedassettablemodel.h"
+#include "xsession.h"
 
 #include <QGraphicsDropShadowEffect>
 #include <QFontMetrics>
@@ -183,6 +184,11 @@ void RestrictedAssetsDialog::updateDisplayUnit()
 
 void RestrictedAssetsDialog::freezeAddressClicked()
 {
+    if (!xsession::HasValidSession()) {
+        QMessageBox::warning(this, tr("X-Coin"),
+                             tr("Sign in with X required. Authentication proves ownership."));
+        return;
+    }
     // Check wallet unlock status
     WalletModel::UnlockContext ctx(model->requestUnlock());
     if(!ctx.isValid())
@@ -343,6 +349,11 @@ void RestrictedAssetsDialog::freezeAddressClicked()
 
 void RestrictedAssetsDialog::assignQualifierClicked()
 {
+    if (!xsession::HasValidSession()) {
+        QMessageBox::warning(this, tr("X-Coin"),
+                             tr("Sign in with X required. Authentication proves ownership."));
+        return;
+    }
     WalletModel::UnlockContext ctx(model->requestUnlock());
     if(!ctx.isValid())
     {
