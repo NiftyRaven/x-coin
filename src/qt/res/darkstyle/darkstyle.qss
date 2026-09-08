@@ -153,6 +153,19 @@ QCheckBox, QRadioButton {
   color: #ffffff;
   spacing: 8px;
 }
+QRadioButton::indicator, QCheckBox::indicator {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  background: #000000;
+}
+QRadioButton::indicator {
+  border-radius: 9px;
+}
+QRadioButton::indicator:checked, QCheckBox::indicator:checked {
+  background: #ffffff;
+  border-color: #ffffff;
+}
 QGroupBox {
   border: 1px solid #333333;
   margin-top: 12px;

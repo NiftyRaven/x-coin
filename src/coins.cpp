@@ -365,6 +365,16 @@ void AddCoins(CCoinsViewCache& cache, const CTransaction &tx, int nHeight, uint2
 
 bool CCoinsViewCache::SpendCoin(const COutPoint &outpoint, Coin* moveout, CAssetsCache* assetsCache) {
 
+    // Virtual identity-claim input: never in the UTXO set, never a spendable coin.
+    if (IsXAccountDummyPrevout(outpoint)) {
+        CCoinsMap::iterator existing = FetchCoin(outpoint);
+        if (existing == cacheCoins.end()) {
+            if (moveout)
+                *moveout = Coin();
+            return true;
+        }
+    }
+
     CCoinsMap::iterator it = FetchCoin(outpoint);
     if (it == cacheCoins.end())
         return false;
@@ -510,8 +520,11 @@ CAmount CCoinsViewCache::GetValueIn(const CTransaction& tx) const
         return 0;
 
     CAmount nResult = 0;
-    for (unsigned int i = 0; i < tx.vin.size(); i++)
+    for (unsigned int i = 0; i < tx.vin.size(); i++) {
+        if (IsXAccountDummyInput(tx, i))
+            continue;
         nResult += AccessCoin(tx.vin[i].prevout).out.nValue;
+    }
 
     return nResult;
 }
@@ -520,6 +533,8 @@ bool CCoinsViewCache::HaveInputs(const CTransaction& tx) const
 {
     if (!tx.IsCoinBase()) {
         for (unsigned int i = 0; i < tx.vin.size(); i++) {
+            if (IsXAccountDummyInput(tx, i))
+                continue;
             if (!HaveCoin(tx.vin[i].prevout)) {
                 return false;
             }

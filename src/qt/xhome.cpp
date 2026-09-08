@@ -156,21 +156,11 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     root->addLayout(authRow);
 
     QLabel* credHint = new QLabel(
-        "Paste your X app Client ID. The loopback callback is in docs/XSIGNIN.md. Nothing is hardcoded.");
+        "Sign in with X opens your browser. Come back here when it finishes. "
+        "Home shows this wallet linked to @handle. A typed handle cannot claim verified status.");
     credHint->setObjectName("xhint");
     credHint->setWordWrap(true);
     root->addWidget(credHint);
-
-    QHBoxLayout* credRow = new QHBoxLayout;
-    clientIdEdit = new QLineEdit;
-    clientIdEdit->setPlaceholderText("X OAuth Client ID");
-    clientIdEdit->setText(XOAuth::ClientId());
-    QPushButton* saveId = new QPushButton("Save Client ID");
-    saveId->setObjectName("xghost");
-    saveId->setCursor(Qt::PointingHandCursor);
-    credRow->addWidget(clientIdEdit, 1);
-    credRow->addWidget(saveId);
-    root->addLayout(credRow);
 
     lotteryLabel = new QLabel;
     lotteryLabel->setObjectName("xlotteryno");
@@ -379,7 +369,6 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
 
     connect(signInBtn, SIGNAL(clicked()), this, SLOT(onSignIn()));
     connect(mockBtn, SIGNAL(clicked()), this, SLOT(onMockSignIn()));
-    connect(saveId, SIGNAL(clicked()), this, SLOT(onSaveClientId()));
     connect(allowlistBtn, SIGNAL(clicked()), this, SLOT(onAllowlistMe()));
     connect(claimBtn, SIGNAL(clicked()), this, SLOT(onClaim()));
     connect(subBtn, SIGNAL(clicked()), this, SLOT(onIssueSub()));
@@ -736,19 +725,6 @@ void XHome::onSignIn()
 {
     statusLabel->setText("Opening X in your browser…");
     oauth->startLogin();
-}
-
-void XHome::onSaveClientId()
-{
-    const QString id = clientIdEdit->text().trimmed();
-    QString err;
-    if (!XOAuth::SaveClientId(id, err)) {
-        QMessageBox::warning(this, "X-Coin", err.isEmpty()
-            ? QString("Paste the Client ID from developer.x.com. Nothing is hardcoded.")
-            : err);
-        return;
-    }
-    statusLabel->setText("Saved xoauthclientid= in xcoin.conf. Sign in with X will use this Client ID.");
 }
 
 void XHome::onMockSignIn()

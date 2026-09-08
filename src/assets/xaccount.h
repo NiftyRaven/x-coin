@@ -10,11 +10,11 @@
 #endif
 
 #include "amount.h"
+#include "primitives/transaction.h"
 
 #include <string>
 
 class CScript;
-class CTransaction;
 class CAssetsCache;
 
 /**
@@ -36,6 +36,29 @@ bool DeriveMainAssetName(const std::string& xHandleOrId, std::string& outName, s
 CScript MakeXAccountAssignmentScript(const std::string& xId);
 bool ParseXAccountAssignmentScript(const CScript& script, std::string& xId);
 bool ParseXAccountAssignment(const CTransaction& tx, std::string& xId);
+
+/**
+ * Zero-fee identity-root claims cannot use an empty vin (BIP144 treats
+ * vin=[] as the witness marker). They also must not spend or create XFER.
+ *
+ * Consensus-safe dummy prevout: hash = SHA256d("xcoin-xid-vin-v1" || handle),
+ * n = 0x58494431 ('XID1'). That n is not a real vout index, the hash is not a
+ * coinbase null, and each X handle has its own outpoint so mempool conflicts
+ * work like a double-spend. Never inserted into the UTXO set (not a premine).
+ */
+static const uint32_t XACCOUNT_DUMMY_N = 0x58494431u;
+
+COutPoint MakeXAccountDummyPrevout(const std::string& normalizedHandle);
+bool IsXAccountDummyPrevout(const COutPoint& prevout);
+/** True when vin[nIn] is the dummy bound to this tx's XID1 handle. */
+bool IsXAccountDummyInput(const CTransaction& tx, unsigned int nIn);
+/**
+ * Free identity-root assignment: XID1 + new root, exactly one dummy vin,
+ * 0 XFER in/out, no witness. Not a coin grant.
+ */
+bool IsXAccountIdentityClaim(const CTransaction& tx, std::string* handleOut = nullptr);
+/** Reject dummy prevouts that are not a valid identity claim. */
+bool CheckXAccountDummyInputs(const CTransaction& tx, std::string& err);
 
 bool CheckIfXAccountAssigned(const std::string& xId, std::string* assetName = nullptr);
 bool AddXAccountAssignment(const std::string& xId, const std::string& assetName);

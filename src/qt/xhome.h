@@ -42,7 +42,6 @@ public Q_SLOTS:
 
 private Q_SLOTS:
     void onSignIn();
-    void onSaveClientId();
     void onMockSignIn();
     void onAllowlistMe();
     void onClaim();
@@ -79,7 +78,6 @@ private:
     QLabel* assetLabel;
     QLabel* balanceLabel;
     QLabel* statusLabel;
-    QLineEdit* clientIdEdit;
     QLineEdit* subNameEdit;
     QLineEdit* uniqueNameEdit;
     QLineEdit* nodeIpEdit;

@@ -29,6 +29,7 @@
 #include "validationinterface.h"
 
 #include "lottery.h"
+#include "assets/xaccount.h"
 #include "wallet/wallet.h"
 
 #include <algorithm>
@@ -160,6 +161,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     int nPackagesSelected = 0;
     int nDescendantsUpdated = 0;
     addPackageTxs(nPackagesSelected, nDescendantsUpdated);
+    addZeroFeeIdentityClaims();
 
     int64_t nTime1 = GetTimeMicros();
 
@@ -282,6 +284,23 @@ void BlockAssembler::AddToBlock(CTxMemPool::txiter iter)
         LogPrintf("fee %s txid %s\n",
                   CFeeRate(iter->GetModifiedFee(), iter->GetTxSize()).ToString(),
                   iter->GetTx().GetHash().ToString());
+    }
+}
+
+void BlockAssembler::addZeroFeeIdentityClaims()
+{
+    for (CTxMemPool::indexed_transaction_set::const_iterator it = mempool.mapTx.begin();
+         it != mempool.mapTx.end(); ++it) {
+        CTxMemPool::txiter iter = it;
+        if (inBlock.count(iter))
+            continue;
+        if (!IsXAccountIdentityClaim(iter->GetTx()))
+            continue;
+        if (!TestPackage(iter->GetTxSize(), iter->GetSigOpCost()))
+            continue;
+        if (!IsFinalTx(iter->GetTx(), nHeight, nLockTimeCutoff))
+            continue;
+        AddToBlock(iter);
     }
 }
 

@@ -618,7 +618,10 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         view.SetBackend(viewMemPool);
 
         // do all inputs exist?
-        for (const CTxIn txin : tx.vin) {
+        for (size_t i = 0; i < tx.vin.size(); i++) {
+            const CTxIn& txin = tx.vin[i];
+            if (IsXAccountDummyInput(tx, i))
+                continue;
             if (!pcoinsTip->HaveCoinInCache(txin.prevout)) {
                 coins_to_uncache.push_back(txin.prevout);
             }
@@ -713,12 +716,14 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                 strprintf("%d", nSigOpsCost));
 
         CAmount mempoolRejectFee = pool.GetMinFee(gArgs.GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000).GetFee(nSize);
-        if (!bypass_limits && mempoolRejectFee > 0 && nModifiedFees < mempoolRejectFee) {
+        const bool fIdentityClaim = IsXAccountIdentityClaim(tx);
+        if (!bypass_limits && !fIdentityClaim && mempoolRejectFee > 0 && nModifiedFees < mempoolRejectFee) {
             return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "mempool min fee not met", false, strprintf("%d < %d", nFees, mempoolRejectFee));
         }
 
         // No transactions are allowed below minRelayTxFee except from disconnected blocks
-        if (!bypass_limits && nModifiedFees < ::minRelayTxFee.GetFee(nSize)) {
+        // and the one free identity-root claim (0 XFER in/out, dummy vin).
+        if (!bypass_limits && !fIdentityClaim && nModifiedFees < ::minRelayTxFee.GetFee(nSize)) {
             LogPrintf("Modifed fees: %u, minrelayfee: %u\n", nModifiedFees, ::minRelayTxFee.GetFee(nSize));
             return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "min relay fee not met");
         }
@@ -1552,6 +1557,10 @@ void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, CTxUndo &txund
         txundo.vprevout.reserve(tx.vin.size());
         for (const CTxIn &txin : tx.vin) {
             txundo.vprevout.emplace_back();
+            if (IsXAccountDummyPrevout(txin.prevout)) {
+                txundo.vprevout.back() = Coin();
+                continue;
+            }
             bool is_spent = inputs.SpendCoin(txin.prevout, &txundo.vprevout.back(), assetCache); /** XCOIN START */ /* Pass assetCache into function */ /** XCOIN END */
             assert(is_spent);
         }
@@ -1639,6 +1648,8 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
             }
 
             for (unsigned int i = 0; i < tx.vin.size(); i++) {
+                if (IsXAccountDummyInput(tx, i))
+                    continue;
                 const COutPoint &prevout = tx.vin[i].prevout;
                 const Coin& coin = inputs.AccessCoin(prevout);
                 assert(!coin.IsSpent());
@@ -2190,6 +2201,8 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
             for (unsigned int j = tx.vin.size(); j-- > 0;) {
                 const COutPoint &out = tx.vin[j].prevout;
                 Coin &undo = txundo.vprevout[j];
+                if (IsXAccountDummyPrevout(out))
+                    continue;
                 int res = ApplyTxInUndo(std::move(undo), view, out, assetsCache); /** XCOIN START */ /* Pass assetsCache into ApplyTxInUndo function */ /** XCOIN END */
                 if (res == DISCONNECT_FAILED) return DISCONNECT_FAILED;
                 fClean = fClean && res != DISCONNECT_UNCLEAN;
@@ -2580,6 +2593,10 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
             // be in ConnectBlock because they require the UTXO set
             prevheights.resize(tx.vin.size());
             for (size_t j = 0; j < tx.vin.size(); j++) {
+                if (IsXAccountDummyInput(tx, j)) {
+                    prevheights[j] = 0;
+                    continue;
+                }
                 prevheights[j] = view.AccessCoin(tx.vin[j].prevout).nHeight;
             }
 
@@ -2591,6 +2608,8 @@ static bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockInd
             if (fAddressIndex || fSpentIndex)
             {
                 for (size_t j = 0; j < tx.vin.size(); j++) {
+                    if (IsXAccountDummyInput(tx, j))
+                        continue;
 
                     const CTxIn input = tx.vin[j];
                     const CTxOut &prevout = view.AccessCoin(tx.vin[j].prevout).out;

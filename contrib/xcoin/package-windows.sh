@@ -42,7 +42,7 @@ if [[ -z "$QT" || -z "$DAEMON" || -z "$CLI" ]]; then
   echo "Build with:" >&2
   echo "  cd depends && make HOST=${HOST}" >&2
   echo "  mkdir -p build-win && cd build-win" >&2
-  echo "  CONFIG_SITE=\$PWD/../depends/${HOST}/share/config.site ../configure --prefix=/ --with-gui=qt5 --disable-bench --disable-tests --enable-reduce-exports" >&2
+  echo "  CONFIG_SITE=\$PWD/../depends/${HOST}/share/config.site ../configure --prefix=/ --with-gui=qt5 --without-qtdbus --disable-bench --disable-tests --enable-reduce-exports" >&2
   echo "  make -j\$(nproc)" >&2
   exit 1
 fi

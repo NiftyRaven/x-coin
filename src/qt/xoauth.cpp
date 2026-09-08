@@ -139,7 +139,7 @@ void XOAuth::startLogin()
 {
     const QString client = ClientId();
     if (client.isEmpty()) {
-        fail(tr("Set your X app Client ID first (xoauthclientid= in xcoin.conf)."));
+        fail(tr("This wallet has no X app Client ID. The operator sets xoauthclientid= in xcoin.conf (callback http://127.0.0.1:18791/callback)."));
         return;
     }
     verifier = RandomB64Url(32);

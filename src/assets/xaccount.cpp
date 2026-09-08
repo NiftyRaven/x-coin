@@ -7,6 +7,7 @@
 #include "assets/assetdb.h"
 #include "assets/assets.h"
 #include "base58.h"
+#include "hash.h"
 #include "lottery.h"
 #include "primitives/transaction.h"
 #include "script/script.h"
@@ -192,6 +193,93 @@ bool ParseXAccountAssignmentScript(const CScript& script, std::string& xId)
     xId.assign(data.begin() + 4, data.end());
     if (xId.empty() || xId.size() > lottery::MAX_X_HANDLE)
         return false;
+    return true;
+}
+
+COutPoint MakeXAccountDummyPrevout(const std::string& normalizedHandle)
+{
+    CHash256 hasher;
+    static const char tag[] = "xcoin-xid-vin-v1";
+    hasher.Write(reinterpret_cast<const unsigned char*>(tag), sizeof(tag) - 1);
+    hasher.Write(reinterpret_cast<const unsigned char*>(normalizedHandle.data()), normalizedHandle.size());
+    uint256 hash;
+    hasher.Finalize(hash.begin());
+    return COutPoint(hash, XACCOUNT_DUMMY_N);
+}
+
+bool IsXAccountDummyPrevout(const COutPoint& prevout)
+{
+    return prevout.n == XACCOUNT_DUMMY_N && !prevout.hash.IsNull();
+}
+
+bool IsXAccountIdentityClaim(const CTransaction& tx, std::string* handleOut)
+{
+    if (handleOut)
+        handleOut->clear();
+    if (tx.IsCoinBase() || tx.HasWitness())
+        return false;
+    if (tx.vin.size() != 1)
+        return false;
+    if (tx.vin[0].prevout.IsNull() || !IsXAccountDummyPrevout(tx.vin[0].prevout))
+        return false;
+    if (!tx.vin[0].scriptSig.empty() || tx.vin[0].scriptWitness.stack.size() != 0)
+        return false;
+    if (tx.vin[0].nSequence != CTxIn::SEQUENCE_FINAL)
+        return false;
+
+    for (const auto& out : tx.vout) {
+        if (out.nValue != 0)
+            return false;
+    }
+
+    std::string xid;
+    if (!ParseXAccountAssignment(tx, xid))
+        return false;
+    std::string handle;
+    uint64_t uid = 0;
+    std::string err;
+    if (!NormalizeXAccountId(xid, handle, uid, err))
+        return false;
+    if (tx.vin[0].prevout != MakeXAccountDummyPrevout(handle))
+        return false;
+    if (!tx.IsNewAsset())
+        return false;
+    if (handleOut)
+        *handleOut = handle;
+    return true;
+}
+
+bool IsXAccountDummyInput(const CTransaction& tx, unsigned int nIn)
+{
+    if (nIn >= tx.vin.size())
+        return false;
+    if (!IsXAccountDummyPrevout(tx.vin[nIn].prevout))
+        return false;
+    return IsXAccountIdentityClaim(tx);
+}
+
+bool CheckXAccountDummyInputs(const CTransaction& tx, std::string& err)
+{
+    err.clear();
+    unsigned int dummyCount = 0;
+    for (const auto& in : tx.vin) {
+        if (IsXAccountDummyPrevout(in.prevout))
+            dummyCount++;
+    }
+    if (dummyCount == 0)
+        return true;
+    if (tx.IsCoinBase()) {
+        err = "bad-txns-coinbase-xid-dummy";
+        return false;
+    }
+    if (!IsXAccountIdentityClaim(tx)) {
+        err = "bad-txns-xid-dummy-not-identity";
+        return false;
+    }
+    if (dummyCount != 1) {
+        err = "bad-txns-xid-dummy-count";
+        return false;
+    }
     return true;
 }
 
