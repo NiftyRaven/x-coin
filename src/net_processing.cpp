@@ -32,6 +32,7 @@
 #include "utilmoneystr.h"
 #include "utilstrencodings.h"
 #include "lottery.h"
+#include "pool.h"
 #include "xsession.h"
 #include "validationinterface.h"
 
@@ -1798,6 +1799,15 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                                                           xsession::SessionIsXVerified(), hbSig));
             }
         }
+        {
+            std::vector<xpool::Advert> pools = xpool::Get().AllAdverts();
+            for (size_t i = 0; i < pools.size(); i++) {
+                const xpool::Advert& a = pools[i];
+                std::vector<unsigned char> pub(a.pub.begin(), a.pub.end());
+                connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::XPL, a.id, a.name, a.seq,
+                                                          pub, a.members, a.sig));
+            }
+        }
     }
 
     else if (!pfrom->fSuccessfullyConnected)
@@ -3019,6 +3029,62 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         }
     }
 
+    else if (strCommand == NetMsgType::XPL)
+    {
+        std::string poolId;
+        std::string name;
+        uint32_t seq = 0;
+        std::vector<unsigned char> vchPub;
+        std::vector<CScript> members;
+        std::vector<unsigned char> vchSig;
+        try {
+            vRecv >> poolId >> name >> seq >> vchPub >> members >> vchSig;
+        } catch (const std::exception&) {
+            LOCK(cs_main);
+            Misbehaving(pfrom->GetId(), 1);
+            return false;
+        }
+        if (poolId.size() > xpool::MAX_POOL_ID || name.size() > xpool::MAX_POOL_NAME ||
+            members.size() > xpool::MAX_POOL_MEMBERS || vchSig.size() > 65) {
+            LOCK(cs_main);
+            Misbehaving(pfrom->GetId(), 1);
+            return false;
+        }
+        xpool::Advert a;
+        a.id = poolId;
+        a.name = name;
+        a.seq = seq;
+        a.pub.Set(vchPub.begin(), vchPub.end());
+        a.members = members;
+        a.sig = vchSig;
+        std::string err;
+        if (!xpool::Get().AcceptGossip(a, err)) {
+            LogPrint(BCLog::NET, "lottery xpl ignored (%s) peer=%d\n", err, pfrom->GetId());
+            return true;
+        }
+        static CCriticalSection cs_xplRelay;
+        static std::map<std::string, uint32_t> lastSeq;
+        bool shouldRelay = false;
+        {
+            LOCK(cs_xplRelay);
+            uint32_t& seen = lastSeq[a.id];
+            if (a.seq > seen) {
+                seen = a.seq;
+                shouldRelay = true;
+            }
+        }
+        if (shouldRelay) {
+            connman->ForEachNode([&](CNode* pto) {
+                if (pto == pfrom || !pto->fSuccessfullyConnected || pto->fDisconnect)
+                    return;
+                CNetMsgMaker relayMaker(pto->GetSendVersion());
+                std::vector<unsigned char> pub(a.pub.begin(), a.pub.end());
+                connman->PushMessage(pto, relayMaker.Make(NetMsgType::XPL, a.id, a.name, a.seq,
+                                                          pub, a.members, a.sig));
+            });
+        }
+    }
+
     else {
         // Ignore unknown commands for extensibility
         LogPrint(BCLog::NET, "Unknown command \"%s\" from peer=%d\n", SanitizeString(strCommand), pfrom->GetId());
@@ -3359,6 +3425,15 @@ bool PeerLogicValidation::SendMessages(CNode* pto, std::atomic<bool>& interruptM
                     connman->PushMessage(pto, msgMaker.Make(NetMsgType::XHB, hbNow, localScript,
                                                             localX.handle, (uint64_t)0,
                                                             xsession::SessionIsXVerified(), hbSig));
+            }
+            {
+                std::vector<xpool::Advert> pools = xpool::Get().AllAdverts();
+                for (size_t i = 0; i < pools.size(); i++) {
+                    const xpool::Advert& a = pools[i];
+                    std::vector<unsigned char> pub(a.pub.begin(), a.pub.end());
+                    connman->PushMessage(pto, msgMaker.Make(NetMsgType::XPL, a.id, a.name, a.seq,
+                                                              pub, a.members, a.sig));
+                }
             }
         }
 

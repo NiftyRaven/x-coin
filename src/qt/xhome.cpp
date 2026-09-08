@@ -67,7 +67,15 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     , walletModel(0)
     , oauth(new XOAuth(this))
     , nodeIpEdit(0)
+    , poolNameEdit(0)
+    , poolIdEdit(0)
+    , poolPassEdit(0)
+    , joinIdEdit(0)
+    , joinPassEdit(0)
     , copyNodeBtn(0)
+    , copyPoolIdBtn(0)
+    , poolMineLabel(0)
+    , poolPublicLabel(0)
     , shareNodeChk(0)
     , nodeSharePanel(0)
     , nodeEndpointLabel(0)
@@ -244,6 +252,76 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     moneyHint->setWordWrap(true);
     root->addWidget(moneyHint);
 
+    QLabel* poolHead = new QLabel("POOL");
+    poolHead->setObjectName("xsection");
+    root->addWidget(poolHead);
+
+    QLabel* poolHint = new QLabel(
+        "Optional. Create a pool, or join with a pool id and password someone shared. "
+        "Each X Verified running member is one lottery ticket. Unverified members add no tickets "
+        "but still take an even split of a win. Share id + password only if you want that. "
+        "Everyone else sees the pool name and payout addresses.");
+    poolHint->setObjectName("xhint");
+    poolHint->setWordWrap(true);
+    root->addWidget(poolHint);
+
+    poolMineLabel = new QLabel;
+    poolMineLabel->setObjectName("xcard");
+    poolMineLabel->setWordWrap(true);
+    poolMineLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    root->addWidget(poolMineLabel);
+
+    poolNameEdit = new QLineEdit;
+    poolNameEdit->setPlaceholderText("Pool name (public)");
+    poolIdEdit = new QLineEdit;
+    poolIdEdit->setPlaceholderText("Pool id (share with password)");
+    poolPassEdit = new QLineEdit;
+    poolPassEdit->setPlaceholderText("Password");
+    poolPassEdit->setEchoMode(QLineEdit::Password);
+    QPushButton* createPoolBtn = new QPushButton("Create pool");
+    createPoolBtn->setObjectName("xprimary");
+    createPoolBtn->setCursor(Qt::PointingHandCursor);
+    createPoolBtn->setMinimumHeight(44);
+    QVBoxLayout* createCol = new QVBoxLayout;
+    createCol->setSpacing(8);
+    createCol->addWidget(poolNameEdit);
+    createCol->addWidget(poolIdEdit);
+    createCol->addWidget(poolPassEdit);
+    createCol->addWidget(createPoolBtn);
+    root->addLayout(createCol);
+
+    joinIdEdit = new QLineEdit;
+    joinIdEdit->setPlaceholderText("Pool id");
+    joinPassEdit = new QLineEdit;
+    joinPassEdit->setPlaceholderText("Password");
+    joinPassEdit->setEchoMode(QLineEdit::Password);
+    QPushButton* joinPoolBtn = new QPushButton("Join pool");
+    joinPoolBtn->setObjectName("xghost");
+    joinPoolBtn->setCursor(Qt::PointingHandCursor);
+    joinPoolBtn->setMinimumHeight(44);
+    QHBoxLayout* joinRow = new QHBoxLayout;
+    joinRow->addWidget(joinIdEdit, 1);
+    joinRow->addWidget(joinPassEdit, 1);
+    joinRow->addWidget(joinPoolBtn);
+    root->addLayout(joinRow);
+
+    QHBoxLayout* poolBtns = new QHBoxLayout;
+    copyPoolIdBtn = new QPushButton("Copy pool id");
+    copyPoolIdBtn->setObjectName("xghost");
+    copyPoolIdBtn->setCursor(Qt::PointingHandCursor);
+    QPushButton* leavePoolBtn = new QPushButton("Leave pool");
+    leavePoolBtn->setObjectName("xghost");
+    leavePoolBtn->setCursor(Qt::PointingHandCursor);
+    poolBtns->addWidget(copyPoolIdBtn);
+    poolBtns->addWidget(leavePoolBtn);
+    root->addLayout(poolBtns);
+
+    poolPublicLabel = new QLabel;
+    poolPublicLabel->setObjectName("xcard");
+    poolPublicLabel->setWordWrap(true);
+    poolPublicLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    root->addWidget(poolPublicLabel);
+
     QLabel* nodeHead = new QLabel("MY NODE");
     nodeHead->setObjectName("xsection");
     root->addWidget(nodeHead);
@@ -315,6 +393,10 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     connect(oauth, SIGNAL(status(QString)), this, SLOT(onOAuthStatus(QString)));
     connect(shareNodeChk, SIGNAL(toggled(bool)), this, SLOT(onShareNodeToggled(bool)));
     connect(copyNodeBtn, SIGNAL(clicked()), this, SLOT(onCopyNodeAddress()));
+    connect(createPoolBtn, SIGNAL(clicked()), this, SLOT(onCreatePool()));
+    connect(joinPoolBtn, SIGNAL(clicked()), this, SLOT(onJoinPool()));
+    connect(leavePoolBtn, SIGNAL(clicked()), this, SLOT(onLeavePool()));
+    connect(copyPoolIdBtn, SIGNAL(clicked()), this, SLOT(onCopyPoolId()));
 
     QTimer* t = new QTimer(this);
     connect(t, SIGNAL(timeout()), this, SLOT(refresh()));
@@ -364,7 +446,7 @@ void XHome::showRpcOutcome(const QString& raw, const QString& okPrefix)
     if (ok) {
         if (okPrefix.isEmpty())
             statusLabel->setText(text);
-        else if (text.isEmpty())
+        else if (text.isEmpty() || text.startsWith("{") || text.startsWith("["))
             statusLabel->setText(okPrefix);
         else
             statusLabel->setText(okPrefix + " — " + text);
@@ -490,6 +572,67 @@ void XHome::refresh()
 
     claimBtn->setEnabled(signedIn && rootName.isEmpty());
     allowlistBtn->setEnabled(signedIn);
+
+    UniValue mine;
+    mine.read(rpc("getmypool").toStdString());
+    const bool inPool = mine.isObject() && (mine["in_pool"].isTrue()
+                                           || mine["in_pool"].getValStr() == "1"
+                                           || mine["in_pool"].getValStr() == "true");
+    if (inPool) {
+        QString addrs;
+        if (mine.exists("addresses") && mine["addresses"].isArray()) {
+            const UniValue& arr = mine["addresses"];
+            for (size_t i = 0; i < arr.size(); i++) {
+                if (!addrs.isEmpty())
+                    addrs += "\n";
+                addrs += QString::fromStdString(arr[i].getValStr());
+            }
+        }
+        QString idLine;
+        if (mine.exists("id"))
+            idLine = QString("Pool id (share with your password): %1\n")
+                         .arg(QString::fromStdString(mine["id"].getValStr()));
+        poolMineLabel->setText(QString(
+            "Your pool: %1\n"
+            "%2"
+            "Eligible tickets (X Verified running members): %3\n"
+            "Even split among every member address, verified or not.\n"
+            "%4")
+            .arg(QString::fromStdString(mine["name"].getValStr()))
+            .arg(idLine)
+            .arg(QString::fromStdString(mine["eligible_tickets"].getValStr()))
+            .arg(addrs.isEmpty() ? QString("(no addresses yet)") : addrs));
+        if (copyPoolIdBtn)
+            copyPoolIdBtn->setEnabled(mine.exists("id"));
+    } else {
+        poolMineLabel->setText("Not in a pool. Create one or join with an id and password.");
+        if (copyPoolIdBtn)
+            copyPoolIdBtn->setEnabled(false);
+    }
+
+    UniValue listed;
+    listed.read(rpc("listpools").toStdString());
+    if (listed.isArray() && listed.size() > 0) {
+        QString pub;
+        for (size_t i = 0; i < listed.size(); i++) {
+            const UniValue& p = listed[i];
+            if (!p.isObject())
+                continue;
+            if (!pub.isEmpty())
+                pub += "\n\n";
+            pub += QString::fromStdString(p["name"].getValStr());
+            pub += QString("\nTickets: %1")
+                       .arg(QString::fromStdString(p["eligible_tickets"].getValStr()));
+            if (p.exists("addresses") && p["addresses"].isArray()) {
+                const UniValue& arr = p["addresses"];
+                for (size_t j = 0; j < arr.size(); j++)
+                    pub += "\n" + QString::fromStdString(arr[j].getValStr());
+            }
+        }
+        poolPublicLabel->setText("Public pools (name + addresses only)\n" + pub);
+    } else {
+        poolPublicLabel->setText("Public pools\nNone on this node yet.");
+    }
 }
 
 QString XHome::localListenEndpoint() const
@@ -712,4 +855,59 @@ void XHome::onOAuthFailed(const QString& error)
 void XHome::onOAuthStatus(const QString& message)
 {
     statusLabel->setText(message);
+}
+
+void XHome::onCreatePool()
+{
+    const QString name = poolNameEdit ? poolNameEdit->text().trimmed() : QString();
+    const QString id = poolIdEdit ? poolIdEdit->text().trimmed() : QString();
+    const QString pass = poolPassEdit ? poolPassEdit->text() : QString();
+    if (name.isEmpty() || id.isEmpty() || pass.isEmpty()) {
+        QMessageBox::information(this, "X-Coin", "Enter a public name, a pool id, and a password.");
+        return;
+    }
+    showRpcOutcome(rpc("createpool", QStringList() << name << id << pass), "Pool created");
+    if (poolPassEdit)
+        poolPassEdit->clear();
+    refresh();
+}
+
+void XHome::onJoinPool()
+{
+    const QString id = joinIdEdit ? joinIdEdit->text().trimmed() : QString();
+    const QString pass = joinPassEdit ? joinPassEdit->text() : QString();
+    if (id.isEmpty() || pass.isEmpty()) {
+        QMessageBox::information(this, "X-Coin", "Enter the pool id and password that were shared with you.");
+        return;
+    }
+    showRpcOutcome(rpc("joinpool", QStringList() << id << pass), "Joined pool");
+    if (joinPassEdit)
+        joinPassEdit->clear();
+    refresh();
+}
+
+void XHome::onLeavePool()
+{
+    UniValue mine;
+    mine.read(rpc("getmypool").toStdString());
+    if (!mine.isObject() || !mine.exists("id")
+            || !(mine["in_pool"].isTrue() || mine["in_pool"].getValStr() == "1")) {
+        QMessageBox::information(this, "X-Coin", "You are not in a pool on this wallet.");
+        return;
+    }
+    showRpcOutcome(rpc("leavepool", QStringList() << QString::fromStdString(mine["id"].getValStr())),
+                   "Left pool");
+    refresh();
+}
+
+void XHome::onCopyPoolId()
+{
+    UniValue mine;
+    mine.read(rpc("getmypool").toStdString());
+    if (!mine.isObject() || !mine.exists("id")) {
+        QMessageBox::information(this, "X-Coin", "No pool id on this wallet. Create or join first.");
+        return;
+    }
+    QApplication::clipboard()->setText(QString::fromStdString(mine["id"].getValStr()));
+    statusLabel->setText("Copied pool id. Share the password yourself — it is not copied.");
 }
