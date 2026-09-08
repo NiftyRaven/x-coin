@@ -126,8 +126,7 @@ BOOST_AUTO_TEST_CASE(dummy_vin_roundtrip_is_not_bip144_marker)
 
     CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
     ss << tx;
-    CTransaction tx2;
-    ss >> tx2;
+    CTransaction tx2(deserialize, ss);
     BOOST_CHECK_EQUAL(tx2.vin.size(), 1u);
     BOOST_CHECK(tx2.vin[0].prevout == tx.vin[0].prevout);
     BOOST_CHECK(!tx2.IsCoinBase());
@@ -177,8 +176,7 @@ BOOST_AUTO_TEST_CASE(identity_claim_full_tx_roundtrip)
 
     CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
     ss << tx;
-    CTransaction tx2;
-    ss >> tx2;
+    CTransaction tx2(deserialize, ss);
     BOOST_CHECK_EQUAL(tx2.vin.size(), 1u);
     BOOST_CHECK(tx2.vin[0].prevout == tx.vin[0].prevout);
     BOOST_CHECK(IsXAccountIdentityClaim(tx2));
