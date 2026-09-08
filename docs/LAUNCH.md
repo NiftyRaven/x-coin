@@ -147,5 +147,12 @@ Coinbase is immature for 100 blocks — generate ~110 on regtest before `issue`.
 contrib/xcoin/smoke-regtest.sh
 ```
 
-Exercises `getlotteryinfo`, on-demand blocks, a two-winner split after the
-regtest halving (height 150), and `issue TESTASSET`.
+Exercises `getlotteryinfo`, on-demand blocks, a single-winner 5000 XFER
+coinbase at height 149, a two-winner 2500 XFER split at height 150 (first
+regtest halving), and `issue TESTASSET`.
+
+```bash
+contrib/xcoin/smoke-gossip.sh
+```
+
+Two regtest nodes: after `addnode`, both `getactivenodes` lists match (P2P `xhb`).

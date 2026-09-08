@@ -126,3 +126,7 @@ contrib/devtools/split-debug.sh
 cmake-build-debug
 
 CMakeLists.txt
+
+# local smoke output
+smoke-regtest-datadir/
+smoke-gossip-datadir/
