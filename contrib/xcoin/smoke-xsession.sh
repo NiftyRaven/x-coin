@@ -148,23 +148,6 @@ if "${CLI[@]}" linkxaccount nftrvn >/tmp/xcoin-xsession-imp.err 2>&1; then
 fi
 grep -qi "impersonation\|cannot use\|signed in as" /tmp/xcoin-xsession-imp.err
 
-echo "== session handle alice can provision the root =="
-ADDR="$("${CLI[@]}" getnewaddress)"
-# Identity root burn is 0 but the assignment tx still pays a relay fee.
-"${CLI[@]}" generatetoaddress 110 "$ADDR" >/dev/null
-LINK="$("${CLI[@]}" linkxaccount alice "$ADDR")"
-echo "$LINK"
-echo "$LINK" | python3 -c '
-import json,sys
-j=json.load(sys.stdin)
-if j.get("xaccount") != "alice":
-    sys.exit("expected xaccount=alice, got %r" % j.get("xaccount"))
-if j.get("asset") != "ALICE":
-    sys.exit("expected root ALICE, got %r" % j.get("asset"))
-'
-"${CLI[@]}" listmyassets | grep -q ALICE
-"${CLI[@]}" getmainasset alice | grep -q ALICE
-
 INFO2="$("${CLI[@]}" getlotteryinfo)"
 echo "$INFO2"
 echo "$INFO2" | python3 -c '
@@ -192,5 +175,24 @@ if j.get("local_x_verified") is not True:
 if j.get("local_eligible") is not True:
     sys.exit("signed-in X Verified alice must be eligible; invite list is not a gate")
 '
+
+echo "== session handle alice can provision the root =="
+ADDR="$("${CLI[@]}" getnewaddress)"
+# Identity root burn is 0 but the assignment tx still pays a relay fee.
+# generatetoaddress needs an X Verified local heartbeat so the coinbase
+# can commit a non-empty active set.
+"${CLI[@]}" generatetoaddress 110 "$ADDR" >/dev/null
+LINK="$("${CLI[@]}" linkxaccount alice "$ADDR")"
+echo "$LINK"
+echo "$LINK" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("xaccount") != "alice":
+    sys.exit("expected xaccount=alice, got %r" % j.get("xaccount"))
+if j.get("asset") != "ALICE":
+    sys.exit("expected root ALICE, got %r" % j.get("asset"))
+'
+"${CLI[@]}" listmyassets | grep -q ALICE
+"${CLI[@]}" getmainasset alice | grep -q ALICE
 
 echo "smoke-xsession: ok"
