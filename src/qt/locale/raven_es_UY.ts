@@ -251,7 +251,7 @@
         <translation>Recibiendo direcciones</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation>Enviar monedas a una dirección Raven</translation>
     </message>
     <message>

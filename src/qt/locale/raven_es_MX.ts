@@ -339,7 +339,7 @@
         <translation>Reindexando bloques en el disco...</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation>Enviar monedas a una dirección Raven</translation>
     </message>
     <message>
@@ -629,7 +629,7 @@
         <translation>Opciones:</translation>
     </message>
     <message>
-        <source>Raven Core</source>
+        <source>X Coin</source>
         <translation>nucleo Raven</translation>
     </message>
     <message>

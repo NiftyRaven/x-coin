@@ -521,7 +521,7 @@
         <translation>Opsiynau:</translation>
     </message>
     <message>
-        <source>Raven Core</source>
+        <source>X Coin</source>
         <translation>Craidd Raven</translation>
     </message>
     <message>

@@ -292,10 +292,10 @@ RES_ICONS = \
   qt/res/icons/asset_manage_selected.png \
   qt/res/icons/asset_transfer.png \
   qt/res/icons/asset_transfer_selected.png \
-  qt/res/icons/ravencointext.png \
-  qt/res/icons/raven.ico \
-  qt/res/icons/raven_testnet.ico \
-  qt/res/icons/raven.png \
+  qt/res/icons/xcointext.png \
+  qt/res/icons/xcoin.ico \
+  qt/res/icons/xcoin_testnet.ico \
+  qt/res/icons/xcoin.png \
   qt/res/icons/chevron.png \
   qt/res/icons/clock1.png \
   qt/res/icons/clock2.png \

@@ -1,8 +1,20 @@
-# Ravencoin - Community Ideas
+# Community notes (historical)
+
+This folder is an imported idea list, not current X Coin product copy.
+Operator docs: `docs/LAUNCH.md`, `docs/LOTTERY.md`, `docs/ASSETS.md`.
+Legal / opcode notes: `docs/FORK.md`.
+
+# Community notes (historical)
+
+This folder is an imported idea list, not current X Coin product copy.
+Operator docs: `docs/LAUNCH.md`, `docs/LOTTERY.md`, `docs/ASSETS.md`.
+Legal / opcode notes: `docs/FORK.md`.
+
+# X Coin - Community Ideas
 
 “Every new mechanism frees the human mind for more creative adventures and accomplishments” - Life After Google by George Gilder  
 
-We’re all in this together. There are new capabilities included in the latest Phoenix version (3.2+) of Ravencoin that open up new business opportunities.  Join in and build something.  This is not an exhaustive list, but just a starting point to fire the imagination.  
+We’re all in this together. There are new capabilities included in the latest Phoenix version (3.2+) of X Coin that open up new business opportunities.  Join in and build something.  This is not an exhaustive list, but just a starting point to fire the imagination.  
 
 
 ### Anyone with a computer
@@ -14,7 +26,7 @@ We’re all in this together. There are new capabilities included in the latest 
     * REST API to RPC (business specific)
     * REST API to memos/messages
 * Core
-    * Asset Exchange Proxy (simulate sending an ASSET like ravend does for RVN)
+    * Asset Exchange Proxy (simulate sending an ASSET like xcoind does for XFER)
     * Improved messaging/memo RPC calls
     * 24 word - master key (not seed) - direct to/from master xprv and pub
     * Local Filter (whitelist/blacklist) for assets
@@ -41,7 +53,7 @@ We’re all in this together. There are new capabilities included in the latest 
     * List of Tags per Address
     * Tighter integration with IPFS
 * Mobile wallet enhancements
-    * Fix dark mode on RVN Wallet
+    * Fix dark mode on X Coin wallet
     * Fix GitHub Issues on Wallet
     * Asset Sweeping on Android
 * Mobile Wallet
@@ -52,7 +64,7 @@ We’re all in this together. There are new capabilities included in the latest 
     * Memo/Message explorer
 
 
-### Ravencoin.com
+### X Coin.com
 * Build website specifically for businesses / consultants
 
 
@@ -61,36 +73,36 @@ We’re all in this together. There are new capabilities included in the latest 
 * IPFS Integration benefits (education)
 * Digital Twin capabilities (education)
 * Security Token issuer benefits (education)
-* Run a contest: RVN prize for best idea for new Ravencoin based Business
+* Run a contest: XFER prize for best idea for new X Coin based Business
 
 
 ### Entrepreneur (Business Opportunities)
 * Security Token Issuance Platform
 * Back-office for security issuance
 * Digital Twins / Proof-of-Authenticity Business
-* Back-end API platform for Ravencoin
+* Back-end API platform for X Coin
     * Other people to hit high-availablity API
-* Fee system to pay RVN fees automatically
+* Fee system to pay XFER fees automatically
     * Auto-pay fees
     * Can take X% of fees
     * Auto-cosign transactions
     * Constructs a transaction for signing , adds fees, cosigns and publishes
 * Auto fee funder (so users of ABC token doesn’t need to worry about fees)
     * Watches for a specific token
-    * Sends small amount of RVN for fees.
+    * Sends small amount of XFER for fees.
 * #BLUE_CHECK_MARK tag issuer as a trust mark.  Not just KYC, but a history of being a good actor.  Mirrors the blue check mark from twitter.
-* #KYC tagger - store info and tag Ravencoin addresses
-* #ACCREDITED - verify accredited status and tag Ravencoin addresses
+* #KYC tagger - store info and tag X Coin addresses
+* #ACCREDITED - verify accredited status and tag X Coin addresses
  
 ### Technical Consultant
-* Help companies apply Ravencoin capabilities to real-world problems
+* Help companies apply X Coin capabilities to real-world problems
 * Security Token Issuance Platform
 * Collaborate with exchanges for more listings
 * Collaborate with custodial Security Token exchanges for deposit/withdrawal
-* Collaborate with hardware wallets for additional RVN and asset support
+* Collaborate with hardware wallets for additional XFER and asset support
 
 
-### Areas for Ravencoin Innovation
+### Areas for X Coin Innovation
 * Financial
 * Supply-chain - Paperless record keeping
 * Tokenized Game Items - spanning game companies

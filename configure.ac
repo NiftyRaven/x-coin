@@ -301,13 +301,13 @@ CPPFLAGS="$CPPFLAGS -DHAVE_BUILD_INFO -D__STDC_FORMAT_MACROS"
 
 AC_ARG_WITH([cli],
   [AS_HELP_STRING([--with-cli],
-  [build raven-cli (default=yes)])],
+  [build xcoin-cli (default=yes)])],
   [build_raven_cli=$withval],
   [build_raven_cli=yes])
 
 AC_ARG_WITH([tx],
   [AS_HELP_STRING([--with-tx],
-  [build raven-tx (default=no)])],
+  [build xcoin-tx (default=no)])],
   [build_raven_tx=$withval],
   [build_raven_tx=no])
 
@@ -319,7 +319,7 @@ AC_ARG_WITH([libs],
 
 AC_ARG_WITH([daemon],
   [AS_HELP_STRING([--with-daemon],
-  [build ravend daemon (default=yes)])],
+  [build xcoind daemon (default=yes)])],
   [build_ravend=$withval],
   [build_ravend=yes])
 
@@ -1066,15 +1066,15 @@ AC_SUBST(UNIVALUE_LIBS)
 
 RAVEN_QT_PATH_PROGS([PROTOC], [protoc],$protoc_bin_path)
 
-AC_MSG_CHECKING([whether to build ravend])
+AC_MSG_CHECKING([whether to build xcoind])
 AM_CONDITIONAL([BUILD_RAVEND], [test x$build_ravend = xyes])
 AC_MSG_RESULT($build_ravend)
 
-AC_MSG_CHECKING([whether to build raven-cli])
+AC_MSG_CHECKING([whether to build xcoin-cli])
 AM_CONDITIONAL([BUILD_RAVEN_CLI], [test x$build_raven_cli = xyes])
 AC_MSG_RESULT($build_raven_cli)
 
-AC_MSG_CHECKING([whether to build raven-tx])
+AC_MSG_CHECKING([whether to build xcoin-tx])
 AM_CONDITIONAL([BUILD_RAVEN_TX], [test x$build_raven_tx = xyes])
 AC_MSG_RESULT($build_raven_tx)
 
@@ -1175,7 +1175,7 @@ if test x$raven_enable_qt != xno; then
     AC_MSG_WARN("xgettext is required to update qt translations")
   fi
 
-  AC_MSG_CHECKING([whether to build test_raven-qt])
+  AC_MSG_CHECKING([whether to build test_xcoin-qt])
   if test x$use_gui_tests$raven_enable_qt_test = xyesyes; then
     AC_MSG_RESULT([yes])
     BUILD_TEST_QT="yes"
@@ -1186,7 +1186,7 @@ fi
 
 AM_CONDITIONAL([ENABLE_ZMQ], [test "x$use_zmq" = "xyes"])
 
-AC_MSG_CHECKING([whether to build test_raven])
+AC_MSG_CHECKING([whether to build test_xcoin])
 if test x$use_tests = xyes; then
   AC_MSG_RESULT([yes])
   BUILD_TEST="yes"
@@ -1274,7 +1274,7 @@ AC_CONFIG_FILES([contrib/devtools/split-debug.sh],[chmod +x contrib/devtools/spl
 AM_COND_IF([HAVE_DOXYGEN], [AC_CONFIG_FILES([doc/Doxyfile])])
 AC_CONFIG_LINKS([contrib/filter-lcov.py:contrib/filter-lcov.py])
 AC_CONFIG_LINKS([test/functional/test_runner.py:test/functional/test_runner.py])
-AC_CONFIG_LINKS([test/util/raven-util-test.py:test/util/raven-util-test.py])
+AC_CONFIG_LINKS([test/util/xcoin-util-test.py:test/util/xcoin-util-test.py])
 AC_CONFIG_LINKS([src/crypto/md_helper.c:src/crypto/md_helper.c])
 
 dnl boost's m4 checks do something really nasty: they export these vars. As a
@@ -1330,8 +1330,8 @@ esac
 
 echo
 echo "Options used to compile and link:"
-echo "  build raven-cli = $build_raven_cli"
-echo "  build raven-tx  = $build_raven_tx"
+echo "  build xcoin-cli = $build_raven_cli"
+echo "  build xcoin-tx  = $build_raven_tx"
 echo "  with wallet     = $enable_wallet"
 echo "  with gui / qt   = $raven_enable_qt"
 if test x$raven_enable_qt != xno; then

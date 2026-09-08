@@ -1,0 +1,33 @@
+# /etc/conf.d/xcoind: config file for /etc/init.d/xcoind
+
+# Config file location
+#XCOIND_CONFIGFILE="/etc/xcoin/xcoin.conf"
+
+# What directory to write pidfile to?  (created and owned by $XCOIND_USER)
+#XCOIND_PIDDIR="/var/run/xcoind"
+
+# What filename to give the pidfile
+#XCOIND_PIDFILE="${XCOIND_PIDDIR}/xcoind.pid"
+
+# Where to write xcoind data (be mindful that the blockchain is large)
+#XCOIND_DATADIR="/var/lib/xcoind"
+
+# User and group to own xcoind process
+#XCOIND_USER="xcoin"
+#XCOIND_GROUP="xcoin"
+
+# Path to xcoind executable
+#XCOIND_BIN="/usr/bin/xcoind"
+
+# Nice value to run xcoind under
+#XCOIND_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+#XCOIND_OPTS=""
+
+# The timeout in seconds OpenRC will wait for xcoind to terminate
+# after a SIGTERM has been raised.
+# Note that this will be mapped as argument to start-stop-daemon's
+# '--retry' option, which means you can specify a retry schedule
+# here. For more information see man 8 start-stop-daemon.
+XCOIND_SIGTERM_TIMEOUT=60

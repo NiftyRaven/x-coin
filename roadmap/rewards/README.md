@@ -21,7 +21,7 @@ For RVN this must send an equal number of satoshis to every TARGET_TOKEN.  Remai
 
 For a token, this must send an equal number of the token to every TARGET_TOKEN.  The calculation will need to factor in the units.  For example, if you attempted to send 7 non-divisible (units=0) of SEND_TOKEN to every holder of TARGET_TOKEN, but there were 8 or more TARGET_TOKEN holders, then the 'reward' call would fail because it is impossible to reward the TARGET_TOKEN holders equally.
 
-Example: 10 RVN to 3 TRONCO holders.  10 * 100,000,000 sats = 1,000,000,000 RVN sats.
+Example: 10 XFER to 3 TRONCO holders.  10 * 100,000,000 sats = 1,000,000,000 RVN sats.
 PER_TOKEN_AMOUNT_IN_SATOSHIS = 1,000,000,000 / 3 = 333333333.33333333 (repeating) per TRONCO holder.  The remainder of .3333 (repeating) satoshis per holder will not be sent as an output, and therefore will be given to the miners.  This is 1 sat once multiplied by the 3 TRONCO holders.  Each TRONCO holder will receive exactly 333333333 RVN sats.
 
 One special case - Paying TRONCO to TRONCO.  This special case would require an exception address, and the source of the TRONCO would need to come from one or more of the exception addresses.
@@ -65,7 +65,7 @@ RFMD7ZJzexAmiLA9BHxwFCPVeiuAgdVjcP   40 TRONCO
 reward 100 RVN TRONCO
 
 Takes 100 RVN (10,000,000,000 sats)
-RBQ5A9wYKcebZtTSrJ5E4bKgPRbNmr8M2H gets 10 RVN (10,000,000,000 RVN sats)
+RBQ5A9wYKcebZtTSrJ5E4bKgPRbNmr8M2H gets 10 XFER (10,000,000,000 RVN sats)
 RPsCVwsq8Uf2dcUSXcYPzVnsAMZtAHw6sV gets 20 RVN (20,000,000,000 RVN sats)
 RBp5woWDU8TRMz1TPeemyLxxLL3xsCnQgh gets 30 RVN (30,000,000,000 RVN sats)
 RFMD7ZJzexAmiLA9BHxwFCPVeiuAgdVjcP gets 40 RVN (40,000,000,000 RVN sats)

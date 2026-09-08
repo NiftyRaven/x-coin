@@ -46,7 +46,7 @@ config file):
 	HiddenServicePort 18767 127.0.0.1:18767
 
 The directory can be different of course, but (both) port numbers should be equal to
-your ravend's P2P listen port (8767 by default).
+your xcoind's P2P listen port (8767 by default).
 
 	-externalip=X   You can tell raven about its publicly reachable address using
 	                this option, and this can be a .onion address. Given the above
@@ -68,18 +68,18 @@ your ravend's P2P listen port (8767 by default).
 
 In a typical situation, where you're only reachable via Tor, this should suffice:
 
-	./ravend -proxy=127.0.0.1:9050 -externalip=57qr3yd1nyntf5k.onion -listen
+	./xcoind -proxy=127.0.0.1:9050 -externalip=57qr3yd1nyntf5k.onion -listen
 
 (obviously, replace the Onion address with your own). It should be noted that you still
 listen on all devices and another node could establish a clearnet connection, when knowing
 your address. To mitigate this, additionally bind the address of your Tor proxy:
 
-	./ravend ... -bind=127.0.0.1
+	./xcoind ... -bind=127.0.0.1
 
 If you don't care too much about hiding your node, and want to be reachable on IPv4
 as well, use `discover` instead:
 
-	./ravend ... -discover
+	./xcoind ... -discover
 
 and open port 8767 on your firewall (or use -upnp).
 
@@ -93,24 +93,24 @@ for normal IPv4/IPv6 communication, use:
 
 Starting with Tor version 0.2.7.1 it is possible, through Tor's control socket
 API, to create and destroy 'ephemeral' hidden services programmatically.
-Raven Core has been updated to make use of this.
+X Coin has been updated to make use of this.
 
 This means that if Tor is running (and proper authentication has been configured),
-Raven Core automatically creates a hidden service to listen on. This will positively 
+X Coin automatically creates a hidden service to listen on. This will positively 
 affect the number of available .onion nodes.
 
-This new feature is enabled by default if Raven Core is listening (`-listen`), and
+This new feature is enabled by default if X Coin is listening (`-listen`), and
 requires a Tor connection to work. It can be explicitly disabled with `-listenonion=0`
 and, if not disabled, configured using the `-torcontrol` and `-torpassword` settings.
 To show verbose debugging information, pass `-debug=tor`.
 
 Connecting to Tor's control socket API requires one of two authentication methods to be 
-configured. For cookie authentication the user running ravend must have write access 
+configured. For cookie authentication the user running xcoind must have write access 
 to the `CookieAuthFile` specified in Tor configuration. In some cases this is 
 preconfigured and the creation of a hidden service is automatic. If permission problems 
 are seen with `-debug=tor` they can be resolved by adding both the user running tor and 
-the user running ravend to the same group and setting permissions appropriately. On 
-Debian-based systems the user running ravend can be added to the debian-tor group, 
+the user running xcoind to the same group and setting permissions appropriately. On 
+Debian-based systems the user running xcoind can be added to the debian-tor group, 
 which has the appropriate permissions. An alternative authentication method is the use 
 of the `-torpassword` flag and a `hash-password` which can be enabled and specified in 
 Tor configuration.

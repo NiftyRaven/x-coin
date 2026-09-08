@@ -287,7 +287,7 @@ bool BuildTransaction(
         for (int i = start; i < (int)p_pendingPayments.size() && i < stop; i++) {
             expectedCount++;
 
-            // Parse Raven address (already validated during ownership snapshot creation)
+            // Parse X Coin address (already validated during ownership snapshot creation)
             CTxDestination dest = DecodeDestination(p_pendingPayments[i].address);
             CScript scriptPubKey = GetScriptForDestination(dest);
             CRecipient recipient = {scriptPubKey, p_pendingPayments[i].amount, false};

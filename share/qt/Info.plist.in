@@ -11,7 +11,7 @@
   </array>
 
   <key>CFBundleIconFile</key>
-  <string>raven.icns</string>
+  <string>xcoin.icns</string>
 
   <key>CFBundlePackageType</key>
   <string>APPL</string>
@@ -29,16 +29,16 @@
   <string>????</string>
 
   <key>CFBundleExecutable</key>
-  <string>Raven-Qt</string>
+  <string>XCoin-Qt</string>
   
   <key>CFBundleName</key>
-  <string>Raven-Qt</string>
+  <string>XCoin-Qt</string>
 
   <key>LSHasLocalizedDisplayName</key>
   <true/>
 
   <key>CFBundleIdentifier</key>
-  <string>org.ravenfoundation.Raven-Qt</string>
+  <string>org.ravenfoundation.XCoin-Qt</string>
 
   <key>CFBundleURLTypes</key>
   <array>

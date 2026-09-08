@@ -1,6 +1,6 @@
 <!DOCTYPE RCC><RCC version="1.0">
     <qresource prefix="/icons">
-        <file alias="raven">res/icons/raven.png</file>
+        <file alias="xcoin">res/icons/xcoin.png</file>
         <file alias="address-book">res/icons/address-book.png</file>
         <file alias="quit">res/icons/quit.png</file>
         <file alias="send">res/icons/send.png</file>
@@ -72,8 +72,7 @@
         <file alias="asset_manage_selected">res/icons/asset_manage_selected.png</file>
         <file alias="asset_transfer">res/icons/asset_transfer.png</file>
         <file alias="asset_transfer_selected">res/icons/asset_transfer_selected.png</file>
-        <file alias="ravencointext">res/icons/ravencointext.png</file>
-        <file alias="rvntext">res/icons/rvntext.png</file>
+        <file alias="xcointext">res/icons/xcointext.png</file>
 	<file alias="restricted_asset">res/icons/restricted_asset.png</file>
 	<file alias="restricted_asset_selected">res/icons/restricted_asset_selected.png</file>
     </qresource>

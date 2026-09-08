@@ -62,11 +62,11 @@
         <translation>Primește Adrese</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your X Coin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation>Acestea sunt adresele Raven pentru efectuarea plăților . Intotdeauna verifică cantitatea si adresa de primire inainte de a efectua tranzactia</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your X Coin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation>Acestea sunt adresele Raven pentru a primi plățile.Este recomandat să folosești o noua adresă pentru fiecare tranzacție</translation>
     </message>
     <message>
@@ -659,7 +659,7 @@
         <translation>Deschide &amp;URI...</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation>Trimite monedele către o adresă Raven</translation>
     </message>
     <message>
@@ -707,11 +707,11 @@
         <translation>Criptează cheile private care aparțin portofelului tău.</translation>
     </message>
     <message>
-        <source>Sign messages with your Raven addresses to prove you own them</source>
+        <source>Sign messages with your X Coin addresses to prove you own them</source>
         <translation>Semnează mesajele cu adresa ta de Raven pentru a face dovada că îți aparțin.</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Raven addresses</source>
+        <source>Verify messages to ensure they were signed with specified X Coin addresses</source>
         <translation>Verifică mesajele cu scopul de a asigura faptul că au fost semnate cu adresa de Raven specificată.</translation>
     </message>
     <message>
@@ -901,8 +901,8 @@
 <context>
     <name>raven-core</name>
     <message>
-        <source>Raven Core</source>
-        <translation>Raven Core</translation>
+        <source>X Coin</source>
+        <translation>X Coin</translation>
     </message>
     <message>
         <source>Information</source>

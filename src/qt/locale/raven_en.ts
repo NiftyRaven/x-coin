@@ -80,12 +80,12 @@
     </message>
     <message>
         <location line="+7"/>
-        <source>These are your Raven addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your X Coin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+4"/>
-        <source>These are your Raven addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your X Coin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -813,7 +813,7 @@
     </message>
     <message>
         <location line="+107"/>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1491,7 +1491,7 @@
         <location line="+43"/>
         <location line="+22"/>
         <location line="+645"/>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1648,7 +1648,7 @@
     </message>
     <message>
         <location line="+71"/>
-        <source>The entered address &quot;%1&quot; is not a valid Raven address.</source>
+        <source>The entered address &quot;%1&quot; is not a valid X Coin address.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1947,7 +1947,7 @@ Recommended action: Fully sync your wallet before sending a transaction.
     </message>
     <message>
         <location line="+8"/>
-        <source>%1 will download and store a copy of the Raven block chain.</source>
+        <source>%1 will download and store a copy of the X Coin blockchain.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2004,7 +2004,7 @@ Recommended action: Fully sync your wallet before sending a transaction.
     </message>
     <message>
         <location line="+26"/>
-        <source>Since no wallet.dat file was found in the Raven block chain data directory, a wallet file will be created.</source>
+        <source>Since no wallet.dat file was found in the X Coin blockchain data directory, a wallet file will be created.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2904,7 +2904,7 @@ They are not recoverable !!</source>
     </message>
     <message>
         <location line="+8"/>
-        <source>URI cannot be parsed! This can be caused by an invalid Raven address or malformed URI parameters.</source>
+        <source>URI cannot be parsed! This can be caused by an invalid X Coin address or malformed URI parameters.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3036,7 +3036,7 @@ They are not recoverable !!</source>
     </message>
     <message>
         <location filename="../guiutil.cpp" line="-349"/>
-        <source>Enter a Raven address (e.g. %1)</source>
+        <source>Enter an X Coin address (e.g. %1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3865,7 +3865,7 @@ They are not recoverable !!</source>
     </message>
     <message>
         <location line="+149"/>
-        <source>Ravencoin Market Price</source>
+        <source>X Coin Market Price</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3900,8 +3900,8 @@ They are not recoverable !!</source>
     </message>
     <message>
         <location line="-974"/>
-        <source>Send coins to a Raven address</source>
-        <translation>Send coins to a Raven address</translation>
+        <source>Send coins to an X Coin address</source>
+        <translation>Send coins to an X Coin address</translation>
     </message>
     <message>
         <location line="+131"/>
@@ -3960,13 +3960,13 @@ They are not recoverable !!</source>
     </message>
     <message>
         <location line="+11"/>
-        <source>Sign messages with your Raven addresses to prove you own them</source>
-        <translation>Sign messages with your Raven addresses to prove you own them</translation>
+        <source>Sign messages with your X Coin addresses to prove you own them</source>
+        <translation>Sign messages with your X Coin addresses to prove you own them</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Verify messages to ensure they were signed with specified Raven addresses</source>
-        <translation>Verify messages to ensure they were signed with specified Raven addresses</translation>
+        <source>Verify messages to ensure they were signed with specified X Coin addresses</source>
+        <translation>Verify messages to ensure they were signed with specified X Coin addresses</translation>
     </message>
     <message>
         <location line="+65"/>
@@ -4712,7 +4712,7 @@ They are not recoverable !!</source>
     <message>
         <location line="+6"/>
         <location line="+659"/>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5054,7 +5054,7 @@ They are not recoverable !!</source>
     </message>
     <message>
         <location line="+22"/>
-        <source>The Raven address to send the payment to</source>
+        <source>The X Coin address to send the payment to</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5510,7 +5510,7 @@ They are not recoverable !!</source>
     </message>
     <message>
         <location line="+101"/>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5560,7 +5560,7 @@ They are not recoverable !!</source>
     </message>
     <message>
         <location line="+66"/>
-        <source>The Raven address to send the payment to</source>
+        <source>The X Coin address to send the payment to</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5684,7 +5684,7 @@ They are not recoverable !!</source>
     </message>
     <message>
         <location line="+18"/>
-        <source>The Raven address to sign the message with</source>
+        <source>The X Coin address to sign the message with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5726,8 +5726,8 @@ They are not recoverable !!</source>
     </message>
     <message>
         <location line="+21"/>
-        <source>Sign the message to prove you own this Raven address</source>
-        <translation>Sign the message to prove you own this Raven address</translation>
+        <source>Sign the message to prove you own this X Coin address</source>
+        <translation>Sign the message to prove you own this X Coin address</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -5757,13 +5757,13 @@ They are not recoverable !!</source>
     </message>
     <message>
         <location line="+21"/>
-        <source>The Raven address the message was signed with</source>
+        <source>The X Coin address the message was signed with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+37"/>
-        <source>Verify the message to ensure it was signed with the specified Raven address</source>
-        <translation>Verify the message to ensure it was signed with the specified Raven address</translation>
+        <source>Verify the message to ensure it was signed with the specified X Coin address</source>
+        <translation>Verify the message to ensure it was signed with the specified X Coin address</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -6742,8 +6742,8 @@ They are not recoverable !!</source>
     </message>
     <message>
         <location line="-525"/>
-        <source>Raven Core</source>
-        <translation type="unfinished">Raven Core</translation>
+        <source>X Coin</source>
+        <translation type="unfinished">X Coin</translation>
     </message>
     <message>
         <location line="+1"/>

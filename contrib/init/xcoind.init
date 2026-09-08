@@ -1,36 +1,36 @@
 #!/bin/bash
 #
-#  ravend The raven core server.
+#  xcoind The X Coin server.
 #
 #
 # chkconfig: 345 80 20
-# description: ravend
-# processname: ravend
+# description: xcoind
+# processname: xcoind
 #
 
 # Source function library.
 . /etc/init.d/functions
 
-# you can override defaults in /etc/sysconfig/ravend, see below
-if [ -f /etc/sysconfig/ravend ]; then
-        . /etc/sysconfig/ravend
+# you can override defaults in /etc/sysconfig/xcoind, see below
+if [ -f /etc/sysconfig/xcoind ]; then
+        . /etc/sysconfig/xcoind
 fi
 
 RETVAL=0
 
-prog=ravend
-# you can override the lockfile via RAVEND_LOCKFILE in /etc/sysconfig/ravend
-lockfile=${RAVEND_LOCKFILE-/var/lock/subsys/ravend}
+prog=xcoind
+# you can override the lockfile via XCOIND_LOCKFILE in /etc/sysconfig/xcoind
+lockfile=${XCOIND_LOCKFILE-/var/lock/subsys/xcoind}
 
-# ravend defaults to /usr/bin/ravend, override with RAVEND_BIN
-ravend=${RAVEND_BIN-/usr/bin/ravend}
+# xcoind defaults to /usr/bin/xcoind, override with XCOIND_BIN
+xcoind=${XCOIND_BIN-/usr/bin/xcoind}
 
-# ravend opts default to -disablewallet, override with RAVEND_OPTS
-ravend_opts=${RAVEND_OPTS--disablewallet}
+# xcoind opts default to -disablewallet, override with XCOIND_OPTS
+xcoind_opts=${XCOIND_OPTS--disablewallet}
 
 start() {
     echo -n $"Starting $prog: "
-    daemon $DAEMONOPTS $ravend $ravend_opts
+    daemon $DAEMONOPTS $xcoind $xcoind_opts
     RETVAL=$?
     echo
     [ $RETVAL -eq 0 ] && touch $lockfile

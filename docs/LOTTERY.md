@@ -15,7 +15,7 @@ This document is the source of truth for the algorithm.
 | Subunit | **xferon** — 1 XFER = 100,000,000 xferons |
 | Slot length | 60 seconds (one lottery minute) |
 | Height mapping | height `h` uses slot `floor(genesisTime / 60) + h` |
-| Target spacing | 1 block per minute (same as Ravencoin’s clock, without hashing) |
+| Target spacing | 1 block per minute (no hashing) |
 | Subsidy | 5000 XFER at height **1**, halved every `nSubsidyHalvingInterval` blocks (2,100,000 on main/test, 150 on regtest). Height 0 pays **0**. |
 | Spendable lifetime | **20,999,994,999.727 XFER** (integer `>>=` halvings; ~21B minus unpaid genesis and shift dust) |
 
@@ -27,6 +27,20 @@ Consensus does **not** call X.com on every block. Honest operators share one
 explicit allowlist of **X-verified** (blue-check / X Premium verified)
 accounts. That is how bots and anonymous process spam are excluded for the
 private launch. There is no X OAuth product and no live API key is required.
+
+### Offline handle verification (private test)
+
+Operators verify handles **without** calling the X.com API:
+
+1. Open the public profile `https://x.com/<handle>` in a browser.
+2. Confirm it is the intended person and shows an X Premium / verified badge.
+3. Write the handle (no `@`) into the shared allowlist file.
+4. Every honest node loads that same file (`-xallowlist=` or
+   `~/.xcoin/verified-x-accounts.txt`).
+5. The operator sets `-xaccount=<handle>` and runs `linkxaccount` to receive
+   the free root.
+
+The owner handle for this private test is **`NFTRVN`**.
 
 A node is lottery-eligible only when **both** are true:
 
@@ -54,6 +68,7 @@ with every honest node so they agree on the active set.
 ```text
 # verified-x-accounts.txt  (datadir or -xallowlist=)
 # handle [userid]
+NFTRVN
 YourHandle 123456789
 alice
 bob
@@ -136,7 +151,7 @@ Same active set + same seed ⇒ same winner list on every honest node.
 ## Rewards and coinbase
 
 `GetBlockSubsidy(h)` is 0 at `h < 1`, else `5000 XFER >> floor(h / interval)`,
-forced to 0 after 64 shifts (same cap as Bitcoin/Ravencoin; XFER’s 5000·COIN
+forced to 0 after 64 shifts (same 64-shift cap as the imported engine; XFER’s 5000·COIN
 already reaches 0 xferons at shift 39). That amount is split across the winners:
 
 ```
@@ -164,7 +179,7 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 - **Regtest:** the producer only heartbeats. Use `generatetoaddress` /
   `generate` to assemble blocks on demand (still no PoW). The destination
   script is heartbeated so it is in the active set.
-- Removed / gutted: `RavenMiner` hash loop, `-gen` / `setgenerate` as a miner,
+- Removed / gutted: the legacy miner hash loop, `-gen` / `setgenerate` as a miner,
   KawPoW submit helpers (`pprpcsb`, `getkawpowhash`).
 
 ## RPCs

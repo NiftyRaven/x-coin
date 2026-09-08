@@ -1,6 +1,6 @@
 UNIX/LINUX BUILD NOTES
 ====================
-Some notes on how to build Raven Core in *nix.
+Some notes on how to build X Coin in *nix.
 
 
 Note
@@ -23,7 +23,7 @@ make
 make install # optional
 ```
 
-This will build raven-qt as well if the dependencies are met.
+This will build xcoin-qt as well if the dependencies are met.
 
 On most Linux distros the "fPIC" flag needs to be set.  If this flag is not specified it is possible that the build will fail with an error similar to:
 ```bash
@@ -97,7 +97,7 @@ libqrencode (optional) can be installed with:
 
 Notes
 -----
-The release is built with GCC and then "strip ravend" to strip the debug
+The release is built with GCC and then "strip xcoind" to strip the debug
 symbols, which reduces the executable size by about 90%.
 
 
@@ -203,7 +203,7 @@ Setup and Build Example: Arch Linux
 This example lists the steps necessary to setup and build a command line only, non-wallet distribution of the latest changes on Arch Linux:
 
     pacman -S git base-devel boost libevent python
-    git clone https://github.com/RavenProject/Ravencoin.git
+    git clone https://github.com/NiftyRaven/x-coin.git
     cd raven/
     ./autogen.sh
     ./configure --disable-wallet --without-gui --without-miniupnpc
@@ -213,7 +213,7 @@ Note:
 Enabling wallet support requires either compiling against a Berkeley DB newer than 4.8 (package `db`) using `--with-incompatible-bdb`,
 or building and depending on a local version of Berkeley DB 4.8. The readily available Arch Linux packages are currently built using
 `--with-incompatible-bdb` according to the [PKGBUILD](https://projects.archlinux.org/svntogit/community.git/tree/raven/trunk/PKGBUILD).
-As mentioned above, when maintaining portability of the wallet between the standard Raven Core distributions and independently built
+As mentioned above, when maintaining portability of the wallet between the standard X Coin distributions and independently built
 node software is desired, Berkeley DB 4.8 must be used.
 
 

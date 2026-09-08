@@ -1,4 +1,4 @@
-Build instructions for Ravencoin 
+Build instructions for X Coin 
 =================================
 
 This will install most of the dependencies from ubuntu.
@@ -130,12 +130,12 @@ protobuf-compiler
 
 Directory structure
 ------------------
-Ravencoin sources in `$HOME/src`
+X Coin sources in `$HOME/src`
 
 Berkeley DB will be installed to `$HOME/src/db4`
 
 
-Ravencoin
+X Coin
 ------------------
 
 Start in $HOME
@@ -146,11 +146,11 @@ Make the directory for sources and go into it.
 
 `cd src`
 
-__Download Ravencoin source.__
+__Download X Coin source.__
 
-`git clone https://github.com/RavenProject/Ravencoin`
+`git clone https://github.com/NiftyRaven/x-coin`
 
-`cd Ravencoin`
+`cd X Coin`
 
 `git checkout develop` # this checks out the develop branch.
 
@@ -171,11 +171,11 @@ _Adjust to own needs. This will install the binaries to `/usr/local/bin`_
 
 `make -j8`  # 8 for 8 build threads, adjust to fit your setup.
 
-You can now start raven-qt from the build directory.
+You can now start xcoin-qt from the build directory.
 
-`src/qt/raven-qt`
+`src/qt/xcoin-qt`
 
-ravend and raven-cli are in `src/`
+xcoind and xcoin-cli are in `src/`
 
 
 __Optional:__

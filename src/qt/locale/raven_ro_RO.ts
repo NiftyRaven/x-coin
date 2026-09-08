@@ -62,11 +62,11 @@
         <translation>Adrese de primire</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your X Coin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation>Acestea sunt adresele tale Raven pentru a trimite plăţi.Întotdeauna verificaţi cantitatea şi adresa înainte de a trimite monezi.</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your X Coin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation>Acestea sunt adresele tale Raven pentru a primi plăţi.Este recomandat să folosiţi o nouă adresă pentru fiecare tranzacţie.</translation>
     </message>
     <message>
@@ -625,7 +625,7 @@
         <translation>Plăteşte doar minima taxă de %1</translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>Atenţie: Adresă Raven invalidă.</translation>
     </message>
     <message>
@@ -1211,7 +1211,7 @@
         <translation>Cantitate</translation>
     </message>
     <message>
-        <source>Enter a Raven address (e.g. %1)</source>
+        <source>Enter an X Coin address (e.g. %1)</source>
         <translation>Introduceţi o adresă Raven (de exemplu %1)</translation>
     </message>
     <message>
@@ -1543,7 +1543,7 @@
         <translation>Se reindexează blocurile pe disc...</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation>Trimite monede către o adresă Raven</translation>
     </message>
     <message>
@@ -1591,11 +1591,11 @@
         <translation>Criptează cheile private ale portofelului dvs.</translation>
     </message>
     <message>
-        <source>Sign messages with your Raven addresses to prove you own them</source>
+        <source>Sign messages with your X Coin addresses to prove you own them</source>
         <translation>Semnaţi mesaje cu adresa dvs. Raven pentru a dovedi că vă aparţin</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Raven addresses</source>
+        <source>Verify messages to ensure they were signed with specified X Coin addresses</source>
         <translation>Verificaţi mesaje pentru a vă asigura că au fost semnate cu adresa Raven specificată</translation>
     </message>
     <message>
@@ -1941,7 +1941,7 @@
         <translation>Aceasta este o tranzacţie normală.</translation>
     </message>
     <message>
-        <source>The Raven address to send the payment to</source>
+        <source>The X Coin address to send the payment to</source>
         <translation>Adresa raven către care se face plata</translation>
     </message>
     <message>
@@ -2002,7 +2002,7 @@
         <translation>&amp;Semnează mesaj</translation>
     </message>
     <message>
-        <source>The Raven address to sign the message with</source>
+        <source>The X Coin address to sign the message with</source>
         <translation>Adresa cu care semnaţi mesajul</translation>
     </message>
     <message>
@@ -2034,7 +2034,7 @@
         <translation>Copiază semnatura curentă în clipboard-ul sistemului</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Raven address</source>
+        <source>Sign the message to prove you own this X Coin address</source>
         <translation>Semnează mesajul pentru a dovedi ca deţineţi acestă adresă Raven</translation>
     </message>
     <message>
@@ -2054,11 +2054,11 @@
         <translation>&amp;Verifică mesaj</translation>
     </message>
     <message>
-        <source>The Raven address the message was signed with</source>
+        <source>The X Coin address the message was signed with</source>
         <translation>Introduceţi o adresă Raven</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Raven address</source>
+        <source>Verify the message to ensure it was signed with the specified X Coin address</source>
         <translation>Verificaţi mesajul pentru a vă asigura că a fost semnat cu adresa Raven specificată</translation>
     </message>
     <message>
@@ -2147,7 +2147,7 @@
         <translation>Rulează în fundal ca un demon şi acceptă comenzi</translation>
     </message>
     <message>
-        <source>Raven Core</source>
+        <source>X Coin</source>
         <translation>Nucleul Raven</translation>
     </message>
     <message>

@@ -62,11 +62,11 @@
         <translation>Empfangsadressen</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your X Coin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation>Dies sind ihre Raven-Adressen zum Tätigen von Überweisungen. Bitte prüfen Sie den Betrag und die Empfangsadresse, bevor Sie Ravens überweisen.</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your X Coin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation>Dies sind Ihre Raven-Adressen zum Empfangen von Zahlungen. Es wird empfohlen, für jede Transaktion eine neue Empfangsadresse zu verwenden.</translation>
     </message>
     <message>
@@ -621,7 +621,7 @@
         <translation><numerusform>Voraussichtlicher Beginn der Bestätigung innerhalb von %n Block.</numerusform><numerusform>Voraussichtlicher Beginn der Bestätigung innerhalb von %n Blöcken.</numerusform></translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>Warnung: Ungültige Raven-Adresse</translation>
     </message>
     <message>
@@ -1161,7 +1161,7 @@
         <translation>Der IPFS/Txid Hash ist nicht gültig. Bitte benutzen Sie einen gültigen IPFS/Txid Hash.</translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>Warnung: Ungültige Raven-Adresse</translation>
     </message>
     <message>
@@ -1284,7 +1284,7 @@
         <translation>Zahlungsadresse bearbeiten</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Raven address.</source>
+        <source>The entered address "%1" is not a valid X Coin address.</source>
         <translation>Die eingegebene Adresse "%1" ist keine gültige Raven-Adresse.</translation>
     </message>
     <message>
@@ -1521,7 +1521,7 @@ Empfohlene Aktion: Vollständige Synchronisation bevor eine Transaktion gesendet
         <translation>Raven</translation>
     </message>
     <message>
-        <source>%1 will download and store a copy of the Raven block chain.</source>
+        <source>%1 will download and store a copy of the X Coin blockchain.</source>
         <translation>%1 wird eine Kopie der Raven-Blockchain herunterladen und speichern.</translation>
     </message>
     <message>
@@ -1563,7 +1563,7 @@ Empfohlene Aktion: Vollständige Synchronisation bevor eine Transaktion gesendet
         <translation>Wählen Sie den Typ der zu erstellenden Wallet aus.</translation>
     </message>
     <message>
-        <source>Since no wallet.dat file was found in the Raven block chain data directory, a wallet file will be created.</source>
+        <source>Since no wallet.dat file was found in the X Coin blockchain data directory, a wallet file will be created.</source>
         <translation>Eine neue Wallet-Datei wird erstellt, da am Speicherort der Raven-Blockchain  keine wallet.dat gefunden wurde.</translation>
     </message>
     <message>
@@ -2135,7 +2135,7 @@ Sie sind nicht wiederherstellbar!</translation>
         <translation>Ungültige Zahlungsadresse %1</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Raven address or malformed URI parameters.</source>
+        <source>URI cannot be parsed! This can be caused by an invalid X Coin address or malformed URI parameters.</source>
         <translation>URI kann nicht analysiert werden! Dies kann durch eine ungültige Raven-Adresse oder fehlerhafte URI-Parameter verursacht werden.</translation>
     </message>
     <message>
@@ -2229,7 +2229,7 @@ Sie sind nicht wiederherstellbar!</translation>
         <translation>Betrag</translation>
     </message>
     <message>
-        <source>Enter a Raven address (e.g. %1)</source>
+        <source>Enter an X Coin address (e.g. %1)</source>
         <translation>Raven-Adresse eingeben (z.B. %1)</translation>
     </message>
     <message>
@@ -2777,8 +2777,8 @@ Sie sind nicht wiederherstellbar!</translation>
         <translation>&amp;Wallet</translation>
     </message>
     <message>
-        <source>Ravencoin Market Price</source>
-        <translation>Ravencoin Marktpreis</translation>
+        <source>X Coin Market Price</source>
+        <translation>X Coin Marktpreis</translation>
     </message>
     <message>
         <source>Brought to you by binance.com</source>
@@ -2805,7 +2805,7 @@ Sie sind nicht wiederherstellbar!</translation>
         <translation>Reindiziere Blöcke auf Datenträger...</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation>Ravens an eine Raven-Adresse überweisen</translation>
     </message>
     <message>
@@ -2853,11 +2853,11 @@ Sie sind nicht wiederherstellbar!</translation>
         <translation>Verschlüsselt die zu Ihrer Wallet gehörenden privaten Schlüssel</translation>
     </message>
     <message>
-        <source>Sign messages with your Raven addresses to prove you own them</source>
+        <source>Sign messages with your X Coin addresses to prove you own them</source>
         <translation>Nachrichten signieren, um den Besitz Ihrer Raven-Adressen zu beweisen</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Raven addresses</source>
+        <source>Verify messages to ensure they were signed with specified X Coin addresses</source>
         <translation>Nachrichten verifizieren, um sicherzustellen, dass diese mit den angegebenen Raven-Adressen signiert wurden</translation>
     </message>
     <message>
@@ -3411,7 +3411,7 @@ Sie sind nicht wiederherstellbar!</translation>
         <translation>Warnung: Die Ausgabe eingeschränkter Assets erfordert eine Adresse</translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>Warnung: Ungültige Raven-Adresse</translation>
     </message>
     <message>
@@ -3776,7 +3776,7 @@ Sie sind nicht wiederherstellbar!</translation>
         <translation>Nur die notwendige Gebühr in Höhe von %1 zahlen</translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>Warnung: Ungültige Raven-Adresse</translation>
     </message>
     <message>
@@ -3815,7 +3815,7 @@ Sie sind nicht wiederherstellbar!</translation>
         <translation>Dies ist eine normale Überweisung.</translation>
     </message>
     <message>
-        <source>The Raven address to send the payment to</source>
+        <source>The X Coin address to send the payment to</source>
         <translation>Die Zahlungsadresse der Überweisung</translation>
     </message>
     <message>
@@ -3904,7 +3904,7 @@ Sie sind nicht wiederherstellbar!</translation>
         <translation>Sie können Nachrichten/Vereinbarungen mit Hilfe Ihrer Adressen signieren, um zu beweisen, dass Sie Ravens empfangen können, die an diese Adressen überwiesen werden. Seien Sie vorsichtig und signieren Sie nichts Vages oder Willkürliches, um Ihre Indentität vor Phishingangriffen zu schützen. Signieren Sie nur vollständig-detaillierte Aussagen, mit denen Sie auch einverstanden sind.</translation>
     </message>
     <message>
-        <source>The Raven address to sign the message with</source>
+        <source>The X Coin address to sign the message with</source>
         <translation>Die Raven-Adresse mit der die Nachricht signiert wird</translation>
     </message>
     <message>
@@ -3936,7 +3936,7 @@ Sie sind nicht wiederherstellbar!</translation>
         <translation>Aktuelle Signatur in die Zwischenablage kopieren</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Raven address</source>
+        <source>Sign the message to prove you own this X Coin address</source>
         <translation>Die Nachricht signieren, um den Besitz dieser Raven-Adresse zu beweisen</translation>
     </message>
     <message>
@@ -3960,11 +3960,11 @@ Sie sind nicht wiederherstellbar!</translation>
         <translation>Geben Sie die Zahlungsadresse des Empfängers, Nachricht (achten Sie darauf Zeilenumbrüche, Leerzeichen, Tabulatoren usw. exakt zu kopieren) und Signatur unten ein, um die Nachricht zu verifizieren. Vorsicht, interpretieren Sie nicht mehr in die Signatur hinein, als in der signierten Nachricht selber enthalten ist, um nicht von einem Man-in-the-middle-Angriff hinters Licht geführt zu werden. Beachten Sie dass dies nur beweist, dass die signierende Partei über diese Adresse Überweisungen empfangen kann.</translation>
     </message>
     <message>
-        <source>The Raven address the message was signed with</source>
+        <source>The X Coin address the message was signed with</source>
         <translation>Die Raven-Adresse mit der die Nachricht signiert wurde</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Raven address</source>
+        <source>Verify the message to ensure it was signed with the specified X Coin address</source>
         <translation>Die Nachricht verifizieren, um sicherzustellen, dass diese mit der angegebenen Raven-Adresse signiert wurde</translation>
     </message>
     <message>
@@ -4617,8 +4617,8 @@ Sie sind nicht wiederherstellbar!</translation>
         <translation>Kann HTTP Server nicht starten. Siehe debug log für Details.</translation>
     </message>
     <message>
-        <source>Raven Core</source>
-        <translation>Raven Core</translation>
+        <source>X Coin</source>
+        <translation>X Coin</translation>
     </message>
     <message>
         <source>The %s developers</source>

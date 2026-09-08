@@ -183,7 +183,7 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
 {
     // X Coin: PoW is not the block-production path. Lottery consensus
     // (docs/LOTTERY.md) selects winners. nBits is retained for serialization
-    // compatibility with the Ravencoin block header and is not enforced.
+    // compatibility with the X Coin block header and is not enforced.
     (void)hash;
     (void)nBits;
     (void)params;

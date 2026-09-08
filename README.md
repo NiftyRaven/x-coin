@@ -1,13 +1,13 @@
 # X Coin (XFER)
 
-X Coin is a **private hard-fork of [Ravencoin v4.8.0](https://github.com/RavenProject/Ravencoin/releases/tag/v4.8.0)** for simple peer-to-peer value transfer (aimed at use between users on X) plus Ravencoin-style **user-created assets/tokens**.
+X Coin is a **private** peer-to-peer coin for simple value transfer (aimed at
+use between users on X) plus **user-created assets**. There is **no mining**.
+Every **minute**, a lottery picks who produces the block and who shares the
+reward among **verified-X** active nodes. On each **halving**, one more winner
+is added that minute (1 → 2 → 3 …). A node with no linked X account is not
+lottery-eligible (it may still sync and relay).
 
-There is **no mining**. Every **minute**, a lottery picks who produces the
-block and who shares the reward among **verified-X** active nodes. On each
-**halving**, one more winner is added that minute (1 → 2 → 3 …). A node
-with no linked X account is not lottery-eligible (it may still sync/relay).
-
-This repository is the product home. Do not treat RavenProject remotes as something to push to.
+This repository is the product home.
 
 | | |
 | --- | --- |
@@ -15,10 +15,10 @@ This repository is the product home. Do not treat RavenProject remotes as someth
 | Ticker | **XFER** |
 | Subunit | **xferon** (1 XFER = 100,000,000 xferons) |
 | Consensus | Minute lottery among active nodes ([docs/LOTTERY.md](docs/LOTTERY.md)) |
-| Assets | Kept from Ravencoin (issue / transfer / unique / restricted / …) |
-| Upstream | Ravencoin **v4.8.0** (`22549129888d02e0e08fcdb9f96f3c699167e774`) — [docs/FORK.md](docs/FORK.md) |
+| Assets | One free root per verified X handle; subs and uniques ([docs/ASSETS.md](docs/ASSETS.md)) |
+| Legal / opcode notes | [docs/FORK.md](docs/FORK.md) |
 
-## Network identity (do not collide with Ravencoin)
+## Network identity
 
 | | Main | Testnet | Regtest |
 | --- | --- | --- | --- |
@@ -28,9 +28,11 @@ This repository is the product home. Do not treat RavenProject remotes as someth
 | Data dir (Unix) | `~/.xcoin` | `~/.xcoin/testnet1` | `~/.xcoin/regtest` |
 | Config | `xcoin.conf` | | |
 
-## Build
+Do not reuse upstream v4.8.0 ports, magic, or address versions. Collision table: [docs/FORK.md](docs/FORK.md).
 
-Dependencies are the same as Ravencoin Core 4.8 (Autotools, Boost, libevent, OpenSSL, Berkeley DB 4.8 for wallets). On Debian/Ubuntu:
+## Build (`--without-gui`)
+
+On Debian/Ubuntu:
 
 ```bash
 sudo apt-get update
@@ -42,7 +44,7 @@ sudo apt-get install -y build-essential libtool autotools-dev automake pkg-confi
 make -j$(nproc)
 ```
 
-Verified in this pass: `xcoind` + `xcoin-cli` linked on Ubuntu 24.04 / gcc 13 / Boost 1.83 / BDB 5.3. Two small compile fixes for that toolchain are in-tree (`init.cpp` Boost.Signals2 disconnect, `lockedpool.cpp` `<stdexcept>`).
+Verified: `xcoind` + `xcoin-cli` on Ubuntu 24.04 / gcc 13 / Boost 1.83 / BDB 5.3.
 
 `--disable-wallet` works if you omit BDB; a wallet is required to *produce* lottery blocks (coinbase script).
 
@@ -51,25 +53,21 @@ Binaries:
 - `src/xcoind` — node / lottery producer
 - `src/xcoin-cli` — RPC client
 - `src/xcoin-tx` — transaction utility
-- `src/qt/xcoin-qt` — GUI (optional)
+- `src/qt/xcoin-qt` — GUI (optional; omit `--without-gui`)
 
-Upstream `doc/build-*.md` still says `ravend` in places; use the `xcoin*` names.
-
-### Run (regtest — fastest way to exercise the chain)
+### Run (regtest)
 
 ```bash
-src/xcoind -regtest -daemon -server -xaccount=alice -xverified=alice
+src/xcoind -regtest -daemon -server -xaccount=NFTRVN -xverified=NFTRVN
 src/xcoin-cli -regtest getblockchaininfo
 src/xcoin-cli -regtest getlotteryinfo   # local_eligible should be true
 src/xcoin-cli -regtest getnewaddress   # y… on regtest/testnet; X… on main
-src/xcoin-cli -regtest generatetoaddress 1 <address>
-src/xcoin-cli -regtest linkxaccount alice   # free main/root identity asset
-src/xcoin-cli -regtest issue ALICE/NOTE 1   # sub, 100 XFER
+src/xcoin-cli -regtest generatetoaddress 110 <address>
+src/xcoin-cli -regtest linkxaccount NFTRVN   # free main/root identity asset
+src/xcoin-cli -regtest issue NFTRVN/NOTE 1   # sub, 100 XFER
 ```
 
 `generatetoaddress` **assembles** a block; it does not hash. Coinbase is immature for 100 blocks — generate ~110 before `linkxaccount` / `issue` of a sub. On main/test the producer thread emits at most one block per minute when this node wins.
-
-Verified on regtest in this pass: distinct genesis, `getlotteryinfo` (1 winner, 5000 XFER), on-demand block, protocol main via `linkxaccount` + sub/unique. Users cannot `issue` a new root.
 
 ## RPC (lottery)
 
@@ -77,21 +75,26 @@ Verified on regtest in this pass: distinct genesis, `getlotteryinfo` (1 winner, 
 - `getactivenodes` — in-memory registry (includes `xaccount`)
 - `registeractivenode` — heartbeat (rejects unlinked/unverified)
 - `addxverified` / `listxverified` / `loadxverified` — verified X allowlist
+- `linkxaccount` / `getmainasset` — free root assignment for a verified handle
 
-`setgenerate` / `getgenerate` are removed (they only existed to drive PoW).
+`setgenerate` / `getgenerate` are removed.
 
 ## Assets
 
-See [docs/ASSETS.md](docs/ASSETS.md). Each verified X account is assigned one free main/root asset (`linkxaccount` / `AssignLinkedUserMainAsset`). Users cannot `issue` a new root. Sub **100 XFER**, unique **5 XFER**. Restricted/qualifier assets are removed. Reserved names include **XFER** / **XCOIN** as well as RVN/RAVEN. Script-level `OP_RVN_ASSET` markers are unchanged.
+See [docs/ASSETS.md](docs/ASSETS.md). Each verified X account is assigned one free main/root asset. Users cannot `issue` a new root. Sub **100 XFER**, unique **5 XFER**. Restricted/qualifier assets are removed. Historical opcode and reserved-name notes: [docs/FORK.md](docs/FORK.md).
 
-## Launch
+## Private test
 
-Private-launch checklist (ports, magic, genesis, seed publish, join, rewards, risks): [docs/LAUNCH.md](docs/LAUNCH.md). Lottery: [docs/LOTTERY.md](docs/LOTTERY.md).
+Checklist: [docs/LAUNCH.md](docs/LAUNCH.md). Lottery: [docs/LOTTERY.md](docs/LOTTERY.md).
 
-`contrib/xcoin/smoke-regtest.sh` exercises lottery + a single-winner coinbase at height 149 + a two-winner split at height 150 + `linkxaccount` / sub / unique (`issue TESTASSET` is illegal). `contrib/xcoin/smoke-gossip.sh` checks that two nodes share one active-node set over P2P `xhb`. `contrib/xcoin/smoke-eligibility.sh` checks that an unlinked node cannot enter the lottery.
+```bash
+contrib/xcoin/smoke-regtest.sh      # lottery, multi-winner, NFTRVN root, sub/unique
+contrib/xcoin/smoke-gossip.sh       # two-node P2P xhb
+contrib/xcoin/smoke-eligibility.sh  # unlinked node cannot enter the lottery
+```
 
-Live X.com API keys / OAuth are out of scope. Eligibility is an operator-shared allowlist of X-verified handles (see [docs/LOTTERY.md](docs/LOTTERY.md)). Also out of scope: explorers, DNS seeds, making upstream `make check` green against the new genesis.
+Live X.com API keys / OAuth are out of scope. Operators verify handles **offline** and share an allowlist (see [docs/LOTTERY.md](docs/LOTTERY.md)). Also out of scope: public DNS seeds, explorers, making upstream `make check` green against the new genesis.
 
 ## License
 
-MIT. Copyright Bitcoin Core, Raven Core, and X Coin developers. See [COPYING](COPYING). Keep upstream SPDX / copyright headers in source files.
+MIT. Copyright Bitcoin Core, Raven Core, and X Coin developers. See [COPYING](COPYING). Keep upstream SPDX / copyright headers in source files. Product branding is X Coin; legal attribution of the imported tree is listed in [docs/FORK.md](docs/FORK.md).

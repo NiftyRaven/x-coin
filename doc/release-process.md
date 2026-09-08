@@ -3,9 +3,9 @@ Release Process
 
 Before every release candidate:
 
-* Update translations see [translation_process.md](https://github.com/RavenProject/Ravencoin/blob/master/doc/translation_process.md#synchronising-translations).
+* Update translations see [translation_process.md](https://github.com/NiftyRaven/x-coin/blob/master/doc/translation_process.md#synchronising-translations).
 
-* Update manpages, see [gen-manpages.sh](https://github.com/RavenProject/Ravencoin/blob/master/contrib/devtools/README.md#gen-manpagessh).
+* Update manpages, see [gen-manpages.sh](https://github.com/NiftyRaven/x-coin/blob/master/contrib/devtools/README.md#gen-manpagessh).
 
 Before every minor and major release:
 
@@ -28,7 +28,7 @@ Before every major release:
 ### First time / New builders
 
 
-    git clone https://github.com/RavenProject/Ravencoin.git
+    git clone https://github.com/NiftyRaven/x-coin.git
 
 ### Raven maintainers/release engineers, suggestion for writing release notes
 
@@ -56,15 +56,15 @@ Codesigner only: Create Windows/OS X detached signatures:
 
 Codesigner only: Sign the osx binary:
 
-    transfer raven-osx-unsigned.tar.gz to osx for signing
-    tar xf raven-osx-unsigned.tar.gz
+    transfer xcoin-osx-unsigned.tar.gz to osx for signing
+    tar xf xcoin-osx-unsigned.tar.gz
     ./detached-sig-create.sh -s "Key ID"
     Enter the keychain password and authorize the signature
     Move signature-osx.tar.gz back to the gitian host
 
 Codesigner only: Sign the windows binaries:
 
-    tar xf raven-win-unsigned.tar.gz
+    tar xf xcoin-win-unsigned.tar.gz
     ./detached-sig-create.sh -key /path/to/codesign.key
     Enter the passphrase for the key when prompted
     signature-win.tar.gz will be created
@@ -98,16 +98,16 @@ Note: check that SHA256SUMS itself doesn't end up in SHA256SUMS, which is a spur
 
 - Upload zips and installers, as well as `SHA256SUMS.asc` from last step, to the github-release page.
 
-- Update ravencoin.org version
+- Update github.com/NiftyRaven/x-coin version
 
 - Announce the release:
 
   - ravencore.org blog post
 
-  - Optionally twitter, reddit /r/Ravencoin, ... but this will usually sort out itself
+  - Optionally twitter, reddit /NiftyRaven/x-coin, ... but this will usually sort out itself
 
   - Archive release notes for the new version to `doc/release-notes/` (branch `master` and branch of the release)
 
-  - Create a [new GitHub release](https://github.com/RavenProject/Ravencoin/releases/new) with a link to the archived release notes.
+  - Create a [new GitHub release](https://github.com/NiftyRaven/x-coin/releases/new) with a link to the archived release notes.
 
   - Celebrate

@@ -52,7 +52,7 @@
         </size>
        </property>
        <property name="pixmap">
-        <pixmap resource="../raven.qrc">:/icons/raven</pixmap>
+        <pixmap resource="../raven.qrc">:/icons/xcoin</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>

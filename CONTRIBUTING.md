@@ -1,7 +1,7 @@
-Contributing to Raven Core
+Contributing to X Coin
 ============================
 
-The Raven Core project operates an open contributor model where anyone is
+The X Coin project operates an open contributor model where anyone is
 welcome to contribute towards development in the form of peer review, testing
 and patches. This document explains the practical process and guidelines for
 contributing.
@@ -60,7 +60,7 @@ the pull request affects. Valid areas as:
   - *Consensus* for changes to consensus critical code
   - *Depends* for changes to depends
   - *Docs* for changes to the documentation
-  - *GUI* for changes to raven-qt
+  - *GUI* for changes to xcoin-qt
   - *Mining* for changes to the mining code
   - *Net* or *P2P* for changes to the peer-to-peer network code
   - *RPC/REST/ZMQ* for changes to the RPC, REST or ZMQ APIs
@@ -85,7 +85,7 @@ Examples:
     Trivial: Fix typo in init.cpp
 
 Note that translations should not be submitted as pull requests, please see
-[Translation Process](https://github.com/RavenProject/Ravencoin/blob/master/doc/translation_process.md) 
+[Translation Process](https://github.com/NiftyRaven/x-coin/blob/master/doc/translation_process.md) 
 for more information on helping with translations.
 
 If a pull request is specifically not to be considered for merging (yet) please
@@ -172,11 +172,11 @@ workload on reviewing.
 "Decision Making" Process
 -------------------------
 
-The following applies to code changes to the Ravencoin project (and related
-projects) and is not to be confused with overall Ravencoin
+The following applies to code changes to the X Coin project (and related
+projects) and is not to be confused with overall X Coin
 Network Protocol consensus changes.
 
-Whether a pull request is merged into Ravencoin rests with the project merge
+Whether a pull request is merged into X Coin rests with the project merge
 maintainers and ultimately the project lead.
 
 Maintainers will take into consideration if a patch is in line with the general
@@ -194,7 +194,7 @@ In general, all pull requests must:
   - Where bugs are fixed, where possible, there should be unit tests
     demonstrating the bug and also proving the fix. This helps prevent regression.
 
-Patches that change Ravencoin consensus rules are considerably more involved than
+Patches that change X Coin consensus rules are considerably more involved than
 normal because they affect the entire ecosystem and so must be preceded by
 extensive mailing list discussions and have a numbered RIP. While each case will
 be different, one should be prepared to expend more time and effort than for
@@ -235,7 +235,7 @@ higher in terms of discussion and peer review requirements, keeping in mind that
 mistakes could be very costly to the wider community. This includes refactoring
 of consensus critical code.
 
-Where a patch set proposes to change the Ravencoin consensus, it must have been
+Where a patch set proposes to change the X Coin consensus, it must have been
 discussed extensively, be accompanied by a widely discussed RIP and 
 have a generally widely perceived technical consensus of being
 a worthwhile change based on the judgement of the maintainers.
@@ -275,7 +275,7 @@ about:
 Release Policy
 --------------
 
-The RavenQT-SIG selects a release manager for each Ravencoin release.
+The RavenQT-SIG selects a release manager for each X Coin release.
 
 Copyright
 ---------

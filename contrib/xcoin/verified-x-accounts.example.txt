@@ -1,8 +1,11 @@
 # X Coin verified X allowlist (operator-shared)
 # Only list X-verified (blue-check / X Premium verified) handles.
+# Confirm each handle offline (open https://x.com/<handle>) — no API keys.
 # All honest nodes must load the same set so they agree on the active set.
 # format: handle [userid]
 #
+# Owner handle for this private test:
+NFTRVN
 # SeedHandle 123456789
 # alice
 # bob
