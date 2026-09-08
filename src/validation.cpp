@@ -497,7 +497,10 @@ static bool CheckInputsFromMempoolAndCache(const CTransaction& tx, CValidationSt
     LOCK(pool.cs);
 
     assert(!tx.IsCoinBase());
-    for (const CTxIn& txin : tx.vin) {
+    for (unsigned int i = 0; i < tx.vin.size(); i++) {
+        if (IsXAccountDummyInput(tx, i))
+            continue;
+        const CTxIn& txin = tx.vin[i];
         const Coin& coin = view.AccessCoin(txin.prevout);
 
         // At this point we haven't actually checked if the coins are all
@@ -698,8 +701,10 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         // Keep track of transactions that spend a coinbase, which we re-scan
         // during reorgs to ensure COINBASE_MATURITY is still met.
         bool fSpendsCoinbase = false;
-        for (const CTxIn &txin : tx.vin) {
-            const Coin &coin = view.AccessCoin(txin.prevout);
+        for (size_t i = 0; i < tx.vin.size(); i++) {
+            if (IsXAccountDummyInput(tx, i))
+                continue;
+            const Coin &coin = view.AccessCoin(tx.vin[i].prevout);
             if (coin.IsCoinBase()) {
                 fSpendsCoinbase = true;
                 break;
