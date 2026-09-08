@@ -35,7 +35,8 @@ contract + custodian/bridge decision. Do not invent one for listing.
 | Decimals | **Met** | 8 (1 XFER = 100,000,000 xferons) |
 | Max / circulating supply math | **Met** | Spendable lifetime **20,999,994,999.727 XFER**. `MAX_MONEY` = 21,000,000,000 (sanity cap). Height 0 unpaid; subsidy `5000 >> floor(h / 2,100,000)` for `h ≥ 1`. Circulating = sum of paid subsidies minus burns (subs 100, uniques 5). At height 0 circulating is **0**. |
 | Own genesis / magic / ports / address version | **Met** | Not Ravencoin replay. Main genesis `db9bcd75…5347d0`, magic `XFER`, P2P **38443**, P2PKH version **76** (`X…`). [FORK.md](FORK.md), [LAUNCH.md](LAUNCH.md). |
-| Working send / receive wallet (GUI + RPC) | **Met** | `xcoin-qt` Home / Receive / Send / Activity after Sign in with X. RPC `getnewaddress` / `sendtoaddress` gated by session. [XSIGNIN.md](XSIGNIN.md). |
+| Working send / receive wallet (GUI + RPC) | **Met** | `xcoin-qt` Home / Receive / Send / Activity after Sign in with X. RPC `getnewaddress` / `sendtoaddress` / `sendrawtransaction` gated by session. [XSIGNIN.md](XSIGNIN.md). |
+| Release-sabotage notes | **Documented** | Not hacker-proof. [SECURITY.md](SECURITY.md). |
 | Ownership isolation | **Met** | Spend only keys in **this** `wallet.dat`. Session does not import another user's keys. `RequireSession` + `RequireHandle`. Smoke: [contrib/xcoin/smoke-isolation.sh](../contrib/xcoin/smoke-isolation.sh). |
 | `getblockchaininfo` | **Met** | Returns `name`, `currency` (XFER), chain, height, best hash. |
 | `getblock` | **Met** | By hash; verbosity 0/1/2. |
@@ -43,7 +44,7 @@ contract + custodian/bridge decision. Do not invent one for listing.
 | Whitepaper | **Met** | [whitepaper/XCOIN.md](../whitepaper/XCOIN.md) |
 | How-to | **Met** | [README.md](../README.md), [RELEASE-1.0.md](RELEASE-1.0.md) |
 | Explorer | **Missing** (listing dependency) | No in-tree explorer. `DEFAULT_THIRD_PARTY_BROWSERS` is empty. Do not invent a public URL. A DEX may require one later. |
-| P2P port + how a seed operator publishes `addnode` | **Met** (operator docs) | Port **38443**. Private mesh: `addnode=<seed-ip>:38443` in `xcoin.conf`. [LAUNCH.md](LAUNCH.md). |
+| P2P port + how a seed operator publishes `addnode` | **Met** (operator docs) | Port **38443**. Join: `addnode=<trusted-peer-ip>:38443` in `xcoin.conf`. Optional Home control to share *your* listen address (off by default). Never a list of other people's IPs. [LAUNCH.md](LAUNCH.md). |
 | Public DNS seeds | **Missing** (listing dependency) | `vSeeds.clear()`. Correct while private. |
 | No premine / fair launch | **Met** | No IPO, no founder allocation. Genesis coinbase never enters the UTXO set. Subsidy starts at height 1. |
 | Asset vs coin | **Met** | XFER = pair ticker. Identity assets are a separate layer (`XID1`, 32-char roots). |
@@ -57,8 +58,11 @@ contract + custodian/bridge decision. Do not invent one for listing.
 ## What an operator still needs (not code)
 
 1. **Decide to go public** — flip the repo only when you intend to list.
-2. **Publish a seed** — always-on IP, TCP **38443**, tell peers `addnode=`.
-   Optional later: DNS `vSeeds` (do not add public seeds while private).
+2. **Publish a seed** — always-on host, TCP **38443**, tell operators to
+   put a trusted peer IP in the config file (`addnode=`). Home can
+   optionally show *your* listen address if you check **Provide my node
+   IP** (off by default). Optional later: DNS `vSeeds` (do not add
+   public seeds while private).
 3. **Stand up an explorer** — any Bitcoin-family explorer pointed at an
    `-txindex=1` `xcoind`. Put that URL in the listing form and, only then,
    in `DEFAULT_THIRD_PARTY_BROWSERS` if you want a GUI "view on explorer"

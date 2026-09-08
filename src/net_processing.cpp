@@ -1786,11 +1786,15 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         }
         pfrom->fSuccessfullyConnected = true;
 
-        CScript localScript = lottery::GetRegistry().LocalScript();
-        lottery::XAccount localX = lottery::GetRegistry().LocalXAccount();
-        if (!localScript.empty() && lottery::GetRegistry().LocalEligible()) {
-            connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::XHB, GetTime(), localScript,
-                                                      localX.handle, localX.userId));
+        if (lottery::GetRegistry().LocalEligible()) {
+            const CScript localScript = lottery::GetRegistry().LocalScript();
+            const lottery::XAccount localX = lottery::GetRegistry().LocalXAccount();
+            std::vector<unsigned char> hbSig;
+            const int64_t hbNow = GetTime();
+            if (!localScript.empty() && lottery::SignLocalHeartbeat(hbNow, hbSig)) {
+                connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::XHB, hbNow, localScript,
+                                                          localX.handle, localX.userId, hbSig));
+            }
         }
     }
 
@@ -2942,10 +2946,13 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         CScript script;
         std::string xHandle;
         uint64_t xUserId = 0;
+        std::vector<unsigned char> vchSig;
         try {
             vRecv >> nHbTime >> script;
             if (!vRecv.empty())
                 vRecv >> xHandle >> xUserId;
+            if (!vRecv.empty())
+                vRecv >> vchSig;
         } catch (const std::exception&) {
             LOCK(cs_main);
             Misbehaving(pfrom->GetId(), 1);
@@ -2957,15 +2964,24 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             Misbehaving(pfrom->GetId(), 1);
             return false;
         }
-        if (xHandle.size() > lottery::MAX_X_HANDLE) {
-            return true;
+        if (xHandle.size() > lottery::MAX_X_HANDLE || vchSig.size() > lottery::MAX_HEARTBEAT_SIG) {
+            LOCK(cs_main);
+            Misbehaving(pfrom->GetId(), 1);
+            return false;
         }
         if (nHbTime > now + 600 || nHbTime < now - 600) {
             return true;
         }
+        if (!lottery::VerifyHeartbeatSig(script, nHbTime, xHandle, xUserId, vchSig)) {
+            LogPrint(BCLog::NET, "lottery xhb rejected (unsigned or forged) handle=%s peer=%d\n",
+                     xHandle, pfrom->GetId());
+            LOCK(cs_main);
+            Misbehaving(pfrom->GetId(), 10);
+            return false;
+        }
         const uint160 id = lottery::IdFromScript(script);
         if (!lottery::GetRegistry().Heartbeat(script, now, xHandle, xUserId)) {
-            LogPrint(BCLog::NET, "lottery xhb ignored (unlinked or unverified) handle=%s peer=%d\n",
+            LogPrint(BCLog::NET, "lottery xhb ignored (unlisted, pinned mismatch, or sticky handle) handle=%s peer=%d\n",
                      xHandle, pfrom->GetId());
             return true;
         }
@@ -2987,7 +3003,8 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 if (pto == pfrom || !pto->fSuccessfullyConnected || pto->fDisconnect)
                     return;
                 CNetMsgMaker relayMaker(pto->GetSendVersion());
-                connman->PushMessage(pto, relayMaker.Make(NetMsgType::XHB, nHbTime, script, xHandle, xUserId));
+                connman->PushMessage(pto, relayMaker.Make(NetMsgType::XHB, nHbTime, script,
+                                                          xHandle, xUserId, vchSig));
             });
         }
     }
@@ -3323,11 +3340,15 @@ bool PeerLogicValidation::SendMessages(CNode* pto, std::atomic<bool>& interruptM
         }
         if (pto->nNextLotteryHb < GetTimeMicros()) {
             pto->nNextLotteryHb = GetTimeMicros() + 30 * 1000000;
-            CScript localScript = lottery::GetRegistry().LocalScript();
-            lottery::XAccount localX = lottery::GetRegistry().LocalXAccount();
-            if (!localScript.empty() && lottery::GetRegistry().LocalEligible())
-                connman->PushMessage(pto, msgMaker.Make(NetMsgType::XHB, GetTime(), localScript,
-                                                        localX.handle, localX.userId));
+            if (lottery::GetRegistry().LocalEligible()) {
+                const CScript localScript = lottery::GetRegistry().LocalScript();
+                const lottery::XAccount localX = lottery::GetRegistry().LocalXAccount();
+                std::vector<unsigned char> hbSig;
+                const int64_t hbNow = GetTime();
+                if (!localScript.empty() && lottery::SignLocalHeartbeat(hbNow, hbSig))
+                    connman->PushMessage(pto, msgMaker.Make(NetMsgType::XHB, hbNow, localScript,
+                                                            localX.handle, localX.userId, hbSig));
+            }
         }
 
         if (pingSend) {

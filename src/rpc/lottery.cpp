@@ -154,12 +154,14 @@ UniValue registeractivenode(const JSONRPCRequest& request)
         throw std::runtime_error(
             "registeractivenode ( payout xaccount xuserid )\n"
             "\nRecord a heartbeat for an active node. Requires a Sign in with X session.\n"
-            "The handle must match the signed-in username. Typed foreign handles are rejected.\n"
+            "The handle and user id must match the signed-in session. Typed foreign\n"
+            "handles are rejected. Gossip heartbeats still need a payout-key signature;\n"
+            "this RPC is the local, session-trusted path.\n"
             "With no arguments, heartbeats this node's signed-in identity.\n"
             "\nArguments:\n"
             "1. payout    (string, optional) X Coin address or script hex. Default: local payout script.\n"
-            "2. xaccount  (string, optional) X handle. Default: this node's -xaccount.\n"
-            "3. xuserid   (numeric, optional) numeric X user id. Default: -xuserid or 0.\n"
+            "2. xaccount  (string, optional) X handle. Default: signed-in username.\n"
+            "3. xuserid   (numeric, optional) numeric X user id. Must match the session.\n"
             "\nResult:\n"
             "{ \"id\": \"hex\", \"script\": \"hex\", \"lastseen\": n, \"xaccount\": \"handle\",\n"
             "  \"xuserid\": n, \"active_nodes\": n }\n"
@@ -168,6 +170,10 @@ UniValue registeractivenode(const JSONRPCRequest& request)
             + HelpExampleCli("registeractivenode", "\"yLocalAddress\" \"alice\"")
             + HelpExampleRpc("registeractivenode", "")
         );
+
+    std::string serr;
+    if (!xsession::RequireSession(serr))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, serr);
 
     CScript script = lottery::GetRegistry().LocalScript();
     lottery::XAccount x = lottery::GetRegistry().LocalXAccount();
@@ -183,11 +189,11 @@ UniValue registeractivenode(const JSONRPCRequest& request)
     }
     if (x.handle.empty())
         x.handle = xsession::SignedInHandle();
-    if (!request.params[1].isNull() || !x.handle.empty()) {
-        std::string serr;
-        if (!xsession::RequireHandle(x.handle, serr))
-            throw JSONRPCError(RPC_INVALID_PARAMETER, serr);
-    }
+    if (!xsession::RequireHandle(x.handle, serr))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, serr);
+
+    const std::string sid = xsession::SignedInUserId();
+    const uint64_t sessionUid = sid.empty() ? 0 : (uint64_t)atoi64(sid);
     if (request.params.size() > 2 && !request.params[2].isNull()) {
         if (!request.params[2].isNum() && !request.params[2].isStr())
             throw JSONRPCError(RPC_INVALID_PARAMETER, "xuserid must be a number");
@@ -195,17 +201,13 @@ UniValue registeractivenode(const JSONRPCRequest& request)
                                                       : atoi64(request.params[2].get_str());
         if (uid < 0)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "xuserid must be >= 0");
+        if (sessionUid != 0 && (uint64_t)uid != sessionUid)
+            throw JSONRPCError(RPC_INVALID_PARAMETER,
+                               "xuserid must match the signed-in X user id");
         x.userId = (uint64_t)uid;
     }
-    if (x.userId == 0) {
-        const std::string sid = xsession::SignedInUserId();
-        if (!sid.empty())
-            x.userId = (uint64_t)atoi64(sid);
-    }
-
-    if (x.handle.empty())
-        throw JSONRPCError(RPC_INVALID_PARAMETER,
-                           "Sign in with X required; typed handles cannot become lottery-eligible");
+    if (x.userId == 0)
+        x.userId = sessionUid;
     if (!lottery::GetAllowlist().Contains(x.handle, x.userId))
         throw JSONRPCError(RPC_INVALID_PARAMETER,
                            "X account is not on the verified allowlist (addxverified / -xverified / allowlist file)");

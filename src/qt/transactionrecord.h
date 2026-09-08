@@ -23,17 +23,17 @@ public:
     { }
 
     enum Status {
-        Confirmed,          /**< Have 6 or more confirmations (normal tx) or fully mature (mined tx) **/
+        Confirmed,          /**< Have 6 or more confirmations (normal tx) or fully mature (lottery win) **/
         /// Normal (sent/received) transactions
         OpenUntilDate,      /**< Transaction not yet final, waiting for date */
         OpenUntilBlock,     /**< Transaction not yet final, waiting for block */
-        Unconfirmed,        /**< Not yet mined into a block **/
+        Unconfirmed,        /**< Not yet included in a block **/
         Confirming,         /**< Confirmed, but waiting for the recommended number of confirmations **/
         Conflicted,         /**< Conflicts with other transaction or mempool **/
         Abandoned,          /**< Abandoned from the wallet **/
-        /// Generated (mined) transactions
-        Immature,           /**< Mined but waiting for maturity */
-        NotAccepted         /**< Mined but not accepted */
+        /// Lottery (coinbase) transactions
+        Immature,           /**< Lottery win waiting for maturity */
+        NotAccepted         /**< Lottery win not accepted */
     };
 
     /// Transaction counts towards available balance
@@ -41,7 +41,7 @@ public:
     /// Sorting key based on status
     std::string sortKey;
 
-    /** @name Generated (mined) transactions
+    /** @name Lottery (coinbase) transactions
        @{*/
     int matures_in;
     /**@}*/
@@ -51,7 +51,7 @@ public:
     Status status;
     qint64 depth;
     qint64 open_for; /**< Timestamp if status==OpenUntilDate, otherwise number
-                      of additional blocks that need to be mined before
+                      of additional blocks that need to be produced before
                       finalization */
     /**@}*/
 

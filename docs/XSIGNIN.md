@@ -30,14 +30,19 @@ After a successful sign-in:
 
 Proof message: `xcoin-xsession|{id}|{username}|{exp}`.
 
-`getnewaddress`, `getaccountaddress`, `sendtoaddress`, `issue` /
-`transfer` / `reissue`, `linkxaccount`, `registeractivenode`, and
+Steal this datadir (`xsession.key` + `xsession.json`) and you steal
+**this node's session**, not someone else's `wallet.dat`. The HMAC is
+per-datadir; it cannot spend keys that are not in this wallet.
+
+`getnewaddress`, `getaccountaddress`, `sendtoaddress`, `sendrawtransaction`,
+`issue` / `transfer` / `reissue`, `linkxaccount`, `registeractivenode`, and
 lottery identity require a valid proof. **Authentication is the key
 to asset ownership — it proves it is you.** Lottery also requires the
 X-Verified allowlist. A signed-in handle that is not X-Verified can
 still send and receive. `linkxaccount otherperson` is rejected if the
 session is not `otherperson`. Typed `-xaccount=` is ignored without a
-matching session.
+matching session. RPC itself still needs the cookie or `rpcpassword`
+(no unauthenticated spend).
 
 The node never pretends login succeeded without a real access token
 (or, on `-regtest` only, a mock `users/me` payload).

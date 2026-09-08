@@ -75,11 +75,13 @@ with every honest node so they agree on the active set.
 
 ```text
 # verified-x-accounts.txt  (datadir or -xallowlist=)
-# handle [userid]
+# handle [userid] [payout-address-or-script-hex]
 NFTRVN
 YourHandle 123456789
 alice
 bob
+# optional pin — only this payout may heartbeat as NFTRVN:
+# NFTRVN 123456789 XyourPinnedAddressxxxxxxxxxxxxxxxxx
 ```
 
 Ways to load the same list:
@@ -115,11 +117,13 @@ the last **180 seconds**.
 - The producer thread heartbeats that script every second **only if** the
   local node is linked+verified.
 - `registeractivenode` records a heartbeat for the local script or a supplied
-  **address / script hex**, using the signed-in session handle unless another
-  allowlisted handle is passed. Unlinked/unverified registrations are rejected.
+  **address / script hex**. The handle and user id must match the signed-in
+  session. Unlinked/unverified registrations are rejected.
 - Peers gossip `xhb` messages (`int64 timestamp` + `CScript` + X handle +
-  user id) after `verack` and about every 30 seconds. Heartbeats missing a
-  verified link are not added to the active set and are not relayed.
+  user id + compact payout signature) after `verack` and about every 30
+  seconds. Unsigned, unlisted, userid-only, pinned-mismatch, or
+  live-handle-rebind heartbeats are not added to the active set. Forged
+  signatures cost banscore.
 
 ## Deterministic seed
 
@@ -207,17 +211,20 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 
 ## Security notes
 
+Honest write-up: [SECURITY.md](SECURITY.md). This is not hacker-proof.
+
 - **Sybil:** the verified-X allowlist stops anonymous/bot process spam for a
-  private launch. Skip or leave it empty and anyone can heartbeat. It is not a
-  bonded public lottery: a producer can still commit an active set of
-  allowlisted scripts, and validation only proves the coinbase matches the
-  *committed* set. Honest operators share one list.
-- **xhb impersonation:** gossip carries a handle, not a signature binding that
-  handle to a script. A malicious peer can claim an allowlisted handle.
-  Consensus still binds coinbase to committed **scripts**, not handles.
+  private launch. Skip or leave it empty and anyone who can sign a payout
+  can heartbeat. It is not a bonded public lottery: a producer can still
+  commit an active set of allowlisted scripts, and validation only proves
+  the coinbase matches the *committed* set. Honest operators share one list.
+- **xhb:** gossip is compact-signed by the payout key. A live handle cannot
+  be rebound to another script. A listed userid alone cannot authorize a
+  different handle. Residual: first-seen after restart unless you pin a
+  payout; eclipse of a node that only talks to attacker peers.
 - **Unsigned-in wallets:** Sign in with X is required to send, receive,
-  and prove asset ownership. Lottery additionally requires the handle
-  to be X-Verified on the operator allowlist.
+  and prove asset ownership (`sendrawtransaction` included). Lottery
+  additionally requires the handle to be X-Verified on the operator allowlist.
 - Clock skew can delay a slot; height still maps 1:1 (`slot = genesisSlot + h`).
   You cannot skip or double-pay a height on one chain. Catch-up produces one
   height per loop when wall-clock is ahead; `generatetoaddress` is regtest-only

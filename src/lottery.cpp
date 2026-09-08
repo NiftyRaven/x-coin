@@ -5,11 +5,13 @@
 
 #include "lottery.h"
 
+#include "base58.h"
 #include "chain.h"
 #include "chainparams.h"
 #include "consensus/validation.h"
 #include "fs.h"
 #include "hash.h"
+#include "key.h"
 #include "miner.h"
 #include "primitives/block.h"
 #include "pubkey.h"
@@ -24,6 +26,8 @@
 #include "wallet/wallet.h"
 extern std::vector<CWalletRef> vpwallets;
 #endif
+
+class CWallet;
 
 #include <boost/bind/bind.hpp>
 #include <boost/thread.hpp>
@@ -41,6 +45,8 @@ static Registry g_registry;
 static Allowlist g_allowlist;
 static boost::thread_group* g_producerThreads = nullptr;
 static CCriticalSection cs_producer;
+static CKey g_localPayoutKey;
+static CWallet* FirstWalletOrNull();
 
 Registry& GetRegistry()
 {
@@ -136,7 +142,8 @@ std::string Allowlist::PersistPath() const
     return persistPath;
 }
 
-bool Allowlist::Add(const std::string& handle, uint64_t userId, std::string& err, bool persist)
+bool Allowlist::Add(const std::string& handle, uint64_t userId, std::string& err, bool persist,
+                    const CScript& pinnedScript)
 {
     std::string norm;
     if (!NormalizeXHandle(handle, norm, err))
@@ -146,6 +153,8 @@ bool Allowlist::Add(const std::string& handle, uint64_t userId, std::string& err
         handles[norm] = userId;
         if (userId != 0)
             byUserId[userId] = norm;
+        if (!pinnedScript.empty())
+            pins[norm] = pinnedScript;
     }
     if (persist && !persistPath.empty() && !Persist(err))
         return false;
@@ -168,6 +177,7 @@ bool Allowlist::Remove(const std::string& handle, std::string& err, bool persist
         if (it->second != 0)
             byUserId.erase(it->second);
         handles.erase(it);
+        pins.erase(norm);
     }
     if (persist && !persistPath.empty() && !Persist(err))
         return false;
@@ -179,19 +189,36 @@ bool Allowlist::Contains(const std::string& handle, uint64_t userId) const
 {
     std::string norm;
     std::string err;
-    const bool haveHandle = NormalizeXHandle(handle, norm, err);
+    if (!NormalizeXHandle(handle, norm, err))
+        return false;
     LOCK(cs);
-    if (haveHandle) {
-        auto it = handles.find(norm);
-        if (it != handles.end())
-            return true;
-    }
-    if (userId != 0) {
-        auto it = byUserId.find(userId);
-        if (it != byUserId.end())
-            return true;
-    }
-    return false;
+    auto it = handles.find(norm);
+    if (it == handles.end())
+        return false;
+    if (it->second != 0 && userId != 0 && it->second != userId)
+        return false;
+    return true;
+}
+
+CScript Allowlist::PinnedScript(const std::string& handle) const
+{
+    std::string norm;
+    std::string err;
+    if (!NormalizeXHandle(handle, norm, err))
+        return CScript();
+    LOCK(cs);
+    auto it = pins.find(norm);
+    if (it == pins.end())
+        return CScript();
+    return it->second;
+}
+
+void Allowlist::Reset()
+{
+    LOCK(cs);
+    handles.clear();
+    byUserId.clear();
+    pins.clear();
 }
 
 std::vector<VerifiedXAccount> Allowlist::List() const
@@ -203,6 +230,9 @@ std::vector<VerifiedXAccount> Allowlist::List() const
         VerifiedXAccount a;
         a.handle = kv.first;
         a.userId = kv.second;
+        auto pit = pins.find(kv.first);
+        if (pit != pins.end())
+            a.pinnedScript = pit->second;
         out.push_back(a);
     }
     return out;
@@ -233,18 +263,62 @@ bool Allowlist::LoadFile(const std::string& path, std::string& err)
             continue;
         XAccount acc;
         std::string perr;
-        // File lines: "handle" or "handle userid" (space) or handle:userid
+        CScript pin;
+        // Lines: handle | handle userid | handle address | handle userid address
+        // also handle:userid (no pin).
         std::string spec = t;
-        size_t sp = t.find_first_of(" \t");
-        if (sp != std::string::npos && t.find_first_of(":,") == std::string::npos) {
-            spec = t.substr(0, sp) + ":" + TrimCopy(t.substr(sp + 1));
+        std::string pinTok;
+        if (t.find_first_of(":,") == std::string::npos) {
+            std::vector<std::string> parts;
+            std::string cur;
+            for (char c : t) {
+                if (c == ' ' || c == '\t') {
+                    if (!cur.empty()) {
+                        parts.push_back(cur);
+                        cur.clear();
+                    }
+                } else {
+                    cur.push_back(c);
+                }
+            }
+            if (!cur.empty())
+                parts.push_back(cur);
+            if (parts.empty())
+                continue;
+            spec = parts[0];
+            if (parts.size() >= 2) {
+                const bool secondIsId = parts[1].find_first_not_of("0123456789") == std::string::npos;
+                if (secondIsId) {
+                    spec = parts[0] + ":" + parts[1];
+                    if (parts.size() >= 3)
+                        pinTok = parts[2];
+                } else {
+                    pinTok = parts[1];
+                }
+            }
         }
         if (!ParseXAccountSpec(spec, acc, perr)) {
             err = strprintf("%s (line %s)", perr, t);
             return false;
         }
+        if (!pinTok.empty()) {
+            CTxDestination dest = DecodeDestination(pinTok);
+            if (IsValidDestination(dest)) {
+                pin = GetScriptForDestination(dest);
+            } else if (IsHex(pinTok) && (pinTok.size() % 2) == 0 && pinTok.size() >= 4) {
+                const std::vector<unsigned char> raw = ParseHex(pinTok);
+                if (raw.empty() || raw.size() > MAX_HEARTBEAT_SCRIPT) {
+                    err = strprintf("pinned payout too large (%s)", t);
+                    return false;
+                }
+                pin = CScript(raw.begin(), raw.end());
+            } else {
+                err = strprintf("pinned payout is not an address or script hex (%s)", t);
+                return false;
+            }
+        }
         std::string aerr;
-        if (!Add(acc.handle, acc.userId, aerr, false)) {
+        if (!Add(acc.handle, acc.userId, aerr, false, pin)) {
             err = aerr;
             return false;
         }
@@ -269,6 +343,9 @@ bool Allowlist::Persist(std::string& err) const
             VerifiedXAccount a;
             a.handle = kv.first;
             a.userId = kv.second;
+            auto pit = pins.find(kv.first);
+            if (pit != pins.end())
+                a.pinnedScript = pit->second;
             cur.push_back(a);
         }
     }
@@ -279,10 +356,22 @@ bool Allowlist::Persist(std::string& err) const
     }
     fprintf(f, "# X Coin verified X accounts (operator-shared allowlist)\n");
     fprintf(f, "# Only list X-verified (blue-check / X Premium verified) handles.\n");
-    fprintf(f, "# format: handle [userid]\n");
+    fprintf(f, "# format: handle [userid] [payout-address-or-script-hex]\n");
     for (const auto& a : cur) {
-        if (a.userId != 0)
+        std::string pin;
+        if (!a.pinnedScript.empty()) {
+            CTxDestination d;
+            if (ExtractDestination(a.pinnedScript, d))
+                pin = EncodeDestination(d);
+            else
+                pin = HexStr(a.pinnedScript.begin(), a.pinnedScript.end());
+        }
+        if (a.userId != 0 && !pin.empty())
+            fprintf(f, "%s %llu %s\n", a.handle.c_str(), (unsigned long long)a.userId, pin.c_str());
+        else if (a.userId != 0)
             fprintf(f, "%s %llu\n", a.handle.c_str(), (unsigned long long)a.userId);
+        else if (!pin.empty())
+            fprintf(f, "%s %s\n", a.handle.c_str(), pin.c_str());
         else
             fprintf(f, "%s\n", a.handle.c_str());
     }
@@ -331,6 +420,92 @@ void InitEligibility()
 uint160 IdFromScript(const CScript& script)
 {
     return Hash160(script);
+}
+
+uint256 HeartbeatDigest(int64_t timestamp, const CScript& script,
+                        const std::string& handle, uint64_t userId)
+{
+    uint256 out;
+    unsigned char tle[8];
+    unsigned char ule[8];
+    for (int i = 0; i < 8; i++) {
+        tle[i] = (timestamp >> (8 * i)) & 0xff;
+        ule[i] = (userId >> (8 * i)) & 0xff;
+    }
+    CSHA256()
+        .Write(reinterpret_cast<const unsigned char*>(HEARTBEAT_MAGIC),
+               sizeof(HEARTBEAT_MAGIC) - 1)
+        .Write(tle, sizeof(tle))
+        .Write(script.data(), script.size())
+        .Write(reinterpret_cast<const unsigned char*>(handle.data()), handle.size())
+        .Write(ule, sizeof(ule))
+        .Finalize(out.begin());
+    return out;
+}
+
+bool SignHeartbeat(const CKey& key, int64_t timestamp, const CScript& script,
+                   const std::string& handle, uint64_t userId,
+                   std::vector<unsigned char>& sigOut)
+{
+    sigOut.clear();
+    if (!key.IsValid())
+        return false;
+    const uint256 digest = HeartbeatDigest(timestamp, script, handle, userId);
+    return key.SignCompact(digest, sigOut);
+}
+
+bool VerifyHeartbeatSig(const CScript& script, int64_t timestamp,
+                        const std::string& handle, uint64_t userId,
+                        const std::vector<unsigned char>& sig)
+{
+    if (sig.empty() || sig.size() > MAX_HEARTBEAT_SIG)
+        return false;
+    if (script.empty() || script.size() > MAX_HEARTBEAT_SCRIPT)
+        return false;
+    std::string norm;
+    std::string err;
+    if (!NormalizeXHandle(handle, norm, err))
+        return false;
+    CTxDestination dest;
+    if (!ExtractDestination(script, dest))
+        return false;
+    const CKeyID* keyID = boost::get<CKeyID>(&dest);
+    if (!keyID)
+        return false;
+    CPubKey pub;
+    const uint256 digest = HeartbeatDigest(timestamp, script, norm, userId);
+    if (!pub.RecoverCompact(digest, sig))
+        return false;
+    return pub.GetID() == *keyID;
+}
+
+bool SignLocalHeartbeat(int64_t timestamp, std::vector<unsigned char>& sigOut)
+{
+    sigOut.clear();
+    const CScript script = GetRegistry().LocalScript();
+    const XAccount x = GetRegistry().LocalXAccount();
+    if (script.empty() || x.handle.empty())
+        return false;
+    CTxDestination dest;
+    if (!ExtractDestination(script, dest))
+        return false;
+    const CKeyID* keyID = boost::get<CKeyID>(&dest);
+    if (!keyID)
+        return false;
+    if (g_localPayoutKey.IsValid() && g_localPayoutKey.GetPubKey().GetID() == *keyID)
+        return SignHeartbeat(g_localPayoutKey, timestamp, script, x.handle, x.userId, sigOut);
+#ifdef ENABLE_WALLET
+    CWallet* pwallet = FirstWalletOrNull();
+    if (pwallet) {
+        CKey wkey;
+        {
+            LOCK(pwallet->cs_wallet);
+            if (pwallet->GetKey(*keyID, wkey) && wkey.IsValid())
+                return SignHeartbeat(wkey, timestamp, script, x.handle, x.userId, sigOut);
+        }
+    }
+#endif
+    return false;
 }
 
 void Registry::SetLocalScript(const CScript& script)
@@ -395,15 +570,27 @@ bool Registry::Heartbeat(const CScript& script, int64_t now,
         return false;
     if (!GetAllowlist().Contains(norm, xUserId))
         return false;
+    const CScript pin = GetAllowlist().PinnedScript(norm);
+    if (!pin.empty() && pin != script)
+        return false;
 
     LOCK(cs);
     auto hit = byHandle.find(norm);
     if (hit != byHandle.end() && hit->second != id) {
-        nodes.erase(hit->second);
+        auto existing = nodes.find(hit->second);
+        if (existing != nodes.end() &&
+            now - existing->second.lastSeen <= HEARTBEAT_TTL_SECONDS) {
+            // Live handle already bound — unsigned/spoofed gossip cannot steal it.
+            return false;
+        }
+        if (existing != nodes.end())
+            nodes.erase(existing);
         byHandle.erase(hit);
     }
     auto nit = nodes.find(id);
     if (nit != nodes.end() && nit->second.x.handle != norm) {
+        if (now - nit->second.lastSeen <= HEARTBEAT_TTL_SECONDS)
+            return false;
         byHandle.erase(nit->second.x.handle);
     }
     XAccount x;
@@ -423,6 +610,13 @@ bool Registry::Heartbeat(const CScript& script, int64_t now,
         }
     }
     return true;
+}
+
+void Registry::Reset()
+{
+    LOCK(cs);
+    nodes.clear();
+    byHandle.clear();
 }
 
 bool Registry::HeartbeatLocal(int64_t now)
@@ -479,36 +673,33 @@ size_t Registry::Count(int64_t now) const
 
 CScript LoadOrCreateLocalScript()
 {
-    fs::path path = GetDataDir() / "lottery-payout.dat";
-    if (fs::exists(path)) {
-        FILE* f = fsbridge::fopen(path, "rb");
+    const fs::path keyPath = GetDataDir() / "lottery-payout.key";
+    const fs::path scriptPath = GetDataDir() / "lottery-payout.dat";
+    CKey key;
+    if (fs::exists(keyPath)) {
+        FILE* f = fsbridge::fopen(keyPath, "rb");
         if (f) {
-            if (fseek(f, 0, SEEK_END) == 0) {
-                long sz = ftell(f);
-                if (sz > 0 && sz <= (long)MAX_HEARTBEAT_SCRIPT && fseek(f, 0, SEEK_SET) == 0) {
-                    std::vector<unsigned char> buf((size_t)sz);
-                    size_t n = fread(buf.data(), 1, buf.size(), f);
-                    fclose(f);
-                    if (n == buf.size())
-                        return CScript(buf.begin(), buf.end());
-                } else {
-                    fclose(f);
-                }
-            } else {
-                fclose(f);
-            }
+            unsigned char raw[32];
+            const size_t n = fread(raw, 1, sizeof(raw), f);
+            fclose(f);
+            if (n == sizeof(raw))
+                key.Set(raw, raw + sizeof(raw), true);
         }
     }
-
-    uint256 rnd = GetRandHash();
-    uint160 h;
-    CHash160().Write(rnd.begin(), 32).Finalize(h.begin());
-    CScript script = GetScriptForDestination(CKeyID(h));
-
-    FILE* f = fsbridge::fopen(path, "wb");
-    if (f) {
-        fwrite(script.data(), 1, script.size(), f);
-        fclose(f);
+    if (!key.IsValid()) {
+        key.MakeNewKey(true);
+        FILE* f = fsbridge::fopen(keyPath, "wb");
+        if (f) {
+            fwrite(key.begin(), 1, key.size(), f);
+            fclose(f);
+        }
+    }
+    g_localPayoutKey = key;
+    const CScript script = GetScriptForDestination(CKeyID(key.GetPubKey().GetID()));
+    FILE* sf = fsbridge::fopen(scriptPath, "wb");
+    if (sf) {
+        fwrite(script.data(), 1, script.size(), sf);
+        fclose(sf);
     }
     return script;
 }
@@ -525,6 +716,49 @@ int64_t SlotFromHeight(int nHeight, int64_t genesisTime)
     if (nHeight <= 0)
         return SlotFromTime(genesisTime);
     return SlotFromTime(genesisTime) + nHeight;
+}
+
+int64_t SlotStartTime(int nHeight, int64_t genesisTime)
+{
+    return SlotFromHeight(nHeight, genesisTime) * SLOT_SECONDS;
+}
+
+bool CheckBlockTime(int nHeight, int64_t nTime, int64_t genesisTime,
+                    int64_t nowLocal, bool fMineBlocksOnDemand,
+                    CValidationState& state)
+{
+    if (fMineBlocksOnDemand)
+        return true;
+    if (nHeight <= 0)
+        return true;
+
+    const int64_t slot = SlotFromHeight(nHeight, genesisTime);
+    const int64_t slotStart = slot * SLOT_SECONDS;
+    const int64_t slotEnd = slotStart + SLOT_SECONDS;
+    if (nTime < slotStart || nTime >= slotEnd) {
+        return state.DoS(100, false, REJECT_INVALID, "bad-lottery-slot-time", false,
+                         "block time is outside the locked 60-second lottery slot for this height");
+    }
+    const int64_t nowSlot = SlotFromTime(nowLocal);
+    if (slot > nowSlot + MAX_FUTURE_SLOTS) {
+        return state.Invalid(false, REJECT_INVALID, "time-too-new",
+                             "lottery slot is too far in the future");
+    }
+    return true;
+}
+
+int64_t ClampTimeToSlot(int nHeight, int64_t genesisTime, int64_t now, int64_t mtp)
+{
+    const int64_t slotStart = SlotStartTime(nHeight, genesisTime);
+    const int64_t slotEnd = slotStart + SLOT_SECONDS;
+    int64_t t = now;
+    if (t < slotStart)
+        t = slotStart;
+    if (t >= slotEnd)
+        t = slotEnd - 1;
+    if (t <= mtp)
+        t = mtp + 1;
+    return t;
 }
 
 int WinnerCount(int nHeight, int nSubsidyHalvingInterval)
@@ -843,6 +1077,13 @@ static bool ProduceOneBlock(const CChainParams& chainparams)
             return false;
         unsigned int extra = 0;
         IncrementExtraNonce(pblock, pindexPrev, extra);
+        if (!chainparams.MineBlocksOnDemand()) {
+            const int nHeight = pindexPrev->nHeight + 1;
+            pblock->nTime = ClampTimeToSlot(nHeight,
+                                            chainparams.GenesisBlock().nTime,
+                                            GetTime(),
+                                            pindexPrev->GetMedianTimePast());
+        }
     }
 
     std::shared_ptr<const CBlock> shared = std::make_shared<const CBlock>(*pblock);
@@ -875,7 +1116,7 @@ static void ProducerThread(const CChainParams& chainparams)
             const int64_t now = GetTime();
 
 #ifdef ENABLE_WALLET
-            // Adopt the wallet mining script once. Do not touch the keypool
+            // Adopt the wallet coinbase/payout script once. Do not touch the keypool
             // every second from this thread (that raced and OOMed on start).
             static bool fAdoptedWallet = false;
             if (!fAdoptedWallet) {

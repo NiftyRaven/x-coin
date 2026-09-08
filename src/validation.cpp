@@ -3123,7 +3123,7 @@ void static UpdateTip(CBlockIndex *pindexNew, const CChainParams& chainParams) {
             warningMessages.push_back(strprintf(_("%d of last 100 blocks have unexpected version"), nUpgraded));
         if (nUpgraded > 100/2)
         {
-            std::string strWarning = _("Warning: Unknown block versions being mined! It's possible unknown rules are in effect");
+            std::string strWarning = _("Warning: Unknown block versions being produced! It's possible unknown rules are in effect");
             // notify GetWarnings(), called by Qt and the JSON-RPC code to warn the user:
             DoWarning(strWarning);
         }
@@ -4183,6 +4183,16 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
         CBlockIndex* pcheckpoint = Checkpoints::GetLastCheckpoint(params.Checkpoints());
         if (pcheckpoint && nHeight < pcheckpoint->nHeight)
             return state.DoS(100, error("%s: forked chain older than last checkpoint (height %d)", __func__, nHeight), REJECT_CHECKPOINT, "bad-fork-prior-to-checkpoint");
+    }
+
+    // Permanent lottery slot lock (main/test). Slot length is compile-time
+    // and is not a P2P field. Regtest (MineBlocksOnDemand) skips this so
+    // generatetoaddress can assemble blocks immediately.
+    if (!params.MineBlocksOnDemand()) {
+        if (!lottery::CheckBlockTime(nHeight, block.GetBlockTime(),
+                                     params.GenesisBlock().nTime, nAdjustedTime,
+                                     false, state))
+            return error("%s: lottery::CheckBlockTime: %s", __func__, FormatStateMessage(state));
     }
 
     // Check timestamp against prev

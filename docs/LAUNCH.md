@@ -99,22 +99,29 @@ There are no DNS seeds in-tree. For a private mesh:
      -xallowlist=/shared/verified-x-accounts.txt
    ```
 
-3. Tell every other operator to join with **either**:
+3. Tell every other operator to put a **trusted peer IP in the config
+   file** (`xcoin.conf`). This is a P2P join address, **not** a BIP39
+   seed and **not** a required wallet field. Home / Receive / Send never
+   auto-list peer addresses (every `xcoin-qt` already *is* a node). If
+   you want to give someone *your* listen address (friend, seed), Home
+   has an optional **Provide my node IP** control — off by default;
+   uncheck and the IP disappears again.
 
    ```bash
-   # xcoin.conf
-   addnode=<seed-ip>:38443
+   # xcoin.conf — operators only
+   addnode=<trusted-peer-ip>:38443
    # or, for first contact only:
-   seednode=<seed-ip>:38443
+   seednode=<trusted-peer-ip>:38443
    ```
 
-4. Optional hard-code later: add `vSeeds.emplace_back("seed.example.com", false);`
-   in `CMainParams` and/or run `contrib/seeds/generate-seeds.py` to refresh
-   `chainparamsseeds.h`. Until then, `addnode`/`seednode` is the launch path.
+4. Do **not** add public DNS seeds while this repo is private.
+   `addnode`/`seednode` in the config file is the launch path. Hardening
+   notes: [SECURITY.md](SECURITY.md).
 
-Peers gossip lottery heartbeats (`xhb`) after `verack`. Honest nodes that can
-connect to the seed (directly or via the mesh) share one active-node set.
-Heartbeats without a verified X link are ignored for that set.
+Peers gossip **signed** lottery heartbeats (`xhb`) after `verack`. Honest
+nodes that can connect to the seed (directly or via the mesh) share one
+active-node set. Unsigned, unlisted, or sticky-violating heartbeats are
+ignored for that set.
 
 ## Verified X allowlist (required for lottery)
 
@@ -206,9 +213,17 @@ Coinbase is immature for 100 blocks — generate ~110 on regtest before
 ## Operator ports / firewall
 
 - P2P **38443/tcp** must be reachable on the seed (and on any node you want
-  others to dial).
-- RPC **38442** is local-only by default (`rpcallowip`). Do not expose it.
+  others to dial). Prefer `-bind=0.0.0.0:38443` on the seed only.
+- RPC **38442** is local-only by default (`rpcallowip`). Cookie or
+  `rpcuser`/`rpcpassword` is required; there is no unauthenticated spend.
+  Do not expose 38442.
+- Seed: `-maxconnections=32` (or lower) so a connection flood cannot
+  occupy every inbound slot. Ban junk with `setban` / `-banscore`.
 - Testnet 48443/48442, regtest 28443/28442.
+- Lone node vs eclipse: `fMiningRequiresPeers` is false so one eligible
+  node can produce. Other people seeing the **same** tip still need
+  `addnode` to a seed you know. Checkpoints are empty — do not peer with
+  strangers on release day. See [SECURITY.md](SECURITY.md).
 
 ## Binaries
 
@@ -219,12 +234,15 @@ Coinbase is immature for 100 blocks — generate ~110 on regtest before
 
 ## Known risks (accepted for a private launch)
 
-- **Sybil if the allowlist is skipped or empty:** anyone can heartbeat. The
-  allowlist is operator-shared, not a bonded identity. A producer can commit
-  any script set; validation only checks the coinbase matches that commitment.
-- **xhb handle spoofing:** gossip is not signed. A peer can claim an
-  allowlisted handle. Fine on a trusted mesh; not a public anti-impersonation
-  proof.
+Nothing is hacker-proof. Details: [SECURITY.md](SECURITY.md).
+
+- **Sybil if the allowlist is skipped or empty:** anyone who can sign a
+  payout can heartbeat. The allowlist is operator-shared, not a bonded
+  identity. A producer can commit any script set; validation only checks
+  the coinbase matches that commitment.
+- **xhb:** gossip is compact-signed by the payout key. A live handle cannot
+  be rebound. Residual: first-seen after restart unless you pin a payout;
+  eclipse of a lone node.
 - **Clock skew / catch-up:** main/test wait for wall-clock slot ≥ height slot.
   Height still maps 1:1; no skip-pay or double-pay of a slot in consensus.
 - **No DNS seeds / public explorers** — you are the network. Private-test
@@ -254,6 +272,7 @@ Two regtest nodes: after `addnode`, both `getactivenodes` lists match (P2P `xhb`
 contrib/xcoin/smoke-eligibility.sh
 contrib/xcoin/smoke-xsession.sh
 contrib/xcoin/smoke-gui.sh
+contrib/xcoin/smoke-sabotage.sh
 ```
 
 Unlinked node is not eligible; `registeractivenode` is rejected until the

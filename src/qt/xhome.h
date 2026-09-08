@@ -13,9 +13,11 @@ class ClientModel;
 class WalletView;
 class XOAuth;
 
+class QCheckBox;
 class QLabel;
 class QLineEdit;
 class QPushButton;
+class QWidget;
 
 /** Primary X-Coin home: linked X identity, keys vs session, receive, send, assets, lottery. */
 class XHome : public QWidget
@@ -49,10 +51,15 @@ private Q_SLOTS:
     void onOAuthSuccess(const QString& username, const QString& userId);
     void onOAuthFailed(const QString& error);
     void onOAuthStatus(const QString& message);
+    void onShareNodeToggled(bool on);
+    void onCopyNodeAddress();
 
 private:
     void applyTheme();
     QString rpc(const QString& method, const QStringList& args = QStringList()) const;
+    QString localListenEndpoint() const;
+    void fillNodeShareWidgets();
+    void applyNodeShareVisibility(bool on);
 
     WalletView* walletView;
     ClientModel* clientModel;
@@ -60,6 +67,7 @@ private:
     XOAuth* oauth;
 
     QLabel* heroTitle;
+    QLabel* peersLabel;
     QLabel* sessionLabel;
     QLabel* keysLabel;
     QLabel* lotteryLabel;
@@ -69,10 +77,15 @@ private:
     QLineEdit* clientIdEdit;
     QLineEdit* subNameEdit;
     QLineEdit* uniqueNameEdit;
+    QLineEdit* nodeIpEdit;
     QPushButton* signInBtn;
     QPushButton* mockBtn;
     QPushButton* claimBtn;
     QPushButton* allowlistBtn;
+    QPushButton* copyNodeBtn;
+    QCheckBox* shareNodeChk;
+    QWidget* nodeSharePanel;
+    QLabel* nodeEndpointLabel;
 };
 
 #endif // RAVEN_QT_XHOME_H
