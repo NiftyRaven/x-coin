@@ -3937,6 +3937,13 @@ bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const s
         error = std::make_pair(RPC_INVALID_PARAMETER, "Protocol X-account assignment can only create a main/root asset");
         return false;
     }
+    if (!fProtocolRoot && assetType != AssetType::ROOT) {
+        std::string ownErr;
+        if (!RequireIssueUnderOwnMain(assets[0].strName, ownErr)) {
+            error = std::make_pair(RPC_INVALID_PARAMETER, ownErr);
+            return false;
+        }
+    }
 
     // Assign the correct burn amount and the correct burn address depending on the type of asset issuance that is happening
     CAmount burnAmount = fProtocolRoot ? 0 : GetBurnAmount(assetType) * assets.size();

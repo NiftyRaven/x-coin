@@ -798,16 +798,18 @@ void XHome::onIssueSub()
     UniValue s;
     s.read(rpc("getxsession").toStdString());
     if (!s.isObject() || !s["signed_in"].isTrue()) {
-        QMessageBox::warning(this, "X-Coin", "Sign in with X first.");
+        QMessageBox::warning(this, "X-Coin", "Sign in with X first. Main assets are created by authentication only.");
         return;
     }
-    std::string root, err;
-    if (!MapXHandleToRootName(s["username"].getValStr(), root, err)) {
-        QMessageBox::warning(this, "X-Coin", QString::fromStdString(err));
+    UniValue m;
+    m.read(rpc("getmainasset").toStdString());
+    if (!m.isObject() || !m["assigned"].isTrue()) {
+        QMessageBox::warning(this, "X-Coin", "Claim your root asset first. Subs are issued under that main asset.");
         return;
     }
-    showRpcOutcome(rpc("issue", QStringList() << (QString::fromStdString(root) + "/" + leaf) << "1"),
-                   "Issued " + QString::fromStdString(root) + "/" + leaf);
+    const QString root = QString::fromStdString(m["asset"].getValStr());
+    showRpcOutcome(rpc("issue", QStringList() << (root + "/" + leaf) << "1"),
+                   "Issued " + root + "/" + leaf);
     refresh();
 }
 
@@ -821,16 +823,18 @@ void XHome::onIssueUnique()
     UniValue s;
     s.read(rpc("getxsession").toStdString());
     if (!s.isObject() || !s["signed_in"].isTrue()) {
-        QMessageBox::warning(this, "X-Coin", "Sign in with X first.");
+        QMessageBox::warning(this, "X-Coin", "Sign in with X first. Main assets are created by authentication only.");
         return;
     }
-    std::string root, err;
-    if (!MapXHandleToRootName(s["username"].getValStr(), root, err)) {
-        QMessageBox::warning(this, "X-Coin", QString::fromStdString(err));
+    UniValue m;
+    m.read(rpc("getmainasset").toStdString());
+    if (!m.isObject() || !m["assigned"].isTrue()) {
+        QMessageBox::warning(this, "X-Coin", "Claim your root asset first. Uniques are issued under that main asset.");
         return;
     }
+    const QString root = QString::fromStdString(m["asset"].getValStr());
     const QString tags = QString("[\"%1\"]").arg(leaf);
-    showRpcOutcome(rpc("issueunique", QStringList() << QString::fromStdString(root) << tags),
+    showRpcOutcome(rpc("issueunique", QStringList() << root << tags),
                    "Issued unique " + leaf);
     refresh();
 }

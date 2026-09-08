@@ -13,6 +13,7 @@ One X account → one main asset. Lottery still needs **X Verified**
 (blue check); claiming the root needs the session only — not a blue
 check. Subs and uniques are created **from that signed-in account’s
 main asset** (`NAME/CHILD`, `NAME#tag`) and require owning `NAME!`.
+Issuing under any other root is rejected.
 
 ```
 # GUI: Sign in with X, then Claim my root asset.

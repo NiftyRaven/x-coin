@@ -42,6 +42,11 @@ bool AddXAccountAssignment(const std::string& xId, const std::string& assetName)
 bool RemoveXAccountAssignment(const std::string& xId);
 bool LoadXAccountAssignments();
 
+/** Top-level root of NAME, NAME/CHILD, or NAME#tag. Empty if the name is invalid. */
+std::string TopLevelRootName(const std::string& assetName);
+/** Session required. Subs/uniques must sit under this handle’s assigned main asset. */
+bool RequireIssueUnderOwnMain(const std::string& assetName, std::string& err);
+
 #ifdef ENABLE_WALLET
 /** Call on a successful X-link. Idempotent. dest empty → new wallet address. */
 bool AssignLinkedUserMainAsset(const std::string& xHandleOrId, const std::string& dest,

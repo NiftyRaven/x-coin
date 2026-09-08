@@ -34,6 +34,7 @@
 
 #include <stdint.h>
 #include "assets/assets.h"
+#include "assets/xaccount.h"
 
 #include <univalue.h>
 #include <tinyformat.h>
@@ -2099,6 +2100,33 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
     CTransactionRef tx(MakeTransactionRef(std::move(mtx)));
     const uint256& hashTx = tx->GetHash();
+
+#ifdef ENABLE_WALLET
+    if (tx->IsNewAsset() || tx->IsNewUniqueAsset()) {
+        CNewAsset asset;
+        std::string address;
+        const bool got = tx->IsNewUniqueAsset()
+            ? UniqueAssetFromTransaction(*tx, asset, address)
+            : AssetFromScript(tx->vout.back().scriptPubKey, asset, address);
+        if (got) {
+            AssetType itype;
+            IsAssetNameValid(asset.strName, itype);
+            if (itype == AssetType::ROOT) {
+                std::string xid;
+                if (!ParseXAccountAssignment(*tx, xid))
+                    throw JSONRPCError(RPC_INVALID_PARAMETER,
+                        "Users cannot create main assets. Sign in with X, then linkxaccount.");
+                std::string herr;
+                if (!xsession::RequireHandle(xid, herr))
+                    throw JSONRPCError(RPC_INVALID_PARAMETER, herr);
+            } else {
+                std::string oerr;
+                if (!RequireIssueUnderOwnMain(asset.strName, oerr))
+                    throw JSONRPCError(RPC_INVALID_PARAMETER, oerr);
+            }
+        }
+    }
+#endif
 
     CAmount nMaxRawTxFee = maxTxFee;
     if (!request.params[1].isNull() && request.params[1].get_bool())
