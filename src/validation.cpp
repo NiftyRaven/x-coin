@@ -352,6 +352,10 @@ bool CheckSequenceLocks(const CTransaction &tx, int flags, LockPoints* lp, bool 
         prevheights.resize(tx.vin.size());
         for (size_t txinIndex = 0; txinIndex < tx.vin.size(); txinIndex++) {
             const CTxIn& txin = tx.vin[txinIndex];
+            if (IsXAccountDummyInput(tx, txinIndex)) {
+                prevheights[txinIndex] = 0;
+                continue;
+            }
             Coin coin;
             if (!viewMemPool.GetCoin(txin.prevout, coin)) {
                 return error("%s: Missing input", __func__);
