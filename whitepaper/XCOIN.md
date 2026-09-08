@@ -78,6 +78,14 @@ Subsidy at height 1 is **5000 XFER**, halved every 2,100,000 blocks
 (every 150 blocks on regtest). Height 0 pays nothing; the genesis
 coinbase is never added to the UTXO set.
 
+Genesis is **frozen in the binary**. Mainnet header `nTime` is
+`1788825600` (2026-09-08 00:00:00 UTC). Starting a node, signing in,
+or connecting a peer does **not** rewrite height 0. That header is
+the ledger’s birth. Height 1 is the first payday: it is produced
+when an **X Verified** eligible node is running and wins that minute.
+Later blocks use wall-clock time at production. A lone node already
+stores genesis; other people seeing the same tip still need `addnode`.
+
 Winner count that minute is `1 + floor(height / halvingInterval)`.
 The subsidy is split as evenly as possible across those winners; fees
 go to the first winner.
@@ -214,11 +222,16 @@ Setup: [docs/XSIGNIN.md](../docs/XSIGNIN.md). Example owner handle:
 
 The user **is** a main asset.
 
-When a handle is linked (Sign in with X), the protocol assigns **one free
-root**. Users cannot `issue` a new root. One X account → one main
-asset. Lottery still needs **X Verified**; claiming the root needs the
-session only. The assignment is a zero-burn transaction with `OP_RETURN`
-`XID1` plus the normalized handle.
+A wallet **without** Sign in with X cannot create a main/root asset.
+`issue` of a new root is rejected at RPC and at consensus. The only
+valid root is the protocol assignment from `linkxaccount` after a
+valid session: zero burn, `OP_RETURN` `XID1` plus the normalized
+handle. That assignment does **not** require a blue check. One X
+account → one main asset. Lottery still needs **X Verified**.
+
+Subs and uniques are issued **under that signed-in account’s root**
+(`NAME/CHILD`, `NAME#tag`) and require owning `NAME!` plus the same
+session. Users cannot invent a second main.
 
 The root name is the handle, uppercased, in `A-Z 0-9 . _` (length
 3–**32**). A 26-character X handle maps 1:1 (no truncation).
@@ -262,6 +275,13 @@ receives on this node; peers see mempool and blocks. There is no public
 explorer and nothing appears on Ravencoin explorers.
 
 User agent is `XCoin`. Signed messages use `X Coin Signed Message:\n`.
+
+Third-party **block explorers**, **asset explorers**, and **wallets**
+can speak the same Bitcoin-family RPC (`getblock`, `getrawtransaction`
+with `-txindex=1`, `listassets`, `getassetdata`, `issue`, `transfer`).
+There is no in-tree explorer URL. A third-party wallet still cannot
+mint a main asset without Sign in with X on that node; subs are issued
+under that session’s root. [docs/DEX.md](../docs/DEX.md).
 
 ## 7. The wallet (honest status)
 
@@ -313,7 +333,8 @@ P2P, mempool, the asset script format. How to use it:
 - A cheating producer can omit `XPL1` and skip a pool split. Honest
   nodes always split when they know the pool. Keep id + password private.
 - Clock skew can delay a slot; height still maps 1:1.
-- No public explorer, no DNS seeds, no exchange listing.
+- No public explorer URL, no DNS seeds, no exchange listing. RPC is
+  enough for a third party to stand up an explorer or wallet later.
   Private-test audit: [docs/AUDIT.md](../docs/AUDIT.md).
   Threat model: [docs/SECURITY.md](../docs/SECURITY.md).
 

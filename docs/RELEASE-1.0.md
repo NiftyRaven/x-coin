@@ -23,7 +23,7 @@ the repository public. The current Linux tarball is **1.1.0**.
 - Handle → root mapping: X handles `[A-Za-z0-9_]` length 1–32; **26-character
   handles map 1:1** (no truncation). Root names max **32** characters.
 - Lottery among verified-X active nodes (no mining).
-- One free identity root per verified handle; user-created roots forbidden.
+- One free identity root per **signed-in** handle; user-created roots forbidden.
 
 ## Install the GUI (Ubuntu)
 

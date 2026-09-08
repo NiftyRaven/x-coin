@@ -1,6 +1,11 @@
 Repository Tools
 ---------------------
 
+Private X Coin tree. Operator docs: [README.md](../README.md),
+[docs/RELEASE-1.1.md](../docs/RELEASE-1.1.md). There is no mining and
+no public DNS seeds. Historical imported READMEs below still mention
+Raven / raven.org in places.
+
 ### [Developer tools](/contrib/devtools) ###
 Specific tools for developers working on this repository.
 Contains the script `github-merge.py` for merging GitHub pull requests securely and signing them using GPG.

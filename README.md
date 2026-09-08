@@ -7,7 +7,9 @@ Peer-to-peer coin for users on X. No mining. Minute lottery among **X
 Verified** (blue check) active nodes; halvings add winners. Optional
 pools: tickets from verified members, even split to everyone in the
 pool. Fair launch, no premine. ~21 billion XFER. One free root identity
-asset per signed-in X handle.
+asset per signed-in X handle (no login → no main asset; subs under that
+root). Genesis is frozen at 2026-09-08 00:00:00 UTC; height 1 is the
+first payday when an eligible node produces.
 
 Whitepaper: [whitepaper/XCOIN.md](whitepaper/XCOIN.md).  
 Release 1.1 (private): [docs/RELEASE-1.1.md](docs/RELEASE-1.1.md).  
@@ -154,8 +156,10 @@ src/xcoin-cli stop
 A 26-character X handle maps 1:1 to a 26-character root (max root name:
 **32**). See [docs/ASSETS.md](docs/ASSETS.md).
 
-You must Sign in with X to send or receive. Lottery additionally requires
-**X Verified** (`users/me.verified` — blue check) and a running wallet.
+You must Sign in with X to send or receive. **No session → no main/root
+asset.** Subs and uniques are issued under that signed-in account’s
+root. Lottery additionally requires **X Verified** (`users/me.verified`
+— blue check) and a running wallet.
 Unverified accounts have **zero chance**. The operator invite list cannot
 exclude a verified running wallet; it is optional pins / invites, not
 the meaning of Verified.

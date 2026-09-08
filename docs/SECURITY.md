@@ -93,9 +93,9 @@ Stay private. Do **not** add public DNS seeds.
    *your* listen address is opt-in on Home (**Provide my node IP**; off
    by default).
 
-3. **Same allowlist on every honest node.** Confirm each handle offline
-   (verified / Premium badge). Prefer `handle userid` and, for the seed
-   operators you care about, pin the payout:
+3. **Optional invite / payout-pin file** (not a lottery gate). Confirm
+   each handle offline if you use pins. Prefer `handle userid` and, for
+   the seed operators you care about, pin the payout:
 
    ```
    NFTRVN 123456789 XyourPinnedAddressxxxxxxxxxxxxxxxxx

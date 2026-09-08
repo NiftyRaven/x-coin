@@ -114,7 +114,8 @@ The node never pretends login succeeded without a real access token
 2. **Sign in with X** (binds this node to your X account; does not replace the seed).
 3. Paste **Client ID** → **Save Client ID**.
 4. **Allowlist my handle** (optional operator invite list — not a blue check)
-   then **Claim my root asset**.
+   then **Claim my root asset**. Unsigned-in wallets cannot claim a root
+   and cannot `issue` a main. Subs/uniques are issued under that root.
 5. **Receive** (address + Copy) / **Send** (paste address, amount, Send).
 6. **Activity** (history). Issue sub / unique from Home. Lottery status is on Home.
 7. Optional **POOL** — create or join (id + password). Public card is name +

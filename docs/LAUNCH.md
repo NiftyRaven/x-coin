@@ -74,6 +74,11 @@ headers — no leading-zero PoW grind):
 `nMinimumChainWork` and `defaultAssumeValid` are zero. Checkpoints are empty.
 No imported UTXO, assumevalid hash, or checkpoint is inherited.
 
+**Birth of the chain:** genesis is already in the binary. First start does
+**not** rewrite `nTime`. The first *spendable* block is height 1, produced
+when an X Verified eligible node is running and wins that minute. Connecting
+the first peer does not create genesis; it only shares the same frozen ledger.
+
 **Fair launch:** no IPO, no premine, no founder allocation. Height 0 is not a
 payday. The genesis coinbase (5000 XFER in the serialized tx) is **never
 added to the UTXO set** (`ConnectBlock` special-case, same as Bitcoin).
@@ -82,12 +87,13 @@ Subsidy starts at height 1 via the lottery. Spendable lifetime supply is
 integer right-shift; ~21 billion minus unpaid genesis and `>>=` dust).
 `MAX_MONEY` is 21,000,000,000 XFER (sanity cap, not the minted total).
 
-**Sign in with X is required to send and receive.** Authentication
-proves it is you and is the key to asset ownership. Lottery eligibility
-additionally requires **X Verified** (X’s blue check from `users/me`)
-and a running wallet. Unverified accounts have zero chance. The operator
-invite list cannot exclude a verified wallet. A node
-without a session can still sync and relay.
+**Sign in with X is required to send, receive, and create assets.**
+Authentication proves it is you. **No session → no main/root asset.**
+Subs and uniques are issued under that signed-in account’s root.
+Lottery eligibility additionally requires **X Verified** (X’s blue
+check from `users/me`) and a running wallet. Unverified accounts have
+zero chance. The operator invite list cannot exclude a verified wallet.
+A node without a session can still sync and relay.
 
 ## Publish a seed node
 
@@ -223,9 +229,10 @@ See [LOTTERY.md](LOTTERY.md). Short form:
   Mismatches are invalid.
 
 Assets: see [ASSETS.md](ASSETS.md). Main/root identity assets are **free**
-(protocol assignment on verified X-link). Users cannot `issue` a new root.
-Sub-asset burn **100 XFER**, unique **5 XFER**. Restricted/qualifier assets
-are removed.
+(protocol assignment on a **signed-in** X-link). No session → no main
+asset. Users cannot `issue` a new root. Subs/uniques are issued under
+that account’s root. Sub-asset burn **100 XFER**, unique **5 XFER**.
+Restricted/qualifier assets are removed.
 
 | Action | Burn | Main address |
 | --- | --- | --- |

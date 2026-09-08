@@ -20,8 +20,9 @@ X Coin is a peer-to-peer coin for **transfers between users on X**.
 | Halvings | Each halving adds one more winner that minute (1 → 2 → 3 …) |
 | Pools | Optional. Tickets = verified running members. Win split evenly among every member address |
 | Launch | Fair. No premine, no founder allocation |
+| Genesis | Frozen `nTime` 1788825600 (2026-09-08 00:00:00 UTC). Height 1 when first eligible node produces |
 | Supply | About **21 billion** XFER spendable |
-| Identity | Sign in with X. One **free root** asset per handle. GUI shows @handle only |
+| Identity | Sign in with X. One **free root** per signed-in handle (no login → no main). GUI shows @handle only |
 | Subs / uniques | **100 XFER** / **5 XFER** under that root |
 | P2P / RPC | 38443 / 38442 (magic `XFER`) |
 

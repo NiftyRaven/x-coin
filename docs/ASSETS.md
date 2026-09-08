@@ -5,10 +5,14 @@ The asset engine is the backbone, simplified.
 
 ## The user is a main asset
 
-When a person links an X account, the protocol assigns them **one
-main/root asset, free**. That asset *is* the user. Users cannot `issue` a new
-root. One X account → one main asset. Lottery still needs **X Verified**
-(blue check); claiming the root needs the session only.
+**Sign in with X is required to create the main asset.** A wallet with
+no session cannot `issue` a root and cannot call `linkxaccount`. The
+protocol assigns **one** free main/root when that signed-in handle is
+linked. That asset *is* the user. Users cannot `issue` a new root.
+One X account → one main asset. Lottery still needs **X Verified**
+(blue check); claiming the root needs the session only — not a blue
+check. Subs and uniques are created **from that signed-in account’s
+main asset** (`NAME/CHILD`, `NAME#tag`) and require owning `NAME!`.
 
 ```
 # GUI: Sign in with X, then Claim my root asset.
@@ -89,10 +93,11 @@ assets. Restricted-only RPCs and the Qt Restricted tab are gone.
 `issue` of a new root is rejected with a clear error. Consensus rejects a
 500-XFER root burn and accepts only a zero-burn root that includes `XID1`.
 
-Wallets without a Sign in with X session cannot **send or receive**.
-Authentication proves it is you and is the key to asset ownership.
-A node can still sync. Lottery needs a signed-in **X Verified**
-session (`users/me.verified`). Issue of a sub/unique also requires that session.
+Wallets without a Sign in with X session cannot **send, receive, claim a
+root, or issue**. Authentication proves it is you and is the key to
+asset ownership. A node can still sync. Lottery needs a signed-in
+**X Verified** session (`users/me.verified`). Issue of a sub/unique
+also requires that session **and** ownership of the parent `NAME!`.
 
 ## Smoke
 

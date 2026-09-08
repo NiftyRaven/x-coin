@@ -132,7 +132,7 @@ within the last **180 seconds**. Unverified gossip is dropped (zero chance).
   same handle replaces the payout script).
 - On start, the node loads or creates a payout script in `lottery-payout.dat`
   under the data directory (`~/.xcoin` on Unix). When a wallet is present the
-  producer adopts the wallet mining script as the local payout.
+  producer adopts the wallet’s local payout script.
 - The producer thread heartbeats that script every second **only if** the
   local node is linked+verified.
 - `registeractivenode` records a heartbeat for the local script or a supplied

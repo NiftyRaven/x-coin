@@ -3930,7 +3930,7 @@ bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const s
         return false;
     }
     if (assetType == AssetType::ROOT && !fProtocolRoot) {
-        error = std::make_pair(RPC_INVALID_PARAMETER, "Users cannot create main assets. Link a verified X account (linkxaccount / AssignLinkedUserMainAsset).");
+        error = std::make_pair(RPC_INVALID_PARAMETER, "Users cannot create main assets. Sign in with X, then linkxaccount (AssignLinkedUserMainAsset).");
         return false;
     }
     if (fProtocolRoot && assetType != AssetType::ROOT) {

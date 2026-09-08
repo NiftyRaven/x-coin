@@ -757,7 +757,7 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
 
                     AssetType rawIssueType;
                     if (IsAssetNameValid(asset_name.get_str(), rawIssueType) && rawIssueType == AssetType::ROOT)
-                        throw JSONRPCError(RPC_INVALID_PARAMETER, "Users cannot create main assets. Link a verified X account (linkxaccount).");
+                        throw JSONRPCError(RPC_INVALID_PARAMETER, "Users cannot create main assets. Sign in with X, then linkxaccount.");
                     if (rawIssueType == AssetType::QUALIFIER || rawIssueType == AssetType::SUB_QUALIFIER)
                         throw JSONRPCError(RPC_INVALID_PARAMETER, "Restricted assets were removed");
 

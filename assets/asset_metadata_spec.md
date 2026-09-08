@@ -1,5 +1,10 @@
 ## X Coin Metadata Specification
 
+Optional IPFS JSON for an asset. **Restricted assets were removed from
+the protocol** (no create / transfer / RPC / activation). A `"restricted"`
+key in this JSON is a third-party signal only — the node does not
+enforce it. Product rules: [docs/ASSETS.md](../docs/ASSETS.md).
+
 Additional fields may be added, but will be ignored by X Coin.
 
 ```
@@ -11,7 +16,7 @@ Additional fields may be added, but will be ignored by X Coin.
 
    "contract_signature": "<X Coin signed contract_hash>",
 
-   "contract_address": "R9x4u22ru3zm5v8suWiXNji4ENWSG7eYkx",
+   "contract_address": "X… (main P2PKH version 76)",
 
    "symbol": "LEMONADE",
 
@@ -43,7 +48,7 @@ Additional fields may be added, but will be ignored by X Coin.
 
    "forsale": true,
 
-   "forsale_price": "5000 RVN",
+   "forsale_price": "5000 XFER",
    
    "domain": "bitactivate.com",
    

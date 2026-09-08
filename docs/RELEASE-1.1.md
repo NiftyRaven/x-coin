@@ -27,8 +27,9 @@ Release. Do not make the repository public. 1.0 notes:
   not replace the seed ([WALLET.md](WALLET.md)).
 
 Still true from 1.0: desktop GUI `xcoin-qt`, same `wallet.dat` as CLI,
-one free identity root per handle, no mining, fair launch, no public
-DNS seeds, no explorer.
+one free identity root per **signed-in** handle (no session → no main
+asset; subs under that root), no mining, fair launch, no public DNS
+seeds, no explorer.
 
 ## Install the GUI (Ubuntu)
 
@@ -60,8 +61,9 @@ Pack: `contrib/xcoin/package-linux.sh` → `dist/xcoin-1.1.0-linux-x86_64.tar.gz
 
 ## Known limits
 
-- Sign in with X is required to send, receive, and own assets. Lottery
-  is **X Verified** (blue check) plus a running wallet.
+- Sign in with X is required to send, receive, claim a root, and issue
+  assets. No session → no main asset. Lottery is **X Verified** (blue
+  check) plus a running wallet.
 - Live X OAuth needs a developer Client ID (`xoauthclientid=`).
   `-regtest` mock `users/me` covers tests (`-xoauthmock=NFTRVN:verified`).
 - Honest nodes emit `XPL1` and split when the winner is in a known pool.

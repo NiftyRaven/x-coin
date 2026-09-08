@@ -25,8 +25,9 @@ and SPDX lines. That is required by the MIT license.
 X Coin (**XFER**) is a private hard-fork of that v4.8.0 tree:
 
 - **Keep** the asset engine (sub / unique / transfer / messaging channels).
-- **Each user is a main asset.** A verified X-link assigns one free root.
-  Users cannot create roots.
+- **Each user is a main asset.** A **signed-in** X-link (`linkxaccount`)
+  assigns one free root. No session → no main asset. Users cannot
+  `issue` roots. Subs/uniques are issued under that account’s root.
 - **Delete restricted assets** (qualifier / tag / freeze / restricted RPC and UI).
 - **Remove** Proof-of-Work as the block-production mechanism.
 - **Replace** mining with a **minute lottery** among active nodes. See [LOTTERY.md](LOTTERY.md).
@@ -86,9 +87,11 @@ for those versions.
    P2P `xpl`, coinbase `XPL1`. Active set requires a linked X session that is
    **X Verified** (users/me blue check) and a running wallet. Unverified =
    zero chance. The operator invite list cannot exclude a verified wallet.
-4. **Assets** on from height 0. Main roots are protocol-assigned on X-link
-   (zero burn, `XID1`). User `issue` of a new root is consensus-invalid.
-   Restricted assets are not activated (`AreRestrictedAssetsDeployed()` is false).
+4. **Assets** on from height 0. Main roots are protocol-assigned on a
+   **signed-in** X-link (zero burn, `XID1`) — not a blue-check gate.
+   User `issue` of a new root is consensus-invalid. Subs/uniques require
+   the session plus `NAME!`. Restricted assets are not activated
+   (`AreRestrictedAssetsDeployed()` is false).
 5. KawPoW activation time pushed to the far future; header hashing stays on
    the pre-KawPoW path. Lottery does not use that hash as a work function.
 

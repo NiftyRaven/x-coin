@@ -432,7 +432,7 @@ UniValue issue(const JSONRPCRequest& request)
             "issue \"asset_name\" qty \"( to_address )\" \"( change_address )\" ( units ) ( reissuable ) ( has_ipfs ) \"( ipfs_hash )\"\n"
             + AssetActivationWarning() +
             "\nIssue a sub-asset or unique asset under a main asset this wallet owns.\n"
-            "Users cannot create main/root assets. Link a verified X account (linkxaccount)\n"
+            "Users cannot create main/root assets. Sign in with X, then linkxaccount\n"
             "to be assigned one free identity root, then issue NAME/CHILD (100 XFER) or NAME#tag (5 XFER).\n"
             "Asset name must not conflict with any existing asset.\n"
             "Unit as the number of decimals precision for the asset (0 for whole units (\"1\"), 8 for max precision (\"1.00000000\")\n"
@@ -478,7 +478,7 @@ UniValue issue(const JSONRPCRequest& request)
     }
 
     if (assetType == AssetType::ROOT) {
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Users cannot create main assets. Link a verified X account (linkxaccount) to be assigned one free identity root.");
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Users cannot create main assets. Sign in with X, then linkxaccount to be assigned one free identity root.");
     }
 
     if (assetType == AssetType::RESTRICTED || assetType == AssetType::QUALIFIER || assetType == AssetType::SUB_QUALIFIER) {

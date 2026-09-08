@@ -1,6 +1,11 @@
 Release Process
 ====================
 
+Imported upstream checklist. **X Coin private releases do not use a
+public GitHub Release page.** Pack with `contrib/xcoin/package-linux.sh`
+(currently 1.1.0). Operator notes: [docs/RELEASE-1.1.md](../docs/RELEASE-1.1.md).
+Do not add public DNS seeds. Credit **Nifty Raven (@NFTRVN on X)** only.
+
 Before every release candidate:
 
 * Update translations see [translation_process.md](https://github.com/NiftyRaven/x-coin/blob/master/doc/translation_process.md#synchronising-translations).
@@ -96,18 +101,11 @@ rm SHA256SUMS
 (the digest algorithm is forced to sha256 to avoid confusion of the `Hash:` header that GPG adds with the SHA256 used for the files)
 Note: check that SHA256SUMS itself doesn't end up in SHA256SUMS, which is a spurious/nonsensical entry.
 
-- Upload zips and installers, as well as `SHA256SUMS.asc` from last step, to the github-release page.
+- Upload the private tarball from `contrib/xcoin/package-linux.sh`.
+  **Do not** create a public GitHub Release while the repository is
+  private.
 
-- Update github.com/NiftyRaven/x-coin version
+- Announce only to operators who already have access. Do not add public
+  DNS seeds. Credit **Nifty Raven (@NFTRVN on X)** only.
 
-- Announce the release:
-
-  - ravencore.org blog post
-
-  - Optionally twitter, reddit /NiftyRaven/x-coin, ... but this will usually sort out itself
-
-  - Archive release notes for the new version to `doc/release-notes/` (branch `master` and branch of the release)
-
-  - Create a [new GitHub release](https://github.com/NiftyRaven/x-coin/releases/new) with a link to the archived release notes.
-
-  - Celebrate
+- Archive operator notes in `docs/RELEASE-1.1.md` (not a raven.org post).
