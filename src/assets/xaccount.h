@@ -5,6 +5,10 @@
 #ifndef XCOIN_ASSETS_XACCOUNT_H
 #define XCOIN_ASSETS_XACCOUNT_H
 
+#if defined(HAVE_CONFIG_H)
+#include "config/raven-config.h"
+#endif
+
 #include "amount.h"
 
 #include <string>

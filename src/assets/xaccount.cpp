@@ -106,7 +106,7 @@ bool DeriveMainAssetName(const std::string& xHandleOrId, std::string& outName, s
     auto tryName = [&](const std::string& n) -> bool {
         if (n.size() < MIN_ASSET_LENGTH || n.size() > 30)
             return false;
-        if (!IsRootNameValid(n))
+        if (!IsAssetNameARoot(n))
             return false;
         if (NameTaken(n, cache))
             return false;
