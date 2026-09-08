@@ -135,6 +135,7 @@ smoke-gui-datadir/
 smoke-xsession-datadir/
 smoke-benchmark-datadir/
 smoke-isolation-datadir/
+smoke-sabotage-datadir/
 gui-demo-datadir/
 
 # built GUI (keep src/qt/xcoin-qt out of git)

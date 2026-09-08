@@ -26,6 +26,7 @@
 #include "txmempool.h"
 #include "uint256.h"
 #include "utilstrencodings.h"
+#include "xsession.h"
 #ifdef ENABLE_WALLET
 #include "wallet/rpcwallet.h"
 #include "wallet/wallet.h"
@@ -2081,6 +2082,12 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
             "\nAs a json rpc call\n"
             + HelpExampleRpc("sendrawtransaction", "\"signedhex\"")
         );
+
+    {
+        std::string err;
+        if (!xsession::RequireSession(err))
+            throw JSONRPCError(RPC_WALLET_ERROR, err);
+    }
 
     ObserveSafeMode();
     LOCK(cs_main);

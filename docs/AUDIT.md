@@ -89,10 +89,11 @@ different address prefixes (`X` / `y` vs `R` / `n`).
 ## P2P
 
 - No DNS seeds in-tree (`vSeeds.clear()`). Leftover imported IP arrays
-  in `chainparamsseeds.h` are empty and unused.
+  in `chainparamsseeds.h` are empty and unused. Do not add public seeds.
 - Join path: `addnode=` / `seednode=` on **38443**.
-- Heartbeats: `xhb` after `verack`. Unsigned / unlisted heartbeats are
-  ignored for the active set.
+- Heartbeats: signed `xhb` after `verack`. Unsigned, unlisted, userid-only,
+  or sticky-violating heartbeats are ignored (or banned, if the compact
+  sig is missing / forged). See [SECURITY.md](SECURITY.md).
 
 ## Wallet / privacy
 
@@ -108,11 +109,24 @@ different address prefixes (`X` / `y` vs `R` / `n`).
 ## Verdict
 
 **Ready for a private full test** among operators who already share an
-allowlist and a seed IP. Not ready for a public launch.
+allowlist and a **known** seed IP. Not ready for a public launch. Not
+hacker-proof. Threat model: [SECURITY.md](SECURITY.md).
 
-Accepted (not blockers for a private test):
+Hardened (was a real gap; now closed for the cheap cases):
 
-- Allowlist / `xhb` handle spoofing (trusted mesh).
+- Gossip `xhb` must be signed by the payout key; a live handle cannot be
+  rebound to an attacker script.
+- Allowlist match is the handle. A listed userid alone cannot authorize
+  a different handle.
+- `sendrawtransaction` requires the same session as `sendtoaddress`.
+
+Accepted residual (not blockers for a private test):
+
+- Eclipse / lone-node: `fMiningRequiresPeers` is false; checkpoints empty.
+  Connect to a seed you know (`addnode`).
+- First-seen handle grab after restart unless the payout is pinned.
+- Producer commits the active set; validation checks the coinbase against
+  that commitment, not an oracle of “who is really online.”
 - No public explorer, no public seeds, no exchange, no mobile.
 - Upstream `make check` still hard-codes imported genesis hashes.
 
@@ -126,4 +140,5 @@ contrib/xcoin/smoke-gossip.sh
 contrib/xcoin/smoke-gui.sh          # sets XDG_RUNTIME_DIR; do not pkill -f xcoin-qt
 contrib/xcoin/smoke-benchmark.sh    # lone ledger + 3-node visible send
 contrib/xcoin/smoke-isolation.sh    # two wallets: Bob cannot spend Alice
+contrib/xcoin/smoke-sabotage.sh     # unsigned sendraw / handle steal rejected
 ```

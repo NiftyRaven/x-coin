@@ -28,6 +28,7 @@ RAVEN_TESTS =\
   test/assets/asset_tests.cpp \
   test/assets/xaccount_tests.cpp \
   test/xsession_tests.cpp \
+  test/lottery_security_tests.cpp \
   test/assets/serialization_tests.cpp \
   test/assets/asset_tx_tests.cpp \
   test/assets/cache_tests.cpp \

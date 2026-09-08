@@ -10,6 +10,7 @@ XFER. One free root identity asset per verified X handle.
 Whitepaper: [whitepaper/XCOIN.md](whitepaper/XCOIN.md).  
 Release 1.0: [docs/RELEASE-1.0.md](docs/RELEASE-1.0.md).  
 Private-test audit: [docs/AUDIT.md](docs/AUDIT.md).  
+Release-day threat model (not hacker-proof): [docs/SECURITY.md](docs/SECURITY.md).  
 DEX listing criteria (private; do not apply): [docs/DEX.md](docs/DEX.md).
 
 ## How to use the wallet

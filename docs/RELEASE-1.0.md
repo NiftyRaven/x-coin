@@ -77,6 +77,7 @@ Brand stills: [assets/brand/](../assets/brand/).
   cannot complete a live login; `-regtest` mock `users/me` covers tests.
 - No mobile app. No public DNS seeds. No exchange listing.
   DEX criteria (ready to *apply* vs ready to *trade*): [DEX.md](DEX.md).
+  Not hacker-proof: [SECURITY.md](SECURITY.md).
 - Restricted assets stay removed.
 - Internal C++ names (`RavenGUI`, `OP_RVN_ASSET`, copyright headers) stay;
   catalog: [FORK.md](FORK.md).
@@ -96,11 +97,12 @@ contrib/xcoin/smoke-eligibility.sh
 contrib/xcoin/smoke-gui.sh          # headless Qt (sets XDG_RUNTIME_DIR)
 contrib/xcoin/smoke-benchmark.sh    # lone ledger + 3-node visible send
 contrib/xcoin/smoke-isolation.sh    # Bob cannot spend Alice's wallet.dat
+contrib/xcoin/smoke-sabotage.sh     # unsigned sendraw / handle steal rejected
 ```
 
 `smoke-regtest.sh` includes `linkxaccount` of a 26-character handle.
 `smoke-benchmark.sh` answers “are txs visible?” and “own ledger + more
 than one node” on a private mesh (no public explorer).
 
-Private-test audit: [AUDIT.md](AUDIT.md).
+Private-test audit: [AUDIT.md](AUDIT.md). Release-day notes: [SECURITY.md](SECURITY.md).
 DEX listing criteria (do not apply while private): [DEX.md](DEX.md).
