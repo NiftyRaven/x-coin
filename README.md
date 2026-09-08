@@ -83,7 +83,7 @@ The Ravencoin asset layer is intact: `issue`, `transfer`, `listassets`, unique/q
 
 Private-launch checklist (ports, magic, genesis, seed publish, join, rewards, risks): [docs/LAUNCH.md](docs/LAUNCH.md). Lottery: [docs/LOTTERY.md](docs/LOTTERY.md).
 
-`contrib/xcoin/smoke-regtest.sh` exercises lottery + a two-winner coinbase + `issue TESTASSET`.
+`contrib/xcoin/smoke-regtest.sh` exercises lottery + a single-winner coinbase at height 149 + a two-winner split at height 150 + `issue TESTASSET`. `contrib/xcoin/smoke-gossip.sh` checks that two nodes share one active-node set over P2P `xhb`.
 
 Not in scope: X.com API, explorers, DNS seeds, making upstream `make check` green against the new genesis.
 
