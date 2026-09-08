@@ -488,6 +488,58 @@ void WalletView::gotoRestrictedAssetsPage()
     setCurrentWidget(restrictedAssetsPage);
 }
 
+static QString wrapRpcError(const std::string& message)
+{
+    UniValue inner(UniValue::VOBJ);
+    inner.pushKV("message", message);
+    UniValue wrap(UniValue::VOBJ);
+    wrap.pushKV("error", inner);
+    return QString::fromStdString(wrap.write());
+}
+
+QString WalletView::humanRpc(const QString& raw, bool* ok)
+{
+    if (ok)
+        *ok = false;
+    const QString trimmed = raw.trimmed();
+    if (trimmed.isEmpty()) {
+        if (ok)
+            *ok = true;
+        return QString();
+    }
+    UniValue u;
+    if (!u.read(trimmed.toStdString())) {
+        return trimmed.length() > 240 ? trimmed.left(240) + QStringLiteral("…") : trimmed;
+    }
+    if (u.isObject() && u.exists("error")) {
+        const UniValue& e = u["error"];
+        QString msg;
+        if (e.isObject() && e.exists("message"))
+            msg = QString::fromStdString(e["message"].getValStr());
+        else if (e.isStr())
+            msg = QString::fromStdString(e.get_str());
+        else
+            msg = QString::fromStdString(e.write());
+        if (msg.isEmpty())
+            msg = QStringLiteral("Request failed.");
+        return msg;
+    }
+    if (u.isObject() && u.exists("code") && u.exists("message"))
+        return QString::fromStdString(u["message"].getValStr());
+    if (ok)
+        *ok = true;
+    if (u.isStr())
+        return QString::fromStdString(u.get_str());
+    if (u.isNum())
+        return QString::fromStdString(u.getValStr());
+    if (u.isObject() && u.exists("txid"))
+        return QString::fromStdString(u["txid"].getValStr());
+    QString compact = QString::fromStdString(u.write());
+    if (compact.size() > 280)
+        compact = compact.left(240) + QStringLiteral("…");
+    return compact;
+}
+
 QString WalletView::callRpc(const QString& method, const QStringList& args) const
 {
     std::string cmd = method.toStdString();
@@ -509,9 +561,13 @@ QString WalletView::callRpc(const QString& method, const QStringList& args) cons
     try {
         RPCConsole::RPCExecuteCommandLine(result, cmd);
     } catch (const UniValue& e) {
-        return QString::fromStdString(e.write(2));
+        if (e.isObject() && e.exists("message"))
+            return wrapRpcError(e["message"].getValStr());
+        if (e.isStr())
+            return wrapRpcError(e.get_str());
+        return wrapRpcError(e.write());
     } catch (const std::exception& e) {
-        return QString::fromStdString(e.what());
+        return wrapRpcError(e.what());
     }
     return QString::fromStdString(result);
 }

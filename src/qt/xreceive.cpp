@@ -31,7 +31,7 @@ XReceive::XReceive(WalletView* walletViewIn, QWidget* parent)
     title->setObjectName("xsection");
     root->addWidget(title);
 
-    tagLabel = new QLabel("Sign in with X first. Receive requires the session proof that links this wallet to your X account.");
+    tagLabel = new QLabel("Sign in with X on Home first. Receive uses a private session on this computer.");
     tagLabel->setObjectName("xhint");
     tagLabel->setWordWrap(true);
     root->addWidget(tagLabel);
@@ -91,9 +91,7 @@ void XReceive::refresh()
         tagLabel->setText("This wallet is not linked yet. Sign in with X on Home. "
                           "A typed handle cannot create a receive address.");
         addressLabel->setText("(sign in with X to receive)");
-        hintLabel->setText("Receive requires a private Sign in with X session on this computer. "
-                           "This wallet + this X session = you. Another user cannot create a receive address in your wallet. "
-                           "The 12-word seed still controls the keys; Sign in with X is the identity gate.");
+        hintLabel->setText("Receive requires Sign in with X on this computer. A typed handle cannot create an address here.");
         return;
     }
     const QString handle = QString::fromStdString(xsession::SignedInHandle());
@@ -114,10 +112,8 @@ void XReceive::refresh()
     if (currentAddress.isEmpty())
         currentAddress = m->addRow(AddressTableModel::Receive, "Receive", "");
     addressLabel->setText(currentAddress.isEmpty() ? QString("(could not create address)") : currentAddress);
-    hintLabel->setText(QString("This address is yours because this wallet.dat holds the keys and this node holds a "
-                              "private Sign in with X session for @%1. "
-                              "Another user cannot receive into your wallet by typing your handle. Copy and send this to the payer.")
-        .arg(QString::fromStdString(xsession::SignedInHandle())));
+    hintLabel->setText(QString("Address for the wallet linked to @%1. Copy and send this to the payer.")
+        .arg(handle));
 }
 
 void XReceive::onCopy()

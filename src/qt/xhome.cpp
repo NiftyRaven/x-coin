@@ -37,13 +37,17 @@
 
 static const char *kTheme =
     "QWidget#xhomeInner, QWidget { background: #000000; color: #ffffff; }"
-    "QLabel#xhero { color: #ffffff; font-size: 42px; font-weight: 800; letter-spacing: 10px; }"
+    "QLabel#xhero { color: #ffffff; font-size: 40px; font-weight: 800; letter-spacing: 8px; }"
     "QLabel#xtag { color: #a1a1aa; font-size: 13px; }"
     "QLabel#xsection { color: #ffffff; font-size: 12px; font-weight: 800; letter-spacing: 3px; margin-top: 8px; }"
     "QLabel#xcard { background: #0a0a0a; border: 1px solid #27272a; border-radius: 0px; padding: 14px; color: #e4e4e7; font-size: 13px; }"
+    "QLabel#xbalance { background: #0a0a0a; border: 1px solid #ffffff; border-radius: 0px; padding: 18px; color: #ffffff; font-size: 22px; font-weight: 700; }"
+    "QLabel#xlotteryok { background: #0a0a0a; border: 1px solid #ffffff; border-radius: 0px; padding: 16px; color: #ffffff; font-size: 13px; }"
+    "QLabel#xlotteryno { background: #0a0a0a; border: 1px solid #3f3f46; border-radius: 0px; padding: 16px; color: #a1a1aa; font-size: 13px; }"
     "QLabel#xlinked { background: #0a0a0a; border: 1px solid #ffffff; border-radius: 0px; padding: 16px; color: #ffffff; font-size: 13px; }"
     "QLabel#xunlinked { background: #0a0a0a; border: 1px solid #3f3f46; border-radius: 0px; padding: 16px; color: #a1a1aa; font-size: 13px; }"
     "QLabel#xhint { color: #71717a; font-size: 12px; }"
+    "QLabel#xstatuserr { color: #fca5a5; font-size: 12px; }"
     "QPushButton#xprimary { background: #ffffff; color: #000000; border: none; border-radius: 0px; padding: 10px 22px; font-weight: 700; font-size: 14px; }"
     "QPushButton#xprimary:hover { background: #e4e4e7; }"
     "QPushButton#xprimary:disabled { background: #27272a; color: #71717a; }"
@@ -91,7 +95,7 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     word->setAlignment(Qt::AlignHCenter);
     root->addWidget(word);
 
-    QLabel* tag = new QLabel("Private test chain · this wallet · your X account");
+    QLabel* tag = new QLabel("Private test · Sign in with X · fair lottery");
     tag->setObjectName("xtag");
     tag->setAlignment(Qt::AlignHCenter);
     tag->setWordWrap(true);
@@ -107,7 +111,7 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     root->addWidget(peersLabel);
 
     balanceLabel = new QLabel;
-    balanceLabel->setObjectName("xcard");
+    balanceLabel->setObjectName("xbalance");
     balanceLabel->setWordWrap(true);
     root->addWidget(balanceLabel);
 
@@ -124,10 +128,8 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     keysLabel->setObjectName("xcard");
     keysLabel->setWordWrap(true);
     keysLabel->setText(
-        "This wallet + this X session = you. Another user cannot send from inside your wallet.\n"
-        "12-word BIP39 seed — still required. It creates and restores the keys in this wallet.dat.\n"
-        "Sign in with X stays on this computer. Login tokens are never saved and never sent to peers.\n"
-        "Spend only keys in this wallet.dat. Signing in as @alice on Bob's empty wallet cannot spend Alice's UTXOs. A typed handle cannot steal this.");
+        "12-word seed restores this wallet. Sign in with X stays on this computer — "
+        "login tokens are never saved and never sent to peers. Spend only keys in this wallet.dat.");
     root->addWidget(keysLabel);
 
     QHBoxLayout* authRow = new QHBoxLayout;
@@ -146,9 +148,7 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     root->addLayout(authRow);
 
     QLabel* credHint = new QLabel(
-        "Operator: paste your X app Client ID. The loopback callback URL is in "
-        "docs/XSIGNIN.md. Nothing is hardcoded. Login never succeeds without a "
-        "real token (or a -regtest mock of GET /2/users/me).");
+        "Paste your X app Client ID. The loopback callback is in docs/XSIGNIN.md. Nothing is hardcoded.");
     credHint->setObjectName("xhint");
     credHint->setWordWrap(true);
     root->addWidget(credHint);
@@ -165,7 +165,7 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     root->addLayout(credRow);
 
     lotteryLabel = new QLabel;
-    lotteryLabel->setObjectName("xcard");
+    lotteryLabel->setObjectName("xlotteryno");
     lotteryLabel->setWordWrap(true);
     root->addWidget(lotteryLabel);
 
@@ -239,8 +239,7 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     root->addLayout(money);
 
     QLabel* moneyHint = new QLabel(
-        "Receive, Send, Activity, and Transfer assets are all in this window — no terminal. "
-        "Send and transfer spend only keys in this wallet.dat.");
+        "Receive, Send, and Activity are also in the left menu. Transfer spends only keys in this wallet.dat.");
     moneyHint->setObjectName("xhint");
     moneyHint->setWordWrap(true);
     root->addWidget(moneyHint);
@@ -261,8 +260,7 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     nodeLay->setSpacing(10);
 
     QLabel* nodeHint = new QLabel(
-        "Optional. This is your listen address — give it to a friend or seed operator if you want. "
-        "Nobody is required to share. Other people's IPs are never listed here. "
+        "Optional. Copy the address you want to give out. Other people's IPs are never listed. "
         "Joining a mesh still uses addnode= in xcoin.conf.");
     nodeHint->setObjectName("xhint");
     nodeHint->setWordWrap(true);
@@ -356,6 +354,27 @@ QString XHome::rpc(const QString& method, const QStringList& args) const
     return walletView->callRpc(method, args);
 }
 
+void XHome::showRpcOutcome(const QString& raw, const QString& okPrefix)
+{
+    bool ok = false;
+    const QString text = WalletView::humanRpc(raw, &ok);
+    statusLabel->setObjectName(ok ? "xhint" : "xstatuserr");
+    statusLabel->style()->unpolish(statusLabel);
+    statusLabel->style()->polish(statusLabel);
+    if (ok) {
+        if (okPrefix.isEmpty())
+            statusLabel->setText(text);
+        else if (text.isEmpty())
+            statusLabel->setText(okPrefix);
+        else
+            statusLabel->setText(okPrefix + " — " + text);
+        return;
+    }
+    const QString msg = text.isEmpty() ? QStringLiteral("Request failed.") : text;
+    statusLabel->setText(msg);
+    QMessageBox::warning(this, "X-Coin", msg);
+}
+
 void XHome::refresh()
 {
     UniValue s;
@@ -367,41 +386,27 @@ void XHome::refresh()
         const QString vtype = QString::fromStdString(s["verified_type"].getValStr());
         QString verifiedLine;
         if (xVerified) {
-            verifiedLine = QString(
-                "X Verified: yes (%1). This running wallet cannot be excluded from the lottery.\n")
-                .arg(vtype.isEmpty() ? QString("blue check / X Premium") : vtype + " check");
+            verifiedLine = QString("X Verified: yes (%1). This running wallet cannot be excluded from the lottery.")
+                .arg(vtype.isEmpty() ? QString("blue check") : vtype + " check");
         } else {
             verifiedLine = QString(
-                "X Verified: no. X has not marked @%1 verified (no blue / business / government check).\n"
-                "Lottery is closed. “Allowlist my handle” is an operator invite list — it does not make you X Verified.\n")
+                "X Verified: no. Lottery chance is zero. Allowlist is an invite list — it does not make @%1 verified.")
                 .arg(handle);
         }
         sessionLabel->setObjectName("xlinked");
         sessionLabel->setText(QString(
-            "THIS WALLET IS YOURS\n"
             "Linked to @%1\n"
             "%2\n"
-            "Sign-in stays on this computer. X login tokens are never saved and are never sent to peers.\n"
-            "Other people cannot see your login. Home does not show your X user id, session files, or secrets.\n\n"
-            "Send, receive, and own require that private session on this node. Another signed-in identity cannot spend this wallet.dat.\n"
-            "You cannot open someone else's coins or assets just by typing their @handle.\n"
-            "The 12-word seed still controls the keys. Sign in with X is the identity proof on this node.")
+            "This wallet + this X session = you. Tokens stay off disk and off the wire.")
             .arg(handle)
-            .arg(verifiedLine.trimmed()));
+            .arg(verifiedLine));
         signInBtn->setText("Wallet linked to @" + handle);
     } else {
         sessionLabel->setObjectName("xunlinked");
         sessionLabel->setText(
-            "THIS WALLET IS NOT LINKED YET\n"
-            "Sign in with X to bind this node to your X account.\n\n"
-            "Send, receive, and own require a private session on this computer, "
-            "written only after Sign in with X. A typed handle cannot steal this.\n"
-            "Login tokens are never saved and never sent to other nodes.\n"
-            "This wallet + this X session = you. Another user cannot send from inside your wallet.\n"
-            "The 12-word seed still controls the keys. Sign in with X is the identity gate, not a replacement for the seed.\n"
-            "Only X Verified handles (X's blue check / X Premium, plus business and government org checks) enter the lottery. "
-            "That is what GET /2/users/me reports — not the operator invite list. A verified running wallet cannot be excluded. "
-            "An account that is not blue-check verified has zero chance. Every signed-in user can send and receive.");
+            "Not linked yet. Sign in with X to bind this wallet to your account.\n"
+            "Send and receive need that private session on this computer. A typed handle cannot steal this.\n"
+            "Lottery is X Verified only (blue / business / government check). Unverified has zero chance.");
         signInBtn->setText("Sign in with X");
     }
     sessionLabel->style()->unpolish(sessionLabel);
@@ -430,18 +435,40 @@ void XHome::refresh()
         fillNodeShareWidgets();
 
     UniValue l;
-    if (l.read(rpc("getlotteryinfo").toStdString()) && l.isObject()) {
+    if (l.read(rpc("getlotteryinfo").toStdString()) && l.isObject() && !l.exists("error")) {
         const bool elig = l["local_eligible"].isTrue();
+        const bool xv = l["local_x_verified"].isTrue();
         const QString handle = QString::fromStdString(l["local_xaccount"].getValStr());
-        lotteryLabel->setText(QString("Lottery (X Verified — blue check; invite list cannot exclude you)\nEligible: %1\nNext draw: block %2 (one block per minute slot)\nYour handle: %3\nActive nodes: %4")
+        const QString next = QString::fromStdString(l["next_draw_height"].getValStr().empty()
+                                                       ? l["height"].getValStr()
+                                                       : l["next_draw_height"].getValStr());
+        QString extra;
+        if (l["local_is_winner"].isTrue())
+            extra = "\nThis slot: winner";
+        QString handleDisp = handle.isEmpty() ? QString("(sign in first)") : handle;
+        if (!handle.isEmpty() && !handleDisp.startsWith(QLatin1Char('@')))
+            handleDisp = QLatin1Char('@') + handleDisp;
+        lotteryLabel->setObjectName(elig ? "xlotteryok" : "xlotteryno");
+        lotteryLabel->setText(QString(
+            "Lottery — X Verified only (invite list cannot exclude you)\n"
+            "Eligible        %1\n"
+            "X Verified      %2\n"
+            "Next block      %3\n"
+            "Handle          %4\n"
+            "Active nodes    %5%6")
             .arg(elig ? "yes" : "no")
-            .arg(QString::fromStdString(l["next_draw_height"].getValStr().empty()
-                                            ? l["height"].getValStr()
-                                            : l["next_draw_height"].getValStr()))
-            .arg(handle.isEmpty() ? QString("(sign in first)") : handle)
-            .arg(QString::fromStdString(l["active_nodes"].getValStr())));
+            .arg(xv ? "yes" : "no")
+            .arg(next)
+            .arg(handleDisp)
+            .arg(QString::fromStdString(l["active_nodes"].getValStr()))
+            .arg(extra));
+        lotteryLabel->style()->unpolish(lotteryLabel);
+        lotteryLabel->style()->polish(lotteryLabel);
     } else {
-        lotteryLabel->setText("Lottery\n(node starting…)");
+        lotteryLabel->setObjectName("xlotteryno");
+        lotteryLabel->setText("Lottery\nNode starting…");
+        lotteryLabel->style()->unpolish(lotteryLabel);
+        lotteryLabel->style()->polish(lotteryLabel);
     }
 
     QString rootName;
@@ -456,11 +483,10 @@ void XHome::refresh()
         }
     }
     if (rootName.isEmpty())
-        assetLabel->setText("My asset\nNo root yet. After you sign in, Claim my root asset. "
-                            "Allowlist my handle is an optional operator invite list for private test — it does not make you X Verified. "
-                            "The node uses the signed-in username only — a typed foreign handle is rejected.");
+        assetLabel->setText("My asset\nNo root yet. Sign in, then Claim my root asset. "
+                            "Allowlist is an optional invite list — it does not make you X Verified.");
     else
-        assetLabel->setText("My asset\nRoot: " + rootName + "\nIssue a sub or unique below — no CLI.");
+        assetLabel->setText("My asset\nRoot: " + rootName + "\nIssue a sub or unique below.");
 
     claimBtn->setEnabled(signedIn && rootName.isEmpty());
     allowlistBtn->setEnabled(signedIn);
@@ -608,13 +634,14 @@ void XHome::onAllowlistMe()
         QMessageBox::warning(this, "X-Coin", "Sign in with X first. The invite list uses the session username, not a typed field. Allowlisting is not X Verified.");
         return;
     }
-    statusLabel->setText(rpc("addxverified", QStringList() << QString::fromStdString(s["username"].getValStr())));
+    showRpcOutcome(rpc("addxverified", QStringList() << QString::fromStdString(s["username"].getValStr())),
+                   "Invite list updated");
     refresh();
 }
 
 void XHome::onClaim()
 {
-    statusLabel->setText(rpc("linkxaccount"));
+    showRpcOutcome(rpc("linkxaccount"), "Root asset claimed");
     refresh();
 }
 
@@ -636,7 +663,8 @@ void XHome::onIssueSub()
         QMessageBox::warning(this, "X-Coin", QString::fromStdString(err));
         return;
     }
-    statusLabel->setText(rpc("issue", QStringList() << (QString::fromStdString(root) + "/" + leaf) << "1"));
+    showRpcOutcome(rpc("issue", QStringList() << (QString::fromStdString(root) + "/" + leaf) << "1"),
+                   "Issued " + QString::fromStdString(root) + "/" + leaf);
     refresh();
 }
 
@@ -659,7 +687,8 @@ void XHome::onIssueUnique()
         return;
     }
     const QString tags = QString("[\"%1\"]").arg(leaf);
-    statusLabel->setText(rpc("issueunique", QStringList() << QString::fromStdString(root) << tags));
+    showRpcOutcome(rpc("issueunique", QStringList() << QString::fromStdString(root) << tags),
+                   "Issued unique " + leaf);
     refresh();
 }
 
@@ -673,6 +702,9 @@ void XHome::onOAuthSuccess(const QString& username, const QString& userId)
 
 void XHome::onOAuthFailed(const QString& error)
 {
+    statusLabel->setObjectName("xstatuserr");
+    statusLabel->style()->unpolish(statusLabel);
+    statusLabel->style()->polish(statusLabel);
     statusLabel->setText(error);
     QMessageBox::warning(this, "Sign in with X", error);
 }
