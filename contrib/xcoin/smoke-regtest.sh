@@ -163,6 +163,8 @@ if j.get("asset") != "NFTRVN":
 if j.get("owner") != "NFTRVN!":
     sys.exit("expected owner token NFTRVN!")
 '
+# Confirm the 0-XFER identity claim in a lottery block (height 0 still paid nothing).
+"${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
 "${CLI[@]}" listmyassets | grep -q NFTRVN
 "${CLI[@]}" getmainasset NFTRVN | grep -q NFTRVN
 "${CLI[@]}" registeractivenode "$ADDR_N" NFTRVN >/dev/null
@@ -200,11 +202,13 @@ if j.get("owner") != want + "!":
     sys.exit("expected owner token %s!" % want)
 print("26-char handle root", j.get("asset"))
 '
+"${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
 "${CLI[@]}" getmainasset "$LONG_HANDLE" | grep -q ABCDEFGHIJABCDEFGHIJABCDEF
 echo "26-char handle identity path: ok"
 
 echo "== two-winner window (regtest halving interval 150) =="
 # Height 149: still 1 winner, full 5000 subsidy. Height 150: 2 winners, 2500 subsidy.
+HEIGHT="$("${CLI[@]}" getblockcount)"
 NEED=$((149 - HEIGHT))
 if [[ "$NEED" -gt 0 ]]; then
   "${CLI[@]}" mockxsignin smoke2:verified >/dev/null
