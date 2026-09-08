@@ -2,8 +2,10 @@
 
 **Nifty Raven** (@NFTRVN on X)
 
-This repository stays **private** until you say go. There is no public
-GitHub Release and no DNS seed until then.
+This repository stays **private** until the **September 12, 2026**
+window (and until you say go). There is no public GitHub Release and
+no DNS seed until then. Invited people add a seed by hand on port
+**38443**.
 
 ## Birth of the chain
 

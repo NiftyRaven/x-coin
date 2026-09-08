@@ -7,7 +7,8 @@ private login, X Verified = blue check). This page is the 1.0 snapshot.
 Anonymous public identity — display name and handle only.
 
 Product version **1.0.0**. This is a **private** release. Do not make
-the repository public. The current Linux tarball is **1.1.0**.
+the repository public. Packages: `dist/xcoin-1.0.0-linux-x86_64.tar.gz`
+and `dist/xcoin-1.0.0-win-x86_64.zip`.
 
 ## What shipped
 
@@ -19,45 +20,26 @@ the repository public. The current Linux tarball is **1.1.0**.
   **This wallet + this X session = you** — another user cannot send
   from inside your wallet. **12-word BIP39 create/restore is unchanged**
   — Sign in with X does not replace the seed ([WALLET.md](WALLET.md)).
+- **Linux and Windows folders** with two labeled starts: the real
+  wallet and **Practice** (always `-regtest`, isolated datadir,
+  window title says `[regtest]`).
 - **CLI** `xcoind` / `xcoin-cli` still work.
 - Handle → root mapping: X handles `[A-Za-z0-9_]` length 1–32; **26-character
   handles map 1:1** (no truncation). Root names max **32** characters.
 - Lottery among verified-X active nodes (no mining).
 - One free identity root per **signed-in** handle; user-created roots forbidden.
 
-## Install the GUI (Ubuntu)
+## Install the GUI
 
-Dependencies:
+Do not compile. Unpack the package and double-click the labeled start.
+Step-by-step: [README.md](../README.md).
 
-```bash
-sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config \
-    bsdmainutils python3 libevent-dev libboost-all-dev libssl-dev libdb++-dev \
-    qtbase5-dev qttools5-dev qttools5-dev-tools libqt5svg5-dev \
-    libqrencode-dev protobuf-compiler libprotobuf-dev
-```
+- Linux: `dist/xcoin-1.0.0-linux-x86_64.tar.gz` → **X Coin Wallet**
+- Windows: `dist/xcoin-1.0.0-win-x86_64.zip` → **X Coin Wallet.exe**
+- Practice: **X Coin Practice Wallet** / **X Coin Practice Wallet.exe**
 
-Configure **with GUI** (this is the 1.0 line):
-
-```bash
-./autogen.sh
-./configure --with-gui=qt5 --disable-bench --disable-tests --with-incompatible-bdb
-make -j$(nproc)
-```
-
-CLI-only alternative: `./configure --without-gui --disable-bench --disable-tests --with-incompatible-bdb`
-
-Run:
-
-```bash
-src/qt/xcoin-qt                 # main
-src/qt/xcoin-qt -regtest        # local practice
-```
-
-`make install` installs `xcoin-qt`, `xcoind`, `xcoin-cli` into the prefix
-(default `/usr/local`). Pack a Linux tarball with
-`contrib/xcoin/package-linux.sh` — output is
-`dist/xcoin-1.0.0-linux-x86_64.tar.gz` (`bin/xcoin-qt` plus CLI).
-Current pack script emits **1.1.0**.
+Pack from a developer build: `contrib/xcoin/package-linux.sh` and
+`contrib/xcoin/package-windows.sh`.
 
 ## Screenshots
 

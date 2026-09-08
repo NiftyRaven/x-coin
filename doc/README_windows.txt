@@ -1,23 +1,24 @@
-X Coin
+X Coin (XFER)
 =============
 
-Intro
------
-Raven is a free open source peer-to-peer electronic cash system that is
-completely decentralized, without the need for a central server or trusted
-parties.  Users hold the crypto keys to their own money and transact directly
-with each other, with the help of a P2P network to check for double-spending.
+Nifty Raven (@NFTRVN on X)
+Anonymous public identity — display name and handle only.
 
+Which file to open
+------------------
+Unpack xcoin-1.0.0-win-x86_64.zip and double-click:
 
-Setup
------
-Unpack the files into a directory and run xcoin-qt.exe.
+  X Coin Wallet.exe
+      The real wallet. No -regtest. Uses %APPDATA%\XCoin.
 
-X Coin is the original Raven client and it builds the backbone of the network.
-However, it downloads and stores the entire history of Raven transactions;
-depending on the speed of your computer and network connection, the synchronization
-process can take anywhere from a few hours to a day or more.
+  X Coin Practice Wallet.exe
+      Isolated practice. Always -regtest. Uses
+      %APPDATA%\XCoin\regtest. Never writes the main ledger or
+      the main wallet.dat. The window title says [regtest].
 
-See the raven wiki at:
-  https://raven.wiki/wiki/X Coin_Wiki
-for more help and information.
+You do not compile. You do not open the source tree.
+
+Private until 12 September 2026
+-------------------------------
+The chain stays private until that window. No public DNS seeds.
+No explorer. Invited people add a seed by hand on port 38443.

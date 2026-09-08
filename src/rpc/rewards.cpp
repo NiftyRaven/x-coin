@@ -294,7 +294,7 @@ UniValue distributereward(const JSONRPCRequest& request) {
                 "\nArguments:\n"
                 "1. \"asset_name\"                 (string, required) The reward will be distributed all owners of this asset\n"
                 "2. \"snapshot_height\"            (number, required) The block height of the ownership snapshot\n"
-                "3. \"distribution_asset_name\"    (string, required) The name of the asset that will be distributed, or RVN\n"
+                "3. \"distribution_asset_name\"    (string, required) The name of the asset that will be distributed, or XFER\n"
                 "4. \"gross_distribution_amount\"  (number, required) The amount of the distribution asset that will be split amongst all owners\n"
                 "5. \"exception_addresses\"        (string, optional) Ownership addresses that should be excluded\n"
                 "6. \"change_address\"             (string, optional) If the rewards can't be fully distributed. The change will be sent to this address\n"
@@ -427,7 +427,7 @@ UniValue getdistributestatus(const JSONRPCRequest& request) {
                 "\nArguments:\n"
                 "1. \"asset_name\"                 (string, required) The reward will be distributed all owners of this asset\n"
                 "2. \"snapshot_height\"            (number, required) The block height of the ownership snapshot\n"
-                "3. \"distribution_asset_name\"    (string, required) The name of the asset that will be distributed, or RVN\n"
+                "3. \"distribution_asset_name\"    (string, required) The name of the asset that will be distributed, or XFER\n"
                 "4. \"gross_distribution_amount\"  (number, required) The amount of the distribution asset that will be split amongst all owners\n"
                 "5. \"exception_addresses\"        (string, optional) Ownership addresses that should be excluded\n"
 
