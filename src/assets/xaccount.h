@@ -28,6 +28,9 @@ static const CAmount MAIN_ASSET_CIRCULATING_AMOUNT = 1 * COIN;
 static const char XACCOUNT_ASSIGN_MAGIC[4] = {'X', 'I', 'D', '1'};
 
 bool NormalizeXAccountId(const std::string& in, std::string& handleOut, uint64_t& userIdOut, std::string& err);
+/** Map an X handle to a candidate root name (uppercase, explicit edge rules).
+ *  Does not assign or check uniqueness. Fails rather than truncate. */
+bool MapXHandleToRootName(const std::string& handle, std::string& outName, std::string& err);
 bool DeriveMainAssetName(const std::string& xHandleOrId, std::string& outName, std::string& err, CAssetsCache* cache = nullptr);
 
 CScript MakeXAccountAssignmentScript(const std::string& xId);

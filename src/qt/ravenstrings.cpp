@@ -124,7 +124,7 @@ QT_TRANSLATE_NOOP("raven-core", ""
 "the asset"),
 QT_TRANSLATE_NOOP("raven-core", ""
 "Invalid parameter: asset_name must only consist of valid characters and have "
-"a size between 3 and 30 characters. See help for more details."),
+"a size between 3 and 32 characters. See help for more details."),
 QT_TRANSLATE_NOOP("raven-core", ""
 "Invalid parameter: ipfs_hash is not valid, or txid hash is not the right "
 "length"),

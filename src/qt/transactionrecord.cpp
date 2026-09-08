@@ -427,13 +427,13 @@ bool TransactionRecord::isSwapTransaction(const CWallet *wallet, const CWalletTx
                 //Total price paid, need to use net calculation when we executed
                 sub.credit = mine ? myReceievedOutput.nValue : nNet;
                 std::string asset_qty_format = RavenUnits::formatWithCustomName(QString::fromStdString(sentType), sentAmount, 2).toUtf8().constData();
-                sub.assetName = strprintf("RVN (%s %s)", TransactionView::tr("Sold").toUtf8().constData(), asset_qty_format);
+                sub.assetName = strprintf("XFER (%s %s)", TransactionView::tr("Sold").toUtf8().constData(), asset_qty_format);
             } else if (fRecvAssets) {
                 //Buy!
                 //Total price paid, need to use net calculation when we executed
                 sub.credit = (mine ? -myProvidedInput.nValue : nNet);
                 std::string asset_qty_format = RavenUnits::formatWithCustomName(QString::fromStdString(recvType), recvAmount, 2).toUtf8().constData();
-                sub.assetName = strprintf("RVN (%s %s)", TransactionView::tr("Bought").toUtf8().constData(), asset_qty_format);
+                sub.assetName = strprintf("XFER (%s %s)", TransactionView::tr("Bought").toUtf8().constData(), asset_qty_format);
             } else {
                 LogPrintf("\tFell Through!\n");
                 return false; //!

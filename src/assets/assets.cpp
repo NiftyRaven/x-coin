@@ -41,8 +41,8 @@
 std::map<uint256, std::string> mapReissuedTx;
 std::map<std::string, uint256> mapReissuedAssets;
 
-// excluding owner tag ('!')
-static const auto MAX_NAME_LENGTH = 31;
+// including owner tag ('!') — roots are MAX_ROOT_NAME_LENGTH (32)
+static const auto MAX_NAME_LENGTH = MAX_ASSET_LENGTH;
 static const auto MAX_CHANNEL_NAME_LENGTH = 12;
 
 // min lengths are expressed by quantifiers
@@ -206,8 +206,7 @@ bool IsAssetNameASubQualifier(const std::string& name)
 bool IsAssetNameValid(const std::string& name, AssetType& assetType, std::string& error)
 {
     // Do a max length check first to stop the possibility of a stack exhaustion.
-    // We check for a value that is larger than the max asset name
-    if (name.length() > 40)
+    if (name.length() > 48)
         return false;
 
     assetType = AssetType::INVALID;
@@ -368,7 +367,7 @@ bool IsTypeCheckNameValid(const AssetType type, const std::string& name, std::st
         if (!valid) { error = "Restricted name contains invalid characters (Valid characters are: A-Z 0-9 _ .) ($ must be the first character, _ . special characters can't be the first or last characters)";  return false; }
         return true;
     } else {
-        if (name.size() > MAX_NAME_LENGTH - 1) { error = "Name is greater than max length of " + std::to_string(MAX_NAME_LENGTH - 1); return false; }  //Assets and sub-assets need to leave one extra char for OWNER indicator
+        if (name.size() > MAX_ROOT_NAME_LENGTH) { error = "Name is greater than max length of " + std::to_string(MAX_ROOT_NAME_LENGTH); return false; }  //Assets and sub-assets need to leave one extra char for OWNER indicator
         if (!IsAssetNameASubasset(name) && name.size() < MIN_ASSET_LENGTH) { error = "Name must be contain " + std::to_string(MIN_ASSET_LENGTH) + " characters"; return false; }
         bool valid = IsNameValidBeforeTag(name);
         if (!valid && IsAssetNameASubasset(name) && name.size() < 3) { error = "Name must have at least 3 characters (Valid characters are: A-Z 0-9 _ .)";  return false; }
@@ -1587,7 +1586,7 @@ bool CAssetTransfer::IsValid(std::string& strError) const
     strError = "";
 
     if (!IsAssetNameValid(std::string(strName))) {
-        strError = "Invalid parameter: asset_name must only consist of valid characters and have a size between 3 and 30 characters. See help for more details.";
+        strError = "Invalid parameter: asset_name must only consist of valid characters and have a size between 3 and 32 characters. See help for more details.";
         return false;
     }
 
@@ -5256,7 +5255,7 @@ bool ContextualCheckTransferAsset(CAssetsCache* assetCache, const CAssetTransfer
     strError = "";
     AssetType assetType;
     if (!IsAssetNameValid(transfer.strName, assetType)) {
-        strError = "Invalid parameter: asset_name must only consist of valid characters and have a size between 3 and 30 characters. See help for more details.";
+        strError = "Invalid parameter: asset_name must only consist of valid characters and have a size between 3 and 32 characters. See help for more details.";
         return false;
     }
 
@@ -5308,7 +5307,7 @@ bool CheckNewAsset(const CNewAsset& asset, std::string& strError)
 
     AssetType assetType;
     if (!IsAssetNameValid(std::string(asset.strName), assetType)) {
-        strError = _("Invalid parameter: asset_name must only consist of valid characters and have a size between 3 and 30 characters. See help for more details.");
+        strError = _("Invalid parameter: asset_name must only consist of valid characters and have a size between 3 and 32 characters. See help for more details.");
         return false;
     }
 

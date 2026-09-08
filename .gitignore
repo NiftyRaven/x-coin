@@ -131,3 +131,14 @@ CMakeLists.txt
 smoke-regtest-datadir/
 smoke-gossip-datadir/
 smoke-eligibility-datadir/
+smoke-gui-datadir/
+gui-demo-datadir/
+
+# built GUI (keep src/qt/xcoin-qt out of git)
+src/qt/xcoin-qt
+src/xcoin-qt
+
+# packaged Linux tarball is tracked under dist/
+dist/*/
+!dist/
+!dist/*.tar.gz

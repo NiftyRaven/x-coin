@@ -313,6 +313,7 @@ private Q_SLOTS:
     void toggleNetworkActive();
 
     void showModalOverlay();
+    void updateLotteryHeader();
 };
 
 class UnitDisplayStatusBarControl : public QLabel

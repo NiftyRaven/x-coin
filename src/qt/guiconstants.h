@@ -1,5 +1,6 @@
 // Copyright (c) 2011-2016 The Bitcoin Core developers
 // Copyright (c) 2017-2021 The Raven Core developers
+// Copyright (c) 2026 The X Coin developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -18,17 +19,17 @@ static const int STATUSBAR_ICONSIZE = 16;
 static const bool DEFAULT_SPLASHSCREEN = true;
 
 /* Invalid field background style */
-#define STYLE_INVALID "background:#FF8080; border: 1px solid lightgray; padding: 0px;"
-#define STYLE_VALID "border: 1px solid lightgray; padding: 0px;"
+#define STYLE_INVALID "background:#3a0000; border: 1px solid #ffffff; padding: 0px;"
+#define STYLE_VALID "border: 1px solid #555555; padding: 0px;"
 
 /* Transaction list -- unconfirmed transaction */
-#define COLOR_UNCONFIRMED QColor(128, 128, 128)
+#define COLOR_UNCONFIRMED QColor(160, 160, 160)
 /* Transaction list -- negative amount */
-#define COLOR_NEGATIVE QColor(255, 0, 0)
+#define COLOR_NEGATIVE QColor(255, 255, 255)
 /* Transaction list -- bare address (without label) */
-#define COLOR_BAREADDRESS QColor(140, 140, 140)
+#define COLOR_BAREADDRESS QColor(170, 170, 170)
 /* Transaction list -- TX status decoration - open until date */
-#define COLOR_TX_STATUS_OPENUNTILDATE QColor(64, 64, 255)
+#define COLOR_TX_STATUS_OPENUNTILDATE QColor(200, 200, 200)
 /* Transaction list -- TX status decoration - danger, tx needs attention */
 #define COLOR_TX_STATUS_DANGER QColor(200, 100, 100)
 /* Transaction list -- TX status decoration - default color */
@@ -36,68 +37,40 @@ static const bool DEFAULT_SPLASHSCREEN = true;
 /* Widget Background color - default color */
 #define COLOR_WHITE QColor(255, 255, 255)
 
-#define COLOR_WALLETFRAME_SHADOW QColor(0,0,0,71)
+#define COLOR_WALLETFRAME_SHADOW QColor(0,0,0,180)
 
-/* Color of labels */
-#define COLOR_LABELS QColor("#4960ad")
+/* Color of labels — X theme is black / white / sharp */
+#define COLOR_LABELS QColor("#ffffff")
 
-/** LIGHT MODE */
-/* Background color, very light gray */
-#define COLOR_BACKGROUND_LIGHT QColor("#fbfbfe")
-/* X Coin dark orange */
-#define COLOR_DARK_ORANGE QColor("#f05239")
-/* X Coin light orange */
-#define COLOR_LIGHT_ORANGE QColor("#f79433")
-/* X Coin dark blue */
-#define COLOR_DARK_BLUE QColor("#384192")
-/* X Coin light blue */
-#define COLOR_LIGHT_BLUE QColor("#5874cf")
-/* X Coin asset text */
+/** LIGHT MODE (still X: white field, black type, no orange/green) */
+#define COLOR_BACKGROUND_LIGHT QColor("#f4f4f4")
+#define COLOR_DARK_ORANGE QColor("#000000")
+#define COLOR_LIGHT_ORANGE QColor("#111111")
+#define COLOR_DARK_BLUE QColor("#000000")
+#define COLOR_LIGHT_BLUE QColor("#1a1a1a")
 #define COLOR_ASSET_TEXT QColor(255, 255, 255)
-/* X Coin shadow color - light mode */
-#define COLOR_SHADOW_LIGHT QColor("#e1e6f3")
-/* Toolbar not selected text color */
-#define COLOR_TOOLBAR_NOT_SELECTED_TEXT QColor("#a5b7f3")
-/* Toolbar selected text color */
+#define COLOR_SHADOW_LIGHT QColor("#d0d0d0")
+#define COLOR_TOOLBAR_NOT_SELECTED_TEXT QColor("#666666")
 #define COLOR_TOOLBAR_SELECTED_TEXT COLOR_WHITE
-/* Send entries background color */
-#define COLOR_SENDENTRIES_BACKGROUND QColor("#fbfbfe")
+#define COLOR_SENDENTRIES_BACKGROUND QColor("#f4f4f4")
 
 
-/** DARK MODE */
-/* Widget background color, dark mode */
-#define COLOR_WIDGET_BACKGROUND_DARK QColor("#1c2535")
-/* X Coin shadow color - dark mode */
-#define COLOR_SHADOW_DARK QColor("#0c1b3d")
-/* X Coin Light blue - dark mode - dark mode */
-#define COLOR_LIGHT_BLUE_DARK QColor("#1e2636")
-/* X Coin Dark blue - dark mode - dark mode */
-#define COLOR_DARK_BLUE_DARK QColor("#0b1018")
-/* Pricing widget background color */
-#define COLOR_PRICING_WIDGET QColor("#161e2d")
-/* X Coin dark mode administrator background color */
-#define COLOR_ADMIN_CARD_DARK COLOR_BLACK
-/* X Coin dark mode regular asset background color */
-#define COLOR_REGULAR_CARD_DARK_BLUE_DARK_MODE QColor("#06132a")
-/* X Coin dark mode regular asset background color */
-#define COLOR_REGULAR_CARD_LIGHT_BLUE_DARK_MODE QColor("#0e1b3b")
-/* Toolbar not selected text color */
-#define COLOR_TOOLBAR_NOT_SELECTED_TEXT_DARK_MODE QColor("#6c80c5")
-/* Toolbar selected text color */
-#define COLOR_TOOLBAR_SELECTED_TEXT_DARK_MODE QColor("#c5ccdf")
-/* Send entries background color dark mode */
-#define COLOR_SENDENTRIES_BACKGROUND_DARK QColor("#1c2535")
+/** DARK MODE — default X look */
+#define COLOR_WIDGET_BACKGROUND_DARK QColor("#0a0a0a")
+#define COLOR_SHADOW_DARK QColor("#000000")
+#define COLOR_LIGHT_BLUE_DARK QColor("#111111")
+#define COLOR_DARK_BLUE_DARK QColor("#000000")
+#define COLOR_PRICING_WIDGET QColor("#000000")
+#define COLOR_ADMIN_CARD_DARK QColor("#1a1a1a")
+#define COLOR_REGULAR_CARD_DARK_BLUE_DARK_MODE QColor("#111111")
+#define COLOR_REGULAR_CARD_LIGHT_BLUE_DARK_MODE QColor("#1a1a1a")
+#define COLOR_TOOLBAR_NOT_SELECTED_TEXT_DARK_MODE QColor("#8a8a8a")
+#define COLOR_TOOLBAR_SELECTED_TEXT_DARK_MODE QColor("#ffffff")
+#define COLOR_SENDENTRIES_BACKGROUND_DARK QColor("#0a0a0a")
 
 
-/* X Coin label color as a string */
-#define STRING_LABEL_COLOR "color: #4960ad"
+#define STRING_LABEL_COLOR "color: #ffffff"
 #define STRING_LABEL_COLOR_WARNING "color: #FF8080"
-
-
-
-
-
-
 
 
 /* Tooltips longer than this (in characters) are converted into rich text,
@@ -114,13 +87,13 @@ static const int MAX_URI_LENGTH = 255;
 /* Number of frames in spinner animation */
 #define SPINNER_FRAMES 36
 
-#define QAPP_ORG_NAME "Raven"
-#define QAPP_ORG_DOMAIN "raven.org"
-#define QAPP_APP_NAME_DEFAULT "Raven-Qt"
-#define QAPP_APP_NAME_TESTNET "Raven-Qt-testnet"
+#define QAPP_ORG_NAME "X Coin"
+#define QAPP_ORG_DOMAIN "xcoin"
+#define QAPP_APP_NAME_DEFAULT "X Coin"
+#define QAPP_APP_NAME_TESTNET "X Coin-testnet"
 
-/* Default third party browser urls */
-#define DEFAULT_THIRD_PARTY_BROWSERS "https://api.ravencoin.org/tx/%s|https://rvn.cryptoscope.io/tx/?txid=%s|https://blockbook.ravencoin.org/tx/%s|https://explorer.mangofarmassets.com/tx/%s|https://www.assetsexplorer.com/tx/%s|https://explorer.ravenland.org/tx/%s"
+/* No public explorers for this private chain */
+#define DEFAULT_THIRD_PARTY_BROWSERS ""
 
 /* Default IPFS viewer */
 #define DEFAULT_IPFS_VIEWER "https://ipfs.io/ipfs/%s"

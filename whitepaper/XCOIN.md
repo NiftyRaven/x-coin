@@ -165,7 +165,8 @@ asset. The assignment is a zero-burn transaction with `OP_RETURN`
 `XID1` plus the normalized handle.
 
 The root name is the handle, uppercased, in `A-Z 0-9 . _` (length
-3–30). `NFTRVN` → asset `NFTRVN` plus owner token `NFTRVN!`.
+3–**32**). A 26-character X handle maps 1:1 (no truncation).
+`NFTRVN` → asset `NFTRVN` plus owner token `NFTRVN!`.
 
 Under a root the owner may issue:
 
@@ -205,12 +206,12 @@ The wallet **is** the core wallet that ships with the node:
 
 - `xcoind` — daemon, lottery producer, wallet
 - `xcoin-cli` — RPC
-- `xcoin-qt` — optional inherited desktop GUI (not required; this
-  release is documented and verified `--without-gui`)
+- `xcoin-qt` — desktop GUI (X theme: black / white / sharp). This is
+  the 1.0 wallet. CLI remains supported.
 
 There is **no** new mobile wallet, **no** X-app wallet, and **no**
 X.com OAuth login inside the node. Creating an address, sending XFER,
-and linking a handle are RPC (or Qt) operations against the core
+and linking a handle are RPC or Qt operations against the core
 wallet file in `~/.xcoin`.
 
 What this release changed on top of that core:

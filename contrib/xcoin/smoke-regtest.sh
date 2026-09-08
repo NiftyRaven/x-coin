@@ -143,6 +143,32 @@ print("NFTRVN active handles", handles)
 '
 echo "NFTRVN identity path: ok"
 
+echo "== 26-character X handle maps 1:1 to root (no truncation) =="
+# X handles are [A-Za-z0-9_], typically 1–15, protocol max 32. A 26-char
+# handle must produce the same 26-char uppercase root.
+LONG_HANDLE="abcdefghijabcdefghijabcdef"
+[[ ${#LONG_HANDLE} -eq 26 ]]
+"${CLI[@]}" addxverified "$LONG_HANDLE" >/dev/null
+ADDR_L="$("${CLI[@]}" getnewaddress)"
+LINK_L="$("${CLI[@]}" linkxaccount "$LONG_HANDLE" "$ADDR_L")"
+echo "$LINK_L"
+echo "$LINK_L" | python3 -c '
+import json, sys
+j = json.load(sys.stdin)
+want = "ABCDEFGHIJABCDEFGHIJABCDEF"
+if j.get("xaccount") != "abcdefghijabcdefghijabcdef":
+    sys.exit("expected xaccount=abcdefghijabcdefghijabcdef, got %r" % j.get("xaccount"))
+if j.get("asset") != want:
+    sys.exit("expected free root %s (26 chars), got %r" % (want, j.get("asset")))
+if len(j.get("asset", "")) != 26:
+    sys.exit("root must be 26 characters, got %d" % len(j.get("asset", "")))
+if j.get("owner") != want + "!":
+    sys.exit("expected owner token %s!" % want)
+print("26-char handle root", j.get("asset"))
+'
+"${CLI[@]}" getmainasset "$LONG_HANDLE" | grep -q ABCDEFGHIJABCDEFGHIJABCDEF
+echo "26-char handle identity path: ok"
+
 echo "== two-winner window (regtest halving interval 150) =="
 # Height 149: still 1 winner, full 5000 subsidy. Height 150: 2 winners, 2500 subsidy.
 NEED=$((149 - HEIGHT))

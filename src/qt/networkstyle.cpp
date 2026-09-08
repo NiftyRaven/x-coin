@@ -30,7 +30,8 @@ NetworkStyle::NetworkStyle(const QString &_appName, const int iconColorHueShift,
     // load pixmap
     QPixmap pixmap(":/icons/xcoin");
 
-    if(iconColorHueShift != 0 && iconColorSaturationReduction != 0)
+    // X mark is black/white. Do not hue-shift it toward leftover green/orange.
+    if(false && iconColorHueShift != 0 && iconColorSaturationReduction != 0)
     {
         // generate QImage from QPixmap
         QImage img = pixmap.toImage();

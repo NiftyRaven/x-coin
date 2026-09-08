@@ -28,7 +28,11 @@
 #define DEFAULT_HAS_IPFS 0
 #define DEFAULT_IPFS ""
 #define MIN_ASSET_LENGTH 3
-#define MAX_ASSET_LENGTH 32
+/** Root and sub names (no owner bang). Raised from Ravencoin's 30 so a
+ *  26-character X handle maps 1:1 with room for a collision suffix. */
+#define MAX_ROOT_NAME_LENGTH 32
+/** Longest stored asset string (root + owner bang). Unique tags share this. */
+#define MAX_ASSET_LENGTH 33
 #define OWNER_TAG "!"
 #define OWNER_LENGTH 1
 #define OWNER_UNITS 0

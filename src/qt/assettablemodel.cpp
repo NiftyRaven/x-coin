@@ -61,22 +61,27 @@ public:
                         continue;
 
                     if (!IsAssetNameAnOwner(bal->first)) {
-                        // Asset is not an administrator asset
                         CNewAsset assetData;
                         if (!currentActiveAssetCache->GetAssetMetaDataIfExists(bal->first, assetData)) {
-                            qWarning("AssetTablePriv::refreshWallet: Error retrieving asset data");
-                            return;
-                        }
-                        units = assetData.units;
-                        ipfsHash = assetData.strIPFSHash;
-                        // If we have the administrator asset, add it to the skip listå
-                        if (balances.count(bal->first + OWNER_TAG)) {
-                            setAssetsToSkip.insert(bal->first + OWNER_TAG);
+                            // Still list the balance (identity roots can race metadata).
+                            qWarning("AssetTablePriv::refreshWallet: missing metadata for %s — showing with default units",
+                                     bal->first.c_str());
+                            units = 0;
+                            if (balances.count(bal->first + OWNER_TAG)) {
+                                setAssetsToSkip.insert(bal->first + OWNER_TAG);
+                            } else {
+                                fIsAdministrator = false;
+                            }
                         } else {
-                            fIsAdministrator = false;
+                            units = assetData.units;
+                            ipfsHash = assetData.strIPFSHash;
+                            if (balances.count(bal->first + OWNER_TAG)) {
+                                setAssetsToSkip.insert(bal->first + OWNER_TAG);
+                            } else {
+                                fIsAdministrator = false;
+                            }
                         }
                     } else {
-                        // Asset is an administrator asset, if we own assets that is administrators, skip this balance
                         std::string name = bal->first;
                         name.pop_back();
                         if (balances.count(name)) {
@@ -186,7 +191,7 @@ QVariant AssetTableModel::data(const QModelIndex &index, int role) const
                 return QVariant();
 
             if (!rec->fIsAdministrator)
-                QVariant();
+                return QVariant();
 
             QPixmap pixmap;
 

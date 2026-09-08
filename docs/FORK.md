@@ -116,12 +116,15 @@ These still match a naive `rg -i 'ravencoin|\braven\b|\brvn\b'` and are
    with no consensus benefit. Installed binaries are `xcoin*`.
 4. **Copyright-holder guard** in `src/util.cpp` (`CopyrightHolders`) — refuses
    to drop the Raven Core line from `--version`.
-5. **Vendored third-party** — `src/leveldb`, `src/secp256k1`, `src/univalue`,
+5. **Qt class names** — `RavenGUI`, `RavenUnits`, `RavenAmountField`, locale
+   files `raven_*.ts`. User-facing 1.0 copy is X Coin / XFER; the X theme is
+   black/white, not Ravencoin orange/green.
+6. **Vendored third-party** — `src/leveldb`, `src/secp256k1`, `src/univalue`,
    `src/crypto/ctaes` (including sipa’s unrelated `raven.sipa.be` URL).
-6. **Upstream `make check` vectors** — many tests hard-code imported genesis
+7. **Upstream `make check` vectors** — many tests hard-code imported genesis
    hashes. A red `make check` is not a private-test blocker. Use
    `contrib/xcoin/smoke-*.sh`.
-7. **Packaging leftovers** — `share/pixmaps/raven*` bitmaps, some Qt widget
+8. **Packaging leftovers** — `share/pixmaps/raven*` bitmaps, some Qt widget
    object names (`ravenAtStartup`). Source SVG is `qt/res/src/xcoin.svg`;
    installed icon files are `xcoin.png` / `xcoin.icns` / `xcoin.ico`.
 
@@ -149,6 +152,10 @@ See also `assets/asset_metadata_spec.md` for the wire format.
 
 See the root README. Autotools path:
 
+Release 1.0 ships the Qt wallet. GUI:
+
 ```bash
-./autogen.sh && ./configure --without-gui --disable-bench --disable-tests --with-incompatible-bdb && make
+./autogen.sh && ./configure --with-gui=qt5 --disable-bench --disable-tests --with-incompatible-bdb && make
 ```
+
+CLI-only: `--without-gui` instead of `--with-gui=qt5`. Binary is `src/qt/xcoin-qt`.

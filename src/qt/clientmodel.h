@@ -78,6 +78,19 @@ public:
     QString formatFullVersion() const;
     QString formatSubVersion() const;
     bool isReleaseVersion() const;
+
+    /** Snapshot of lottery state for the wallet header / overview. */
+    struct LotteryGuiInfo {
+        QString handle;
+        bool eligible = false;
+        bool isWinner = false;
+        bool producerRunning = false;
+        int activeNodes = 0;
+        int winnerCount = 0;
+        qint64 slot = 0;
+        int height = 0;
+    };
+    LotteryGuiInfo getLotteryGuiInfo() const;
     QString formatClientStartupTime() const;
     QString dataDir() const;
 
@@ -102,6 +115,7 @@ Q_SIGNALS:
     void networkActiveChanged(bool networkActive);
     void alertsChanged(const QString &warnings);
     void bytesChanged(quint64 totalBytesIn, quint64 totalBytesOut);
+    void lotteryChanged();
 
     //! Fired when a message should be reported to the user
     void message(const QString &title, const QString &message, unsigned int style);
