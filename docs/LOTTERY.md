@@ -2,8 +2,15 @@
 
 X Coin does **not** use Proof-of-Work. Every **minute** a lottery picks who
 may produce the next block and who shares that minute’s subsidy. Only nodes
-linked to a **verified X account** are lottery-eligible. An unlinked node
+linked to an **X Verified** account are lottery-eligible. An unlinked node
 still syncs and relays; it cannot enter the active set, win, or produce.
+
+**X Verified** is X’s blue check / X Premium (and business / government
+org checks): a user X itself marks verified via `GET /2/users/me`
+(`user.fields=verified,verified_type`). Official meaning:
+[About the blue check](https://help.x.com/en/managing-your-account/about-x-bluecheck)
+per [X’s verification policy](https://help.x.com/en/rules-and-policies/verification-policy).
+It is **not** the operator invite list (`addxverified`).
 
 This document is the source of truth for the algorithm.
 
@@ -21,36 +28,47 @@ This document is the source of truth for the algorithm.
 
 Genesis (height 0) is not a lottery block and is not a payday. The serialized genesis coinbase is never added to the UTXO set (`ConnectBlock` skips it).
 
-## Verified X eligibility (anti-bot)
+## X Verified eligibility (anti-bot)
 
-Consensus does **not** call X.com on every block. Honest operators share one
-explicit allowlist of **X-verified** (blue-check / X Premium verified)
-accounts. **Sign in with X** is what stops impersonation: the handle that
-gets a free root and lottery eligibility comes from `GET /2/users/me`,
-not from a typed string. See [XSIGNIN.md](XSIGNIN.md).
+Consensus does **not** call X.com on every block. **Sign in with X**
+stores `verified` / `verified_type` from `GET /2/users/me` in
+`xsession.json` with the HMAC proof. Lottery eligibility for this node:
 
-### Offline handle verification (private test)
+1. A valid Sign in with X session (user id + username + proof).
+2. That session is **X Verified** (`verified==true`, including `blue` /
+   `business` / `government` check types X exposes).
+3. This wallet is running (local payout script + heartbeat).
 
-Operators verify handles **without** calling the X.com API for the
-allowlist:
+Fair code: nobody who meets (1)–(3) can be excluded. The operator invite
+list is **not** a lottery gate. A session that is **not** X Verified has
+**zero chance** (no heartbeat, not in the active set).
 
-1. Open the public profile `https://x.com/<handle>` in a browser.
-2. Confirm it is the intended person and shows an X Premium / verified badge.
-3. Write the handle (no `@`) into the shared allowlist file.
-4. Every honest node loads that same file (`-xallowlist=` or
-   `~/.xcoin/verified-x-accounts.txt`).
-5. The operator **Signs in with X** on that node, then Claims the root.
-   Typed `-xaccount=` is ignored.
+See [XSIGNIN.md](XSIGNIN.md).
 
-The owner handle for this private test is **`NFTRVN`**.
+### Operator invite list (optional pins / private mesh)
 
-A node is lottery-eligible only when **both** are true:
+Operators may keep a closed **invite / payout-pin list** for this private
+test. Confirming a public profile badge in a browser is how humans decide
+whom to invite — it does **not** become X Verified inside the node, and
+it cannot drop a blue-check wallet from the draw. Only `users/me` does.
 
-1. It has a valid Sign in with X session (user id + username + proof).
-2. That account is on the operator-shared verified allowlist.
+1. Open the public profile `https://x.com/<handle>` in a browser
+   (optional human check).
+2. Write the handle (no `@`) into the shared invite file if you want
+   optional payout pins.
+3. Every honest node loads that same file (`-xallowlist=` or
+   `~/.xcoin/verified-x-accounts.txt`) when using a closed mesh.
+4. The operator **Signs in with X** on that node. Typed `-xaccount=`
+   is ignored.
 
-Unlinked or unverified heartbeats are **ignored** for the active set. The
-local producer refuses to produce if this node is not linked+verified.
+The owner handle for this private test is **`NFTRVN`**. On `-regtest`
+without live OAuth, `-xoauthmock=NFTRVN` mocks `verified=true`.
+
+A node is lottery-eligible only when **session + X Verified + a running
+wallet** are true. Unverified heartbeats from this node are **ignored**
+for the active set (zero chance). The local producer refuses to produce
+if this node is not X Verified. The invite list cannot exclude a
+verified running wallet.
 
 ### Link an X account (every operator)
 
@@ -58,20 +76,21 @@ Sign in with X in `xcoin-qt` (or, on `-regtest` only, `-xoauthmock=` /
 `mockxsignin`). Then:
 
 ```bash
-src/xcoin-cli addxverified YourHandle   # operator allowlist
+src/xcoin-cli addxverified YourHandle   # optional operator invite list (not X Verified)
 src/xcoin-cli linkxaccount              # uses the session username
-src/xcoin-cli getxsession
-src/xcoin-cli getlotteryinfo            # local_eligible must be true
+src/xcoin-cli getxsession               # verified / verified_type / x_verified
+src/xcoin-cli getlotteryinfo            # local_eligible must be true (session + blue check)
 ```
 
 Typed `linkxaccount OtherHandle` is rejected unless that is the signed-in
 username. Headless seed: sign in once on this datadir (GUI), then run
 `xcoind` against the same `~/.xcoin`.
 
-### Publish the verified allowlist (seed / operator)
+### Publish the invite list (seed / operator, optional pins)
 
-List only handles you have confirmed are X-verified. Share the same file
-with every honest node so they agree on the active set.
+This file is a private-mesh invite / payout-pin list, **not** X Verified
+and **not** a lottery gate. Share the same file with every honest node
+if you want matching pins.
 
 ```text
 # verified-x-accounts.txt  (datadir or -xallowlist=)
@@ -90,7 +109,7 @@ Ways to load the same list:
 | --- | --- |
 | Datadir file | `~/.xcoin/verified-x-accounts.txt` (loaded on start) |
 | Flag | `-xallowlist=/shared/verified-x-accounts.txt` |
-| Repeatable flag | `-xverified=alice -xverified=bob:99` |
+| Repeatable flag | `-xverified=alice -xverified=bob:99` (invite list, not X Verified) |
 | RPC | `addxverified alice` / `listxverified` / `removexverified alice` |
 
 Optional refresh later (no secrets): publish the text file at any HTTPS URL,
@@ -105,8 +124,8 @@ src/xcoin-cli loadxverified
 
 ## Active node
 
-A node is **active** if it has heartbeated a **verified X identity** within
-the last **180 seconds**.
+A node is **active** if it has heartbeated an **X Verified** local identity
+within the last **180 seconds**. Unverified gossip is dropped (zero chance).
 
 - Node **id** = `Hash160(payout script)`. The script is what coinbase will pay.
 - One verified X handle maps to one active node (a later heartbeat for the
@@ -205,26 +224,30 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 | `getlotteryinfo` | Next-height draw: slot, seed, winners, split, local id / X handle / eligibility |
 | `getactivenodes` | Current registry (id, script, lastseen, xaccount, xuserid) |
 | `registeractivenode (payout xaccount xuserid)` | Heartbeat this node or an address / script hex; rejects unlinked/unverified |
-| `addxverified` / `listxverified` / `removexverified` | Mutate / read the verified X allowlist |
-| `loadxverified (path)` | Merge a published allowlist file (no API keys) |
+| `addxverified` / `listxverified` / `removexverified` | Mutate / read the operator invite list (not X Verified) |
+| `loadxverified (path)` | Merge a published invite-list file (no API keys) |
 | `generatetoaddress` | **Regtest only** on-demand assembly (not mining; rejected on main/test) |
 
 ## Security notes
 
 Honest write-up: [SECURITY.md](SECURITY.md). This is not hacker-proof.
 
-- **Sybil:** the verified-X allowlist stops anonymous/bot process spam for a
-  private launch. Skip or leave it empty and anyone who can sign a payout
-  can heartbeat. It is not a bonded public lottery: a producer can still
-  commit an active set of allowlisted scripts, and validation only proves
-  the coinbase matches the *committed* set. Honest operators share one list.
+- **Sybil:** X Verified (session `users/me.verified`) is the meaning of
+  Verified. Unverified accounts have zero chance. The operator invite
+  list is optional pins / invites and cannot exclude a verified running
+  wallet. Remote gossip still accepts compact-signed heartbeats that
+  assert verified; honest wallets only set that bit from `users/me`.
+  It is not a bonded public lottery: a producer can still
+  commit an active set of scripts, and validation only proves
+  the coinbase matches the *committed* set.
 - **xhb:** gossip is compact-signed by the payout key. A live handle cannot
   be rebound to another script. A listed userid alone cannot authorize a
   different handle. Residual: first-seen after restart unless you pin a
   payout; eclipse of a node that only talks to attacker peers.
 - **Unsigned-in wallets:** Sign in with X is required to send, receive,
   and prove asset ownership (`sendrawtransaction` included). Lottery
-  additionally requires the handle to be X-Verified on the operator allowlist.
+  additionally requires the session to be **X Verified** (blue check).
+  Unverified = zero chance. The invite list is not a lottery gate.
 - Clock skew can delay a slot; height still maps 1:1 (`slot = genesisSlot + h`).
   You cannot skip or double-pay a height on one chain. Catch-up produces one
   height per loop when wall-clock is ahead; `generatetoaddress` is regtest-only

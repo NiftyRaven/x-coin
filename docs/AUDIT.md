@@ -84,7 +84,9 @@ different address prefixes (`X` / `y` vs `R` / `n`).
 - **Assets:** protocol `XID1` root on verified X-link; user `issue` of
   a new root is invalid; restricted assets stay off.
 - **Sign in with X:** send / receive / own require a session.
-  Lottery also requires the operator allowlist. Session ≠ BIP39 seed.
+  Lottery requires X Verified (blue check) plus a running wallet.
+  Unverified = zero chance. Invite list cannot exclude a verified wallet.
+  Session ≠ BIP39 seed.
 
 ## P2P
 
@@ -93,7 +95,7 @@ different address prefixes (`X` / `y` vs `R` / `n`).
 - Join path: `addnode=` / `seednode=` on **38443** (operator config).
   Home may optionally show *your* listen address (**Provide my node IP**,
   off by default). It never lists other people's IPs.
-- Heartbeats: signed `xhb` after `verack`. Unsigned, unlisted, userid-only,
+- Heartbeats: signed `xhb` after `verack`. Unsigned, unverified,
   or sticky-violating heartbeats are ignored (or banned, if the compact
   sig is missing / forged). See [SECURITY.md](SECURITY.md).
 

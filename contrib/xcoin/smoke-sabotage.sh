@@ -63,7 +63,7 @@ fi
 grep -qi "sign in with x\|session" /tmp/xcoin-sabotage-reg.err
 
 echo "== listed userid alone cannot make an unlisted handle eligible =="
-"${CLI[@]}" mockxsignin '{"data":{"id":"7","username":"eve"}}' >/dev/null
+"${CLI[@]}" mockxsignin '{"data":{"id":"7","username":"eve","verified":true,"verified_type":"blue"}}' >/dev/null
 EVE_ADDR="$("${CLI[@]}" getnewaddress)"
 # eve is listed without a userid; alice is listed as 99. eve must not
 # inherit alice's slot by passing alice's handle / userid.
@@ -75,7 +75,7 @@ fi
 grep -qi "impersonation\|cannot use\|signed in as" /tmp/xcoin-sabotage-steal.err
 
 echo "== wrong session userid is rejected =="
-"${CLI[@]}" mockxsignin '{"data":{"id":"99","username":"alice"}}' >/dev/null
+"${CLI[@]}" mockxsignin '{"data":{"id":"99","username":"alice","verified":true,"verified_type":"blue"}}' >/dev/null
 ALICE_ADDR="$("${CLI[@]}" getnewaddress)"
 if "${CLI[@]}" registeractivenode "$ALICE_ADDR" alice 100 >/tmp/xcoin-sabotage-uid.err 2>&1; then
   echo "mismatched xuserid must be rejected" >&2
@@ -95,7 +95,7 @@ if int(j.get("xuserid", 0)) != 99:
 '
 
 echo "== live alice payout cannot be rebound by eve on this node =="
-"${CLI[@]}" mockxsignin '{"data":{"id":"7","username":"eve"}}' >/dev/null
+"${CLI[@]}" mockxsignin '{"data":{"id":"7","username":"eve","verified":true,"verified_type":"blue"}}' >/dev/null
 # eve is allowlisted; she may heartbeat her own script, not alice's handle.
 if "${CLI[@]}" registeractivenode "$EVE_ADDR" alice >/tmp/xcoin-sabotage-rebind.err 2>&1; then
   echo "eve must not rebind alice" >&2

@@ -7,8 +7,15 @@ Private test only. Do not publish this chain.
 Signing in is what stops impersonation and **proves asset ownership**.
 A typed handle is not an identity. The wallet uses OAuth 2.0 PKCE, then
 `GET /2/users/me`, and binds **that** user id + username to this node's
-datadir. Send and receive require that session. Only X-Verified
-(allowlisted) signed-in handles enter the lottery.
+datadir. Send and receive require that session. Only **X Verified**
+signed-in handles enter the lottery.
+
+**X Verified** is X’s blue check / X Premium (and org checks per that
+policy) — a user X itself marks verified. Official meaning:
+[About the blue check](https://help.x.com/en/managing-your-account/about-x-bluecheck)
+per [X’s verification policy](https://help.x.com/en/rules-and-policies/verification-policy).
+It is **not** “whoever the operator typed into `addxverified`.” That
+command maintains an optional private-mesh **invite list**.
 
 **This wallet is yours** when Home shows **Linked to @yourhandle** plus
 your X user id. That state means this datadir holds a valid session
@@ -26,9 +33,13 @@ After a successful sign-in:
 | File | Contents |
 | --- | --- |
 | `xsession.key` | 32-byte HMAC secret (created once per datadir) |
-| `xsession.json` | `id`, `username`, `exp`, HMAC-SHA256 proof |
+| `xsession.json` | `id`, `username`, `exp`, `verified`, `verified_type`, HMAC-SHA256 proof |
 
-Proof message: `xcoin-xsession|{id}|{username}|{exp}`.
+Proof message: `xcoin-xsession|{id}|{username}|{exp}|{0|1}|{verified_type}`.
+
+OAuth calls `GET /2/users/me?user.fields=verified,verified_type`.
+`verified==true` (or `verified_type` of `blue` / `business` / `government`)
+is X Verified.
 
 Steal this datadir (`xsession.key` + `xsession.json`) and you steal
 **this node's session**, not someone else's `wallet.dat`. The HMAC is
@@ -37,9 +48,13 @@ per-datadir; it cannot spend keys that are not in this wallet.
 `getnewaddress`, `getaccountaddress`, `sendtoaddress`, `sendrawtransaction`,
 `issue` / `transfer` / `reissue`, `linkxaccount`, `registeractivenode`, and
 lottery identity require a valid proof. **Authentication is the key
-to asset ownership — it proves it is you.** Lottery also requires the
-X-Verified allowlist. A signed-in handle that is not X-Verified can
-still send and receive. `linkxaccount otherperson` is rejected if the
+to asset ownership — it proves it is you.** Lottery also requires
+**X Verified** from that `users/me` response. A signed-in handle that is
+not X Verified can still send and receive, but has **zero lottery chance**.
+An X Verified session plus a running wallet **cannot be excluded** from
+the draw. The operator invite list (`addxverified` / `-xverified` /
+`-xallowlist`) is optional pins / invites, not a lottery gate.
+`linkxaccount otherperson` is rejected if the
 session is not `otherperson`. Typed `-xaccount=` is ignored without a
 matching session. RPC itself still needs the cookie or `rpcpassword`
 (no unauthenticated spend).
@@ -83,7 +98,8 @@ The node never pretends login succeeded without a real access token
 1. Create / open wallet (first-run **12-word BIP39** mnemonic — still required).
 2. **Sign in with X** (binds this node to your X account; does not replace the seed).
 3. Paste **Client ID** → **Save Client ID**.
-4. **Allowlist my handle** (operator) then **Claim my root asset**.
+4. **Allowlist my handle** (optional operator invite list — not a blue check)
+   then **Claim my root asset**.
 5. **Receive** (address + Copy) / **Send** (paste address, amount, Send).
 6. **Activity** (history). Issue sub / unique from Home. Lottery status is on Home.
 7. Home shows **this wallet is yours / linked to @handle**. Transfer assets is a Home button (and the left tab).
@@ -98,9 +114,13 @@ This VM / CI cannot complete a live X OAuth round-trip. Tests inject a
 mock `users/me` **only** on `-regtest`:
 
 ```bash
-xcoind -regtest -xoauthmock=alice
+xcoind -regtest -xoauthmock=alice:verified
 # or:
-xcoin-cli -regtest mockxsignin '{"data":{"id":"99","username":"alice"}}'
+xcoin-cli -regtest mockxsignin '{"data":{"id":"99","username":"alice","verified":true,"verified_type":"blue"}}'
+# unsigned-in (send/receive only, no lottery):
+xcoin-cli -regtest mockxsignin ghost:unverified
+# private test without live OAuth: NFTRVN defaults to verified=true
+xcoind -regtest -xoauthmock=NFTRVN
 ```
 
 The GUI **Simulate sign-in (regtest)** button is hidden on mainnet.

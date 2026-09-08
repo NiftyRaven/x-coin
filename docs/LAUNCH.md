@@ -83,7 +83,9 @@ integer right-shift; ~21 billion minus unpaid genesis and `>>=` dust).
 
 **Sign in with X is required to send and receive.** Authentication
 proves it is you and is the key to asset ownership. Lottery eligibility
-additionally requires an X-Verified (allowlisted) handle. A node
+additionally requires **X Verified** (X’s blue check from `users/me`)
+and a running wallet. Unverified accounts have zero chance. The operator
+invite list cannot exclude a verified wallet. A node
 without a session can still sync and relay.
 
 ## Publish a seed node
@@ -120,26 +122,35 @@ There are no DNS seeds in-tree. For a private mesh:
 
 Peers gossip **signed** lottery heartbeats (`xhb`) after `verack`. Honest
 nodes that can connect to the seed (directly or via the mesh) share one
-active-node set. Unsigned, unlisted, or sticky-violating heartbeats are
+active-node set. Unsigned, unverified, or sticky-violating heartbeats are
 ignored for that set.
 
-## Verified X allowlist (required for lottery)
+## X Verified fair lottery
 
-Only **X-verified** (blue-check / X Premium verified) accounts may run a
-lottery-eligible node. The seed publishes the list; every honest node loads
-the same file. Unlinked nodes still sync/relay but do not win or produce.
+**X Verified** is X’s blue check / X Premium (and org checks) from
+`GET /2/users/me`. Official meaning:
+[About the blue check](https://help.x.com/en/managing-your-account/about-x-bluecheck)
+per [X’s verification policy](https://help.x.com/en/rules-and-policies/verification-policy).
+`addxverified` is an optional private-mesh **invite / pin list**, not X Verified
+and not a lottery gate.
 
-1. Seed operator: confirm each operator’s X handle is verified, then write
-   `verified-x-accounts.txt` (see [LOTTERY.md](LOTTERY.md)).
-2. Confirm each handle **offline** (open `https://x.com/<handle>`, check the
-   verified / Premium badge) for the allowlist. Then each operator **Signs
-   in with X** on their node (see [XSIGNIN.md](XSIGNIN.md)). Do not type
-   someone else's handle into `linkxaccount`.
-3. Share that file (scp, gist, HTTPS). Each operator signs in as
-   **their** handle and points at the file.
+Only **X Verified** accounts with a running wallet enter the lottery.
+Unlinked or unverified (no blue check) nodes still sync/relay but have
+**zero chance** to win or produce. Fair code: a verified running wallet
+cannot be excluded.
 
-The owner handle for this private test is **`NFTRVN`**. Add it to the
-allowlist, sign in as NFTRVN, then claim the free root `NFTRVN`.
+1. Each operator **Signs in with X** so `users/me.verified` is stored
+   with the session proof (see [XSIGNIN.md](XSIGNIN.md)).
+2. Optionally share an invite list (`verified-x-accounts.txt`) for
+   payout pins. Confirming a public profile badge is a human check for
+   whom to invite — it does not make the node report X Verified and
+   cannot drop a blue-check wallet from the draw.
+3. Do not type someone else's handle into `linkxaccount`.
+
+The owner handle for this private test is **`NFTRVN`**. Sign in as
+NFTRVN (regtest: `-xoauthmock=NFTRVN` mocks verified=true), then claim
+the free root `NFTRVN`. Adding NFTRVN to the invite list is optional
+pins, not eligibility.
 
 ```bash
 # xcoin.conf
@@ -236,9 +247,10 @@ Coinbase is immature for 100 blocks — generate ~110 on regtest before
 
 Nothing is hacker-proof. Details: [SECURITY.md](SECURITY.md).
 
-- **Sybil if the allowlist is skipped or empty:** anyone who can sign a
-  payout can heartbeat. The allowlist is operator-shared, not a bonded
-  identity. A producer can commit any script set; validation only checks
+- **Sybil:** anyone who can present X Verified (`users/me.verified`)
+  plus a compact-signed payout can heartbeat. Unverified accounts have
+  zero chance. The invite list cannot exclude a verified running wallet.
+  A producer can commit any script set; validation only checks
   the coinbase matches that commitment.
 - **xhb:** gossip is compact-signed by the payout key. A live handle cannot
   be rebound. Residual: first-seen after restart unless you pin a payout;
@@ -275,9 +287,10 @@ contrib/xcoin/smoke-gui.sh
 contrib/xcoin/smoke-sabotage.sh
 ```
 
-Unlinked node is not eligible; `registeractivenode` is rejected until the
-handle is linked **and** allowlisted. Linked+allowlisted identities appear
-in the active set. `smoke-xsession.sh` proves typed handles cannot send /
+Unlinked node is not eligible; signed-in but not X Verified can send and
+receive, not lottery (zero chance). `registeractivenode` is rejected until
+the session is X Verified (blue check). A verified running wallet cannot
+be excluded by the invite list. `smoke-xsession.sh` proves typed handles cannot send /
 receive / claim. `smoke-gui.sh` needs `XDG_RUNTIME_DIR` (the script sets
 it); do not `pkill -f xcoin-qt`.
 

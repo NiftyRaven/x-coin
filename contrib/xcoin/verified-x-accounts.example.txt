@@ -1,7 +1,10 @@
-# X Coin verified X allowlist (operator-shared)
-# Only list X-verified (blue-check / X Premium verified) handles.
-# Confirm each handle offline (open https://x.com/<handle>) — no API keys.
-# All honest nodes must load the same set so they agree on the active set.
+# X Coin operator invite / payout-pin list (private-mesh ACL)
+# This is NOT X Verified and NOT a lottery gate.
+# X Verified is X's blue check from GET /2/users/me
+# https://help.x.com/en/managing-your-account/about-x-bluecheck
+# https://help.x.com/en/rules-and-policies/verification-policy
+# A verified running wallet cannot be excluded from the lottery.
+# Optional pins: handle [userid] [payout-address-or-script-hex]
 # format: handle [userid]
 #
 # Owner handle for this private test:

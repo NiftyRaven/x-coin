@@ -366,25 +366,40 @@ void XHome::refresh()
         if (uid.isEmpty())
             uid = QString::fromStdString(s["id"].getValStr());
         const QString handle = QString::fromStdString(s["username"].getValStr());
+        const bool xVerified = s["x_verified"].isTrue() || s["verified"].isTrue();
         QString proof = QString::fromStdString(s["session_file"].getValStr());
         QString secret = QString::fromStdString(s["secret_file"].getValStr());
         if (proof.isEmpty())
             proof = "xsession.json";
         if (secret.isEmpty())
             secret = "xsession.key";
+        const QString vtype = QString::fromStdString(s["verified_type"].getValStr());
+        QString verifiedLine;
+        if (xVerified) {
+            verifiedLine = QString(
+                "X Verified: yes (%1). This running wallet cannot be excluded from the lottery.\n")
+                .arg(vtype.isEmpty() ? QString("blue check / X Premium") : vtype + " check");
+        } else {
+            verifiedLine = QString(
+                "X Verified: no. X has not marked @%1 verified (no blue / business / government check).\n"
+                "Lottery is closed. “Allowlist my handle” is an operator invite list — it does not make you X Verified.\n")
+                .arg(handle);
+        }
         sessionLabel->setObjectName("xlinked");
         sessionLabel->setText(QString(
             "THIS WALLET IS YOURS\n"
             "Linked to @%1\n"
-            "X user id %2\n\n"
-            "The session proof in this datadir is what links this wallet to that X account:\n"
+            "X user id %2\n"
             "%3\n"
-            "%4\n\n"
+            "The session proof in this datadir is what links this wallet to that X account:\n"
+            "%4\n"
+            "%5\n\n"
             "Send, receive, and own require that proof. Another signed-in identity cannot spend this wallet.dat.\n"
             "You cannot open someone else's coins or assets just by typing their @handle.\n"
             "The 12-word seed still controls the keys. Sign in with X is the identity proof on this node.")
             .arg(handle)
             .arg(uid)
+            .arg(verifiedLine.trimmed())
             .arg(proof)
             .arg(secret));
         signInBtn->setText("Wallet linked to @" + handle);
@@ -397,7 +412,9 @@ void XHome::refresh()
             "written only after Sign in with X. A typed handle cannot steal this.\n"
             "This wallet + this X session = you. Another user cannot send from inside your wallet.\n"
             "The 12-word seed still controls the keys. Sign in with X is the identity gate, not a replacement for the seed.\n"
-            "Only X-Verified handles enter the lottery. Every signed-in user can send and receive.");
+            "Only X Verified handles (X's blue check / X Premium, plus business and government org checks) enter the lottery. "
+            "That is what GET /2/users/me reports — not the operator invite list. A verified running wallet cannot be excluded. "
+            "An account that is not blue-check verified has zero chance. Every signed-in user can send and receive.");
         signInBtn->setText("Sign in with X");
     }
     sessionLabel->style()->unpolish(sessionLabel);
@@ -429,7 +446,7 @@ void XHome::refresh()
     if (l.read(rpc("getlotteryinfo").toStdString()) && l.isObject()) {
         const bool elig = l["local_eligible"].isTrue();
         const QString handle = QString::fromStdString(l["local_xaccount"].getValStr());
-        lotteryLabel->setText(QString("Lottery (X-Verified only)\nEligible: %1\nNext draw: block %2 (one block per minute slot)\nYour handle: %3\nActive nodes: %4")
+        lotteryLabel->setText(QString("Lottery (X Verified — blue check; invite list cannot exclude you)\nEligible: %1\nNext draw: block %2 (one block per minute slot)\nYour handle: %3\nActive nodes: %4")
             .arg(elig ? "yes" : "no")
             .arg(QString::fromStdString(l["next_draw_height"].getValStr().empty()
                                             ? l["height"].getValStr()
@@ -452,7 +469,8 @@ void XHome::refresh()
         }
     }
     if (rootName.isEmpty())
-        assetLabel->setText("My asset\nNo root yet. After you sign in, tap Allowlist my handle (operator) then Claim my root asset. "
+        assetLabel->setText("My asset\nNo root yet. After you sign in, Claim my root asset. "
+                            "Allowlist my handle is an optional operator invite list for private test — it does not make you X Verified. "
                             "The node uses the signed-in username only — a typed foreign handle is rejected.");
     else
         assetLabel->setText("My asset\nRoot: " + rootName + "\nIssue a sub or unique below — no CLI.");
@@ -581,7 +599,9 @@ void XHome::onMockSignIn()
 {
     bool ok = false;
     QString handle = QInputDialog::getText(this, "Regtest simulate",
-        "Mock GET /2/users/me username (regtest only). This writes a session proof; it is not a live X login.",
+        "Mock GET /2/users/me (regtest only). Examples: NFTRVN  NFTRVN:verified  ghost:unverified. "
+        "Compact handle with no flag defaults to X Verified (blue check). Use :unverified for zero lottery chance. "
+        "This writes a session proof; it is not a live X login.",
         QLineEdit::Normal, "NFTRVN", &ok);
     if (!ok || handle.trimmed().isEmpty()) return;
     QString err;
@@ -598,7 +618,7 @@ void XHome::onAllowlistMe()
     UniValue s;
     s.read(rpc("getxsession").toStdString());
     if (!s.isObject() || !s["signed_in"].isTrue()) {
-        QMessageBox::warning(this, "X-Coin", "Sign in with X first. The allowlist uses the session username, not a typed field.");
+        QMessageBox::warning(this, "X-Coin", "Sign in with X first. The invite list uses the session username, not a typed field. Allowlisting is not X Verified.");
         return;
     }
     statusLabel->setText(rpc("addxverified", QStringList() << QString::fromStdString(s["username"].getValStr())));

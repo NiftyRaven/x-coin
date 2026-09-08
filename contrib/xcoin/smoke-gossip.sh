@@ -20,15 +20,15 @@ rm -rf "$BASE"
 mkdir -p "$A_DIR" "$B_DIR"
 ALLOW="$BASE/verified-x-accounts.txt"
 cat > "$ALLOW" <<'EOF'
-# operator-shared verified X allowlist
+# operator-shared invite list (not X Verified)
 alice
 bob
 EOF
 
 "$XCOIND" -regtest -datadir="$A_DIR" -server -daemon -listen=1 -port=28443 -rpcport=28442 -connect=0 -dnsseed=0 \
-  -xoauthmock=alice -xallowlist="$ALLOW"
+  -xoauthmock=alice:verified -xallowlist="$ALLOW"
 "$XCOIND" -regtest -datadir="$B_DIR" -server -daemon -listen=0 -port=28453 -rpcport=28452 -addnode=127.0.0.1:28443 -dnsseed=0 \
-  -xoauthmock=bob -xallowlist="$ALLOW"
+  -xoauthmock=bob:verified -xallowlist="$ALLOW"
 cleanup() {
   "${A_CLI[@]}" stop >/dev/null 2>&1 || true
   "${B_CLI[@]}" stop >/dev/null 2>&1 || true

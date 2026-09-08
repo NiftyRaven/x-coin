@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Secret-free allowlist refresh: fetch a published text file, then load it.
+# Secret-free invite-list refresh: fetch a published text file, then load it.
 # Usage: refresh-x-allowlist.sh <url> [dest]
 # Default dest: $HOME/.xcoin/verified-x-accounts.txt
+# This is the operator invite list, NOT X Verified (blue check).
 # After this, run: xcoin-cli loadxverified
 set -euo pipefail
 if [[ $# -lt 1 ]]; then

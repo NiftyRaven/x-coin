@@ -3061,7 +3061,7 @@ UniValue linkxaccount(const JSONRPCRequest& request)
             "The handle MUST match the Sign in with X session (OAuth users/me). Typed handles\n"
             "that are not the signed-in username are rejected.\n"
             "Default xaccount is the signed-in username.\n"
-            "The handle must also be on the verified allowlist.\n"
+            "X Verified (blue check) is required for lottery, not for claiming the identity root.\n"
             "\nArguments:\n"
             "1. xaccount    (string, optional) X handle. Default: -xaccount\n"
             "2. to_address  (string, optional) destination for NAME and NAME!. Default: new wallet address\n"
@@ -3103,9 +3103,6 @@ UniValue linkxaccount(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_PARAMETER, nerr);
     if (!xsession::RequireHandle(handle, nerr))
         throw JSONRPCError(RPC_INVALID_PARAMETER, nerr);
-    if (!lottery::GetAllowlist().Contains(handle, userId))
-        throw JSONRPCError(RPC_INVALID_PARAMETER,
-                           "X account is not on the verified allowlist (addxverified / -xverified / allowlist file)");
 
     lottery::XAccount local = lottery::GetRegistry().LocalXAccount();
     if (local.handle.empty()) {

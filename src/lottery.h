@@ -25,9 +25,12 @@ class CValidationState;
  * X Coin lottery consensus.
  *
  * Design (see docs/LOTTERY.md):
- *  - A node is lottery-eligible only if it has a Sign in with X session
- *    (OAuth PKCE / users/me) whose username is on the operator-shared
- *    verified allowlist. Typed -xaccount= is not enough.
+ *  - Fair lottery: nobody who is X Verified (X blue check / X Premium, or
+ *    business / government org check from GET /2/users/me) and running a
+ *    wallet can be excluded. The operator invite list is not a lottery
+ *    gate. Typed -xaccount= is not enough.
+ *  - A session that is not X Verified has zero chance (no heartbeat, not
+ *    in the active set) so unverified accounts cannot exploit the draw.
  *  - Eligible nodes heartbeat a payable script plus that X identity.
  *    Node id = Hash160(script). Heartbeats missing a verified link are
  *    ignored for the active set (one X account → one active node).
@@ -53,7 +56,7 @@ static const size_t MAX_HEARTBEAT_SCRIPT = 520;
 static const size_t MAX_HEARTBEAT_SIG = 65;
 static const size_t MAX_X_HANDLE = 32;
 static const char COMMIT_MAGIC[4] = {'X', 'H', 'B', '1'};
-static const char HEARTBEAT_MAGIC[] = "xcoin-xhb-v1";
+static const char HEARTBEAT_MAGIC[] = "xcoin-xhb-v2";
 
 struct XAccount {
     std::string handle; // normalized lowercase, no leading '@'
@@ -90,6 +93,11 @@ public:
      * If the list records a userid and the caller supplies one, they must match.
      */
     bool Contains(const std::string& handle, uint64_t userId = 0) const;
+    /**
+     * Invite list is not a lottery gate. X Verified (users/me) is.
+     * Always true for a valid handle; payout pins still apply via PinnedScript.
+     */
+    bool Allows(const std::string& handle, uint64_t userId = 0) const;
     CScript PinnedScript(const std::string& handle) const;
     std::vector<VerifiedXAccount> List() const;
     size_t Size() const;
@@ -120,14 +128,12 @@ public:
     // On a successful verified X-link, call AssignLinkedUserMainAsset (src/assets/xaccount.h).
 
     /**
-     * Record a payable script as active if the X identity is linked and
-     * allowlisted. id = Hash160(script). One verified X handle → one node.
-     * A live handle cannot be rebound to a different script (gossip spoof
-     * cannot steal an online node's lottery payout). Optional allowlist
-     * pin must match. Returns false when rejected.
+     * Record a payable script as active. `xVerified` must be true (X blue
+     * check). Unverified → false (zero chance). Not gated by the operator
+     * invite list. id = Hash160(script). One X handle → one node.
      */
     bool Heartbeat(const CScript& script, int64_t now,
-                   const std::string& xHandle, uint64_t xUserId);
+                   const std::string& xHandle, uint64_t xUserId, bool xVerified = true);
     bool HeartbeatLocal(int64_t now);
 
     bool LocalEligible() const;
@@ -158,14 +164,14 @@ bool NormalizeXHandle(const std::string& in, std::string& out, std::string& err)
 
 /** Compact-sig digest over timestamp + script + handle + userid. */
 uint256 HeartbeatDigest(int64_t timestamp, const CScript& script,
-                        const std::string& handle, uint64_t userId);
+                        const std::string& handle, uint64_t userId, bool xVerified);
 bool SignHeartbeat(const CKey& key, int64_t timestamp, const CScript& script,
                    const std::string& handle, uint64_t userId,
-                   std::vector<unsigned char>& sigOut);
+                   std::vector<unsigned char>& sigOut, bool xVerified = true);
 /** True if `sig` recovers a pubkey whose P2PKH script equals `script`. */
 bool VerifyHeartbeatSig(const CScript& script, int64_t timestamp,
                         const std::string& handle, uint64_t userId,
-                        const std::vector<unsigned char>& sig);
+                        const std::vector<unsigned char>& sig, bool xVerified = true);
 /** Sign this node's current local payout + session handle (wallet or payout key). */
 bool SignLocalHeartbeat(int64_t timestamp, std::vector<unsigned char>& sigOut);
 

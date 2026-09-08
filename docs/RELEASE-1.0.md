@@ -72,7 +72,9 @@ Brand stills: [assets/brand/](../assets/brand/).
 ## Known limits
 
 - Sign in with X is required to send, receive, and own assets. Lottery
-  is X-Verified (allowlist) only. See [XSIGNIN.md](XSIGNIN.md).
+  is **X Verified** (blue check from `users/me`) plus a running wallet.
+  Unverified accounts have zero chance. The operator invite list cannot
+  exclude a verified wallet. See [XSIGNIN.md](XSIGNIN.md).
 - Live X OAuth needs a developer Client ID (`xoauthclientid=`). This VM
   cannot complete a live login; `-regtest` mock `users/me` covers tests.
 - No mobile app. No public DNS seeds. No exchange listing.

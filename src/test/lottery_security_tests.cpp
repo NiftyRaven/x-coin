@@ -36,14 +36,19 @@ BOOST_AUTO_TEST_CASE(heartbeat_signature_binds_payout_key)
     const CScript script = P2PKHFromKey(key);
     const int64_t t = 1'700'000'000;
     std::vector<unsigned char> sig;
-    BOOST_CHECK(lottery::SignHeartbeat(key, t, script, "alice", 99, sig));
-    BOOST_CHECK(lottery::VerifyHeartbeatSig(script, t, "alice", 99, sig));
+    BOOST_CHECK(lottery::SignHeartbeat(key, t, script, "alice", 99, sig, true));
+    BOOST_CHECK(lottery::VerifyHeartbeatSig(script, t, "alice", 99, sig, true));
     BOOST_CHECK(lottery::VerifyHeartbeatSig(script, t, "ALICE", 99, sig));
+    BOOST_CHECK(!lottery::VerifyHeartbeatSig(script, t, "alice", 99, sig, false));
     BOOST_CHECK(!lottery::VerifyHeartbeatSig(script, t, "alice", 98, sig));
     BOOST_CHECK(!lottery::VerifyHeartbeatSig(script, t + 1, "alice", 99, sig));
     BOOST_CHECK(!lottery::VerifyHeartbeatSig(script, t, "bob", 99, sig));
     std::vector<unsigned char> empty;
     BOOST_CHECK(!lottery::VerifyHeartbeatSig(script, t, "alice", 99, empty));
+    std::vector<unsigned char> sigUnverified;
+    BOOST_CHECK(lottery::SignHeartbeat(key, t, script, "alice", 99, sigUnverified, false));
+    BOOST_CHECK(lottery::VerifyHeartbeatSig(script, t, "alice", 99, sigUnverified, false));
+    BOOST_CHECK(!lottery::VerifyHeartbeatSig(script, t, "alice", 99, sigUnverified, true));
 
     CKey other;
     other.MakeNewKey(true);
@@ -96,14 +101,31 @@ BOOST_AUTO_TEST_CASE(allowlist_pin_rejects_other_payout)
     BOOST_CHECK(lottery::GetRegistry().Heartbeat(aliceScript, 10, "alice", 0));
 }
 
-BOOST_AUTO_TEST_CASE(unlisted_heartbeat_ignored)
+BOOST_AUTO_TEST_CASE(unverified_heartbeat_has_zero_chance)
 {
     lottery::GetAllowlist().Reset();
     lottery::GetRegistry().Reset();
     CKey key;
     key.MakeNewKey(true);
-    BOOST_CHECK(!lottery::GetRegistry().Heartbeat(P2PKHFromKey(key), 10, "ghost", 0));
+    const CScript script = P2PKHFromKey(key);
+    BOOST_CHECK(!lottery::GetRegistry().Heartbeat(script, 10, "ghost", 0, false));
     BOOST_CHECK_EQUAL(lottery::GetRegistry().Count(10), 0U);
+    BOOST_CHECK(lottery::GetRegistry().Heartbeat(script, 10, "ghost", 0, true));
+    BOOST_CHECK_EQUAL(lottery::GetRegistry().Count(10), 1U);
+}
+
+BOOST_AUTO_TEST_CASE(invite_list_cannot_exclude_verified_wallet)
+{
+    lottery::GetAllowlist().Reset();
+    lottery::GetRegistry().Reset();
+    CKey key;
+    key.MakeNewKey(true);
+    const CScript script = P2PKHFromKey(key);
+    std::string err;
+    BOOST_CHECK(lottery::GetAllowlist().Add("alice", 0, err, false));
+    BOOST_CHECK(lottery::GetAllowlist().Allows("ghost", 0));
+    BOOST_CHECK(lottery::GetRegistry().Heartbeat(script, 10, "ghost", 0, true));
+    BOOST_CHECK_EQUAL(lottery::GetRegistry().Count(10), 1U);
 }
 
 BOOST_AUTO_TEST_CASE(slot_seconds_is_sixty_and_compile_time)

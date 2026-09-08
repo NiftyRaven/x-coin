@@ -240,8 +240,12 @@ void XOAuth::onTokenFinished()
 
 void XOAuth::fetchMe(const QString& token)
 {
-    Q_EMIT status(tr("Calling GET /2/users/me…"));
-    QNetworkRequest req(QUrl("https://api.twitter.com/2/users/me"));
+    Q_EMIT status(tr("Calling GET /2/users/me?user.fields=verified,verified_type…"));
+    QUrl url("https://api.twitter.com/2/users/me");
+    QUrlQuery q;
+    q.addQueryItem("user.fields", "verified,verified_type");
+    url.setQuery(q);
+    QNetworkRequest req(url);
     req.setRawHeader("Authorization", "Bearer " + token.toUtf8());
     QNetworkReply *reply = nam->get(req);
     connect(reply, SIGNAL(finished()), this, SLOT(onMeFinished()));
@@ -264,18 +268,19 @@ void XOAuth::onMeFinished()
 
 bool XOAuth::finishFromUsersMe(const QByteArray& body, QString& err)
 {
-    std::string uid, uname, e;
-    if (!xsession::ParseUsersMe(std::string(body.constData(), (size_t)body.size()), uid, uname, e)) {
+    xsession::UsersMe me;
+    std::string e;
+    if (!xsession::ParseUsersMe(std::string(body.constData(), (size_t)body.size()), me, e)) {
         err = QString::fromStdString(e);
         return false;
     }
     const int64_t exp = GetTime() + 7200;
-    if (!xsession::SaveSession(uid, uname, exp, e)) {
+    if (!xsession::SaveSession(me.userId, me.username, exp, e, me.verified, me.verifiedType)) {
         err = QString::fromStdString(e);
         return false;
     }
     xsession::BindLotteryFromSession();
-    Q_EMIT signedIn(QString::fromStdString(uname), QString::fromStdString(uid));
+    Q_EMIT signedIn(QString::fromStdString(me.username), QString::fromStdString(me.userId));
     return true;
 }
 

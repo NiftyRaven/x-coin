@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Eligibility: unlinked node is not in the lottery; linked+allowlisted is.
+# Fair lottery: X Verified (blue check) + running wallet cannot be excluded.
+# Unverified sessions have zero chance even if allowlisted.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -59,6 +60,8 @@ if j.get("local_eligible") is not False:
     sys.exit("unlinked node must have local_eligible=false")
 if j.get("local_xaccount"):
     sys.exit("unlinked node must have empty local_xaccount")
+if j.get("local_x_verified") is not False:
+    sys.exit("unlinked node must have local_x_verified=false")
 if j.get("active_nodes", 1) != 0:
     sys.exit("unlinked node must have zero active nodes")
 '
@@ -81,12 +84,11 @@ if j.get("verified_accounts", 0) < 1:
     sys.exit("addxverified did not stick")
 '
 stop_node
-# Drop the first-run allowlist so the next start is linked but not listed.
 rm -f "$DATADIR/regtest/verified-x-accounts.txt"
 sleep 0.5
 
-echo "== linked but not allowlisted is not eligible =="
-start_node -xoauthmock=ghost
+echo "== signed-in but not X Verified has zero chance (can still receive) =="
+start_node -xoauthmock=ghost:unverified
 INFO3="$("${CLI[@]}" getlotteryinfo)"
 echo "$INFO3"
 echo "$INFO3" | python3 -c '
@@ -94,30 +96,67 @@ import json,sys
 j=json.load(sys.stdin)
 if j.get("local_xaccount") != "ghost":
     sys.exit("expected local_xaccount=ghost")
+if j.get("local_x_verified") is not False:
+    sys.exit("ghost:unverified must report local_x_verified=false")
 if j.get("local_eligible") is not False:
-    sys.exit("linked-but-unlisted must be ineligible")
+    sys.exit("unverified session must have zero lottery chance")
+if j.get("active_nodes", 1) != 0:
+    sys.exit("unverified node must not enter the active set")
 '
+SESSU="$("${CLI[@]}" getxsession)"
+echo "$SESSU" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("x_verified") is not False:
+    sys.exit("getxsession.x_verified must be false for ghost:unverified")
+'
+RECV="$("${CLI[@]}" getnewaddress)"
+[[ "$RECV" == y* && "$RECV" != R* && "$RECV" != n* ]] || { echo "FAIL: unverified ghost must be able to receive, got $RECV" >&2; exit 1; }
+echo "  receive $RECV (session proves it is you; lottery closed)"
 if "${CLI[@]}" registeractivenode >/dev/null 2>&1; then
-  echo "registeractivenode must fail when handle is not allowlisted" >&2
+  echo "registeractivenode must fail when the session is not X Verified" >&2
   exit 1
 fi
 
-echo "== signed-in but not X-Verified can still receive =="
-RECV="$("${CLI[@]}" getnewaddress)"
-[[ "$RECV" == y* && "$RECV" != R* && "$RECV" != n* ]] || { echo "FAIL: signed-in ghost must be able to receive, got $RECV" >&2; exit 1; }
-echo "  receive $RECV (session proves it is you; lottery still closed)"
-
-echo "== addxverified makes the linked node eligible =="
+echo "== JSON verified:false stays zero chance even if allowlisted =="
 "${CLI[@]}" addxverified ghost >/dev/null
+"${CLI[@]}" mockxsignin '{"data":{"id":"1","username":"ghost","verified":false}}' >/dev/null
+INFO_JSON="$("${CLI[@]}" getlotteryinfo)"
+echo "$INFO_JSON" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("local_eligible") is not False:
+    sys.exit("verified:false JSON must not be lottery eligible")
+if j.get("local_x_verified") is not False:
+    sys.exit("verified:false JSON must report local_x_verified=false")
+if j.get("verified_accounts", 0) < 1:
+    sys.exit("allowlist must still be populated")
+'
+if "${CLI[@]}" registeractivenode >/dev/null 2>&1; then
+  echo "registeractivenode must fail for verified:false even when allowlisted" >&2
+  exit 1
+fi
+stop_node
+rm -f "$DATADIR/regtest/verified-x-accounts.txt"
+sleep 0.5
+
+echo "== X Verified + running wallet is eligible without addxverified =="
+start_node -xoauthmock=ghost
 INFO4="$("${CLI[@]}" getlotteryinfo)"
 echo "$INFO4"
 echo "$INFO4" | python3 -c '
 import json,sys
 j=json.load(sys.stdin)
+if j.get("local_xaccount") != "ghost":
+    sys.exit("expected local_xaccount=ghost")
+if j.get("local_x_verified") is not True:
+    sys.exit("compact ghost must default to X Verified")
 if j.get("local_eligible") is not True:
-    sys.exit("linked+allowlisted must be eligible")
+    sys.exit("verified running wallet must be eligible without the invite list")
 if j.get("active_nodes", 0) < 1:
     sys.exit("eligible local node must be in the active set")
+if j.get("allowlist_accounts", 1) != 0:
+    sys.exit("invite list must still be empty for this fair-entry check")
 '
 REG="$("${CLI[@]}" registeractivenode)"
 echo "$REG"
@@ -138,10 +177,9 @@ if not n or n[0].get("xaccount") != "ghost":
 ADDR="$("${CLI[@]}" getnewaddress)"
 [[ "$ADDR" == y* && "$ADDR" != R* && "$ADDR" != n* ]]
 if "${CLI[@]}" registeractivenode "$ADDR" botter >/dev/null 2>&1; then
-  echo "unverified second identity must be rejected" >&2
+  echo "impersonation of a second identity must be rejected" >&2
   exit 1
 fi
-"${CLI[@]}" addxverified botter >/dev/null
 "${CLI[@]}" mockxsignin botter >/dev/null
 "${CLI[@]}" registeractivenode "$ADDR" botter >/dev/null
 # Restore the local session so HeartbeatLocal does not remap @botter
