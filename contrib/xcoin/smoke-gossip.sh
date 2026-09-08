@@ -32,6 +32,13 @@ EOF
 cleanup() {
   "${A_CLI[@]}" stop >/dev/null 2>&1 || true
   "${B_CLI[@]}" stop >/dev/null 2>&1 || true
+  for _ in $(seq 1 50); do
+    if ! "${A_CLI[@]}" getlotteryinfo >/dev/null 2>&1 && ! "${B_CLI[@]}" getlotteryinfo >/dev/null 2>&1; then
+      sleep 0.4
+      return 0
+    fi
+    sleep 0.2
+  done
 }
 trap cleanup EXIT
 
