@@ -1,9 +1,11 @@
 Building X Coin
 ===============
 
+How to use the core wallet after you build: [README.md](README.md).
+Whitepaper: [whitepaper/XCOIN.md](whitepaper/XCOIN.md).
+
 X Coin (XFER) builds with Autotools. The supported private-test path is
-**`--without-gui`**. See the root [README.md](README.md) for the short
-Ubuntu recipe, and `doc/build-*.md` for platform notes (use `xcoind` /
+**`--without-gui`**. Platform notes: `doc/build-*.md` (use `xcoind` /
 `xcoin-cli` / `xcoin-qt`).
 
 ```bash

@@ -1,10 +1,6 @@
 <!--- Remove sections that do not apply -->
 
-This issue tracker is only for technical issues related to Ravencoin.
-
-General Ravencoin questions and/or support requests and are best directed to the [Ravencoin Discord](https://discord.gg/jn6uhur)).
-
-For reporting security issues, please direct message one of the core developers in discord.
+This tracker is for technical issues related to X Coin (XFER).
 
 ### Describe the issue
 
@@ -21,17 +17,15 @@ Tell us what should happen
 Tell us what happens instead
 
 ### Screenshots.
-If the issue is related to the GUI, screenshots can be added to this issue via drag & drop.
+If the issue is related to the GUI, screenshots can be added via drag and drop.
 
-### What version of Ravencoin are you using?
-List the version number/commit ID, and if it is an official binary, self compiled or a distribution package such as PPA.
+### What version of X Coin are you using?
+List the version / commit (`xcoind -version`).
 
 ### Machine specs:
 - OS:
 - CPU:
 - RAM:
-- Disk size:
-- Disk Type (HD/SDD):
+- Disk:
 
-### Any extra information that might be useful in the debugging process.
-This is normally the contents of a `debug.log` or `config.log` file. Raw text or a link to a pastebin type site are preferred.
+### Any extra information that might be useful

@@ -1,9 +1,10 @@
 # X Coin private launch checklist
 
-This is the operator runbook for a **private launch**. It assumes you are
-building from this repository (Phase 1 import + this launch-ready delta).
-There is no public seed DNS and no exchange listing. Lottery eligibility
-uses a **shared verified-X allowlist** (no live X API keys required).
+Wallet how-to: [README.md](../README.md). Paper: [whitepaper/XCOIN.md](../whitepaper/XCOIN.md).
+
+This is the operator runbook for a **private launch**. There is no public
+seed DNS and no exchange listing. Lottery eligibility uses a **shared
+verified-X allowlist** (no live X API keys required).
 
 ## Frozen identity
 

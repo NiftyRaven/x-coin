@@ -1,12 +1,11 @@
 X Coin (XFER)
 
-A private peer-to-peer coin for simple value transfer plus user-created
-assets. There is no mining. Every minute a lottery among verified-X
-active nodes produces the next block and splits the subsidy.
+A peer-to-peer coin for users on X. No mining. Every minute a lottery
+among verified active nodes produces the block. Fair launch, no premine.
+One free root identity asset per verified X handle.
 
-This repository is the product home. See README.md, docs/LAUNCH.md,
-docs/LOTTERY.md, and docs/ASSETS.md.
+Wallet: the core node (`xcoind` / `xcoin-cli`). See README.md.
+Paper: whitepaper/XCOIN.md.
 
-Legal copyright and historical opcode notes for the imported v4.8.0
-tree are collected in docs/FORK.md. Do not treat this file as a
-substitute for COPYING.
+Nifty Raven (@NFTRVN on X). Anonymous public release.
+Handle and display name only.
