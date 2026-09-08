@@ -65,7 +65,9 @@ See also `assets/asset_metadata_spec.md` from upstream.
 ## Honest leftovers (not private-launch blockers)
 
 - Sybil / stake weighting if a free “run a process” lottery is not enough.
-- Re-audit asset BIP9 vs height-0 force-on.
+- Asset BIP9 windows inherited from Ravencoin are expired on the new main
+  genesis; height-0 force-on covers assets, messaging, transfer-script size,
+  enforce-value, coinbase-asset checks, and transfer-overflow.
 - Make `make check` green against the new genesis (many upstream tests hard-code Ravencoin hashes).
 - DNS seeds, explorers, X.com API / OAuth, mobile — out of scope. See [LAUNCH.md](LAUNCH.md).
 

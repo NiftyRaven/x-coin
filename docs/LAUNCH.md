@@ -37,14 +37,14 @@ X Coin / XFER: Ravencoin hard-fork, assets kept, lottery not mining. 2026-09-08
 | `nVersion` | 4 | 2 | 4 |
 | Hash algo | X16R (`GetX16RHash`) | X16R | X16R |
 
-Recorded hashes (fill-in from `getblockhash 0` / `getblock 0` after a clean
-start; also asserted in `src/chainparams.cpp` once recorded):
+Recorded hashes (asserted in `src/chainparams.cpp`; X16R of the frozen
+headers — no leading-zero PoW grind):
 
 | | `hashGenesisBlock` | `hashMerkleRoot` |
 | --- | --- | --- |
-| Main | *(see chainparams assert / `xcoin-cli getblockhash 0`)* | *(see `getblock` genesis)* |
-| Testnet | same commands with `-testnet` | |
-| Regtest | same commands with `-regtest` | |
+| Main | `db9bcd7597648d68a0f8f1491e0c068faa626090fab516b355cb70e46e5347d0` | `57622a8eb1e132f766eb4e9df94c6acc963860cefe9bea0d25861ef2d1a92a6e` |
+| Testnet | `9a3909c86638c73c5cd3e8921936cbdeb7273524ecb85048caa7c62cfe23429b` | same merkle (same coinbase timestamp string) |
+| Regtest | `bfce7bfad8116b82f4a0ce4be2fa52e9c9f166248e318ce45728b8fe87451d89` | same merkle |
 
 `nMinimumChainWork` and `defaultAssumeValid` are zero. Checkpoints are empty.
 

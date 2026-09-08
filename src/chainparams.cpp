@@ -187,7 +187,8 @@ public:
         genesis = CreateGenesisBlock(1788825600, 1, 0x207fffff, 4, 5000 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetX16RHash();
-        // hashGenesisBlock / merkle asserts filled after first build (see docs/LAUNCH.md).
+        assert(consensus.hashGenesisBlock == uint256S("0xdb9bcd7597648d68a0f8f1491e0c068faa626090fab516b355cb70e46e5347d0"));
+        assert(genesis.hashMerkleRoot == uint256S("0x57622a8eb1e132f766eb4e9df94c6acc963860cefe9bea0d25861ef2d1a92a6e"));
 
         vSeeds.clear();
         vFixedSeeds.clear();
@@ -401,7 +402,8 @@ public:
 
         genesis = CreateGenesisBlock(nGenesisTime, 1, 0x207fffff, 2, 5000 * COIN);
         consensus.hashGenesisBlock = genesis.GetX16RHash();
-        // Launch testnet genesis — hash asserted after first build (docs/LAUNCH.md).
+        assert(consensus.hashGenesisBlock == uint256S("0x9a3909c86638c73c5cd3e8921936cbdeb7273524ecb85048caa7c62cfe23429b"));
+        assert(genesis.hashMerkleRoot == uint256S("0x57622a8eb1e132f766eb4e9df94c6acc963860cefe9bea0d25861ef2d1a92a6e"));
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -612,7 +614,8 @@ public:
 
         genesis = CreateGenesisBlock(1524179366, 1, 0x207fffff, 4, 5000 * COIN);
         consensus.hashGenesisBlock = genesis.GetX16RHash();
-        // Launch regtest genesis — hash asserted after first build (docs/LAUNCH.md).
+        assert(consensus.hashGenesisBlock == uint256S("0xbfce7bfad8116b82f4a0ce4be2fa52e9c9f166248e318ce45728b8fe87451d89"));
+        assert(genesis.hashMerkleRoot == uint256S("0x57622a8eb1e132f766eb4e9df94c6acc963860cefe9bea0d25861ef2d1a92a6e"));
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.

@@ -1362,6 +1362,15 @@ UniValue verifychain(const JSONRPCRequest& request)
 static UniValue BIP9SoftForkDesc(const Consensus::Params& consensusParams, Consensus::DeploymentPos id)
 {
     UniValue rv(UniValue::VOBJ);
+    // Genesis is DEFINED for every BIP9 deployment. Avoid VersionBits walks
+    // that have OOMed on a fresh X Coin chain (new genesis, no inherited bits).
+    if (!chainActive.Tip() || chainActive.Height() <= 0) {
+        rv.push_back(Pair("status", "defined"));
+        rv.push_back(Pair("startTime", consensusParams.vDeployments[id].nStartTime));
+        rv.push_back(Pair("timeout", consensusParams.vDeployments[id].nTimeout));
+        rv.push_back(Pair("since", 0));
+        return rv;
+    }
     const ThresholdState thresholdState = VersionBitsTipState(consensusParams, id);
     switch (thresholdState) {
     case THRESHOLD_DEFINED: rv.push_back(Pair("status", "defined")); break;

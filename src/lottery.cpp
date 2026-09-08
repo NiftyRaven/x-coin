@@ -332,7 +332,7 @@ bool ParseActiveSetCommitment(const CScript& script, std::vector<uint160>& ids)
     for (uint32_t i = 0; i < n; i++)
         memcpy(ids[i].begin(), &data[8 + (size_t)i * 20], 20);
     for (uint32_t i = 1; i < n; i++) {
-        if (ids[i] <= ids[i - 1])
+        if (!(ids[i - 1] < ids[i]))
             return false;
     }
     return true;
@@ -453,7 +453,6 @@ bool CheckLotteryCoinbase(const CBlock& block,
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-split", false,
                              strprintf("payout %u amount mismatch", (unsigned)i));
     }
-    (void)IsWitnessCommitment; // used only as documentation of skipped OP_RETURNs
     return true;
 }
 
@@ -477,7 +476,10 @@ static bool ProduceOneBlock(const CChainParams& chainparams)
         return false;
     }
     std::shared_ptr<CReserveScript> coinbaseScript;
-    pWallet->GetScriptForMining(coinbaseScript);
+    {
+        LOCK(pWallet->cs_wallet);
+        pWallet->GetScriptForMining(coinbaseScript);
+    }
     if (!coinbaseScript || coinbaseScript->reserveScript.empty()) {
         LogPrintf("lottery: no coinbase script (empty keypool?)\n");
         return false;
@@ -529,12 +531,22 @@ static void ProducerThread(const CChainParams& chainparams)
             const int64_t now = GetTime();
 
 #ifdef ENABLE_WALLET
-            CWallet* pWallet = FirstWalletOrNull();
-            if (pWallet) {
-                std::shared_ptr<CReserveScript> coinbaseScript;
-                pWallet->GetScriptForMining(coinbaseScript);
-                if (coinbaseScript && !coinbaseScript->reserveScript.empty())
-                    GetRegistry().SetLocalScript(coinbaseScript->reserveScript);
+            // Adopt the wallet mining script once. Do not touch the keypool
+            // every second from this thread (that raced and OOMed on start).
+            static bool fAdoptedWallet = false;
+            if (!fAdoptedWallet) {
+                CWallet* pWallet = FirstWalletOrNull();
+                if (pWallet) {
+                    std::shared_ptr<CReserveScript> coinbaseScript;
+                    {
+                        LOCK(pWallet->cs_wallet);
+                        pWallet->GetScriptForMining(coinbaseScript);
+                    }
+                    if (coinbaseScript && !coinbaseScript->reserveScript.empty()) {
+                        GetRegistry().SetLocalScript(coinbaseScript->reserveScript);
+                        fAdoptedWallet = true;
+                    }
+                }
             }
 #endif
             GetRegistry().HeartbeatLocal(now);

@@ -5820,6 +5820,12 @@ bool AreEnforcedValuesDeployed()
     if (fEnforcedValuesIsActive)
         return true;
 
+    // New genesis: Ravencoin BIP9 windows are in the past. Keep asset rules on.
+    if (GetParams().GetAssetActivationHeight() <= 0) {
+        fEnforcedValuesIsActive = true;
+        return true;
+    }
+
     const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_ENFORCE_VALUE);
     if (thresholdState == THRESHOLD_ACTIVE || thresholdState == THRESHOLD_LOCKED_IN)
         fEnforcedValuesIsActive = true;
@@ -5831,6 +5837,11 @@ bool AreCoinbaseCheckAssetsDeployed()
 {
     if (fCheckCoinbaseAssetsIsActive)
         return true;
+
+    if (GetParams().GetAssetActivationHeight() <= 0) {
+        fCheckCoinbaseAssetsIsActive = true;
+        return true;
+    }
 
     const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_COINBASE_ASSETS);
     if (thresholdState == THRESHOLD_ACTIVE)
@@ -5885,6 +5896,11 @@ bool AreTransferScriptsSizeDeployed() {
     if (fTransferScriptIsActive)
         return true;
 
+    if (GetParams().GetAssetActivationHeight() <= 0) {
+        fTransferScriptIsActive = true;
+        return true;
+    }
+
     const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_TRANSFER_SCRIPT_SIZE);
     if (thresholdState == THRESHOLD_ACTIVE)
         fTransferScriptIsActive = true;
@@ -5922,6 +5938,11 @@ bool IsTransferOverflowCheckDeployed()
 {
     if (fCheckTransferOverflowIsActive)
         return true;
+
+    if (GetParams().GetAssetActivationHeight() <= 0) {
+        fCheckTransferOverflowIsActive = true;
+        return true;
+    }
 
     const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_TRANSFER_OVERFLOW);
     if (thresholdState == THRESHOLD_ACTIVE)
