@@ -76,8 +76,7 @@ Stay private. Do **not** add public DNS seeds.
    Do not expose **38442**.
 
 2. **Every other node** puts a **trusted peer IP in the config file**
-   (`xcoin.conf`) — not a stranger, not a BIP39 seed, not a required
-   GUI field:
+   (`xcoin.conf`) — not a stranger, not a BIP39 seed, not a GUI widget:
 
    ```
    addnode=<trusted-peer-ip>:38443
@@ -85,9 +84,7 @@ Stay private. Do **not** add public DNS seeds.
 
    Optional: `-connect=<trusted-peer-ip>:38443` (only that peer; harder
    to eclipse *if* the seed is honest; you also cannot see a second
-   honest view). The wallet GUI never lists other people's IPs. Sharing
-   *your* listen address is opt-in on Home (**Provide my node IP**; off
-   by default).
+   honest view). The wallet GUI never lists or shows peer addresses.
 
 3. **Same allowlist on every honest node.** Confirm each handle offline
    (verified / Premium badge). Prefer `handle userid` and, for the seed

@@ -90,9 +90,7 @@ different address prefixes (`X` / `y` vs `R` / `n`).
 
 - No DNS seeds in-tree (`vSeeds.clear()`). Leftover imported IP arrays
   in `chainparamsseeds.h` are empty and unused. Do not add public seeds.
-- Join path: `addnode=` / `seednode=` on **38443** (operator config).
-  Home may optionally show *your* listen address (**Provide my node IP**,
-  off by default). It never lists other people's IPs.
+- Join path: `addnode=` / `seednode=` on **38443**.
 - Heartbeats: signed `xhb` after `verack`. Unsigned, unlisted, userid-only,
   or sticky-violating heartbeats are ignored (or banned, if the compact
   sig is missing / forged). See [SECURITY.md](SECURITY.md).

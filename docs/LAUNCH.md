@@ -101,11 +101,8 @@ There are no DNS seeds in-tree. For a private mesh:
 
 3. Tell every other operator to put a **trusted peer IP in the config
    file** (`xcoin.conf`). This is a P2P join address, **not** a BIP39
-   seed and **not** a required wallet field. Home / Receive / Send never
-   auto-list peer addresses (every `xcoin-qt` already *is* a node). If
-   you want to give someone *your* listen address (friend, seed), Home
-   has an optional **Provide my node IP** control — off by default;
-   uncheck and the IP disappears again.
+   seed and **not** a wallet GUI field. Home / Receive / Send never list
+   or show peer addresses (every `xcoin-qt` already *is* a node).
 
    ```bash
    # xcoin.conf — operators only
