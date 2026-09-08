@@ -146,8 +146,10 @@ code). After the loopback callback, the wallet calls
 `GET /2/users/me` and stores **only** that response: X user id,
 username, expiry, and an HMAC proof (`xsession.json` + datadir secret
 `xsession.key`). **Send and receive** require that proof — authentication
-is what proves the wallet is yours. `linkxaccount otherperson` is
-rejected when the session is not `otherperson`.
+is what proves the wallet is yours. Home shows **this wallet is linked
+to @handle** plus the X user id. `linkxaccount otherperson` is
+rejected when the session is not `otherperson`. This proof does not
+replace the 12-word BIP39 seed.
 
 The allowlist is the second gate (blue-check / X Premium, confirmed
 offline). Lottery eligibility requires both:
@@ -186,9 +188,9 @@ Identity roots are not reissuable. Restricted, qualifier, tag, and
 freeze assets are **removed** — no create, transfer, RPC, or
 activation.
 
-Anyone can still receive, hold, and transfer XFER and any asset sent
-to them. Linking is required to *issue* under your root, not to hold
-or spend.
+A signed-in session is required to create a receive address or send.
+Coins can still arrive at an already-known address. Linking is
+required to *issue* under your root.
 
 Details: [docs/ASSETS.md](../docs/ASSETS.md).
 
@@ -215,22 +217,31 @@ The wallet **is** the core wallet that ships with the node:
 - `xcoin-qt` — desktop GUI (X theme: black / white / sharp). This is
   the 1.0 wallet. CLI remains supported.
 
-There is **no** new mobile wallet, **no** X-app wallet, and **no**
-X.com OAuth login inside the node. Creating an address, sending XFER,
-and linking a handle are RPC or Qt operations against the core
-wallet file in `~/.xcoin`.
+There is **no** new mobile wallet and **no** X-app wallet. Sign in with
+X is OAuth in `xcoin-qt` / the node (PKCE → `users/me` → datadir proof).
+It is an identity gate on this node, not a hosted X.com wallet and not
+a replacement for the seed.
+
+**12-word BIP39 / BIP44 generation is unchanged** and still required
+to create or restore keys. Seed = keys. X session = proof that this
+datadir is linked to that X account. [docs/WALLET.md](../docs/WALLET.md).
+
+Creating an address, sending XFER, and linking a handle are RPC or Qt
+operations against the core `wallet.dat` in `~/.xcoin`. Send and
+receive require the session proof.
 
 What this release changed on top of that core:
 
 - Product name, ports, magic, datadir, binaries
 - Lottery instead of mining
-- Verified-X allowlist and `linkxaccount`
+- Sign in with X session + verified-X allowlist and `linkxaccount`
 - One free root per handle; user roots forbidden; restricted assets
   removed
 
-What is still inherited core behavior: UTXO wallet, `wallet.dat`,
-`encryptwallet` / `backupwallet`, fee estimates, P2P, mempool, the
-asset script format. How to use it: [README.md](../README.md).
+What is still inherited core behavior: UTXO wallet, BIP39 12-word HD
+seed, `wallet.dat`, `encryptwallet` / `backupwallet`, fee estimates,
+P2P, mempool, the asset script format. How to use it:
+[README.md](../README.md).
 
 ## 8. Risks (accepted for private launch)
 

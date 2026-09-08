@@ -10,6 +10,15 @@ A typed handle is not an identity. The wallet uses OAuth 2.0 PKCE, then
 datadir. Send and receive require that session. Only X-Verified
 (allowlisted) signed-in handles enter the lottery.
 
+**This wallet is yours** when Home shows **Linked to @yourhandle** plus
+your X user id. That state means this datadir holds a valid session
+proof (`xsession.json` + `xsession.key`). A typed handle cannot steal
+it.
+
+The **12-word BIP39 seed is unchanged** and still required to create
+or restore keys. Sign in with X does not replace the seed. Details:
+[WALLET.md](WALLET.md).
+
 ## What the node stores
 
 After a successful sign-in:
@@ -66,8 +75,8 @@ The node never pretends login succeeded without a real access token
 
 ## Happy path (GUI, no terminal)
 
-1. Create / open wallet (first-run mnemonic).
-2. **Sign in with X**.
+1. Create / open wallet (first-run **12-word BIP39** mnemonic — still required).
+2. **Sign in with X** (binds this node to your X account; does not replace the seed).
 3. **Allowlist my handle** (operator) then **Claim my root asset**.
 4. **Receive** (address + Copy) / **Send** (paste address, amount, Send).
 5. Issue sub / unique from Home. Lottery status is on Home.

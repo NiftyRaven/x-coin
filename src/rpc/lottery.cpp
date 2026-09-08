@@ -244,12 +244,18 @@ UniValue getxsession(const JSONRPCRequest& request)
         throw std::runtime_error(
             "getxsession\n"
             "\nReturn the local Sign in with X session (user id + username from users/me).\n"
+            "signed_in / linked are the same: this datadir holds a valid HMAC proof\n"
+            "(xsession.json + xsession.key) binding send/receive/own to that X account.\n"
+            "This is not a replacement for the 12-word BIP39 seed.\n"
         );
     UniValue ret(UniValue::VOBJ);
     xsession::Session s;
     std::string err;
     const bool ok = xsession::LoadSession(s, err);
     ret.push_back(Pair("signed_in", ok));
+    ret.push_back(Pair("linked", ok));
+    ret.push_back(Pair("session_file", xsession::SessionPath()));
+    ret.push_back(Pair("secret_file", xsession::SecretPath()));
     if (ok) {
         ret.push_back(Pair("username", s.username));
         ret.push_back(Pair("id", s.userId));

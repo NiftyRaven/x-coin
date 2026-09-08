@@ -33,6 +33,7 @@ private:
 
     WalletView* walletView;
     WalletModel* walletModel;
+    QLabel* tagLabel;
     QLabel* addressLabel;
     QLabel* hintLabel;
     QString currentAddress;

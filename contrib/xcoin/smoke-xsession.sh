@@ -62,6 +62,12 @@ import json,sys
 j=json.load(sys.stdin)
 if j.get("signed_in") is not False:
     sys.exit("expected signed_in=false")
+if j.get("linked") is not False:
+    sys.exit("expected linked=false")
+if "xsession.json" not in str(j.get("session_file","")):
+    sys.exit("getxsession must name xsession.json")
+if "xsession.key" not in str(j.get("secret_file","")):
+    sys.exit("getxsession must name xsession.key")
 '
 
 echo "== send/receive require a session =="
@@ -116,10 +122,16 @@ import json,sys
 j=json.load(sys.stdin)
 if j.get("signed_in") is not True:
     sys.exit("expected signed_in")
+if j.get("linked") is not True:
+    sys.exit("signed-in session must report linked")
 if j.get("username") != "alice":
     sys.exit("session username must be alice")
 if str(j.get("user_id") or j.get("id")) != "99":
     sys.exit("session must store X user id")
+if "xsession.json" not in str(j.get("session_file","")):
+    sys.exit("linked session must name xsession.json")
+if "xsession.key" not in str(j.get("secret_file","")):
+    sys.exit("linked session must name xsession.key")
 '
 RECV="$("${CLI[@]}" getnewaddress)"
 echo "session receive $RECV"

@@ -60,6 +60,10 @@ MnemonicDialog1::MnemonicDialog1(QWidget *parent) :
     radioselected("none")
 {
     ui->setupUi(this);
+    ui->wallettypeLabel->setText(tr(
+        "Since no wallet.dat file was found in the X Coin data directory, a wallet file will be created. "
+        "These 12 BIP39 words control the keys (create or restore). "
+        "Sign in with X on Home is a separate identity proof on this node — it does not replace the seed."));
 };
 
 MnemonicDialog1::~MnemonicDialog1()

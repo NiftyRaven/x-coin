@@ -24,6 +24,7 @@
 #include <QMessageBox>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QStyle>
 #include <QTimer>
 #include <QVBoxLayout>
 
@@ -35,6 +36,8 @@ static const char *kTheme =
     "QLabel#xtag { color: #a1a1aa; font-size: 13px; }"
     "QLabel#xsection { color: #ffffff; font-size: 12px; font-weight: 800; letter-spacing: 3px; margin-top: 8px; }"
     "QLabel#xcard { background: #0a0a0a; border: 1px solid #27272a; border-radius: 0px; padding: 14px; color: #e4e4e7; font-size: 13px; }"
+    "QLabel#xlinked { background: #0a0a0a; border: 1px solid #ffffff; border-radius: 0px; padding: 16px; color: #ffffff; font-size: 13px; }"
+    "QLabel#xunlinked { background: #0a0a0a; border: 1px solid #3f3f46; border-radius: 0px; padding: 16px; color: #a1a1aa; font-size: 13px; }"
     "QLabel#xhint { color: #71717a; font-size: 12px; }"
     "QPushButton#xprimary { background: #ffffff; color: #000000; border: none; border-radius: 0px; padding: 10px 22px; font-weight: 700; font-size: 14px; }"
     "QPushButton#xprimary:hover { background: #e4e4e7; }"
@@ -74,7 +77,7 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     word->setAlignment(Qt::AlignHCenter);
     root->addWidget(word);
 
-    QLabel* tag = new QLabel("Private test chain · Sign in with X · one root per handle");
+    QLabel* tag = new QLabel("Private test chain · this wallet · your X account");
     tag->setObjectName("xtag");
     tag->setAlignment(Qt::AlignHCenter);
     tag->setWordWrap(true);
@@ -85,10 +88,24 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     balanceLabel->setWordWrap(true);
     root->addWidget(balanceLabel);
 
+    QLabel* identHead = new QLabel("THIS WALLET");
+    identHead->setObjectName("xsection");
+    root->addWidget(identHead);
+
     sessionLabel = new QLabel;
-    sessionLabel->setObjectName("xcard");
+    sessionLabel->setObjectName("xunlinked");
     sessionLabel->setWordWrap(true);
     root->addWidget(sessionLabel);
+
+    keysLabel = new QLabel;
+    keysLabel->setObjectName("xcard");
+    keysLabel->setWordWrap(true);
+    keysLabel->setText(
+        "Keys and identity are different.\n"
+        "12-word BIP39 seed — still required. It creates and restores the keys (unchanged HD wallet).\n"
+        "Sign in with X — session proof in this datadir (xsession.json + xsession.key). It binds send, receive, and ownership to your X account on this node.\n"
+        "Neither replaces the other. A typed handle cannot steal this.");
+    root->addWidget(keysLabel);
 
     QHBoxLayout* authRow = new QHBoxLayout;
     signInBtn = new QPushButton("Sign in with X");
@@ -251,21 +268,46 @@ void XHome::refresh()
 {
     UniValue s;
     s.read(rpc("getxsession").toStdString());
-    const bool signedIn = s.isObject() && s["signed_in"].isTrue();
+    const bool signedIn = s.isObject() && (s["signed_in"].isTrue() || s["linked"].isTrue());
     if (signedIn) {
         QString uid = QString::fromStdString(s["user_id"].getValStr());
         if (uid.isEmpty())
             uid = QString::fromStdString(s["id"].getValStr());
-        sessionLabel->setText(QString("Signed in as @%1\nX user id %2")
-            .arg(QString::fromStdString(s["username"].getValStr()))
-            .arg(uid));
-        signInBtn->setText("Signed in with X");
+        const QString handle = QString::fromStdString(s["username"].getValStr());
+        QString proof = QString::fromStdString(s["session_file"].getValStr());
+        QString secret = QString::fromStdString(s["secret_file"].getValStr());
+        if (proof.isEmpty())
+            proof = "xsession.json";
+        if (secret.isEmpty())
+            secret = "xsession.key";
+        sessionLabel->setObjectName("xlinked");
+        sessionLabel->setText(QString(
+            "THIS WALLET IS YOURS\n"
+            "Linked to @%1\n"
+            "X user id %2\n\n"
+            "The session proof in this datadir is what links this wallet to that X account:\n"
+            "%3\n"
+            "%4\n\n"
+            "Send, receive, and own require that proof. A typed handle cannot steal this.\n"
+            "The 12-word seed still controls the keys. Sign in with X is the identity proof on this node.")
+            .arg(handle)
+            .arg(uid)
+            .arg(proof)
+            .arg(secret));
+        signInBtn->setText("Wallet linked to @" + handle);
     } else {
-        sessionLabel->setText("Not signed in.\nSign in with X is required to send, receive, and own assets. "
-                              "It proves it is you. Only X-Verified handles enter the lottery. "
-                              "Typing someone else's handle does nothing.");
+        sessionLabel->setObjectName("xunlinked");
+        sessionLabel->setText(
+            "THIS WALLET IS NOT LINKED YET\n"
+            "Sign in with X to bind this node to your X account.\n\n"
+            "Send, receive, and own require a session proof (xsession.json + xsession.key) "
+            "written only after Sign in with X. A typed handle cannot steal this.\n"
+            "The 12-word seed still controls the keys. Sign in with X is the identity gate, not a replacement for the seed.\n"
+            "Only X-Verified handles enter the lottery. Every signed-in user can send and receive.");
         signInBtn->setText("Sign in with X");
     }
+    sessionLabel->style()->unpolish(sessionLabel);
+    sessionLabel->style()->polish(sessionLabel);
 
     if (walletModel) {
         const int unit = walletModel->getOptionsModel() ? walletModel->getOptionsModel()->getDisplayUnit() : 0;
@@ -410,7 +452,8 @@ void XHome::onIssueUnique()
 
 void XHome::onOAuthSuccess(const QString& username, const QString& userId)
 {
-    statusLabel->setText(QString("Signed in as @%1 (id %2). Identity is bound to this node.").arg(username).arg(userId));
+    statusLabel->setText(QString("This wallet is now linked to @%1 (X user id %2). Session proof written in this datadir.")
+        .arg(username).arg(userId));
     refresh();
 }
 

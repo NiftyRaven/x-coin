@@ -118,6 +118,18 @@ INFO="$("$CLI" "${CLI_ARGS[@]}" getlotteryinfo)"
 echo "$INFO"
 echo "$INFO" | grep -q '"currency": "XFER"'
 echo "$INFO" | grep -q '"local_xaccount": "nftrvn"'
+SESS="$("$CLI" "${CLI_ARGS[@]}" getxsession)"
+echo "$SESS"
+echo "$SESS" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("signed_in") is not True or j.get("linked") is not True:
+    sys.exit("GUI smoke expects a linked Sign in with X session")
+if j.get("username") != "nftrvn":
+    sys.exit("expected username nftrvn, got %r" % j.get("username"))
+if "xsession.json" not in str(j.get("session_file","")):
+    sys.exit("getxsession must name xsession.json")
+'
 
 echo "GUI smoke: ok (xcoin-qt pid $QT_PID)"
 if [[ "${KEEP_GUI:-0}" != "1" ]]; then

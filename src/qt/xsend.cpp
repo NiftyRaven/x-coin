@@ -33,10 +33,10 @@ XSend::XSend(WalletView* walletViewIn, QWidget* parent)
     title->setObjectName("xsection");
     root->addWidget(title);
 
-    QLabel* tag = new QLabel("Sign in with X, then paste an address and an amount. Authentication proves it is you.");
-    tag->setObjectName("xhint");
-    tag->setWordWrap(true);
-    root->addWidget(tag);
+    tagLabel = new QLabel("Sign in with X first. Send requires the session proof that links this wallet to your X account.");
+    tagLabel->setObjectName("xhint");
+    tagLabel->setWordWrap(true);
+    root->addWidget(tagLabel);
 
     balanceLabel = new QLabel;
     balanceLabel->setObjectName("xcard");
@@ -103,15 +103,24 @@ void XSend::setAddress(const QString& addr)
 void XSend::refresh()
 {
     if (!xsession::HasValidSession()) {
-        balanceLabel->setText("Sign in with X required to send.");
+        tagLabel->setText("This wallet is not linked yet. Sign in with X on Home. A typed handle cannot send.");
+        balanceLabel->setText("Sign in with X required to send.\n"
+                              "The session proof (xsession.json + xsession.key) is the identity gate. "
+                              "The 12-word seed still controls the keys.");
         return;
     }
+    const QString handle = QString::fromStdString(xsession::SignedInHandle());
+    const QString uid = QString::fromStdString(xsession::SignedInUserId());
+    tagLabel->setText(QString("Sending from the wallet linked to @%1 (X user id %2). "
+                              "Session proof in this datadir is required. A typed handle cannot send as you.")
+        .arg(handle).arg(uid));
     if (!walletModel) {
         balanceLabel->setText("Balance\n(open a wallet)");
         return;
     }
     const int unit = walletModel->getOptionsModel() ? walletModel->getOptionsModel()->getDisplayUnit() : 0;
-    balanceLabel->setText("Available\n" + RavenUnits::formatWithUnit(unit, walletModel->getBalance()));
+    balanceLabel->setText(QString("Available — wallet linked to @%1\n")
+        .arg(handle) + RavenUnits::formatWithUnit(unit, walletModel->getBalance()));
 }
 
 QString XSend::rpc(const QString& method, const QStringList& args) const

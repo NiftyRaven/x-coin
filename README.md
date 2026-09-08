@@ -74,9 +74,14 @@ Local-only practice (regtest):
 src/qt/xcoin-qt -regtest
 ```
 
-The Home screen is **Sign in with X**, lottery status, and your root
-asset. Receive / Send / Activity are the other tabs. Help → About credits
+The Home screen shows **this wallet is yours / linked to @handle** after
+Sign in with X, plus lottery status and your root asset. Receive / Send /
+Activity are the other tabs. Help → About credits
 **Nifty Raven (@NFTRVN on X)** only.
+
+First run still asks for a **12-word BIP39 seed** (create or restore).
+That did not change. Sign in with X is a separate identity proof on this
+node. See [docs/WALLET.md](docs/WALLET.md).
 
 ### Sign in with X (stops impersonation)
 

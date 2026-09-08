@@ -31,10 +31,10 @@ XReceive::XReceive(WalletView* walletViewIn, QWidget* parent)
     title->setObjectName("xsection");
     root->addWidget(title);
 
-    QLabel* tag = new QLabel("Sign in with X first. Your receive address is yours because the session proves it is you.");
-    tag->setObjectName("xhint");
-    tag->setWordWrap(true);
-    root->addWidget(tag);
+    tagLabel = new QLabel("Sign in with X first. Receive requires the session proof that links this wallet to your X account.");
+    tagLabel->setObjectName("xhint");
+    tagLabel->setWordWrap(true);
+    root->addWidget(tagLabel);
 
     addressLabel = new QLabel("—");
     addressLabel->setObjectName("xaddr");
@@ -88,10 +88,17 @@ void XReceive::refresh()
 {
     currentAddress.clear();
     if (!xsession::HasValidSession()) {
+        tagLabel->setText("This wallet is not linked yet. Sign in with X on Home. "
+                          "A typed handle cannot create a receive address.");
         addressLabel->setText("(sign in with X to receive)");
-        hintLabel->setText("Authentication is required to receive. It proves this address belongs to you.");
+        hintLabel->setText("Receive requires the session proof in this datadir (xsession.json + xsession.key). "
+                           "The 12-word seed still controls the keys; Sign in with X is the identity gate.");
         return;
     }
+    const QString handle = QString::fromStdString(xsession::SignedInHandle());
+    const QString uid = QString::fromStdString(xsession::SignedInUserId());
+    tagLabel->setText(QString("Receiving into the wallet linked to @%1 (X user id %2).")
+        .arg(handle).arg(uid));
     if (!walletModel || !walletModel->getAddressTableModel()) {
         addressLabel->setText("(open a wallet)");
         return;
@@ -107,7 +114,10 @@ void XReceive::refresh()
     if (currentAddress.isEmpty())
         currentAddress = m->addRow(AddressTableModel::Receive, "Receive", "");
     addressLabel->setText(currentAddress.isEmpty() ? QString("(could not create address)") : currentAddress);
-    hintLabel->setText("Copy and send this to the payer. No terminal required.");
+    hintLabel->setText(QString("This address is yours because this node holds a Sign in with X proof for @%1 "
+                              "(xsession.json + xsession.key). A typed handle cannot steal it. "
+                              "Copy and send this to the payer.")
+        .arg(QString::fromStdString(xsession::SignedInHandle())));
 }
 
 void XReceive::onCopy()

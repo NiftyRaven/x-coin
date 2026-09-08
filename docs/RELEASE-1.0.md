@@ -9,9 +9,11 @@ This is a **private** release. Do not make the repository public.
 ## What shipped
 
 - **Desktop GUI** `xcoin-qt` — X theme (black / white / sharp X mark).
-  Home (Sign in with X, lottery, claim root, issue sub/unique), Receive
-  (address + Copy), Send (paste + amount + Send), Activity. Same
-  node/wallet as CLI. No CLI required for the happy path.
+  Home (this wallet linked to @handle + X user id, lottery, claim root,
+  issue sub/unique), Receive (address + Copy), Send (paste + amount +
+  Send), Activity. Same node/wallet as CLI. No CLI required for the
+  happy path. **12-word BIP39 create/restore is unchanged** — Sign in
+  with X does not replace the seed ([WALLET.md](WALLET.md)).
 - **CLI** `xcoind` / `xcoin-cli` still work.
 - Handle → root mapping: X handles `[A-Za-z0-9_]` length 1–32; **26-character
   handles map 1:1** (no truncation). Root names max **32** characters.
@@ -55,7 +57,7 @@ src/qt/xcoin-qt -regtest        # local practice
 
 Running-GUI captures (regtest) are in [docs/gui/](gui/):
 
-- `home.png` — Sign in with X, lottery, claim root
+- `home.png` — linked wallet (@handle + X user id) on Home
 - `overview.png` — Home (legacy name kept)
 - `send.png`
 - `receive.png` — address + Copy

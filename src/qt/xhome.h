@@ -17,7 +17,7 @@ class QLabel;
 class QLineEdit;
 class QPushButton;
 
-/** Primary X-Coin home: Sign in with X, wallet, receive, send, assets, lottery. */
+/** Primary X-Coin home: linked X identity, keys vs session, receive, send, assets, lottery. */
 class XHome : public QWidget
 {
     Q_OBJECT
@@ -59,6 +59,7 @@ private:
 
     QLabel* heroTitle;
     QLabel* sessionLabel;
+    QLabel* keysLabel;
     QLabel* lotteryLabel;
     QLabel* assetLabel;
     QLabel* balanceLabel;

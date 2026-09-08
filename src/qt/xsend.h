@@ -38,6 +38,7 @@ private:
     WalletModel* walletModel;
     QLineEdit* addrEdit;
     QLineEdit* amountEdit;
+    QLabel* tagLabel;
     QLabel* statusLabel;
     QLabel* balanceLabel;
 };
