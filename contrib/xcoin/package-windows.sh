@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 # Pack a Windows x86_64 zip people can open: xcoin-qt.exe + DLLs + Qt plugins + two labeled starts.
 # Cross-compile path: depends HOST=x86_64-w64-mingw32, then this script.
+# Configure Windows in a clean out-of-tree dir (build-win) with
+# --without-qtdbus. Do not reuse an in-tree Linux config.status — that
+# leaves USE_DBUS=1 and the Qt notifier fails on DBus.
 # Practice always passes -regtest. Default practice datadir: %APPDATA%\XCoin\regtest
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${OUT:-$ROOT/dist}"
-VER="${VER:-1.0.0}"
+VER="${VER:-1.0.1}"
 NAME="xcoin-${VER}-win-x86_64"
 STAGE="$OUT/$NAME"
 HOST="${MINGW_HOST:-x86_64-w64-mingw32}"
@@ -41,8 +44,8 @@ if [[ -z "$QT" || -z "$DAEMON" || -z "$CLI" ]]; then
   echo "missing Windows binaries (xcoin-qt.exe / xcoind.exe / xcoin-cli.exe)" >&2
   echo "Build with:" >&2
   echo "  cd depends && make HOST=${HOST}" >&2
-  echo "  mkdir -p build-win && cd build-win" >&2
-  echo "  CONFIG_SITE=\$PWD/../depends/${HOST}/share/config.site ../configure --prefix=/ --with-gui=qt5 --without-qtdbus --disable-bench --disable-tests --enable-reduce-exports" >&2
+  echo "  rm -rf build-win && mkdir -p build-win && cd build-win" >&2
+  echo "  CONFIG_SITE=\$PWD/../depends/${HOST}/share/config.site ../configure --prefix=/ --with-gui=qt5 --disable-bench --disable-tests --enable-reduce-exports --without-qtdbus" >&2
   echo "  make -j\$(nproc)" >&2
   exit 1
 fi

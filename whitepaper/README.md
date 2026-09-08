@@ -31,6 +31,6 @@ purpose, lottery, optional pools, supply, X Verified eligibility, assets,
 privacy, network identity, Linux and Windows packages, and
 practice/regtest isolation. How to open the wallet (do not compile):
 [README](../README.md) — download from
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.0),
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.1),
 not **Code → Download ZIP**. Private-test audit:
 [docs/AUDIT.md](../docs/AUDIT.md).

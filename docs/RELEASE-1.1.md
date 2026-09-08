@@ -6,7 +6,7 @@ Anonymous public identity — display name and handle only.
 Private package **1.1.0** (`contrib/xcoin/package-linux.sh` →
 `dist/xcoin-1.1.0-linux-x86_64.tar.gz`). **1.0 Windows and Linux wallets**
 are on the private
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.0)
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.1)
 page. Do not make the repository public until go-live ([GO-LIVE.md](GO-LIVE.md)).
 Explorers / third-party wallets: [THIRD-PARTY.md](THIRD-PARTY.md). 1.0 notes:
 [RELEASE-1.0.md](RELEASE-1.0.md).
@@ -67,7 +67,9 @@ Pack: `contrib/xcoin/package-linux.sh` → `dist/xcoin-1.1.0-linux-x86_64.tar.gz
 - Sign in with X is required to send, receive, claim a root, and issue
   assets. No session → no main asset. Lottery is **X Verified** (blue
   check) plus a running wallet.
-- Live X OAuth needs a developer Client ID (`xoauthclientid=`).
+- Live X OAuth uses the one operator Client ID baked into the wallet
+  (`XOAUTH_EMBEDDED_CLIENT_ID` / `xoauthclientid=`). The GUI has no
+  Client ID paste field. Users click **Sign in with X**.
   `-regtest` mock `users/me` covers tests (`-xoauthmock=NFTRVN:verified`).
 - Honest nodes emit `XPL1` and split when the winner is in a known pool.
   A cheating producer can omit `XPL1`. Keep pool secrets private.

@@ -4,39 +4,22 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${OUT:-$ROOT/dist}"
-VER="${VER:-1.0.0}"
+VER="${VER:-1.0.1}"
 NAME="xcoin-${VER}-linux-x86_64"
 STAGE="$OUT/$NAME"
 
-find_linux_bin() {
-  local name="$1"
-  local candidates=(
-    "$ROOT/build-linux/src/qt/${name}"
-    "$ROOT/build-linux/src/${name}"
-    "$ROOT/src/qt/${name}"
-    "$ROOT/src/${name}"
-  )
-  local c
-  for c in "${candidates[@]}"; do
-    if [[ -x "$c" ]]; then
-      echo "$c"
-      return 0
-    fi
-  done
-  return 1
-}
-
-QT="$(find_linux_bin xcoin-qt || true)"
-DAEMON="$(find_linux_bin xcoind || true)"
-CLI="$(find_linux_bin xcoin-cli || true)"
-TX="$(find_linux_bin xcoin-tx || true)"
+QT="$ROOT/src/qt/xcoin-qt"
+DAEMON="$ROOT/src/xcoind"
+CLI="$ROOT/src/xcoin-cli"
+TX="$ROOT/src/xcoin-tx"
 LAUNCHER_SRC="$ROOT/contrib/xcoin/launcher.c"
 
-if [[ -z "$QT" || -z "$DAEMON" || -z "$CLI" ]]; then
-  echo "missing Linux binaries (xcoin-qt / xcoind / xcoin-cli) — build with --with-gui=qt5 first" >&2
-  echo "looked in build-linux/ and src/" >&2
-  exit 1
-fi
+for f in "$QT" "$DAEMON" "$CLI"; do
+  if [[ ! -x "$f" ]]; then
+    echo "missing $f — build with --with-gui=qt5 first" >&2
+    exit 1
+  fi
+done
 if [[ ! -f "$LAUNCHER_SRC" ]]; then
   echo "missing $LAUNCHER_SRC" >&2
   exit 1
