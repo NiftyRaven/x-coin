@@ -188,6 +188,7 @@ run_smoke smoke-xsession "$ROOT/contrib/xcoin/smoke-xsession.sh"
 run_smoke smoke-eligibility "$ROOT/contrib/xcoin/smoke-eligibility.sh"
 run_smoke smoke-pool "$ROOT/contrib/xcoin/smoke-pool.sh"
 run_smoke smoke-gossip "$ROOT/contrib/xcoin/smoke-gossip.sh"
+run_smoke smoke-package-conf "$ROOT/contrib/xcoin/smoke-package-conf.sh"
 run_smoke smoke-gui "$ROOT/contrib/xcoin/smoke-gui.sh"
 run_smoke smoke-benchmark "$ROOT/contrib/xcoin/smoke-benchmark.sh"
 run_smoke smoke-isolation "$ROOT/contrib/xcoin/smoke-isolation.sh"
@@ -230,15 +231,79 @@ else
   record FAIL readme-release-links "README top is not the two Releases download links"
 fi
 
+echo "== README launch night (no compile, no early real wallet) =="
+if python3 - "$ROOT/README.md" <<'PY'
+import re, sys
+text = open(sys.argv[1], encoding="utf-8").read()
+flat = re.sub(r"\s+", " ", text)
+need = [
+    "Launch night (operator)",
+    "12 September 2026 around 9:00 PM ET",
+    "Do not open the real wallet before then",
+    "You do not compile",
+    "Code → Download ZIP",
+    "Provide my node IP",
+    "addnode=",
+    "xoauthclientid=",
+    "http://127.0.0.1:18791/callback",
+    "no public DNS seeds",
+]
+for n in need:
+    if n not in flat:
+        print("README missing %r" % n)
+        sys.exit(1)
+if "autogen.sh" in text or "./configure" in text:
+    print("README must not tell the operator to compile")
+    sys.exit(1)
+print("README_LAUNCH_OK")
+PY
+then
+  record PASS readme-launch-night "operator night is double-click; no compile; no early real wallet"
+else
+  record FAIL readme-launch-night "README launch night section missing or still tells him to compile"
+fi
+
 echo "== Sign in with X is a button (no Client ID paste field) =="
-if grep -E 'OAuth Client ID|Save Client ID|clientIdEdit' "$ROOT/src/qt/xhome.cpp" "$ROOT/src/qt/xhome.h" >/dev/null; then
+if grep -E 'OAuth Client ID|Save Client ID|clientIdEdit|Paste your X app Client ID' "$ROOT/src/qt/xhome.cpp" "$ROOT/src/qt/xhome.h" >/dev/null; then
   record FAIL signin-no-clientid-paste "Home still has a Client ID paste field"
 elif grep -q 'Sign in with X' "$ROOT/src/qt/xhome.cpp" && \
-     grep -q 'XOAUTH_EMBEDDED_CLIENT_ID' "$ROOT/src/qt/xoauth.cpp" && \
-     grep -q 'XOAUTH_EMBEDDED_CLIENT_ID' "$ROOT/src/qt/xoauth_clientid.h"; then
-  record PASS signin-no-clientid-paste "button-only Sign in; Client ID is operator-baked"
+     grep -q 'operator has not baked' "$ROOT/src/qt/xoauth.cpp" && \
+     grep -q 'xoauthclientid=' "$ROOT/contrib/xcoin/xcoin.conf" && \
+     grep -q 'http://127.0.0.1:18791/callback' "$ROOT/src/qt/xoauth.cpp"; then
+  record PASS signin-no-clientid-paste "button-only Sign in; Client ID is operator-baked in package xcoin.conf"
 else
-  record FAIL signin-no-clientid-paste "Sign in with X button or embedded Client ID missing"
+  record FAIL signin-no-clientid-paste "Sign in with X button, empty-ID error, or package xcoin.conf missing"
+fi
+
+echo "== Package xcoin.conf has no invented seed or Client ID =="
+if python3 - "$ROOT/contrib/xcoin/xcoin.conf" <<'PY'
+import re, sys
+text = open(sys.argv[1], encoding="utf-8").read()
+for i, line in enumerate(text.splitlines(), 1):
+    s = line.strip()
+    if not s or s.startswith("#"):
+        continue
+    if re.match(r"addnode\s*=", s, re.I):
+        print("uncommented addnode on line %d: %s" % (i, s))
+        sys.exit(1)
+    if re.match(r"xoauthclientid\s*=\s*\S", s, re.I):
+        print("uncommented Client ID on line %d: %s" % (i, s))
+        sys.exit(1)
+    if re.match(r"dnsseed\s*=\s*1", s, re.I):
+        print("dnsseed enabled on line %d" % i)
+        sys.exit(1)
+if "listen=1" not in text.replace(" ", ""):
+    print("package xcoin.conf must set listen=1")
+    sys.exit(1)
+if "addnode=<host>:38443" not in text:
+    print("package xcoin.conf must document addnode=<host>:38443")
+    sys.exit(1)
+print("PACKAGE_CONF_OK")
+PY
+then
+  record PASS package-conf-no-invented-values "listen on; addnode and Client ID commented"
+else
+  record FAIL package-conf-no-invented-values "shipped xcoin.conf invents a seed, Client ID, or DNS seed"
 fi
 
 echo "== Practice launcher source forces -regtest and -lotterymine =="
@@ -273,6 +338,7 @@ for rel in [
     "doc/README_windows.txt", "binaries/README.md",
     "docs/RELEASE-1.0.md", "docs/RELEASE-1.1.md",
     "contrib/xcoin/package-linux.sh", "contrib/xcoin/package-windows.sh",
+    "contrib/xcoin/xcoin.conf",
 ]:
     p = os.path.join(root, rel)
     if os.path.isfile(p):
@@ -353,7 +419,7 @@ if [[ -f "$LINUX_TAR" ]]; then
   tar -C "$PKG_DIR" -xzf "$LINUX_TAR"
   LROOT="$(find "$PKG_DIR" -maxdepth 1 -type d -name 'xcoin-*-linux-*' | head -1)"
   # Labeled starts must sit in the first folder a person opens — not nested.
-  if [[ -x "$LROOT/X Coin Wallet" && -x "$LROOT/X Coin Practice Wallet" && -x "$LROOT/bin/xcoin-qt" ]]; then
+  if [[ -x "$LROOT/X Coin Wallet" && -x "$LROOT/X Coin Practice Wallet" && -x "$LROOT/bin/xcoin-qt" && -f "$LROOT/xcoin.conf" ]]; then
     nested="$(tar -tzf "$LINUX_TAR" | grep -F 'X Coin Wallet' | grep -v '/bin/' | grep -v '\.desktop' || true)"
     top_ok=1
     while IFS= read -r p; do
@@ -370,7 +436,7 @@ if [[ -f "$LINUX_TAR" ]]; then
     else
       record FAIL linux-package-top-level "labeled start is nested under extra folders"
     fi
-    record PASS linux-package-layout "labeled starts + bin/xcoin-qt"
+    record PASS linux-package-layout "labeled starts + bin/xcoin-qt + xcoin.conf"
     # Confirm practice binary contains -regtest; real launcher does not
     if strings "$LROOT/X Coin Practice Wallet" | grep -q -- '-regtest'; then
       record PASS linux-practice-flag "-regtest baked into Practice launcher"
@@ -467,7 +533,7 @@ if [[ -f "$LINUX_TAR" ]]; then
       record FAIL linux-practice-title-strings "Practice/[regtest] strings missing from packaged GUI"
     fi
   else
-    record FAIL linux-package-layout "missing labeled starts or bin/xcoin-qt at top of unpacked folder"
+    record FAIL linux-package-layout "missing labeled starts, bin/xcoin-qt, or xcoin.conf at top of unpacked folder"
   fi
 else
   record SKIP linux-package "tarball not built yet"
@@ -487,8 +553,8 @@ if [[ -f "$WIN_ZIP" ]]; then
       win_top_ok=0
     fi
   done
-  if [[ -f "$WROOT/xcoin-qt.exe" && -f "$WROOT/X Coin Wallet.exe" && -f "$WROOT/X Coin Practice Wallet.exe" && "$win_top_ok" -eq 1 ]]; then
-    record PASS windows-package-layout "zip has xcoin-qt.exe and two labeled starts"
+  if [[ -f "$WROOT/xcoin-qt.exe" && -f "$WROOT/X Coin Wallet.exe" && -f "$WROOT/X Coin Practice Wallet.exe" && -f "$WROOT/xcoin.conf" && "$win_top_ok" -eq 1 ]]; then
+    record PASS windows-package-layout "zip has xcoin-qt.exe, two labeled starts, and xcoin.conf"
     record PASS windows-package-top-level "exe files sit in the first unpacked folder, not nested"
     if pe_strings "$WROOT/X Coin Practice Wallet.exe" | grep -q -- '-regtest'; then
       record PASS windows-practice-flag "-regtest baked into Practice launcher"
@@ -590,7 +656,7 @@ if [[ -f "$WIN_ZIP" ]]; then
       record SKIP windows-wine-wallet-start "wine not installed"
     fi
   else
-    record FAIL windows-package-layout "zip missing exe or labeled starts are nested"
+    record FAIL windows-package-layout "zip missing exe, xcoin.conf, or labeled starts are nested"
   fi
 else
   record SKIP windows-package "zip not built yet"
@@ -736,7 +802,7 @@ cov_row() {
   echo
   echo "| Asked | Result |"
   echo "| --- | --- |"
-  cov_row "Existing smokes including pool on regtest" "smoke-regtest smoke-xsession smoke-eligibility smoke-pool smoke-gossip smoke-gui smoke-benchmark smoke-isolation smoke-sabotage smoke-extra smoke-abuse"
+  cov_row "Existing smokes including pool on regtest" "smoke-regtest smoke-xsession smoke-eligibility smoke-pool smoke-gossip smoke-package-conf smoke-gui smoke-benchmark smoke-isolation smoke-sabotage smoke-extra smoke-abuse"
   cov_row "Node start" "smoke-regtest smoke-extra"
   cov_row "Wallet create on throwaway regtest datadir" "smoke-extra linux-package-practice-datadir"
   cov_row "Send/receive on regtest" "smoke-extra smoke-benchmark"

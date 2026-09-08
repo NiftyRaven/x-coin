@@ -57,6 +57,7 @@ jobs:
           tar -tzf dist/X-Coin-1.0.1-Linux-x86_64.tar.gz | head
           test -n "$(tar -tzf dist/X-Coin-1.0.1-Linux-x86_64.tar.gz | grep '^xcoin-1.0.1-linux-x86_64/X Coin Practice Wallet$')"
           test -n "$(tar -tzf dist/X-Coin-1.0.1-Linux-x86_64.tar.gz | grep '^xcoin-1.0.1-linux-x86_64/X Coin Wallet$')"
+          test -n "$(tar -tzf dist/X-Coin-1.0.1-Linux-x86_64.tar.gz | grep '^xcoin-1.0.1-linux-x86_64/xcoin.conf$')"
 
       - name: Upload Linux package
         uses: actions/upload-artifact@v4
@@ -209,6 +210,7 @@ jobs:
           unzip -Z -1 dist/X-Coin-1.0.1-Windows.zip | head
           unzip -Z -1 dist/X-Coin-1.0.1-Windows.zip | grep -q '^xcoin-1.0.1-win-x86_64/X Coin Practice Wallet.exe$'
           unzip -Z -1 dist/X-Coin-1.0.1-Windows.zip | grep -q '^xcoin-1.0.1-win-x86_64/X Coin Wallet.exe$'
+          unzip -Z -1 dist/X-Coin-1.0.1-Windows.zip | grep -q '^xcoin-1.0.1-win-x86_64/xcoin.conf$'
 
       - name: Upload Windows package
         uses: actions/upload-artifact@v4

@@ -46,7 +46,17 @@ rpcport=4000
 
 ## Configuration File Path
 
-The configuration file is not automatically created; you can create it using your favorite text editor. By default, the configuration file name is `xcoin.conf` and it is located in the X Coin data directory. Both the data directory and the configuration file path may be changed using the `-datadir` and `-conf` command-line options.
+The configuration file is not automatically created in the data
+directory. The **wallet package** ships `xcoin.conf` next to the
+labeled start (Windows zip / Linux tarball). Double-click reads that
+file automatically (`-packageconf`). If it contains
+`addnode=<host>:38443`, new wallets join that node with no terminal.
+Do not invent a host. Command-line options still override.
+
+A datadir `xcoin.conf` (paths below) is also read. Package defaults
+lose to datadir and to the command line. Use `-packageconf=0` to
+ignore the folder next to the wallet. `-datadir` / `-regtest` in the
+package file are ignored.
 
 The `includeconf=<file>` option in the `xcoin.conf` file can be used to include additional configuration files.
 

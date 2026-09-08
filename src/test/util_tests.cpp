@@ -12,6 +12,7 @@
 #include "utilmoneystr.h"
 #include "test/test_raven.h"
 
+#include <fstream>
 #include <stdint.h>
 #include <vector>
 
@@ -669,6 +670,90 @@ BOOST_FIXTURE_TEST_SUITE(util_tests, BasicTestingSetup)
         BOOST_CHECK(ParseFixedPoint("21000000000", 8, &amount));
         BOOST_CHECK(ParseFixedPoint("42000000000", 8, &amount));
         BOOST_CHECK(!ParseFixedPoint("42000000001", 8, &amount));
+    }
+
+    BOOST_AUTO_TEST_CASE(package_conf_test)
+    {
+        BOOST_TEST_MESSAGE("Running Package Conf Test");
+
+        const fs::path root = fs::temp_directory_path()
+            / strprintf("xcoin_pkgconf_%u", (unsigned)InsecureRandRange(100000000));
+        fs::create_directories(root / "bin");
+        fs::create_directories(root / "win");
+        fs::create_directories(root / "nested");
+
+        const fs::path linuxConf = root / "xcoin.conf";
+        {
+            std::ofstream out(linuxConf.string().c_str());
+            out << "listen=1\n";
+            out << "dnsseed=0\n";
+            out << "# addnode=<host>:38443\n";
+            out << "# xoauthclientid=\n";
+            out << "addnode=127.0.0.1:38443\n";
+            out << "xoauthclientid=test-operator-id\n";
+        }
+
+        BOOST_CHECK(FindPackageConfigFile(root / "bin" / "xcoin-qt") == linuxConf);
+        BOOST_CHECK(FindPackageConfigFile(fs::path()) == fs::path());
+
+        {
+            ArgsManager a;
+            a.ReadConfigFileFromPath(linuxConf, false, true);
+            BOOST_CHECK_EQUAL(a.GetArg("-listen", ""), "1");
+            BOOST_CHECK_EQUAL(a.GetArg("-dnsseed", ""), "0");
+            BOOST_CHECK_EQUAL(a.GetArg("-xoauthclientid", ""), "test-operator-id");
+            const std::vector<std::string> nodes = a.GetArgs("-addnode");
+            BOOST_CHECK_EQUAL(nodes.size(), 1U);
+            BOOST_CHECK_EQUAL(nodes[0], "127.0.0.1:38443");
+        }
+
+        {
+            ArgsManager a;
+            a.ReadConfigFileFromPath(linuxConf, true, true);
+            BOOST_CHECK(a.GetArgs("-addnode").empty());
+            BOOST_CHECK_EQUAL(a.GetArg("-xoauthclientid", ""), "test-operator-id");
+        }
+
+        const fs::path commented = root / "win" / "xcoin.conf";
+        {
+            std::ofstream out(commented.string().c_str());
+            out << "listen=1\n";
+            out << "dnsseed=0\n";
+            out << "# addnode=<host>:38443\n";
+            out << "# xoauthclientid=\n";
+        }
+        BOOST_CHECK(FindPackageConfigFile(root / "win" / "xcoin-qt.exe") == commented);
+        {
+            ArgsManager a;
+            a.ReadConfigFileFromPath(commented, false, true);
+            BOOST_CHECK(a.GetArgs("-addnode").empty());
+            BOOST_CHECK_EQUAL(a.GetArg("-xoauthclientid", ""), "");
+            BOOST_CHECK_EQUAL(a.GetArg("-listen", ""), "1");
+        }
+
+        const fs::path unsafe = root / "unsafe.conf";
+        {
+            std::ofstream out(unsafe.string().c_str());
+            out << "datadir=/tmp/should-not-apply\n";
+            out << "regtest=1\n";
+            out << "addnode=127.0.0.1:1\n";
+        }
+        {
+            ArgsManager a;
+            a.ReadConfigFileFromPath(unsafe, false, true);
+            BOOST_CHECK(!a.IsArgSet("-datadir"));
+            BOOST_CHECK(!a.IsArgSet("-regtest"));
+            BOOST_CHECK_EQUAL(a.GetArg("-addnode", ""), "127.0.0.1:1");
+        }
+
+        const fs::path childConf = root / "nested" / "xcoin.conf";
+        {
+            std::ofstream out(childConf.string().c_str());
+            out << "listen=1\n";
+        }
+        BOOST_CHECK(FindPackageConfigFile(root / "nested" / "xcoin-qt") == childConf);
+
+        fs::remove_all(root);
     }
 
 BOOST_AUTO_TEST_SUITE_END()

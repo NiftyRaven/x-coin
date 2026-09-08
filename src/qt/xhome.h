@@ -97,6 +97,7 @@ private:
     QCheckBox* shareNodeChk;
     QWidget* nodeSharePanel;
     QLabel* nodeEndpointLabel;
+    QLabel* nodeStatusLabel;
 };
 
 #endif // RAVEN_QT_XHOME_H

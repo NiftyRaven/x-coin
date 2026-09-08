@@ -135,6 +135,7 @@ CMakeLists.txt
 # local smoke output
 smoke-regtest-datadir/
 smoke-gossip-datadir/
+smoke-package-conf-datadir/
 smoke-eligibility-datadir/
 smoke-gui-datadir/
 smoke-xsession-datadir/

@@ -104,35 +104,28 @@ A node without a session can still sync and relay.
 
 ## Publish a seed node
 
-There are no DNS seeds in-tree. For a private mesh:
+There are no DNS seeds in-tree. The operator's running wallet **is**
+the first node and the seed:
 
-1. Pick one always-on host with a public (or VPN) IP. Open **TCP 38443**.
-2. Run:
+1. On launch night, double-click **X Coin Wallet**. Opening it starts
+   the node and listens on **TCP 38443**. Keep it running.
+2. Home says you are the first node. Listen is on. **Provide my node
+   IP** is off by default; turn it on to see `host:38443`. That is the
+   address others must use. It does not publish the IP by itself.
+3. Put one line in the public Windows and Linux package `xcoin.conf`
+   (same folder as the labeled start):
 
-   ```bash
-   src/xcoind -listen=1 -port=38443 -server \
-     -rpcuser=xcoin -rpcpassword=change-me \
-     -xallowlist=/shared/verified-x-accounts.txt
+   ```
+   addnode=<host>:38443
    ```
 
-3. Tell every other operator to put a **trusted peer IP in the config
-   file** (`xcoin.conf`). This is a P2P join address, **not** a BIP39
-   seed and **not** a required wallet field. Home / Receive / Send never
-   auto-list peer addresses (every `xcoin-qt` already *is* a node). If
-   you want to give someone *your* listen address (friend, seed), Home
-   has an optional **Provide my node IP** control — off by default;
-   uncheck and the IP disappears again.
+   New wallets read that file automatically. No terminal. Users do not
+   edit a conf file. Do not invent a host. Do not add public DNS seeds.
 
-   ```bash
-   # xcoin.conf — operators only
-   addnode=<trusted-peer-ip>:38443
-   # or, for first contact only:
-   seednode=<trusted-peer-ip>:38443
-   ```
+   Home never lists other people's IPs. Datadir `xcoin.conf`
+   `addnode=` still works if someone already has one.
 
-4. Do **not** add public DNS seeds while this repo is private.
-   `addnode`/`seednode` in the config file is the launch path. Hardening
-   notes: [SECURITY.md](SECURITY.md).
+4. Then open the GitHub repo so people download those packages.
 
 Peers gossip **signed** lottery heartbeats (`xhb`) after `verack` (handle
 only; user id **0** on the wire). Honest nodes that can connect to the seed
@@ -188,33 +181,17 @@ src/xcoin-cli loadxverified
 
 ## Join steps (second machine)
 
-GUI (same as 1.1):
+Download the Windows or Linux wallet from Releases (not **Code →
+Download ZIP**). Double-click **X Coin Wallet**. If the package
+`xcoin.conf` has `addnode=<host>:38443`, you connect with no terminal.
 
-```bash
-./autogen.sh
-./configure --with-gui=qt5 --disable-bench --disable-tests --with-incompatible-bdb
-make -j$(nproc)
-src/qt/xcoin-qt -addnode=<seed-ip>:38443
-```
+Sign in with X, optionally create or join a pool on Home. Developers
+who are compiling (not the launch-night path): [INSTALL.md](../INSTALL.md).
 
-Sign in with X, optionally create or join a pool on Home. CLI-only:
-
-```bash
-./autogen.sh
-./configure --without-gui --disable-bench --disable-tests --with-incompatible-bdb
-make -j$(nproc)
-src/xcoind -server -addnode=<seed-ip>:38443 \
-  -xallowlist=/shared/verified-x-accounts.txt
-src/xcoin-cli getblockchaininfo
-src/xcoin-cli getlotteryinfo
-src/xcoin-cli getactivenodes
-```
-
-Wait until `getactivenodes` shows the seed and yourself, each with an
-`xaccount`. `getlotteryinfo.local_eligible` must be true or this node will
-not produce. On main/test the producer thread emits at most one block per
-minute when this node is a winner. A wallet is required to produce
-(coinbase script).
+Wait until Home shows a connected peer (or `getactivenodes` shows the
+seed and yourself, each with an `xaccount`). Lottery needs **X Verified**
+and a running wallet. `getlotteryinfo.local_eligible` must be true or
+this node will not produce.
 
 Regtest does **not** wait on the clock: use `generatetoaddress` (regtest-only;
 rejected on main/test so RPC cannot print blocks).
@@ -306,6 +283,7 @@ at height 150, protocol main / sub / unique when `linkxaccount` is present
 
 ```bash
 contrib/xcoin/smoke-gossip.sh
+contrib/xcoin/smoke-package-conf.sh
 ```
 
 Two regtest nodes: after `addnode`, both `getactivenodes` lists match (P2P `xhb`).

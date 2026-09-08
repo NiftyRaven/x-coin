@@ -62,7 +62,7 @@ XOAuth::~XOAuth()
 
 QString XOAuth::ClientId()
 {
-    return QString::fromStdString(gArgs.GetArg("-xoauthclientid", ""));
+    return QString::fromStdString(gArgs.GetArg("-xoauthclientid", "")).trimmed();
 }
 
 int XOAuth::CallbackPort()
@@ -139,7 +139,10 @@ void XOAuth::startLogin()
 {
     const QString client = ClientId();
     if (client.isEmpty()) {
-        fail(tr("This wallet has no X app Client ID. The operator sets xoauthclientid= in xcoin.conf (callback http://127.0.0.1:18791/callback)."));
+        fail(tr("The operator has not baked an X app Client ID. Sign in cannot continue. "
+                "There is no Client ID field here. The operator puts xoauthclientid= in the "
+                "xcoin.conf shipped in the Windows and Linux wallet folders "
+                "(callback http://127.0.0.1:18791/callback)."));
         return;
     }
     verifier = RandomB64Url(32);

@@ -17,6 +17,7 @@
 #include "utilstrencodings.h"
 #include "utiltime.h"
 
+#include <set>
 #include <stdarg.h>
 
 #if (defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__))
@@ -25,6 +26,8 @@
 #endif
 
 #ifndef WIN32
+#include <limits.h>
+#include <unistd.h>
 // for posix_fallocate
 #ifdef __linux__
 
@@ -626,30 +629,125 @@ fs::path GetConfigFile(const std::string &confPath)
     return pathConfigFile;
 }
 
+fs::path GetExecutablePath()
+{
+#ifdef WIN32
+    char buf[MAX_PATH];
+    DWORD n = GetModuleFileNameA(nullptr, buf, MAX_PATH);
+    if (n == 0 || n >= MAX_PATH)
+        return fs::path();
+    return fs::path(std::string(buf, n));
+#else
+    char buf[PATH_MAX];
+    ssize_t n = readlink("/proc/self/exe", buf, sizeof(buf) - 1);
+    if (n <= 0)
+        return fs::path();
+    buf[n] = 0;
+    return fs::path(std::string(buf, n));
+#endif
+}
+
+fs::path FindPackageConfigFile(const fs::path& exePath)
+{
+    if (exePath.empty())
+        return fs::path();
+    const fs::path dir = exePath.parent_path();
+    if (dir.empty())
+        return fs::path();
+    const fs::path sameDir = dir / "xcoin.conf";
+    if (fs::exists(sameDir) && fs::is_regular_file(sameDir))
+        return sameDir;
+    const fs::path parent = dir.parent_path();
+    if (parent.empty())
+        return fs::path();
+    const fs::path up = parent / "xcoin.conf";
+    if (fs::exists(up) && fs::is_regular_file(up))
+        return up;
+    return fs::path();
+}
+
+static bool SameConfigPath(const fs::path& a, const fs::path& b)
+{
+    if (a.empty() || b.empty())
+        return false;
+    try {
+        if (fs::exists(a) && fs::exists(b) && fs::equivalent(a, b))
+            return true;
+    } catch (...) {
+    }
+    return a == b;
+}
+
+static bool IsJoinPeerKey(const std::string& strKey)
+{
+    return strKey == "-addnode" || strKey == "-seednode" || strKey == "-connect";
+}
+
+static bool IsPackageUnsafeKey(const std::string& strKey)
+{
+    return strKey == "-datadir" || strKey == "-conf" || strKey == "-regtest"
+        || strKey == "-testnet" || strKey == "-packageconf";
+}
+
+void ArgsManager::ReadConfigFileFromPath(const fs::path& path, bool skipJoinPeers, bool packageSafe)
+{
+    if (path.empty())
+        return;
+    fs::ifstream streamConfig(path);
+    if (!streamConfig.good())
+        return; // Missing file is OK
+
+    LOCK(cs_args);
+    std::set<std::string> setOptions;
+    setOptions.insert("*");
+
+    for (boost::program_options::detail::config_file_iterator it(streamConfig, setOptions), end; it != end; ++it)
+    {
+        // Don't overwrite existing settings so command line / earlier conf wins
+        std::string strKey = std::string("-") + it->string_key;
+        std::string strValue = it->value[0];
+        InterpretNegativeSetting(strKey, strValue);
+        if (packageSafe && IsPackageUnsafeKey(strKey))
+            continue;
+        if (skipJoinPeers && IsJoinPeerKey(strKey))
+            continue;
+        if (mapArgs.count(strKey) == 0)
+            mapArgs[strKey] = strValue;
+        mapMultiArgs[strKey].push_back(strValue);
+    }
+}
+
+void ArgsManager::ReadPackageConfigFile()
+{
+    fs::path pkg;
+    const bool explicitPkg = IsArgSet("-packageconf");
+    if (explicitPkg) {
+        const std::string v = GetArg("-packageconf", "");
+        if (v.empty() || v == "0" || v == "false")
+            return;
+        pkg = fs::path(v);
+        if (!pkg.is_complete())
+            pkg = fs::system_complete(pkg);
+    } else {
+        pkg = FindPackageConfigFile(GetExecutablePath());
+    }
+    if (pkg.empty())
+        return;
+
+    fs::path already = GetConfigFile(GetArg("-conf", RAVEN_CONF_FILENAME));
+    if (SameConfigPath(pkg, already))
+        return;
+
+    const bool skipJoin = !explicitPkg && (GetBoolArg("-regtest", false) || GetBoolArg("-testnet", false));
+    ReadConfigFileFromPath(pkg, skipJoin, true);
+}
+
 void ArgsManager::ReadConfigFile(const std::string &confPath)
 {
-    fs::ifstream streamConfig(GetConfigFile(confPath));
-    if (!streamConfig.good())
-        return; // No xcoin.conf file is OK
-
-    {
-        LOCK(cs_args);
-        std::set<std::string> setOptions;
-        setOptions.insert("*");
-
-        for (boost::program_options::detail::config_file_iterator it(streamConfig, setOptions), end; it != end; ++it)
-        {
-            // Don't overwrite existing settings so command line settings override xcoin.conf
-            std::string strKey = std::string("-") + it->string_key;
-            std::string strValue = it->value[0];
-            InterpretNegativeSetting(strKey, strValue);
-            if (mapArgs.count(strKey) == 0)
-                mapArgs[strKey] = strValue;
-            mapMultiArgs[strKey].push_back(strValue);
-        }
-    }
+    ReadConfigFileFromPath(GetConfigFile(confPath), false, false);
     // If datadir is changed in .conf file:
     ClearDatadirCache();
+    ReadPackageConfigFile();
 }
 
 #ifndef WIN32

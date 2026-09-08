@@ -27,6 +27,7 @@ fi
 
 rm -rf "$STAGE"
 mkdir -p "$STAGE/bin" "$STAGE/lib" "$STAGE/plugins" "$STAGE/docs"
+install -m 0644 "$ROOT/contrib/xcoin/xcoin.conf" "$STAGE/xcoin.conf"
 
 install -m 0755 "$QT" "$STAGE/bin/xcoin-qt"
 install -m 0755 "$DAEMON" "$STAGE/bin/xcoind"
@@ -185,9 +186,12 @@ Open this folder. Double-click one start:
 You do not compile anything. You do not open source code.
 
 The chain stays private until the September 12, 2026 window.
-There are no public seeds and no explorer yet. Invited people
-add a seed by hand on port 38443 (Home → My node, or addnode=
-in ~/.xcoin/xcoin.conf).
+There are no public DNS seeds and no explorer yet.
+
+This folder's xcoin.conf is read automatically when you
+double-click. If it has addnode=<host>:38443, you connect
+to that node with no terminal. The operator puts that line
+in before opening the GitHub repo. Do not invent a host.
 EOF
 
 cat > "$STAGE/README.txt" <<EOF
@@ -218,9 +222,13 @@ receive, and claim your free root. Lottery needs X Verified.
 UNTIL SEPTEMBER 12, 2026
 ------------------------
 The chain stays private until that window. No public DNS seeds.
-No explorer. Invited people add a seed by hand on port 38443.
+No explorer. This folder's xcoin.conf is read automatically.
+If it contains addnode=<host>:38443, this wallet connects to
+that node. You do not edit a conf file. Sign in with X uses
+the operator Client ID in that same xcoin.conf (xoauthclientid=).
+There is no Client ID paste box.
 
-Also in this folder: bin/xcoin-qt, bin/xcoind, bin/xcoin-cli, lib/.
+Also in this folder: xcoin.conf, bin/xcoin-qt, bin/xcoind, bin/xcoin-cli, lib/.
 EOF
 
 cp "$ROOT/README.md" "$STAGE/docs/" 2>/dev/null || true
