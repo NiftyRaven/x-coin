@@ -2,10 +2,10 @@
 
 **Nifty Raven** (@NFTRVN on X) — display name and handle only.
 
-Runner: `contrib/xcoin/run-release-audit.sh` (2026-09-08 14:16:08 UTC).
+Runner: `contrib/xcoin/run-release-audit.sh` (2026-09-08 14:52:23 UTC).
 
-Smokes used packaged Linux `bin/xcoind` from `dist/xcoin-1.0.0-linux-x86_64.tar.gz`
-(`src/xcoind` was not built in this tree).
+Smokes used `/workspace/audit-logs/linux-runtime/xcoin-1.0.0-linux-x86_64/bin/xcoind`
+(packaged Linux archive; `src/xcoind` was not built in this tree).
 
 All runs used throwaway `-regtest` datadirs. No mainnet node. No launch
 `wallet.dat`. `~/.xcoin/wallet.dat` was not created.
@@ -24,6 +24,7 @@ All runs used throwaway `-regtest` datadirs. No mainnet node. No launch
 | PASS | `smoke-isolation` |  |
 | PASS | `smoke-sabotage` |  |
 | PASS | `smoke-extra` |  |
+| PASS | `smoke-abuse` |  |
 | PASS | `readme-release-links` | first two links are Windows zip and Linux tar.gz on Releases |
 | PASS | `copy-audit` |  |
 | PASS | `linux-package-top-level` | X Coin Wallet and Practice sit in the first unpacked folder |
@@ -43,8 +44,10 @@ All runs used throwaway `-regtest` datadirs. No mainnet node. No launch
 | PASS | `windows-wine-practice` | wine Practice wrote throwaway datadir/regtest/debug.log |
 | PASS | `windows-wine-wallet-start` | wine X Coin Wallet.exe with extra -regtest wrote throwaway datadir/regtest only |
 | PASS | `isolation-home-wallet` | no ~/.xcoin/wallet.dat |
+| PASS | `github-homepage-readme` | default branch (NFTRVN) README leads with the two Releases downloads |
+| PASS | `github-release-v1` | published, not draft; Windows zip + Linux tar.gz attached |
 
-Totals: **29 passed**, **0 failed**, **0 skipped**.
+Totals: **32 passed**, **0 failed**, **0 skipped**.
 
 ## Coverage map
 
@@ -63,6 +66,14 @@ Totals: **29 passed**, **0 failed**, **0 skipped**.
 | PASS | Windows zip layout (labeled starts at top of first folder) | this run |
 | PASS | Windows wine start | this run |
 | PASS | README first section is Releases download links | this run |
+| PASS | Bot / unverified account cannot lottery | this run |
+| PASS | Typed handle cannot claim Verified X or someone else's root | this run |
+| PASS | Two distinct verified wallets both eligible; send/receive | this run |
+| PASS | Same verified handle on two wallets (duplicate / spoof) rejected | this run |
+| PASS | Operator invite list cannot exclude a verified wallet | this run |
+| PASS | Session file / mock mismatch cannot send | this run |
+| PASS | GitHub default-branch README is download-first | this run |
+| PASS | GitHub Release v1.0.0 is published with both wallet assets | this run |
 
 ## Packages
 
