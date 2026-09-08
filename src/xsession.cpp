@@ -18,12 +18,49 @@
 
 #include <univalue.h>
 
+#include <cctype>
 #include <cstdio>
 #include <cstring>
+#include <stdexcept>
+#include <vector>
 
 namespace xsession {
 
 static CCriticalSection cs_xsession;
+
+static std::string AsciiLower(const std::string& in)
+{
+    std::string out = in;
+    for (char& c : out) {
+        if (c >= 'A' && c <= 'Z')
+            c = static_cast<char>(c - 'A' + 'a');
+    }
+    return out;
+}
+
+static std::string TrimCopy(const std::string& in)
+{
+    size_t a = 0;
+    while (a < in.size() && std::isspace(static_cast<unsigned char>(in[a])))
+        a++;
+    size_t b = in.size();
+    while (b > a && std::isspace(static_cast<unsigned char>(in[b - 1])))
+        b--;
+    return in.substr(a, b - a);
+}
+
+bool IsOfficialXVerified(bool verified, const std::string& verifiedType)
+{
+    if (verified)
+        return true;
+    const std::string t = AsciiLower(verifiedType);
+    return t == "blue" || t == "business" || t == "government";
+}
+
+bool Session::IsXVerified() const
+{
+    return IsOfficialXVerified(verified, verifiedType);
+}
 
 static bool ReadFileBytes(const fs::path& path, std::string& out)
 {
@@ -86,12 +123,15 @@ bool EnsureSecret(std::string& err)
     return true;
 }
 
-std::string ComputeProof(const std::string& userId, const std::string& username, int64_t expiresAt)
+std::string ComputeProof(const std::string& userId, const std::string& username, int64_t expiresAt,
+                         bool verified, const std::string& verifiedType)
 {
     std::string key;
     if (!ReadFileBytes(SecretPath(), key) || key.size() != 32)
         return "";
-    const std::string msg = strprintf("xcoin-xsession|%s|%s|%lld", userId, username, (long long)expiresAt);
+    const std::string msg = strprintf("xcoin-xsession|%s|%s|%lld|%d|%s",
+                                      userId, username, (long long)expiresAt,
+                                      verified ? 1 : 0, AsciiLower(verifiedType));
     unsigned char mac[CHMAC_SHA256::OUTPUT_SIZE];
     CHMAC_SHA256((const unsigned char*)key.data(), key.size())
         .Write((const unsigned char*)msg.data(), msg.size())
@@ -99,7 +139,8 @@ std::string ComputeProof(const std::string& userId, const std::string& username,
     return HexStr(mac, mac + sizeof(mac));
 }
 
-bool SaveSession(const std::string& userId, const std::string& usernameIn, int64_t expiresAt, std::string& err)
+bool SaveSession(const std::string& userId, const std::string& usernameIn, int64_t expiresAt,
+                 std::string& err, bool verified, const std::string& verifiedTypeIn)
 {
     std::string username;
     if (!lottery::NormalizeXHandle(usernameIn, username, err))
@@ -108,25 +149,34 @@ bool SaveSession(const std::string& userId, const std::string& usernameIn, int64
         err = "X user id missing from sign-in";
         return false;
     }
+    std::string verifiedType = AsciiLower(TrimCopy(verifiedTypeIn));
+    if (verifiedType == "none")
+        verifiedType.clear();
+    // Persist the official meaning: any X checkmark type counts as verified==true.
+    const bool xVerified = IsOfficialXVerified(verified, verifiedType);
     if (!EnsureSecret(err))
         return false;
-    const std::string proof = ComputeProof(userId, username, expiresAt);
+    const std::string proof = ComputeProof(userId, username, expiresAt, xVerified, verifiedType);
     if (proof.empty()) {
         err = "could not compute session proof";
         return false;
     }
     UniValue obj(UniValue::VOBJ);
-    obj.push_back(Pair("v", 1));
+    obj.push_back(Pair("v", 2));
     obj.push_back(Pair("id", userId));
     obj.push_back(Pair("username", username));
     obj.push_back(Pair("exp", expiresAt));
+    obj.push_back(Pair("verified", xVerified));
+    obj.push_back(Pair("verified_type", verifiedType));
     obj.push_back(Pair("proof", proof));
     LOCK(cs_xsession);
     if (!WriteFileBytes(SessionPath(), obj.write() + "\n")) {
         err = "cannot write xsession.json";
         return false;
     }
-    LogPrintf("xsession: signed in as @%s (id %s)\n", username, userId);
+    LogPrintf("xsession: signed in as @%s (id %s) X-Verified=%s type=%s\n",
+              username, userId, xVerified ? "true" : "false",
+              verifiedType.empty() ? "-" : verifiedType);
     return true;
 }
 
@@ -147,6 +197,19 @@ bool LoadSession(Session& out, std::string& err)
     out.username = obj["username"].getValStr();
     out.expiresAt = obj["exp"].isNum() ? obj["exp"].get_int64() : atoi64(obj["exp"].getValStr());
     out.proofHex = obj["proof"].getValStr();
+    if (obj.exists("verified")) {
+        if (obj["verified"].isBool())
+            out.verified = obj["verified"].get_bool();
+        else if (obj["verified"].isTrue())
+            out.verified = true;
+        else
+            out.verified = (obj["verified"].getValStr() == "true" || obj["verified"].getValStr() == "1");
+    }
+    if (obj.exists("verified_type"))
+        out.verifiedType = AsciiLower(obj["verified_type"].getValStr());
+    if (out.verifiedType == "none")
+        out.verifiedType.clear();
+    out.verified = IsOfficialXVerified(out.verified, out.verifiedType);
     if (out.userId.empty() || out.username.empty() || out.proofHex.empty()) {
         err = "xsession.json missing fields";
         return false;
@@ -155,7 +218,8 @@ bool LoadSession(Session& out, std::string& err)
         err = "Sign in with X session expired; sign in again";
         return false;
     }
-    const std::string want = ComputeProof(out.userId, out.username, out.expiresAt);
+    const std::string want = ComputeProof(out.userId, out.username, out.expiresAt,
+                                          out.verified, out.verifiedType);
     if (want.empty() || want != out.proofHex) {
         err = "session proof is invalid (not produced by this node's sign-in)";
         return false;
@@ -177,10 +241,35 @@ void ClearSession()
     fs::remove(SessionPath());
 }
 
-bool ParseUsersMe(const std::string& json, std::string& userId, std::string& username, std::string& err)
+static bool ParseVerifiedField(const UniValue& data, bool& verified, std::string& verifiedType)
 {
-    userId.clear();
-    username.clear();
+    verified = false;
+    verifiedType.clear();
+    if (data.exists("verified_type") && data["verified_type"].isStr())
+        verifiedType = AsciiLower(data["verified_type"].getValStr());
+    else if (data.exists("verified_type"))
+        verifiedType = AsciiLower(data["verified_type"].getValStr());
+    if (verifiedType == "none")
+        verifiedType.clear();
+    if (data.exists("verified")) {
+        if (data["verified"].isBool())
+            verified = data["verified"].get_bool();
+        else if (data["verified"].isTrue())
+            verified = true;
+        else if (data["verified"].isFalse())
+            verified = false;
+        else {
+            const std::string v = AsciiLower(data["verified"].getValStr());
+            verified = (v == "true" || v == "1" || v == "yes");
+        }
+    }
+    verified = IsOfficialXVerified(verified, verifiedType);
+    return true;
+}
+
+bool ParseUsersMe(const std::string& json, UsersMe& out, std::string& err)
+{
+    out = UsersMe();
     UniValue u;
     if (!u.read(json) || !u.isObject()) {
         err = "users/me response is not a JSON object";
@@ -191,14 +280,15 @@ bool ParseUsersMe(const std::string& json, std::string& userId, std::string& use
         err = "users/me missing data";
         return false;
     }
-    userId = data["id"].getValStr();
+    out.userId = data["id"].getValStr();
     const std::string rawName = data["username"].getValStr();
-    if (userId.empty() || rawName.empty()) {
+    if (out.userId.empty() || rawName.empty()) {
         err = "users/me missing id or username";
         return false;
     }
-    if (!lottery::NormalizeXHandle(rawName, username, err))
+    if (!lottery::NormalizeXHandle(rawName, out.username, err))
         return false;
+    ParseVerifiedField(data, out.verified, out.verifiedType);
     return true;
 }
 
@@ -214,6 +304,87 @@ static std::string SyntheticId(const std::string& handle)
     return strprintf("%llu", (unsigned long long)v);
 }
 
+static bool AllDigits(const std::string& s)
+{
+    if (s.empty())
+        return false;
+    for (unsigned char c : s) {
+        if (c < '0' || c > '9')
+            return false;
+    }
+    return true;
+}
+
+static std::vector<std::string> SplitColon(const std::string& in)
+{
+    std::vector<std::string> parts;
+    std::string cur;
+    for (char c : in) {
+        if (c == ':') {
+            parts.push_back(cur);
+            cur.clear();
+        } else {
+            cur.push_back(c);
+        }
+    }
+    parts.push_back(cur);
+    return parts;
+}
+
+static bool ParseMockCompact(const std::string& payload, UsersMe& out, std::string& err)
+{
+    out = UsersMe();
+    const std::string s = TrimCopy(payload);
+    if (s.empty()) {
+        err = "mock users/me spec is empty";
+        return false;
+    }
+    const std::vector<std::string> parts = SplitColon(s);
+    if (!lottery::NormalizeXHandle(parts[0], out.username, err))
+        return false;
+    bool sawFlag = false;
+    uint64_t userId = 0;
+    for (size_t i = 1; i < parts.size(); ++i) {
+        const std::string p = AsciiLower(TrimCopy(parts[i]));
+        if (p.empty())
+            continue;
+        if (p == "verified") {
+            out.verified = true;
+            if (out.verifiedType.empty())
+                out.verifiedType = "blue";
+            sawFlag = true;
+        } else if (p == "unverified") {
+            out.verified = false;
+            out.verifiedType.clear();
+            sawFlag = true;
+        } else if (p == "blue" || p == "business" || p == "government") {
+            out.verified = true;
+            out.verifiedType = p;
+            sawFlag = true;
+        } else if (AllDigits(p)) {
+            try {
+                userId = std::stoull(p);
+            } catch (const std::exception&) {
+                err = "X user id is not a valid integer";
+                return false;
+            }
+        } else {
+            err = strprintf("unknown mock users/me suffix '%s' (use verified, unverified, blue, business, government, or a numeric user id)", p);
+            return false;
+        }
+    }
+    if (!sawFlag) {
+        // Compact mock with no flag: treat as X Verified (blue) so regtest
+        // lottery smokes keep working. Use :unverified for zero-chance tests.
+        // JSON payloads without verified stay unverified (honest users/me).
+        out.verified = true;
+        out.verifiedType = "blue";
+    }
+    out.userId = userId ? strprintf("%llu", (unsigned long long)userId) : SyntheticId(out.username);
+    out.verified = IsOfficialXVerified(out.verified, out.verifiedType);
+    return true;
+}
+
 bool ApplyUsersMePayload(const std::string& payload, std::string& err, UniValue* parsedOut)
 {
     if (!IsRegtest()) {
@@ -221,27 +392,25 @@ bool ApplyUsersMePayload(const std::string& payload, std::string& err, UniValue*
         return false;
     }
     std::string json = payload;
-    std::string trim = payload;
-    while (!trim.empty() && (trim[0] == ' ' || trim[0] == '\n' || trim[0] == '\t'))
-        trim.erase(trim.begin());
+    std::string trim = TrimCopy(payload);
+    UsersMe me;
     if (trim.empty() || trim[0] != '{') {
-        lottery::XAccount acc;
-        if (!lottery::ParseXAccountSpec(payload, acc, err))
+        if (!ParseMockCompact(payload, me, err))
             return false;
-        const std::string id = acc.userId ? strprintf("%llu", (unsigned long long)acc.userId)
-                                          : SyntheticId(acc.handle);
         UniValue data(UniValue::VOBJ);
-        data.push_back(Pair("id", id));
-        data.push_back(Pair("username", acc.handle));
+        data.push_back(Pair("id", me.userId));
+        data.push_back(Pair("username", me.username));
+        data.push_back(Pair("verified", me.verified));
+        if (!me.verifiedType.empty())
+            data.push_back(Pair("verified_type", me.verifiedType));
         UniValue root(UniValue::VOBJ);
         root.pushKV("data", data);
         json = root.write();
-    }
-    std::string userId, username;
-    if (!ParseUsersMe(json, userId, username, err))
+    } else if (!ParseUsersMe(json, me, err)) {
         return false;
+    }
     const int64_t exp = GetTime() + 86400 * 365;
-    if (!SaveSession(userId, username, exp, err))
+    if (!SaveSession(me.userId, me.username, exp, err, me.verified, me.verifiedType))
         return false;
     if (parsedOut) {
         parsedOut->clear();
@@ -272,12 +441,13 @@ void BindLotteryFromSession()
         local.handle = s.username;
         local.userId = atoi64(s.userId);
         lottery::GetRegistry().SetLocalXAccount(local);
-        if (!lottery::GetAllowlist().Contains(local.handle, local.userId)) {
-            LogPrintf("xsession: signed in @%s but not on the verified allowlist; sync/relay only\n",
+        if (!s.IsXVerified()) {
+            LogPrintf("xsession: signed in @%s but not X Verified (users/me.verified); lottery closed, send/receive ok\n",
                       local.handle);
         } else {
-            LogPrintf("xsession: lottery identity @%s (id %s) from Sign in with X\n",
-                      local.handle, s.userId);
+            LogPrintf("xsession: lottery identity @%s (id %s) X Verified type=%s — fair draw, invite list is not a gate\n",
+                      local.handle, s.userId,
+                      s.verifiedType.empty() ? "blue" : s.verifiedType);
         }
         return;
     }
@@ -294,6 +464,30 @@ bool RequireSession(std::string& err)
     Session s;
     if (!LoadSession(s, err)) {
         err = "Sign in with X required to send, receive, or own assets; a typed handle is not enough";
+        return false;
+    }
+    return true;
+}
+
+bool SessionIsXVerified()
+{
+    Session s;
+    std::string err;
+    return LoadSession(s, err) && s.IsXVerified();
+}
+
+bool RequireXVerified(std::string& err)
+{
+    Session s;
+    if (!LoadSession(s, err)) {
+        err = "Sign in with X required; lottery is X Verified (blue check) only";
+        return false;
+    }
+    if (!s.IsXVerified()) {
+        err = "X account is not X Verified. X Verified is X's blue check / X Premium "
+              "(and business / government org checks) from GET /2/users/me "
+              "(https://help.x.com/en/managing-your-account/about-x-bluecheck). "
+              "The operator invite list is not X Verified.";
         return false;
     }
     return true;
@@ -333,6 +527,20 @@ std::string SignedInUserId()
     if (!LoadSession(s, err))
         return "";
     return s.userId;
+}
+
+bool SignedInVerified()
+{
+    return SessionIsXVerified();
+}
+
+std::string SignedInVerifiedType()
+{
+    Session s;
+    std::string err;
+    if (!LoadSession(s, err))
+        return "";
+    return s.verifiedType;
 }
 
 } // namespace xsession

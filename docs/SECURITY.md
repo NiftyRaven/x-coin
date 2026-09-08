@@ -31,8 +31,9 @@ Attacker goals we actually designed against:
 - **Identity on this node:** send / receive / own / claim require a
   session HMAC (`xsession.json` + `xsession.key`). A typed handle cannot
   pass `RequireHandle`.
-- **Lottery membership:** unlisted or unsigned gossip is not added to the
-  active set and is not relayed. Replacing an online handle’s payout
+- **Lottery membership:** unverified or unsigned gossip is not added to the
+  active set and is not relayed (zero chance). An X Verified running
+  wallet cannot be excluded. Replacing an online handle’s payout
   script is rejected.
 - **Network isolation from Ravencoin:** magic, genesis, ports, versions.
 - **RPC:** cookie or password; `sendrawtransaction` also requires a session.
@@ -43,8 +44,9 @@ Attacker goals we actually designed against:
    stall you or feed another *valid* lottery chain. There is no assumevalid
    checkpoint. **Connect to a known seed** (`addnode=` / `seednode=`).
 2. **Majority of eligible producers.** Whoever the committed active set
-   selects can mint. If the allowlist is empty or shared with an attacker,
-   they can heartbeat (with their own signed payout) and win.
+   selects can mint. Unverified accounts have zero chance. A modified
+   client can still assert `xVerified` on gossip (compact-signed by the
+   payout key); honest wallets only set that bit from `users/me`.
 3. **First-seen handle grab** (no payout pin). After a restart, the first
    signed `xhb` for `alice` wins until TTL. Pin the payout in the allowlist
    (`handle [userid] Xaddress…`) if you need to close that window.

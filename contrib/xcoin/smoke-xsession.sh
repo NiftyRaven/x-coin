@@ -104,8 +104,8 @@ if "${CLI[@]}" linkxaccount nftrvn >/tmp/xcoin-xsession-link.err 2>&1; then
 fi
 grep -qi "sign in with x\|session\|typed" /tmp/xcoin-xsession-link.err
 
-echo "== mock users/me alice; foreign handle still rejected =="
-MOCK="$("${CLI[@]}" mockxsignin '{"data":{"id":"99","username":"alice"}}')"
+echo "== mock users/me alice (unverified); foreign handle still rejected =="
+MOCK="$("${CLI[@]}" mockxsignin '{"data":{"id":"99","username":"alice","verified":false}}')"
 echo "$MOCK"
 echo "$MOCK" | python3 -c '
 import json,sys
@@ -114,6 +114,8 @@ if j.get("username") != "alice":
     sys.exit("mock must bind username alice, got %r" % j.get("username"))
 if str(j.get("id")) != "99":
     sys.exit("mock must bind user id 99, got %r" % j.get("id"))
+if j.get("x_verified") is True or j.get("verified") is True:
+    sys.exit("alice JSON without blue check must not be X Verified")
 '
 SESS2="$("${CLI[@]}" getxsession)"
 echo "$SESS2"
@@ -128,6 +130,8 @@ if j.get("username") != "alice":
     sys.exit("session username must be alice")
 if str(j.get("user_id") or j.get("id")) != "99":
     sys.exit("session must store X user id")
+if j.get("verified") is True or j.get("x_verified") is True:
+    sys.exit("unverified alice session must not report x_verified")
 if "xsession.json" not in str(j.get("session_file","")):
     sys.exit("linked session must name xsession.json")
 if "xsession.key" not in str(j.get("secret_file","")):
@@ -144,9 +148,39 @@ if "${CLI[@]}" linkxaccount nftrvn >/tmp/xcoin-xsession-imp.err 2>&1; then
 fi
 grep -qi "impersonation\|cannot use\|signed in as" /tmp/xcoin-xsession-imp.err
 
+INFO2="$("${CLI[@]}" getlotteryinfo)"
+echo "$INFO2"
+echo "$INFO2" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("local_xaccount") != "alice":
+    sys.exit("lottery identity must come from the session")
+if j.get("local_eligible") is not False:
+    sys.exit("signed-in unverified alice must not be lottery-eligible")
+if j.get("local_x_verified") is True:
+    sys.exit("unverified alice must not report local_x_verified")
+'
+
+echo "== mock X Verified alice is lottery-eligible =="
+"${CLI[@]}" mockxsignin '{"data":{"id":"99","username":"alice","verified":true,"verified_type":"blue"}}' >/dev/null
+INFO3="$("${CLI[@]}" getlotteryinfo)"
+echo "$INFO3"
+echo "$INFO3" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("local_xaccount") != "alice":
+    sys.exit("lottery identity must stay alice")
+if j.get("local_x_verified") is not True:
+    sys.exit("verified alice must report local_x_verified")
+if j.get("local_eligible") is not True:
+    sys.exit("signed-in X Verified alice must be eligible; invite list is not a gate")
+'
+
 echo "== session handle alice can provision the root =="
 ADDR="$("${CLI[@]}" getnewaddress)"
 # Identity root burn is 0 but the assignment tx still pays a relay fee.
+# generatetoaddress needs an X Verified local heartbeat so the coinbase
+# can commit a non-empty active set.
 "${CLI[@]}" generatetoaddress 110 "$ADDR" >/dev/null
 LINK="$("${CLI[@]}" linkxaccount alice "$ADDR")"
 echo "$LINK"
@@ -160,16 +194,5 @@ if j.get("asset") != "ALICE":
 '
 "${CLI[@]}" listmyassets | grep -q ALICE
 "${CLI[@]}" getmainasset alice | grep -q ALICE
-
-INFO2="$("${CLI[@]}" getlotteryinfo)"
-echo "$INFO2"
-echo "$INFO2" | python3 -c '
-import json,sys
-j=json.load(sys.stdin)
-if j.get("local_xaccount") != "alice":
-    sys.exit("lottery identity must come from the session")
-if j.get("local_eligible") is not True:
-    sys.exit("signed-in allowlisted alice must be eligible")
-'
 
 echo "smoke-xsession: ok"

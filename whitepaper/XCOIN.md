@@ -134,8 +134,13 @@ Full algorithm: [docs/LOTTERY.md](../docs/LOTTERY.md).
 
 ## 4. Sign in with X (what stops impersonation)
 
-Consensus still does not call X.com on every block. The allowlist is
-still an operator-shared list of verified handles.
+Consensus still does not call X.com on every block. **X Verified** is
+what X itself reports on `GET /2/users/me` (`verified` /
+`verified_type`): the blue check / X Premium, plus business and
+government org checks.
+[About the blue check](https://help.x.com/en/managing-your-account/about-x-bluecheck)
+per [X’s verification policy](https://help.x.com/en/rules-and-policies/verification-policy).
+The operator invite list (`addxverified`) is **not** X Verified.
 
 **Signing in is what stops impersonation.** A typed string in
 `linkxaccount` or `-xaccount=` is not enough. Anyone could type another
@@ -143,20 +148,23 @@ person's handle if that handle were only checked against an allowlist.
 
 The GUI **Sign in with X** button runs OAuth 2.0 PKCE (authorization
 code). After the loopback callback, the wallet calls
-`GET /2/users/me` and stores **only** that response: X user id,
-username, expiry, and an HMAC proof (`xsession.json` + datadir secret
+`GET /2/users/me?user.fields=verified,verified_type` and stores **that**
+response: X user id, username, expiry, `verified`, `verified_type`, and
+an HMAC proof (`xsession.json` + datadir secret
 `xsession.key`). **Send and receive** require that proof — authentication
 is what proves the wallet is yours. Home shows **this wallet is linked
-to @handle** plus the X user id. `linkxaccount otherperson` is
+to @handle** plus the X user id, and whether X Verified is true.
+`linkxaccount otherperson` is
 rejected when the session is not `otherperson`. This proof does not
 replace the 12-word BIP39 seed.
 
-The allowlist is the second gate (blue-check / X Premium, confirmed
-offline). Lottery eligibility requires both:
+Lottery eligibility is **session plus X Verified** (`verified==true`)
+plus a running wallet. Unverified accounts have **zero chance**. The
+invite list cannot exclude a verified wallet:
 
 1. A valid Sign in with X session on this node (user id + username).
-2. That username is on the shared allowlist (`-xallowlist=`,
-   `-xverified=`, `addxverified`, or `~/.xcoin/verified-x-accounts.txt`).
+2. `users/me` reports X Verified (blue / business / government).
+3. This wallet is running (local payout + heartbeat).
 
 Typed `-xaccount=` is ignored unless a session already matches it.
 
@@ -241,7 +249,7 @@ What this release changed on top of that core:
 
 - Product name, ports, magic, datadir, binaries
 - Lottery instead of mining
-- Sign in with X session + verified-X allowlist and `linkxaccount`
+- Sign in with X session + X Verified (blue check) and `linkxaccount`
 - One free root per handle; user roots forbidden; restricted assets
   removed
 
@@ -252,7 +260,9 @@ P2P, mempool, the asset script format. How to use it:
 
 ## 8. Risks (accepted for private launch)
 
-- Skip or empty the allowlist and anyone can heartbeat.
+- Unverified `users/me` has zero lottery chance; a verified running
+  wallet cannot be excluded. Gossip `xVerified` is compact-signed by
+  the payout key; a modified client can still lie.
 - `xhb` carries a handle, not a signature binding that handle to a
   script.
 - Clock skew can delay a slot; height still maps 1:1.

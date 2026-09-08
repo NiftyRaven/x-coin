@@ -27,9 +27,13 @@ UniValue getlotteryinfo(const JSONRPCRequest& request)
         throw std::runtime_error(
             "getlotteryinfo\n"
             "\nReturn the current lottery draw for the next block.\n"
-            "X Coin produces blocks by a minute lottery among verified-X active nodes, not PoW.\n"
-            "A node with no linked X account, or whose account is not on the verified allowlist,\n"
-            "is not lottery-eligible (it may still sync and relay).\n"
+            "X Coin produces blocks by a minute lottery among X Verified active nodes, not PoW.\n"
+            "X Verified is X's blue check / X Premium (and business / government org checks)\n"
+            "from GET /2/users/me — https://help.x.com/en/managing-your-account/about-x-bluecheck\n"
+            "A node with no Sign in with X session, or whose session is not X Verified,\n"
+            "is not lottery-eligible (zero chance). It may still sync, relay, send, and receive.\n"
+            "An X Verified session plus a running wallet cannot be excluded from the draw.\n"
+            "The operator invite list is optional pins / invites, not a lottery gate.\n"
             "\nResult:\n"
             "{\n"
             "  \"height\": n,                 (numeric) next block height\n"
@@ -37,13 +41,15 @@ UniValue getlotteryinfo(const JSONRPCRequest& request)
             "  \"slot_seconds\": 60,          (numeric) seconds per slot\n"
             "  \"winner_count\": n,           (numeric) winners this slot (grows on halvings)\n"
             "  \"halving_interval\": n,       (numeric) heights per subsidy/winner step\n"
-            "  \"active_nodes\": n,           (numeric) verified-X nodes with a fresh heartbeat\n"
+            "  \"active_nodes\": n,           (numeric) X Verified nodes with a fresh heartbeat\n"
             "  \"local_id\": \"hex\",           (string) Hash160 of this node's payout script\n"
             "  \"local_xaccount\": \"handle\",  (string) linked X handle (empty if none)\n"
             "  \"local_xuserid\": n,          (numeric) optional numeric X user id\n"
-            "  \"local_eligible\": true|false,(boolean) linked and on the verified allowlist\n"
+            "  \"local_x_verified\": true|false,(boolean) session users/me.verified (blue check)\n"
+            "  \"local_eligible\": true|false,(boolean) X Verified (blue check) + running wallet\n"
             "  \"local_is_winner\": true|false,\n"
-            "  \"verified_accounts\": n,      (numeric) size of the operator allowlist\n"
+            "  \"allowlist_accounts\": n,     (numeric) operator invite list size (not X Verified)\n"
+            "  \"verified_accounts\": n,      (numeric) deprecated alias of allowlist_accounts\n"
             "  \"seed\": \"hex\",               (string) deterministic seed\n"
             "  \"winners\": [\"hex\", ...],     (array) selected node ids\n"
             "  \"rewards\": [n, ...],         (array) xferon amounts per winner (subsidy only)\n"
@@ -88,7 +94,9 @@ UniValue getlotteryinfo(const JSONRPCRequest& request)
     ret.push_back(Pair("local_xaccount", localX.handle));
     ret.push_back(Pair("local_xuserid", (uint64_t)localX.userId));
     ret.push_back(Pair("local_eligible", lottery::GetRegistry().LocalEligible()));
+    ret.push_back(Pair("local_x_verified", xsession::SessionIsXVerified()));
     ret.push_back(Pair("local_is_winner", lottery::IsWinner(lottery::GetRegistry().LocalId(), draw.winners)));
+    ret.push_back(Pair("allowlist_accounts", (int)lottery::GetAllowlist().Size()));
     ret.push_back(Pair("verified_accounts", (int)lottery::GetAllowlist().Size()));
     ret.push_back(Pair("seed", draw.seed.GetHex()));
     ret.push_back(Pair("winners", winners));
@@ -105,8 +113,8 @@ UniValue getactivenodes(const JSONRPCRequest& request)
         throw std::runtime_error(
             "getactivenodes\n"
             "\nList lottery-eligible active nodes (local registry, filled by heartbeats and P2P xhb gossip).\n"
-            "A node is active if it heartbeated a verified X identity within the last 180 seconds.\n"
-            "Unlinked or unverified heartbeats are ignored. id is Hash160(payout script).\n"
+            "A node is active if it heartbeated an X Verified identity within the last 180 seconds.\n"
+            "Unlinked or unverified (no X blue check) local heartbeats are ignored. id is Hash160(payout script).\n"
             "\nResult:\n"
             "[\n"
             "  {\"id\":\"hex\", \"script\":\"hex\", \"lastseen\": n, \"local\": bool,\n"
@@ -153,7 +161,9 @@ UniValue registeractivenode(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() > 3)
         throw std::runtime_error(
             "registeractivenode ( payout xaccount xuserid )\n"
-            "\nRecord a heartbeat for an active node. Requires a Sign in with X session.\n"
+            "\nRecord a heartbeat for an active node. Requires a Sign in with X session\n"
+            "that is X Verified (blue check from GET /2/users/me). Unverified sessions\n"
+            "have zero chance. The operator invite list cannot exclude a verified wallet.\n"
             "The handle and user id must match the signed-in session. Typed foreign\n"
             "handles are rejected. Gossip heartbeats still need a payout-key signature;\n"
             "this RPC is the local, session-trusted path.\n"
@@ -173,6 +183,8 @@ UniValue registeractivenode(const JSONRPCRequest& request)
 
     std::string serr;
     if (!xsession::RequireSession(serr))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, serr);
+    if (!xsession::RequireXVerified(serr))
         throw JSONRPCError(RPC_INVALID_PARAMETER, serr);
 
     CScript script = lottery::GetRegistry().LocalScript();
@@ -208,13 +220,10 @@ UniValue registeractivenode(const JSONRPCRequest& request)
     }
     if (x.userId == 0)
         x.userId = sessionUid;
-    if (!lottery::GetAllowlist().Contains(x.handle, x.userId))
-        throw JSONRPCError(RPC_INVALID_PARAMETER,
-                           "X account is not on the verified allowlist (addxverified / -xverified / allowlist file)");
 
     const int64_t now = GetTime();
-    if (!lottery::GetRegistry().Heartbeat(script, now, x.handle, x.userId))
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "heartbeat rejected (unlinked or unverified X account)");
+    if (!lottery::GetRegistry().Heartbeat(script, now, x.handle, x.userId, true))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "heartbeat rejected (payout pin or live-handle binding)");
     const uint160 id = lottery::IdFromScript(script);
     UniValue ret(UniValue::VOBJ);
     ret.push_back(Pair("id", id.GetHex()));
@@ -245,9 +254,12 @@ UniValue getxsession(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() > 0)
         throw std::runtime_error(
             "getxsession\n"
-            "\nReturn the local Sign in with X session (user id + username from users/me).\n"
+            "\nReturn the local Sign in with X session (user id + username + X Verified from users/me).\n"
             "signed_in / linked are the same: this datadir holds a valid HMAC proof\n"
             "(xsession.json + xsession.key) binding send/receive/own to that X account.\n"
+            "verified / verified_type are what GET /2/users/me reported (user.fields=verified,verified_type).\n"
+            "x_verified is true for X's blue / business / government checks.\n"
+            "X Verified is not the operator invite list.\n"
             "This is not a replacement for the 12-word BIP39 seed.\n"
         );
     UniValue ret(UniValue::VOBJ);
@@ -263,6 +275,9 @@ UniValue getxsession(const JSONRPCRequest& request)
         ret.push_back(Pair("id", s.userId));
         ret.push_back(Pair("user_id", s.userId));
         ret.push_back(Pair("expires", s.expiresAt));
+        ret.push_back(Pair("verified", s.verified));
+        ret.push_back(Pair("verified_type", s.verifiedType));
+        ret.push_back(Pair("x_verified", s.IsXVerified()));
     } else {
         ret.push_back(Pair("error", err));
     }
@@ -275,7 +290,10 @@ UniValue mockxsignin(const JSONRPCRequest& request)
         throw std::runtime_error(
             "mockxsignin \"payload\"\n"
             "\nREGTEST ONLY. Inject a mock GET /2/users/me payload and write a session proof.\n"
-            "payload is JSON {\"data\":{\"id\":\"…\",\"username\":\"…\"}} or handle[:userid].\n"
+            "payload is JSON {\"data\":{\"id\":\"…\",\"username\":\"…\",\"verified\":true,\"verified_type\":\"blue\"}}\n"
+            "or handle[:userid][:verified|:unverified|:blue|:business|:government].\n"
+            "Examples: NFTRVN:verified   ghost:unverified   alice:99:verified\n"
+            "Compact NFTRVN with no flag defaults to verified=true (private test).\n"
         );
     if (!xsession::IsRegtest())
         throw JSONRPCError(RPC_MISC_ERROR, "mockxsignin is only available on -regtest");
@@ -287,6 +305,9 @@ UniValue mockxsignin(const JSONRPCRequest& request)
     ret.push_back(Pair("ok", true));
     ret.push_back(Pair("username", xsession::SignedInHandle()));
     ret.push_back(Pair("id", xsession::SignedInUserId()));
+    ret.push_back(Pair("verified", xsession::SignedInVerified()));
+    ret.push_back(Pair("verified_type", xsession::SignedInVerifiedType()));
+    ret.push_back(Pair("x_verified", xsession::SessionIsXVerified()));
     if (parsed.isObject())
         ret.push_back(Pair("users_me", parsed));
     return ret;
@@ -297,9 +318,11 @@ UniValue addxverified(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
         throw std::runtime_error(
             "addxverified \"handle\" ( userid )\n"
-            "\nAdd an X handle to the operator-shared verified allowlist.\n"
-            "Honest operators must only list X-verified (blue-check / X Premium verified) accounts.\n"
-            "All honest nodes must share the same list so they agree on the active set.\n"
+            "\nAdd an X handle to the operator invite list (private-mesh ACL).\n"
+            "This is NOT X Verified. X Verified is X's blue check from GET /2/users/me\n"
+            "(https://help.x.com/en/managing-your-account/about-x-bluecheck).\n"
+            "This list cannot exclude an X Verified wallet from the lottery.\n"
+            "Optional payout pins still bind a handle to one script.\n"
             "The list is written to verified-x-accounts.txt in the data directory.\n"
             "\nArguments:\n"
             "1. handle  (string, required) X handle (with or without @)\n"
@@ -337,7 +360,7 @@ UniValue removexverified(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() != 1)
         throw std::runtime_error(
             "removexverified \"handle\"\n"
-            "\nRemove an X handle from the verified allowlist.\n"
+            "\nRemove an X handle from the operator invite list (not X Verified).\n"
             "\nArguments:\n"
             "1. handle  (string, required) X handle\n"
             "\nExamples:\n"
@@ -359,8 +382,8 @@ UniValue listxverified(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() > 0)
         throw std::runtime_error(
             "listxverified\n"
-            "\nList the operator-shared verified X allowlist.\n"
-            "Only these handles may enter the lottery active set.\n"
+            "\nList the operator invite list (private-mesh ACL). This is not X Verified.\n"
+            "Not a lottery gate: X Verified + a running wallet is enough to enter.\n"
             "\nResult:\n"
             "[ {\"handle\":\"alice\", \"userid\": n}, ... ]\n"
             "\nExamples:\n"
@@ -383,7 +406,8 @@ UniValue loadxverified(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() > 1)
         throw std::runtime_error(
             "loadxverified ( path )\n"
-            "\nReload / merge verified X accounts from a text file (no X API keys).\n"
+            "\nReload / merge the operator invite list from a text file (no X API keys).\n"
+            "This file is not X Verified — it is a private-mesh ACL / invite list.\n"
             "Each line is `handle` or `handle userid`. Lines starting with # are comments.\n"
             "Default path is verified-x-accounts.txt in the data directory.\n"
             "Operators can refresh a published list with curl, then call this RPC:\n"

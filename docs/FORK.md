@@ -82,8 +82,9 @@ for those versions.
    `-gen` / `setgenerate` removed as a miner; KawPoW submit RPCs unregistered.
 3. **Lottery module** in `src/lottery.{h,cpp}` + `src/rpc/lottery.cpp`, started
    from `init.cpp`. P2P `xhb` gossip + coinbase `XHB1` commitment / multi-winner
-   validation. Active set requires a linked X account on the operator-shared
-   verified allowlist.
+   validation. Active set requires a linked X session that is **X Verified**
+   (users/me blue check) and a running wallet. Unverified = zero chance.
+   The operator invite list cannot exclude a verified wallet.
 4. **Assets** on from height 0. Main roots are protocol-assigned on X-link
    (zero burn, `XID1`). User `issue` of a new root is consensus-invalid.
    Restricted assets are not activated (`AreRestrictedAssetsDeployed()` is false).

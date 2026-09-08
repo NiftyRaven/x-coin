@@ -80,7 +80,7 @@ echo "== phase 1: lone node already has a ledger =="
 # not required for a local UTXO set (regtest generate; main lottery producer).
 "$XCOIND" -regtest -datadir="$A_DIR" -server -daemon -listen=1 -port=28543 \
   -rpcport=28542 -connect=0 -dnsseed=0 -txindex=1 \
-  -xoauthmock=alice -xallowlist="$ALLOW"
+  -xoauthmock=alice:verified -xallowlist="$ALLOW"
 wait_rpc A_CLI
 A_GEN="$("${A_CLI[@]}" getblockhash 0)"
 echo "A genesis $A_GEN"
@@ -99,7 +99,7 @@ echo "lone A height 5 tip $TIP5 (local ledger exists)"
 echo "== phase 2: connect B (signed-in receiver) and C (unsigned observer) =="
 "$XCOIND" -regtest -datadir="$B_DIR" -server -daemon -listen=1 -port=28553 \
   -rpcport=28552 -addnode=127.0.0.1:28543 -dnsseed=0 -txindex=1 \
-  -xoauthmock=bob -xallowlist="$ALLOW"
+  -xoauthmock=bob:verified -xallowlist="$ALLOW"
 # C has no session: still syncs, relays, and can inspect blocks/txs by RPC.
 # It cannot create a receive address or send.
 "$XCOIND" -regtest -datadir="$C_DIR" -server -daemon -listen=0 -port=28563 \

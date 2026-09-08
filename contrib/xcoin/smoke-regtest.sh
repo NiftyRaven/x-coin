@@ -17,7 +17,7 @@ rm -rf "$DATADIR"
 mkdir -p "$DATADIR"
 
 "$XCOIND" -regtest -datadir="$DATADIR" -server -daemon -listen=0 \
-    -xoauthmock=smoke1 -xverified=smoke1 -xverified=smoke2 -xverified=NFTRVN
+    -xoauthmock=smoke1:verified -xverified=smoke1 -xverified=smoke2 -xverified=NFTRVN
 cleanup() {
   "${CLI[@]}" stop >/dev/null 2>&1 || true
   for _ in $(seq 1 50); do
@@ -82,7 +82,7 @@ echo "$VA1" | grep -q '"isvalid": true'
 echo "== register second verified payout + generate past maturity =="
 "${CLI[@]}" listxverified | grep -q smoke1
 "${CLI[@]}" listxverified | grep -q smoke2
-"${CLI[@]}" mockxsignin smoke2 >/dev/null
+"${CLI[@]}" mockxsignin smoke2:verified >/dev/null
 "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
 "${CLI[@]}" generatetoaddress 110 "$ADDR1" >/dev/null
 HEIGHT="$("${CLI[@]}" getblockcount)"
@@ -97,7 +97,7 @@ if "${CLI[@]}" issue TESTASSET 1000 >/tmp/xcoin-issue-root.err 2>&1; then
   exit 1
 fi
 grep -qi "main asset\|cannot create\|root" /tmp/xcoin-issue-root.err
-"${CLI[@]}" mockxsignin smoke1 >/dev/null
+"${CLI[@]}" mockxsignin smoke1:verified >/dev/null
 LINK="$("${CLI[@]}" linkxaccount smoke1 "$ADDR1")"
 echo "$LINK"
 echo "$LINK" | grep -q '"asset"'
@@ -155,7 +155,7 @@ LONG_HANDLE="abcdefghijabcdefghijabcdef"
 [[ ${#LONG_HANDLE} -eq 26 ]]
 "${CLI[@]}" addxverified "$LONG_HANDLE" >/dev/null
 ADDR_L="$("${CLI[@]}" getnewaddress)"
-"${CLI[@]}" mockxsignin "$LONG_HANDLE" >/dev/null
+"${CLI[@]}" mockxsignin "${LONG_HANDLE}:verified" >/dev/null
 LINK_L="$("${CLI[@]}" linkxaccount "$LONG_HANDLE" "$ADDR_L")"
 echo "$LINK_L"
 echo "$LINK_L" | python3 -c '
@@ -179,9 +179,9 @@ echo "== two-winner window (regtest halving interval 150) =="
 # Height 149: still 1 winner, full 5000 subsidy. Height 150: 2 winners, 2500 subsidy.
 NEED=$((149 - HEIGHT))
 if [[ "$NEED" -gt 0 ]]; then
-  "${CLI[@]}" mockxsignin smoke2 >/dev/null
+  "${CLI[@]}" mockxsignin smoke2:verified >/dev/null
   "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
-  "${CLI[@]}" mockxsignin smoke1 >/dev/null
+  "${CLI[@]}" mockxsignin smoke1:verified >/dev/null
   "${CLI[@]}" generatetoaddress "$NEED" "$ADDR1" >/dev/null
 fi
 H149="$("${CLI[@]}" getblockhash 149)"
@@ -196,10 +196,10 @@ if len(pays) != 1:
 if abs(sum(o["value"] for o in pays) - 5000) > 1e-6:
     sys.exit("height 149 subsidy must be 5000")
 '
-"${CLI[@]}" mockxsignin smoke2 >/dev/null
+"${CLI[@]}" mockxsignin smoke2:verified >/dev/null
 "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
 # Keep @smoke1 on the local payout script so @smoke2 stays on ADDR2.
-"${CLI[@]}" mockxsignin smoke1 >/dev/null
+"${CLI[@]}" mockxsignin smoke1:verified >/dev/null
 "${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
 H150="$("${CLI[@]}" getblockhash 150)"
 TX0="$("${CLI[@]}" getblock "$H150" true | python3 -c 'import json,sys; print(json.load(sys.stdin)["tx"][0])')"
@@ -221,12 +221,12 @@ CHAIN2="$("${CLI[@]}" getblockchaininfo)"
 echo "$CHAIN2" | grep -q '"blocks": 150'
 
 echo "== signed-in send / receive (session required) =="
-"${CLI[@]}" mockxsignin smoke1 >/dev/null
+"${CLI[@]}" mockxsignin smoke1:verified >/dev/null
 ADDR_PAY="$("${CLI[@]}" getnewaddress)"
 echo "signed-in dest $ADDR_PAY"
 TXPAY="$("${CLI[@]}" sendtoaddress "$ADDR_PAY" 25)"
 echo "paid $TXPAY"
-"${CLI[@]}" mockxsignin smoke2 >/dev/null
+"${CLI[@]}" mockxsignin smoke2:verified >/dev/null
 "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
 "${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
 UTXO1="$("${CLI[@]}" listunspent 1 9999999 "[\"$ADDR_PAY\"]")"
@@ -241,7 +241,7 @@ if abs(s - 25) > 1e-6:
 '
 TXSPEND="$("${CLI[@]}" sendfromaddress "$ADDR_PAY" "$ADDR1" 10)"
 echo "signed-in spent $TXSPEND"
-"${CLI[@]}" mockxsignin smoke2 >/dev/null
+"${CLI[@]}" mockxsignin smoke2:verified >/dev/null
 "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
 "${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
 UTXO2="$("${CLI[@]}" listunspent 1 9999999 "[\"$ADDR_PAY\"]")"

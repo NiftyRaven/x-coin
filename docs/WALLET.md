@@ -39,7 +39,9 @@ You cannot open Alice's assets from Bob's `wallet.dat` by typing
 `@alice` or by signing in as Alice on Bob's empty datadir. Smoke:
 [contrib/xcoin/smoke-isolation.sh](../contrib/xcoin/smoke-isolation.sh).
 
-Lottery eligibility is session **plus** the X-Verified allowlist.
+Lottery eligibility is session **plus X Verified** (`users/me.verified`,
+blue check) **plus a running wallet**. Unverified = zero chance. The
+operator invite list cannot exclude a verified running wallet.
 Every signed-in user can send and receive.
 
 See [XSIGNIN.md](XSIGNIN.md) for the OAuth loopback. Home / Receive /

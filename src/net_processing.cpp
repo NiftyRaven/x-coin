@@ -32,6 +32,7 @@
 #include "utilmoneystr.h"
 #include "utilstrencodings.h"
 #include "lottery.h"
+#include "xsession.h"
 #include "validationinterface.h"
 
 #if defined(NDEBUG)
@@ -1793,7 +1794,8 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             const int64_t hbNow = GetTime();
             if (!localScript.empty() && lottery::SignLocalHeartbeat(hbNow, hbSig)) {
                 connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::XHB, hbNow, localScript,
-                                                          localX.handle, localX.userId, hbSig));
+                                                          localX.handle, localX.userId,
+                                                          xsession::SessionIsXVerified(), hbSig));
             }
         }
     }
@@ -2946,11 +2948,14 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         CScript script;
         std::string xHandle;
         uint64_t xUserId = 0;
+        bool xVerified = false;
         std::vector<unsigned char> vchSig;
         try {
             vRecv >> nHbTime >> script;
             if (!vRecv.empty())
                 vRecv >> xHandle >> xUserId;
+            if (!vRecv.empty())
+                vRecv >> xVerified;
             if (!vRecv.empty())
                 vRecv >> vchSig;
         } catch (const std::exception&) {
@@ -2972,16 +2977,21 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         if (nHbTime > now + 600 || nHbTime < now - 600) {
             return true;
         }
-        if (!lottery::VerifyHeartbeatSig(script, nHbTime, xHandle, xUserId, vchSig)) {
+        if (!lottery::VerifyHeartbeatSig(script, nHbTime, xHandle, xUserId, vchSig, xVerified)) {
             LogPrint(BCLog::NET, "lottery xhb rejected (unsigned or forged) handle=%s peer=%d\n",
                      xHandle, pfrom->GetId());
             LOCK(cs_main);
             Misbehaving(pfrom->GetId(), 10);
             return false;
         }
+        if (!xVerified) {
+            LogPrint(BCLog::NET, "lottery xhb ignored (not X Verified) handle=%s peer=%d\n",
+                     xHandle, pfrom->GetId());
+            return true;
+        }
         const uint160 id = lottery::IdFromScript(script);
-        if (!lottery::GetRegistry().Heartbeat(script, now, xHandle, xUserId)) {
-            LogPrint(BCLog::NET, "lottery xhb ignored (unlisted, pinned mismatch, or sticky handle) handle=%s peer=%d\n",
+        if (!lottery::GetRegistry().Heartbeat(script, now, xHandle, xUserId, xVerified)) {
+            LogPrint(BCLog::NET, "lottery xhb ignored (unverified, pinned mismatch, or sticky handle) handle=%s peer=%d\n",
                      xHandle, pfrom->GetId());
             return true;
         }
@@ -3004,7 +3014,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                     return;
                 CNetMsgMaker relayMaker(pto->GetSendVersion());
                 connman->PushMessage(pto, relayMaker.Make(NetMsgType::XHB, nHbTime, script,
-                                                          xHandle, xUserId, vchSig));
+                                                          xHandle, xUserId, xVerified, vchSig));
             });
         }
     }
@@ -3347,7 +3357,8 @@ bool PeerLogicValidation::SendMessages(CNode* pto, std::atomic<bool>& interruptM
                 const int64_t hbNow = GetTime();
                 if (!localScript.empty() && lottery::SignLocalHeartbeat(hbNow, hbSig))
                     connman->PushMessage(pto, msgMaker.Make(NetMsgType::XHB, hbNow, localScript,
-                                                            localX.handle, localX.userId, hbSig));
+                                                            localX.handle, localX.userId,
+                                                            xsession::SessionIsXVerified(), hbSig));
             }
         }
 

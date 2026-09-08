@@ -109,8 +109,13 @@ The wallet runs OAuth 2.0 PKCE, then **GET /2/users/me**. Only that
 username and X user id are stored, with an HMAC proof in the datadir
 (`xsession.json` + `xsession.key`). **Authentication is the key to
 asset ownership** — it proves it is you. Send, receive, and claiming a
-root require that proof. Only **X-Verified** (allowlisted) signed-in
-handles are lottery-eligible. `linkxaccount otherperson` is rejected
+root require that proof. Only **X Verified** signed-in handles
+are lottery-eligible. **X Verified** is X’s blue check / X Premium
+(and business / government org checks) from `GET /2/users/me`
+([about the blue check](https://help.x.com/en/managing-your-account/about-x-bluecheck)
+per [X’s verification policy](https://help.x.com/en/rules-and-policies/verification-policy)).
+It is **not** whoever an operator typed into `addxverified`. That RPC
+is an optional private-mesh **invite list**. `linkxaccount otherperson` is rejected
 when the session is someone else.
 
 Operator setup: paste your X app Client ID (saved as `xoauthclientid=`
@@ -119,6 +124,8 @@ in `xcoin.conf`). Callback:
 
 Regtest only: `-xoauthmock=handle` or RPC `mockxsignin` injects a fake
 `users/me` payload so tests can prove typed names are rejected.
+`-xoauthmock=NFTRVN` (or `NFTRVN:verified`) mocks X Verified; `ghost:unverified`
+is signed-in but not lottery-eligible.
 
 ### 4. CLI (same wallet)
 
@@ -140,7 +147,10 @@ A 26-character X handle maps 1:1 to a 26-character root (max root name:
 **32**). See [docs/ASSETS.md](docs/ASSETS.md).
 
 You must Sign in with X to send or receive. Lottery additionally requires
-an X-Verified allowlisted handle.
+**X Verified** (`users/me.verified` — blue check) and a running wallet.
+Unverified accounts have **zero chance**. The operator invite list cannot
+exclude a verified running wallet; it is optional pins / invites, not
+the meaning of Verified.
 
 Stop the GUI from the File menu, or `src/xcoin-cli stop` if the node is the daemon.
 

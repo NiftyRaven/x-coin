@@ -605,11 +605,11 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-xoauthclientid=<id>", _("X (Twitter) OAuth 2.0 client id for Sign in with X (PKCE). Never typed as someone else's handle."));
     strUsage += HelpMessageOpt("-xoauthclientsecret=<secret>", _("Optional confidential-client secret. Public PKCE apps omit this."));
     strUsage += HelpMessageOpt("-xoauthcallbackport=<n>", _("Loopback callback port for Sign in with X (default: 18791). Register http://127.0.0.1:<n>/callback in the X developer portal."));
-    strUsage += HelpMessageOpt("-xoauthmock=<handle|json>", _("REGTEST ONLY. Inject a mock GET /2/users/me payload and write a local session proof"));
+    strUsage += HelpMessageOpt("-xoauthmock=<handle|json>", _("REGTEST ONLY. Mock GET /2/users/me. handle[:userid][:verified|:unverified] or JSON with verified/verified_type. NFTRVN defaults to verified=true"));
     strUsage += HelpMessageOpt("-xaccount=<handle>", _("Deprecated typed handle. Ignored unless a Sign in with X session already matches it."));
     strUsage += HelpMessageOpt("-xuserid=<id>", _("Optional numeric X user id (informational; session id wins)"));
-    strUsage += HelpMessageOpt("-xallowlist=<file>", _("Load verified X accounts from a text file (handle [userid] per line). Honest operators list only X-verified / blue-check accounts"));
-    strUsage += HelpMessageOpt("-xverified=<handle>", _("Add a verified X handle to the allowlist (repeatable; handle or handle:userid)"));
+    strUsage += HelpMessageOpt("-xallowlist=<file>", _("Load the operator invite / payout-pin list (not X Verified). Cannot exclude a verified wallet from the lottery"));
+    strUsage += HelpMessageOpt("-xverified=<handle>", _("Add a handle to the operator invite list (repeatable; handle or handle:userid). This is not X Verified"));
 
     strUsage += HelpMessageGroup(_("Block creation options:"));
     strUsage += HelpMessageOpt("-blockmaxweight=<n>", strprintf(_("Set maximum BIP141 block weight (default: %d)"), MAX_BLOCK_WEIGHT - 4000));
@@ -1905,7 +1905,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
     }
     LogPrintf("nBestHeight = %d\n", chain_active_height);
 
-    // Lottery producer (not PoW). Only verified-X linked nodes are eligible.
+    // Lottery producer (not PoW). Only X Verified (users/me.verified) nodes are eligible.
     lottery::StartProducer(chainparams);
 
     if (gArgs.GetBoolArg("-listenonion", DEFAULT_LISTEN_ONION))

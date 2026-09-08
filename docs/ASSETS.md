@@ -5,25 +5,30 @@ The asset engine is the backbone, simplified.
 
 ## The user is a main asset
 
-When a person links a **verified X account**, the protocol assigns them **one
+When a person links an X account, the protocol assigns them **one
 main/root asset, free**. That asset *is* the user. Users cannot `issue` a new
-root. One X account → one main asset.
+root. One X account → one main asset. Lottery still needs **X Verified**
+(blue check); claiming the root needs the session only.
 
 ```
-# GUI: Sign in with X, then Allowlist my handle, then Claim my root asset
-xcoin-cli addxverified NFTRVN         # operator allowlist (offline-verified)
-xcoin-cli mockxsignin NFTRVN          # regtest only (mock GET /2/users/me)
+# GUI: Sign in with X, then Claim my root asset.
+# Allowlist my handle is an optional operator invite list (not X Verified).
+xcoin-cli addxverified NFTRVN         # optional operator invite list
+xcoin-cli mockxsignin NFTRVN          # regtest only (mock GET /2/users/me; NFTRVN → verified=true)
 xcoin-cli linkxaccount                # assign the free identity root from the session
 ```
 
 `AssignLinkedUserMainAsset(xHandleOrId, dest)` is the C++ hook. The existing
-verified-X link path (`registeractivenode` after allowlist) calls it; so does
+verified-X link path (`registeractivenode`) calls it; so does
 `linkxaccount`. Idempotent.
 
 The owner’s X handle for this private test is **`NFTRVN`**. That handle
 derives the root name `NFTRVN`. Operators confirm the public profile
 offline (see [LOTTERY.md](LOTTERY.md) and [XSIGNIN.md](XSIGNIN.md)).
-Signing in is what stops impersonation; the allowlist is the second gate.
+Signing in is what stops impersonation. X Verified (blue check from
+`users/me`) plus a running wallet is the lottery gate. Unverified
+accounts have zero chance. The invite list is optional pins / invites
+and cannot exclude a verified wallet.
 
 ## Naming
 
@@ -86,8 +91,8 @@ assets. Restricted-only RPCs and the Qt Restricted tab are gone.
 
 Wallets without a Sign in with X session cannot **send or receive**.
 Authentication proves it is you and is the key to asset ownership.
-A node can still sync. Lottery needs a signed-in **X-Verified**
-allowlisted handle. Issue of a sub/unique also requires that session.
+A node can still sync. Lottery needs a signed-in **X Verified**
+session (`users/me.verified`). Issue of a sub/unique also requires that session.
 
 ## Smoke
 

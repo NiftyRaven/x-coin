@@ -20,15 +20,21 @@ rm -rf "$BASE"
 mkdir -p "$A_DIR" "$B_DIR"
 ALLOW="$BASE/verified-x-accounts.txt"
 cat > "$ALLOW" <<'EOF'
-# operator-shared verified X allowlist
+# operator-shared invite list (not X Verified)
 alice
 bob
 EOF
 
 "$XCOIND" -regtest -datadir="$A_DIR" -server -daemon -listen=1 -port=28443 -rpcport=28442 -connect=0 -dnsseed=0 \
-  -xoauthmock=alice -xallowlist="$ALLOW"
+  -xoauthmock=alice:verified -xallowlist="$ALLOW"
+for _ in $(seq 1 100); do
+  if "${A_CLI[@]}" getlotteryinfo >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.2
+done
 "$XCOIND" -regtest -datadir="$B_DIR" -server -daemon -listen=0 -port=28453 -rpcport=28452 -addnode=127.0.0.1:28443 -dnsseed=0 \
-  -xoauthmock=bob -xallowlist="$ALLOW"
+  -xoauthmock=bob:verified -xallowlist="$ALLOW"
 cleanup() {
   "${A_CLI[@]}" stop >/dev/null 2>&1 || true
   "${B_CLI[@]}" stop >/dev/null 2>&1 || true
@@ -56,7 +62,7 @@ if [[ "$up" -ne 1 ]]; then
 fi
 
 ok=0
-for _ in $(seq 1 40); do
+for _ in $(seq 1 80); do
   peers=$("${A_CLI[@]}" getpeerinfo | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')
   na=$("${A_CLI[@]}" getactivenodes | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')
   nb=$("${B_CLI[@]}" getactivenodes | python3 -c 'import json,sys; print(len(json.load(sys.stdin)))')
@@ -68,6 +74,8 @@ for _ in $(seq 1 40); do
 done
 if [[ "$ok" -ne 1 ]]; then
   echo "gossip did not converge" >&2
+  echo "peers=$peers na=$na nb=$nb" >&2
+  "${A_CLI[@]}" getpeerinfo >&2 || true
   "${A_CLI[@]}" getactivenodes >&2 || true
   "${B_CLI[@]}" getactivenodes >&2 || true
   exit 1

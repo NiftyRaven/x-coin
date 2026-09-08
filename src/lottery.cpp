@@ -171,7 +171,7 @@ bool Allowlist::Remove(const std::string& handle, std::string& err, bool persist
         LOCK(cs);
         auto it = handles.find(norm);
         if (it == handles.end()) {
-            err = "X handle is not on the verified allowlist";
+            err = "X handle is not on the operator invite list";
             return false;
         }
         if (it->second != 0)
@@ -197,6 +197,15 @@ bool Allowlist::Contains(const std::string& handle, uint64_t userId) const
         return false;
     if (it->second != 0 && userId != 0 && it->second != userId)
         return false;
+    return true;
+}
+
+bool Allowlist::Allows(const std::string& handle, uint64_t userId) const
+{
+    (void)handle;
+    (void)userId;
+    // Fair lottery: the invite list cannot exclude an X Verified wallet
+    // that is running. Payout pins still apply via PinnedScript.
     return true;
 }
 
@@ -252,7 +261,7 @@ bool Allowlist::LoadFile(const std::string& path, std::string& err)
     }
     std::ifstream in(path.c_str());
     if (!in) {
-        err = strprintf("cannot open verified X allowlist %s", path);
+        err = strprintf("cannot open operator invite list %s", path);
         return false;
     }
     std::string line;
@@ -325,7 +334,7 @@ bool Allowlist::LoadFile(const std::string& path, std::string& err)
         n++;
     }
     err.clear();
-    LogPrintf("lottery: loaded %d verified X account(s) from %s\n", n, path);
+    LogPrintf("lottery: loaded %d operator invite-list handle(s) from %s\n", n, path);
     return true;
 }
 
@@ -351,12 +360,13 @@ bool Allowlist::Persist(std::string& err) const
     }
     FILE* f = fsbridge::fopen(path, "wb");
     if (!f) {
-        err = strprintf("cannot write verified X allowlist %s", path);
+        err = strprintf("cannot write operator invite list %s", path);
         return false;
     }
-    fprintf(f, "# X Coin verified X accounts (operator-shared allowlist)\n");
-    fprintf(f, "# Only list X-verified (blue-check / X Premium verified) handles.\n");
-    fprintf(f, "# format: handle [userid] [payout-address-or-script-hex]\n");
+    fprintf(f, "# X Coin operator invite list (private-mesh ACL, NOT X Verified)\n");
+    fprintf(f, "# X Verified is X's blue check from GET /2/users/me, not this file.\n");
+    fprintf(f, "# https://help.x.com/en/managing-your-account/about-x-bluecheck\n");
+    fprintf(f, "# Optional extra gate when non-empty. format: handle [userid] [payout]\n");
     for (const auto& a : cur) {
         std::string pin;
         if (!a.pinnedScript.empty()) {
@@ -423,11 +433,12 @@ uint160 IdFromScript(const CScript& script)
 }
 
 uint256 HeartbeatDigest(int64_t timestamp, const CScript& script,
-                        const std::string& handle, uint64_t userId)
+                        const std::string& handle, uint64_t userId, bool xVerified)
 {
     uint256 out;
     unsigned char tle[8];
     unsigned char ule[8];
+    const unsigned char verifiedByte = xVerified ? 1 : 0;
     for (int i = 0; i < 8; i++) {
         tle[i] = (timestamp >> (8 * i)) & 0xff;
         ule[i] = (userId >> (8 * i)) & 0xff;
@@ -439,24 +450,25 @@ uint256 HeartbeatDigest(int64_t timestamp, const CScript& script,
         .Write(script.data(), script.size())
         .Write(reinterpret_cast<const unsigned char*>(handle.data()), handle.size())
         .Write(ule, sizeof(ule))
+        .Write(&verifiedByte, 1)
         .Finalize(out.begin());
     return out;
 }
 
 bool SignHeartbeat(const CKey& key, int64_t timestamp, const CScript& script,
                    const std::string& handle, uint64_t userId,
-                   std::vector<unsigned char>& sigOut)
+                   std::vector<unsigned char>& sigOut, bool xVerified)
 {
     sigOut.clear();
     if (!key.IsValid())
         return false;
-    const uint256 digest = HeartbeatDigest(timestamp, script, handle, userId);
+    const uint256 digest = HeartbeatDigest(timestamp, script, handle, userId, xVerified);
     return key.SignCompact(digest, sigOut);
 }
 
 bool VerifyHeartbeatSig(const CScript& script, int64_t timestamp,
                         const std::string& handle, uint64_t userId,
-                        const std::vector<unsigned char>& sig)
+                        const std::vector<unsigned char>& sig, bool xVerified)
 {
     if (sig.empty() || sig.size() > MAX_HEARTBEAT_SIG)
         return false;
@@ -473,7 +485,7 @@ bool VerifyHeartbeatSig(const CScript& script, int64_t timestamp,
     if (!keyID)
         return false;
     CPubKey pub;
-    const uint256 digest = HeartbeatDigest(timestamp, script, norm, userId);
+    const uint256 digest = HeartbeatDigest(timestamp, script, norm, userId, xVerified);
     if (!pub.RecoverCompact(digest, sig))
         return false;
     return pub.GetID() == *keyID;
@@ -493,7 +505,8 @@ bool SignLocalHeartbeat(int64_t timestamp, std::vector<unsigned char>& sigOut)
     if (!keyID)
         return false;
     if (g_localPayoutKey.IsValid() && g_localPayoutKey.GetPubKey().GetID() == *keyID)
-        return SignHeartbeat(g_localPayoutKey, timestamp, script, x.handle, x.userId, sigOut);
+        return SignHeartbeat(g_localPayoutKey, timestamp, script, x.handle, x.userId, sigOut,
+                             xsession::SessionIsXVerified());
 #ifdef ENABLE_WALLET
     CWallet* pwallet = FirstWalletOrNull();
     if (pwallet) {
@@ -501,7 +514,8 @@ bool SignLocalHeartbeat(int64_t timestamp, std::vector<unsigned char>& sigOut)
         {
             LOCK(pwallet->cs_wallet);
             if (pwallet->GetKey(*keyID, wkey) && wkey.IsValid())
-                return SignHeartbeat(wkey, timestamp, script, x.handle, x.userId, sigOut);
+                return SignHeartbeat(wkey, timestamp, script, x.handle, x.userId, sigOut,
+                                     xsession::SessionIsXVerified());
         }
     }
 #endif
@@ -553,12 +567,16 @@ bool Registry::LocalEligible() const
             return false;
         x = localX;
     }
-    return GetAllowlist().Contains(x.handle, x.userId);
+    if (!xsession::SessionIsXVerified())
+        return false;
+    return true;
 }
 
 bool Registry::Heartbeat(const CScript& script, int64_t now,
-                         const std::string& xHandle, uint64_t xUserId)
+                         const std::string& xHandle, uint64_t xUserId, bool xVerified)
 {
+    if (!xVerified)
+        return false;
     if (script.empty() || script.size() > MAX_HEARTBEAT_SCRIPT)
         return false;
     const uint160 id = IdFromScript(script);
@@ -567,8 +585,6 @@ bool Registry::Heartbeat(const CScript& script, int64_t now,
     std::string norm;
     std::string err;
     if (!NormalizeXHandle(xHandle, norm, err))
-        return false;
-    if (!GetAllowlist().Contains(norm, xUserId))
         return false;
     const CScript pin = GetAllowlist().PinnedScript(norm);
     if (!pin.empty() && pin != script)
@@ -630,7 +646,9 @@ bool Registry::HeartbeatLocal(int64_t now)
     }
     if (s.empty() || x.handle.empty())
         return false;
-    return Heartbeat(s, now, x.handle, x.userId);
+    if (!xsession::SessionIsXVerified())
+        return false;
+    return Heartbeat(s, now, x.handle, x.userId, true);
 }
 
 std::vector<uint160> Registry::ActiveIds(int64_t now) const
@@ -1043,7 +1061,7 @@ static CWallet* FirstWalletOrNull()
 static bool ProduceOneBlock(const CChainParams& chainparams)
 {
     if (!GetRegistry().LocalEligible()) {
-        LogPrintf("lottery: refusing to produce; local node is not linked+verified\n");
+        LogPrintf("lottery: refusing to produce; local node is not X Verified (blue check)\n");
         return false;
     }
 #ifdef ENABLE_WALLET
@@ -1138,7 +1156,7 @@ static void ProducerThread(const CChainParams& chainparams)
 
             if (!GetRegistry().LocalEligible()) {
                 if (!fLoggedIneligible) {
-                    LogPrintf("lottery: not linked to a verified X account; sync/relay only, not producing\n");
+                    LogPrintf("lottery: not X Verified (users/me.verified); sync/relay only, not producing\n");
                     fLoggedIneligible = true;
                 }
                 MilliSleep(1000);
