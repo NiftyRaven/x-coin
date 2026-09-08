@@ -42,6 +42,9 @@ rpcport=$RPCPORT
 port=$P2PPORT
 EOF
 
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp/runtime-ubuntu}"
+mkdir -p "$XDG_RUNTIME_DIR"
+
 need_xvfb=0
 if [[ -z "${DISPLAY:-}" ]]; then
   need_xvfb=1
