@@ -56,7 +56,7 @@ static const char *kTheme =
     "QLineEdit { background: #0a0a0a; color: #ffffff; border: 1px solid #3f3f46; border-radius: 0px; padding: 10px 12px; selection-background-color: #ffffff; selection-color: #000000; }"
     "QLineEdit:focus { border-color: #ffffff; }";
 
-    XHome::XHome(WalletView* walletViewIn, QWidget* parent)
+XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     : QWidget(parent)
     , walletView(walletViewIn)
     , clientModel(0)
@@ -98,7 +98,7 @@ static const char *kTheme =
     root->addWidget(tag);
 
     // Count only. Never list other people's addresses here — every xcoin-qt is already a node.
-    // Sharing *your* listen address is opt-in under My node (off by default).
+    // A user's node IP is their choice to provide. Off by default; never show automatically.
     // Joining a mesh still uses addnode= in xcoin.conf (operator docs).
     peersLabel = new QLabel("Connecting…");
     peersLabel->setObjectName("xtag");
@@ -252,7 +252,7 @@ static const char *kTheme =
     shareNodeChk = new QCheckBox("Provide my node IP");
     shareNodeChk->setObjectName("xcheck");
     shareNodeChk->setCursor(Qt::PointingHandCursor);
-    shareNodeChk->setToolTip("Optional. Off by default. Only then show or copy this machine's listen address.");
+    shareNodeChk->setToolTip("Optional. Off by default. Your node IP is yours to provide — never shown automatically, and other people's IPs are never listed.");
     root->addWidget(shareNodeChk);
 
     nodeSharePanel = new QWidget;
