@@ -88,8 +88,11 @@ Peers on this private mesh see the same mempool and blocks. There is no
 public explorer and nothing appears on Ravencoin explorers — XFER lives
 on **this** ledger only (own genesis, not an imported snapshot). A
 single node already stores that ledger; other people seeing the same
-tip need `addnode` on port **38443**. Help → About credits **Nifty
-Raven (@NFTRVN on X)** only.
+tip need a **trusted peer IP in the config file** (`addnode=` on port
+**38443**). That is operator config, not a BIP39 seed and not a Home
+widget — the GUI shows only “Connected to N peers” / “Connecting…”,
+never addresses. Help → About credits **Nifty Raven (@NFTRVN on X)**
+only.
 
 First run still asks for a **12-word BIP39 seed** (create or restore).
 That did not change. Sign in with X is a separate identity proof on this

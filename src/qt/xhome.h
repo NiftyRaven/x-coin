@@ -60,6 +60,7 @@ private:
     XOAuth* oauth;
 
     QLabel* heroTitle;
+    QLabel* peersLabel;
     QLabel* sessionLabel;
     QLabel* keysLabel;
     QLabel* lotteryLabel;

@@ -83,6 +83,14 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     tag->setWordWrap(true);
     root->addWidget(tag);
 
+    // Count only. Never list peer addresses here — every xcoin-qt is already a node.
+    // Trusted peer IP belongs in xcoin.conf (addnode=), not a Home widget.
+    peersLabel = new QLabel("Connecting…");
+    peersLabel->setObjectName("xtag");
+    peersLabel->setAlignment(Qt::AlignHCenter);
+    peersLabel->setWordWrap(true);
+    root->addWidget(peersLabel);
+
     balanceLabel = new QLabel;
     balanceLabel->setObjectName("xcard");
     balanceLabel->setWordWrap(true);
@@ -123,10 +131,9 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     root->addLayout(authRow);
 
     QLabel* credHint = new QLabel(
-        "Operator: paste your X app Client ID. Callback is "
-        "http://127.0.0.1:18791/callback — see docs/XSIGNIN.md. "
-        "Nothing is hardcoded. Login never succeeds without a real token "
-        "(or a -regtest mock of GET /2/users/me).");
+        "Operator: paste your X app Client ID. The loopback callback URL is in "
+        "docs/XSIGNIN.md. Nothing is hardcoded. Login never succeeds without a "
+        "real token (or a -regtest mock of GET /2/users/me).");
     credHint->setObjectName("xhint");
     credHint->setWordWrap(true);
     root->addWidget(credHint);
@@ -268,7 +275,12 @@ void XHome::applyTheme()
 
 void XHome::setClientModel(ClientModel* model)
 {
+    if (clientModel)
+        disconnect(clientModel, SIGNAL(numConnectionsChanged(int)), this, SLOT(refresh()));
     clientModel = model;
+    if (clientModel)
+        connect(clientModel, SIGNAL(numConnectionsChanged(int)), this, SLOT(refresh()));
+    refresh();
 }
 
 void XHome::setWalletModel(WalletModel* model)
@@ -335,6 +347,18 @@ void XHome::refresh()
         balanceLabel->setText("Balance\n" + RavenUnits::formatWithUnit(unit, walletModel->getBalance()));
     } else {
         balanceLabel->setText("Balance\n(open or create a wallet from File)");
+    }
+
+    if (clientModel) {
+        const int n = clientModel->getNumConnections();
+        if (n <= 0)
+            peersLabel->setText("Connecting…");
+        else if (n == 1)
+            peersLabel->setText("Connected to 1 peer");
+        else
+            peersLabel->setText(QString("Connected to %1 peers").arg(n));
+    } else {
+        peersLabel->setText("Connecting…");
     }
 
     UniValue l;

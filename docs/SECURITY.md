@@ -75,14 +75,16 @@ Stay private. Do **not** add public DNS seeds.
    RPC stays local (default). Use the cookie or a strong `-rpcpassword`.
    Do not expose **38442**.
 
-2. **Every other node** joins that seed — not a stranger:
+2. **Every other node** puts a **trusted peer IP in the config file**
+   (`xcoin.conf`) — not a stranger, not a BIP39 seed, not a GUI widget:
 
    ```
-   addnode=<seed-ip>:38443
+   addnode=<trusted-peer-ip>:38443
    ```
 
-   Optional: `-connect=<seed-ip>:38443` (only that peer; harder to eclipse
-   *if* the seed is honest; you also cannot see a second honest view).
+   Optional: `-connect=<trusted-peer-ip>:38443` (only that peer; harder
+   to eclipse *if* the seed is honest; you also cannot see a second
+   honest view). The wallet GUI never lists or shows peer addresses.
 
 3. **Same allowlist on every honest node.** Confirm each handle offline
    (verified / Premium badge). Prefer `handle userid` and, for the seed

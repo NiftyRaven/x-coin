@@ -99,18 +99,21 @@ There are no DNS seeds in-tree. For a private mesh:
      -xallowlist=/shared/verified-x-accounts.txt
    ```
 
-3. Tell every other operator to join with **either**:
+3. Tell every other operator to put a **trusted peer IP in the config
+   file** (`xcoin.conf`). This is a P2P join address, **not** a BIP39
+   seed and **not** a wallet GUI field. Home / Receive / Send never list
+   or show peer addresses (every `xcoin-qt` already *is* a node).
 
    ```bash
-   # xcoin.conf
-   addnode=<seed-ip>:38443
+   # xcoin.conf — operators only
+   addnode=<trusted-peer-ip>:38443
    # or, for first contact only:
-   seednode=<seed-ip>:38443
+   seednode=<trusted-peer-ip>:38443
    ```
 
 4. Do **not** add public DNS seeds while this repo is private.
-   `addnode`/`seednode` is the launch path. Hardening notes:
-   [SECURITY.md](SECURITY.md).
+   `addnode`/`seednode` in the config file is the launch path. Hardening
+   notes: [SECURITY.md](SECURITY.md).
 
 Peers gossip **signed** lottery heartbeats (`xhb`) after `verack`. Honest
 nodes that can connect to the seed (directly or via the mesh) share one

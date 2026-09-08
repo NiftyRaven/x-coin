@@ -44,7 +44,7 @@ contract + custodian/bridge decision. Do not invent one for listing.
 | Whitepaper | **Met** | [whitepaper/XCOIN.md](../whitepaper/XCOIN.md) |
 | How-to | **Met** | [README.md](../README.md), [RELEASE-1.0.md](RELEASE-1.0.md) |
 | Explorer | **Missing** (listing dependency) | No in-tree explorer. `DEFAULT_THIRD_PARTY_BROWSERS` is empty. Do not invent a public URL. A DEX may require one later. |
-| P2P port + how a seed operator publishes `addnode` | **Met** (operator docs) | Port **38443**. Private mesh: `addnode=<seed-ip>:38443` in `xcoin.conf`. [LAUNCH.md](LAUNCH.md). |
+| P2P port + how a seed operator publishes `addnode` | **Met** (operator docs) | Port **38443**. Trusted peer IP in the config file: `addnode=<trusted-peer-ip>:38443` in `xcoin.conf` (not a GUI widget). [LAUNCH.md](LAUNCH.md). |
 | Public DNS seeds | **Missing** (listing dependency) | `vSeeds.clear()`. Correct while private. |
 | No premine / fair launch | **Met** | No IPO, no founder allocation. Genesis coinbase never enters the UTXO set. Subsidy starts at height 1. |
 | Asset vs coin | **Met** | XFER = pair ticker. Identity assets are a separate layer (`XID1`, 32-char roots). |
@@ -58,7 +58,8 @@ contract + custodian/bridge decision. Do not invent one for listing.
 ## What an operator still needs (not code)
 
 1. **Decide to go public** — flip the repo only when you intend to list.
-2. **Publish a seed** — always-on IP, TCP **38443**, tell peers `addnode=`.
+2. **Publish a seed** — always-on host, TCP **38443**, tell operators to
+   put a trusted peer IP in the config file (`addnode=`). Not a Home field.
    Optional later: DNS `vSeeds` (do not add public seeds while private).
 3. **Stand up an explorer** — any Bitcoin-family explorer pointed at an
    `-txindex=1` `xcoind`. Put that URL in the listing form and, only then,
