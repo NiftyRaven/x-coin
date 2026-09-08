@@ -183,18 +183,19 @@ public:
         nDefaultPort = 38443;
         nPruneAfterHeight = 100000;
 
-        // Placeholder genesis (lottery chain: no PoW grind). Hash is computed at runtime.
+        // Launch genesis (lottery chain: no PoW grind). Times/nonce/bits frozen 2026-09-08.
         genesis = CreateGenesisBlock(1788825600, 1, 0x207fffff, 4, 5000 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetX16RHash();
-        // Distinct from Ravencoin mainnet; do not assert upstream hashes.
+        // hashGenesisBlock / merkle asserts filled after first build (see docs/LAUNCH.md).
 
         vSeeds.clear();
         vFixedSeeds.clear();
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,60);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,122);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,128);
+        // X Coin base58: P2PKH 'X…', P2SH 'x…' (not Ravencoin R… / r…).
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,76);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,139);
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,204);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};
 
@@ -235,18 +236,18 @@ public:
         nAddNullQualifierTagBurnAmount = .1 * COIN;
 
         // Burn Addresses
-        strIssueAssetBurnAddress = "RXissueAssetXXXXXXXXXXXXXXXXXhhZGt";
-        strReissueAssetBurnAddress = "RXReissueAssetXXXXXXXXXXXXXXVEFAWu";
-        strIssueSubAssetBurnAddress = "RXissueSubAssetXXXXXXXXXXXXXWcwhwL";
-        strIssueUniqueAssetBurnAddress = "RXissueUniqueAssetXXXXXXXXXXWEAe58";
-        strIssueMsgChannelAssetBurnAddress = "RXissueMsgChanneLAssetXXXXXXSjHvAY";
-        strIssueQualifierAssetBurnAddress = "RXissueQuaLifierXXXXXXXXXXXXUgEDbC";
-        strIssueSubQualifierAssetBurnAddress = "RXissueSubQuaLifierXXXXXXXXXVTzvv5";
-        strIssueRestrictedAssetBurnAddress = "RXissueRestrictedXXXXXXXXXXXXzJZ1q";
-        strAddNullQualifierTagBurnAddress = "RXaddTagBurnXXXXXXXXXXXXXXXXZQm5ya";
+        strIssueAssetBurnAddress = "XissueAssetXXXXXXXXXXXXXXXXXXwTyxt";
+        strReissueAssetBurnAddress = "XreissueAssetXXXXXXXXXXXXXXXZNfDqa";
+        strIssueSubAssetBurnAddress = "XissueSubAssetXXXXXXXXXXXXXXcHkFpF";
+        strIssueUniqueAssetBurnAddress = "XissueUniqueAssetXXXXXXXXXXXagKZDZ";
+        strIssueMsgChannelAssetBurnAddress = "XissueMsgChanneLAssetXXXXXXXcZDf2U";
+        strIssueQualifierAssetBurnAddress = "XissueQuaLifierXXXXXXXXXXXXXXAQP3h";
+        strIssueSubQualifierAssetBurnAddress = "XissueSubQuaLifierXXXXXXXXXXb8QkLq";
+        strIssueRestrictedAssetBurnAddress = "XissueRestrictedXXXXXXXXXXXXU7kfQh";
+        strAddNullQualifierTagBurnAddress = "XnuLLTagBurnXXXXXXXXXXXXXXXXdbJo3F";
 
             //Global Burn Address
-        strGlobalBurnAddress = "RXBurnXXXXXXXXXXXXXXXXXXXXXXWUo9FV";
+        strGlobalBurnAddress = "XgLobaLBurnXXXXXXXXXXXXXXXXXZTDEwo";
 
         // DGW Activation
         nDGWActivationBlock = 1;
@@ -400,14 +401,15 @@ public:
 
         genesis = CreateGenesisBlock(nGenesisTime, 1, 0x207fffff, 2, 5000 * COIN);
         consensus.hashGenesisBlock = genesis.GetX16RHash();
-        // Placeholder genesis — not Ravencoin testnet.
+        // Launch testnet genesis — hash asserted after first build (docs/LAUNCH.md).
 
         vFixedSeeds.clear();
         vSeeds.clear();
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
+        // Testnet P2PKH 'y…' (not Ravencoin n…/m…).
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,140);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,200);
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,247);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
 
@@ -446,18 +448,18 @@ public:
         nAddNullQualifierTagBurnAmount = .1 * COIN;
 
         // Burn Addresses
-        strIssueAssetBurnAddress = "n1issueAssetXXXXXXXXXXXXXXXXWdnemQ";
-        strReissueAssetBurnAddress = "n1ReissueAssetXXXXXXXXXXXXXXWG9NLd";
-        strIssueSubAssetBurnAddress = "n1issueSubAssetXXXXXXXXXXXXXbNiH6v";
-        strIssueUniqueAssetBurnAddress = "n1issueUniqueAssetXXXXXXXXXXS4695i";
-        strIssueMsgChannelAssetBurnAddress = "n1issueMsgChanneLAssetXXXXXXT2PBdD";
-        strIssueQualifierAssetBurnAddress = "n1issueQuaLifierXXXXXXXXXXXXUysLTj";
-        strIssueSubQualifierAssetBurnAddress = "n1issueSubQuaLifierXXXXXXXXXYffPLh";
-        strIssueRestrictedAssetBurnAddress = "n1issueRestrictedXXXXXXXXXXXXZVT9V";
-        strAddNullQualifierTagBurnAddress = "n1addTagBurnXXXXXXXXXXXXXXXXX5oLMH";
+        strIssueAssetBurnAddress = "yissueAssetXXXXXXXXXXXXXXXXXa53BzP";
+        strReissueAssetBurnAddress = "yReissueAssetXXXXXXXXXXXXXXXcgSAHx";
+        strIssueSubAssetBurnAddress = "yissueSubAssetXXXXXXXXXXXXXXXLKrKM";
+        strIssueUniqueAssetBurnAddress = "yissueUniqueAssetXXXXXXXXXXXXYCYqw";
+        strIssueMsgChannelAssetBurnAddress = "yissueMsgChanneLAssetXXXXXXXcMfYPL";
+        strIssueQualifierAssetBurnAddress = "yissueQuaLifierXXXXXXXXXXXXXXszhtz";
+        strIssueSubQualifierAssetBurnAddress = "yissueSubQuaLifierXXXXXXXXXXaJd6nj";
+        strIssueRestrictedAssetBurnAddress = "yissueRestrictedXXXXXXXXXXXXWy4AP5";
+        strAddNullQualifierTagBurnAddress = "yaddTagBurnXXXXXXXXXXXXXXXXXVtnNZw";
 
         // Global Burn Address
-        strGlobalBurnAddress = "n1BurnXXXXXXXXXXXXXXXXXXXXXXU1qejP";
+        strGlobalBurnAddress = "ygLobaLBurnXXXXXXXXXXXXXXXXXcrYmcW";
 
         // DGW Activation
         nDGWActivationBlock = 1;
@@ -610,7 +612,7 @@ public:
 
         genesis = CreateGenesisBlock(1524179366, 1, 0x207fffff, 4, 5000 * COIN);
         consensus.hashGenesisBlock = genesis.GetX16RHash();
-        // Placeholder genesis — not Ravencoin regtest. Hash computed at runtime.
+        // Launch regtest genesis — hash asserted after first build (docs/LAUNCH.md).
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
@@ -630,13 +632,13 @@ public:
             0
         };
 
-        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);
-        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);
-        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,239);
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,140);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,200);
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,247);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
 
-        // Raven BIP44 cointype in regtest
+        // Same unofficial test-chain type as testnet
         nExtCoinType = 1;
 
         /** RVN Start **/
@@ -651,19 +653,19 @@ public:
         nIssueRestrictedAssetBurnAmount = 1500 * COIN;
         nAddNullQualifierTagBurnAmount = .1 * COIN;
 
-        // Burn Addresses
-        strIssueAssetBurnAddress = "n1issueAssetXXXXXXXXXXXXXXXXWdnemQ";
-        strReissueAssetBurnAddress = "n1ReissueAssetXXXXXXXXXXXXXXWG9NLd";
-        strIssueSubAssetBurnAddress = "n1issueSubAssetXXXXXXXXXXXXXbNiH6v";
-        strIssueUniqueAssetBurnAddress = "n1issueUniqueAssetXXXXXXXXXXS4695i";
-        strIssueMsgChannelAssetBurnAddress = "n1issueMsgChanneLAssetXXXXXXT2PBdD";
-        strIssueQualifierAssetBurnAddress = "n1issueQuaLifierXXXXXXXXXXXXUysLTj";
-        strIssueSubQualifierAssetBurnAddress = "n1issueSubQuaLifierXXXXXXXXXYffPLh";
-        strIssueRestrictedAssetBurnAddress = "n1issueRestrictedXXXXXXXXXXXXZVT9V";
-        strAddNullQualifierTagBurnAddress = "n1addTagBurnXXXXXXXXXXXXXXXXX5oLMH";
+        // Burn Addresses (same prefixes as testnet)
+        strIssueAssetBurnAddress = "yissueAssetXXXXXXXXXXXXXXXXXa53BzP";
+        strReissueAssetBurnAddress = "yReissueAssetXXXXXXXXXXXXXXXcgSAHx";
+        strIssueSubAssetBurnAddress = "yissueSubAssetXXXXXXXXXXXXXXXLKrKM";
+        strIssueUniqueAssetBurnAddress = "yissueUniqueAssetXXXXXXXXXXXXYCYqw";
+        strIssueMsgChannelAssetBurnAddress = "yissueMsgChanneLAssetXXXXXXXcMfYPL";
+        strIssueQualifierAssetBurnAddress = "yissueQuaLifierXXXXXXXXXXXXXXszhtz";
+        strIssueSubQualifierAssetBurnAddress = "yissueSubQuaLifierXXXXXXXXXXaJd6nj";
+        strIssueRestrictedAssetBurnAddress = "yissueRestrictedXXXXXXXXXXXXWy4AP5";
+        strAddNullQualifierTagBurnAddress = "yaddTagBurnXXXXXXXXXXXXXXXXXVtnNZw";
 
         // Global Burn Address
-        strGlobalBurnAddress = "n1BurnXXXXXXXXXXXXXXXXXXXXXXU1qejP";
+        strGlobalBurnAddress = "ygLobaLBurnXXXXXXXXXXXXXXXXXcrYmcW";
 
         // DGW Activation
         nDGWActivationBlock = 200;

@@ -7,6 +7,7 @@
 #define XCOIN_LOTTERY_H
 
 #include "amount.h"
+#include "script/script.h"
 #include "sync.h"
 #include "uint256.h"
 
@@ -14,56 +15,68 @@
 #include <string>
 #include <vector>
 
+class CBlock;
 class CChainParams;
+class CValidationState;
 
 /**
- * X Coin lottery consensus (Phase 1 scaffold).
+ * X Coin lottery consensus.
  *
  * Design (see docs/LOTTERY.md):
- *  - Every running node is an active node after a heartbeat.
+ *  - Every running node is an active node after a heartbeat that advertises
+ *    a payable script. Node id = Hash160(script).
+ *  - Honest peers gossip `xhb` messages so they share one active-node set.
  *  - One lottery slot per minute; height maps 1:1 with slots after genesis.
  *  - Winner count starts at 1 and increases by 1 at each subsidy halving.
  *  - Winners are a deterministic sample of the sorted active-node set,
  *    seeded from the previous block hash and the slot number.
- *  - The slot subsidy is split as evenly as possible among that minute's winners.
- *
- * Phase 1 implements the algorithm, in-memory registry, producer thread, and
- * RPCs. Cross-node heartbeat gossip and coinbase multi-pay enforcement are
- * Phase 2.
+ *  - The slot subsidy is split among winners; fees go to the first winner.
+ *  - The producer commits the sorted active ids in a coinbase OP_RETURN
+ *    (`XHB1`) and validation rejects a coinbase that does not pay that draw.
  */
 namespace lottery {
 
 static const int64_t SLOT_SECONDS = 60;
 static const int64_t HEARTBEAT_TTL_SECONDS = 180;
+static const size_t MAX_ACTIVE_NODES = 4096;
+static const size_t MAX_HEARTBEAT_SCRIPT = 520;
+static const char COMMIT_MAGIC[4] = {'X', 'H', 'B', '1'};
 
 struct ActiveNode {
     uint160 id;
+    CScript script;
     int64_t lastSeen;
 };
 
 class Registry
 {
 public:
-    void SetLocalId(const uint160& id);
+    void SetLocalScript(const CScript& script);
+    CScript LocalScript() const;
     uint160 LocalId() const;
 
-    void Heartbeat(const uint160& id, int64_t now);
+    /** Record a payable script as active. id = Hash160(script). */
+    void Heartbeat(const CScript& script, int64_t now);
     void HeartbeatLocal(int64_t now);
 
     std::vector<uint160> ActiveIds(int64_t now) const;
     std::vector<ActiveNode> ActiveNodes(int64_t now) const;
+    CScript ScriptFor(const uint160& id) const;
     size_t Count(int64_t now) const;
 
 private:
     mutable CCriticalSection cs;
-    std::map<uint160, int64_t> nodes;
+    std::map<uint160, ActiveNode> nodes;
+    CScript localScript;
     uint160 localId;
 };
 
 Registry& GetRegistry();
 
-/** Persist or create a stable local node id in the data directory. */
-uint160 LoadOrCreateLocalId();
+uint160 IdFromScript(const CScript& script);
+
+/** Persist or create a stable local payout script in the data directory. */
+CScript LoadOrCreateLocalScript();
 
 /** Unix minute of a unix timestamp (floor). */
 int64_t SlotFromTime(int64_t unixTime);
@@ -110,6 +123,28 @@ Draw ComputeDraw(int nNextHeight,
                  int nSubsidyHalvingInterval,
                  CAmount subsidy,
                  int64_t now);
+
+/** Replace coinbase vout with winner payouts + XHB1 active-set commitment. */
+void ApplyCoinbasePayouts(CBlock& block,
+                          int nHeight,
+                          const uint256& prevBlockHash,
+                          int64_t genesisTime,
+                          int nSubsidyHalvingInterval,
+                          CAmount subsidy,
+                          CAmount nFees,
+                          const CScript& producerScript);
+
+/** Enforce committed active set and multi-winner payouts (height >= 1). */
+bool CheckLotteryCoinbase(const CBlock& block,
+                          int nHeight,
+                          const uint256& prevBlockHash,
+                          int64_t genesisTime,
+                          int nSubsidyHalvingInterval,
+                          CAmount subsidy,
+                          CValidationState& state);
+
+CScript MakeActiveSetCommitment(const std::vector<uint160>& sortedIds);
+bool ParseActiveSetCommitment(const CScript& script, std::vector<uint160>& ids);
 
 void StartProducer(const CChainParams& chainparams);
 void StopProducer();

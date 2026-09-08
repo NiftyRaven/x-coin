@@ -31,6 +31,7 @@
 #include "util.h"
 #include "utilmoneystr.h"
 #include "utilstrencodings.h"
+#include "lottery.h"
 #include "validationinterface.h"
 
 #if defined(NDEBUG)
@@ -1784,6 +1785,11 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::SENDCMPCT, fAnnounceUsingCMPCTBLOCK, nCMPCTBLOCKVersion));
         }
         pfrom->fSuccessfullyConnected = true;
+
+        CScript localScript = lottery::GetRegistry().LocalScript();
+        if (!localScript.empty()) {
+            connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::XHB, GetTime(), localScript));
+        }
     }
 
     else if (!pfrom->fSuccessfullyConnected)
@@ -2928,6 +2934,50 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         // message would be undesirable as we transmit it ourselves.
     }
 
+    else if (strCommand == NetMsgType::XHB)
+    {
+        int64_t nHbTime = 0;
+        CScript script;
+        try {
+            vRecv >> nHbTime >> script;
+        } catch (const std::exception&) {
+            LOCK(cs_main);
+            Misbehaving(pfrom->GetId(), 1);
+            return false;
+        }
+        const int64_t now = GetTime();
+        if (script.empty() || script.size() > lottery::MAX_HEARTBEAT_SCRIPT) {
+            LOCK(cs_main);
+            Misbehaving(pfrom->GetId(), 1);
+            return false;
+        }
+        if (nHbTime > now + 600 || nHbTime < now - 600) {
+            return true;
+        }
+        const uint160 id = lottery::IdFromScript(script);
+        static CCriticalSection cs_hbRelay;
+        static std::map<uint160, int64_t> lastRelay;
+        bool shouldRelay = false;
+        {
+            LOCK(cs_hbRelay);
+            auto it = lastRelay.find(id);
+            if (it == lastRelay.end() || now - it->second >= 15) {
+                lastRelay[id] = now;
+                shouldRelay = true;
+            }
+        }
+        lottery::GetRegistry().Heartbeat(script, now);
+        LogPrint(BCLog::NET, "lottery xhb id=%s peer=%d relay=%d\n", id.GetHex(), pfrom->GetId(), shouldRelay);
+        if (shouldRelay) {
+            connman->ForEachNode([&](CNode* pto) {
+                if (pto == pfrom || !pto->fSuccessfullyConnected || pto->fDisconnect)
+                    return;
+                CNetMsgMaker relayMaker(pto->GetSendVersion());
+                connman->PushMessage(pto, relayMaker.Make(NetMsgType::XHB, nHbTime, script));
+            });
+        }
+    }
+
     else {
         // Ignore unknown commands for extensibility
         LogPrint(BCLog::NET, "Unknown command \"%s\" from peer=%d\n", SanitizeString(strCommand), pfrom->GetId());
@@ -3257,6 +3307,13 @@ bool PeerLogicValidation::SendMessages(CNode* pto, std::atomic<bool>& interruptM
             // Ping automatically sent as a latency probe & keepalive.
             pingSend = true;
         }
+        if (pto->nNextLotteryHb < GetTimeMicros()) {
+            pto->nNextLotteryHb = GetTimeMicros() + 30 * 1000000;
+            CScript localScript = lottery::GetRegistry().LocalScript();
+            if (!localScript.empty())
+                connman->PushMessage(pto, msgMaker.Make(NetMsgType::XHB, GetTime(), localScript));
+        }
+
         if (pingSend) {
             uint64_t nonce = 0;
             while (nonce == 0) {

@@ -48,6 +48,7 @@ Binaries:
 - `src/xcoind` — node / lottery producer
 - `src/xcoin-cli` — RPC client
 - `src/xcoin-tx` — transaction utility
+- `src/qt/xcoin-qt` — GUI (optional)
 
 Upstream `doc/build-*.md` still says `ravend` in places; use the `xcoin*` names.
 
@@ -57,7 +58,7 @@ Upstream `doc/build-*.md` still says `ravend` in places; use the `xcoin*` names.
 src/xcoind -regtest -daemon -server
 src/xcoin-cli -regtest getblockchaininfo
 src/xcoin-cli -regtest getlotteryinfo
-src/xcoin-cli -regtest getnewaddress
+src/xcoin-cli -regtest getnewaddress   # y… on regtest/testnet; X… on main
 src/xcoin-cli -regtest generatetoaddress 1 <address>
 src/xcoin-cli -regtest issue TEST_ASSET 1000
 ```
@@ -78,14 +79,13 @@ Verified on regtest in this pass: distinct genesis, `getlotteryinfo` (1 winner, 
 
 The Ravencoin asset layer is intact: `issue`, `transfer`, `listassets`, unique/qualifier/restricted assets, burn fees. Reserved names now include **XFER** / **XCOIN** as well as RVN/RAVEN. Script-level `OP_RVN_ASSET` markers are unchanged so the protocol still matches the upstream implementation.
 
-## Honest TODOs (Phase 2)
+## Launch
 
-- Gossip heartbeats so every honest node shares one active set.
-- Enforce multi-winner coinbase payouts in validation.
-- Freeze a launch genesis (current hashes are placeholders).
-- New address prefixes (Phase 1 still uses Ravencoin base58 versions so burn addresses decode).
-- Seeds, explorers, production audit, X.com API — out of scope here.
-- Full `make check` against the new genesis (upstream tests hard-code Ravencoin hashes).
+Private-launch checklist (ports, magic, genesis, seed publish, join, rewards, risks): [docs/LAUNCH.md](docs/LAUNCH.md). Lottery: [docs/LOTTERY.md](docs/LOTTERY.md).
+
+`contrib/xcoin/smoke-regtest.sh` exercises lottery + a two-winner coinbase + `issue TESTASSET`.
+
+Not in scope: X.com API, explorers, DNS seeds, making upstream `make check` green against the new genesis.
 
 ## License
 

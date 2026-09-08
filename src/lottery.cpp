@@ -7,10 +7,14 @@
 
 #include "chain.h"
 #include "chainparams.h"
+#include "consensus/validation.h"
 #include "fs.h"
 #include "hash.h"
 #include "miner.h"
+#include "primitives/block.h"
+#include "pubkey.h"
 #include "random.h"
+#include "script/standard.h"
 #include "util.h"
 #include "utilstrencodings.h"
 #include "validation.h"
@@ -38,10 +42,27 @@ Registry& GetRegistry()
     return g_registry;
 }
 
-void Registry::SetLocalId(const uint160& id)
+uint160 IdFromScript(const CScript& script)
+{
+    return Hash160(script);
+}
+
+void Registry::SetLocalScript(const CScript& script)
+{
+    if (script.empty())
+        return;
+    const uint160 id = IdFromScript(script);
+    LOCK(cs);
+    if (localId != id && !localId.IsNull())
+        nodes.erase(localId);
+    localScript = script;
+    localId = id;
+}
+
+CScript Registry::LocalScript() const
 {
     LOCK(cs);
-    localId = id;
+    return localScript;
 }
 
 uint160 Registry::LocalId() const
@@ -50,17 +71,31 @@ uint160 Registry::LocalId() const
     return localId;
 }
 
-void Registry::Heartbeat(const uint160& id, int64_t now)
+void Registry::Heartbeat(const CScript& script, int64_t now)
 {
+    if (script.empty() || script.size() > MAX_HEARTBEAT_SCRIPT)
+        return;
+    const uint160 id = IdFromScript(script);
     if (id.IsNull())
         return;
     LOCK(cs);
-    nodes[id] = now;
+    nodes[id] = ActiveNode{id, script, now};
+    if (nodes.size() > MAX_ACTIVE_NODES) {
+        auto oldest = nodes.begin();
+        for (auto it = nodes.begin(); it != nodes.end(); ++it) {
+            if (it->second.lastSeen < oldest->second.lastSeen)
+                oldest = it;
+        }
+        if (oldest->first != localId)
+            nodes.erase(oldest);
+    }
 }
 
 void Registry::HeartbeatLocal(int64_t now)
 {
-    Heartbeat(LocalId(), now);
+    CScript s = LocalScript();
+    if (!s.empty())
+        Heartbeat(s, now);
 }
 
 std::vector<uint160> Registry::ActiveIds(int64_t now) const
@@ -69,10 +104,9 @@ std::vector<uint160> Registry::ActiveIds(int64_t now) const
     LOCK(cs);
     ids.reserve(nodes.size());
     for (const auto& kv : nodes) {
-        if (now - kv.second <= HEARTBEAT_TTL_SECONDS)
+        if (now - kv.second.lastSeen <= HEARTBEAT_TTL_SECONDS)
             ids.push_back(kv.first);
     }
-    // std::map is already sorted by uint160
     return ids;
 }
 
@@ -82,10 +116,19 @@ std::vector<ActiveNode> Registry::ActiveNodes(int64_t now) const
     LOCK(cs);
     out.reserve(nodes.size());
     for (const auto& kv : nodes) {
-        if (now - kv.second <= HEARTBEAT_TTL_SECONDS)
-            out.push_back({kv.first, kv.second});
+        if (now - kv.second.lastSeen <= HEARTBEAT_TTL_SECONDS)
+            out.push_back(kv.second);
     }
     return out;
+}
+
+CScript Registry::ScriptFor(const uint160& id) const
+{
+    LOCK(cs);
+    auto it = nodes.find(id);
+    if (it == nodes.end())
+        return CScript();
+    return it->second.script;
 }
 
 size_t Registry::Count(int64_t now) const
@@ -93,34 +136,40 @@ size_t Registry::Count(int64_t now) const
     return ActiveIds(now).size();
 }
 
-uint160 LoadOrCreateLocalId()
+CScript LoadOrCreateLocalScript()
 {
-    fs::path path = GetDataDir() / "lottery-nodeid.dat";
+    fs::path path = GetDataDir() / "lottery-payout.dat";
     if (fs::exists(path)) {
         FILE* f = fsbridge::fopen(path, "rb");
         if (f) {
-            unsigned char buf[20];
-            size_t n = fread(buf, 1, 20, f);
-            fclose(f);
-            if (n == 20) {
-                uint160 id;
-                memcpy(id.begin(), buf, 20);
-                if (!id.IsNull())
-                    return id;
+            if (fseek(f, 0, SEEK_END) == 0) {
+                long sz = ftell(f);
+                if (sz > 0 && sz <= (long)MAX_HEARTBEAT_SCRIPT && fseek(f, 0, SEEK_SET) == 0) {
+                    std::vector<unsigned char> buf((size_t)sz);
+                    size_t n = fread(buf.data(), 1, buf.size(), f);
+                    fclose(f);
+                    if (n == buf.size())
+                        return CScript(buf.begin(), buf.end());
+                } else {
+                    fclose(f);
+                }
+            } else {
+                fclose(f);
             }
         }
     }
 
     uint256 rnd = GetRandHash();
-    uint160 id;
-    CHash160().Write(rnd.begin(), 32).Finalize(id.begin());
+    uint160 h;
+    CHash160().Write(rnd.begin(), 32).Finalize(h.begin());
+    CScript script = GetScriptForDestination(CKeyID(h));
 
     FILE* f = fsbridge::fopen(path, "wb");
     if (f) {
-        fwrite(id.begin(), 1, 20, f);
+        fwrite(script.data(), 1, script.size(), f);
         fclose(f);
     }
-    return id;
+    return script;
 }
 
 int64_t SlotFromTime(int64_t unixTime)
@@ -144,8 +193,6 @@ int WinnerCount(int nHeight, int nSubsidyHalvingInterval)
     if (nSubsidyHalvingInterval <= 0)
         return 1;
     int halvings = nHeight / nSubsidyHalvingInterval;
-    // One extra winner per completed halving. Cap so we cannot overflow
-    // a pathological height and so a tiny active set still terminates.
     if (halvings > 1023)
         halvings = 1023;
     return halvings + 1;
@@ -155,7 +202,6 @@ uint256 Seed(const uint256& prevBlockHash, int64_t slot)
 {
     uint256 out;
     uint64_t le = 0;
-    // little-endian slot for host-independent hashing
     for (int i = 0; i < 8; i++)
         reinterpret_cast<unsigned char*>(&le)[i] = (slot >> (8 * i)) & 0xff;
 
@@ -203,7 +249,6 @@ std::vector<uint160> SelectWinners(const std::vector<uint160>& sortedActive,
         std::swap(pool[i], pool[idx]);
         winners.push_back(pool[i]);
     }
-    // Keep winner list in selection order (first winner is the block producer).
     return winners;
 }
 
@@ -242,6 +287,176 @@ Draw ComputeDraw(int nNextHeight,
     return d;
 }
 
+CScript MakeActiveSetCommitment(const std::vector<uint160>& sortedIds)
+{
+    std::vector<unsigned char> data;
+    data.reserve(8 + sortedIds.size() * 20);
+    data.push_back((unsigned char)COMMIT_MAGIC[0]);
+    data.push_back((unsigned char)COMMIT_MAGIC[1]);
+    data.push_back((unsigned char)COMMIT_MAGIC[2]);
+    data.push_back((unsigned char)COMMIT_MAGIC[3]);
+    uint32_t n = (uint32_t)sortedIds.size();
+    data.push_back(n & 0xff);
+    data.push_back((n >> 8) & 0xff);
+    data.push_back((n >> 16) & 0xff);
+    data.push_back((n >> 24) & 0xff);
+    for (const auto& id : sortedIds)
+        data.insert(data.end(), id.begin(), id.end());
+    return CScript() << OP_RETURN << data;
+}
+
+bool ParseActiveSetCommitment(const CScript& script, std::vector<uint160>& ids)
+{
+    ids.clear();
+    if (script.empty() || script[0] != OP_RETURN)
+        return false;
+    CScript::const_iterator pc = script.begin() + 1;
+    std::vector<unsigned char> data;
+    opcodetype opcode;
+    if (!script.GetOp(pc, opcode, data))
+        return false;
+    if (data.size() < 8)
+        return false;
+    if (data[0] != (unsigned char)COMMIT_MAGIC[0] ||
+        data[1] != (unsigned char)COMMIT_MAGIC[1] ||
+        data[2] != (unsigned char)COMMIT_MAGIC[2] ||
+        data[3] != (unsigned char)COMMIT_MAGIC[3])
+        return false;
+    uint32_t n = (uint32_t)data[4] | ((uint32_t)data[5] << 8) |
+                 ((uint32_t)data[6] << 16) | ((uint32_t)data[7] << 24);
+    if (n > 1024)
+        return false;
+    if (data.size() != 8 + (size_t)n * 20)
+        return false;
+    ids.resize(n);
+    for (uint32_t i = 0; i < n; i++)
+        memcpy(ids[i].begin(), &data[8 + (size_t)i * 20], 20);
+    for (uint32_t i = 1; i < n; i++) {
+        if (ids[i] <= ids[i - 1])
+            return false;
+    }
+    return true;
+}
+
+void ApplyCoinbasePayouts(CBlock& block,
+                          int nHeight,
+                          const uint256& prevBlockHash,
+                          int64_t genesisTime,
+                          int nSubsidyHalvingInterval,
+                          CAmount subsidy,
+                          CAmount nFees,
+                          const CScript& producerScript)
+{
+    if (nHeight < 1 || block.vtx.empty())
+        return;
+
+    const int64_t now = GetTime();
+    if (!producerScript.empty()) {
+        GetRegistry().SetLocalScript(producerScript);
+        GetRegistry().Heartbeat(producerScript, now);
+    } else {
+        GetRegistry().HeartbeatLocal(now);
+    }
+
+    Draw draw = ComputeDraw(nHeight, prevBlockHash, genesisTime,
+                            nSubsidyHalvingInterval, subsidy, now);
+    if (draw.winners.empty()) {
+        // Should not happen after heartbeating the producer script.
+        GetRegistry().Heartbeat(producerScript, now);
+        draw = ComputeDraw(nHeight, prevBlockHash, genesisTime,
+                           nSubsidyHalvingInterval, subsidy, now);
+    }
+    if (draw.winners.empty())
+        return;
+
+    std::vector<CAmount> parts = SplitReward(subsidy, (int)draw.winners.size());
+    CMutableTransaction tx(*block.vtx[0]);
+    tx.vout.clear();
+    for (size_t i = 0; i < draw.winners.size(); i++) {
+        CScript dest = GetRegistry().ScriptFor(draw.winners[i]);
+        if (dest.empty())
+            dest = producerScript;
+        CAmount value = parts.empty() ? 0 : parts[i];
+        if (i == 0)
+            value += nFees;
+        tx.vout.emplace_back(value, dest);
+    }
+    tx.vout.emplace_back(0, MakeActiveSetCommitment(draw.active));
+    block.vtx[0] = MakeTransactionRef(std::move(tx));
+}
+
+bool CheckLotteryCoinbase(const CBlock& block,
+                          int nHeight,
+                          const uint256& prevBlockHash,
+                          int64_t genesisTime,
+                          int nSubsidyHalvingInterval,
+                          CAmount subsidy,
+                          CValidationState& state)
+{
+    if (nHeight < 1)
+        return true;
+    if (block.vtx.empty() || !block.vtx[0]->IsCoinBase())
+        return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery", false, "missing coinbase");
+
+    const CTransaction& cb = *block.vtx[0];
+    std::vector<uint160> committed;
+    bool found = false;
+    for (const auto& out : cb.vout) {
+        if (ParseActiveSetCommitment(out.scriptPubKey, committed)) {
+            found = true;
+            break;
+        }
+    }
+    if (!found)
+        return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-commit", false,
+                         "coinbase missing XHB1 active-set commitment");
+
+    const int64_t slot = SlotFromHeight(nHeight, genesisTime);
+    const uint256 seed = Seed(prevBlockHash, slot);
+    const int k = WinnerCount(nHeight, nSubsidyHalvingInterval);
+    const std::vector<uint160> winners = SelectWinners(committed, seed, k);
+    if (winners.empty())
+        return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-empty", false,
+                         "committed active set produced no winners");
+
+    std::vector<CTxOut> pays;
+    pays.reserve(cb.vout.size());
+    for (const auto& out : cb.vout) {
+        if (out.scriptPubKey.empty())
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-script", false,
+                             "empty coinbase script");
+        if (out.scriptPubKey[0] == OP_RETURN)
+            continue;
+        pays.push_back(out);
+    }
+    if (pays.size() != winners.size())
+        return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-count", false,
+                         strprintf("expected %u winner outputs, got %u",
+                                   (unsigned)winners.size(), (unsigned)pays.size()));
+
+    CAmount paid = 0;
+    for (const auto& p : pays)
+        paid += p.nValue;
+    if (paid < subsidy)
+        return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-amount", false,
+                         "coinbase pays less than subsidy");
+
+    std::vector<CAmount> parts = SplitReward(subsidy, (int)winners.size());
+    for (size_t i = 0; i < winners.size(); i++) {
+        if (IdFromScript(pays[i].scriptPubKey) != winners[i])
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-winner", false,
+                             strprintf("payout %u script does not match winner", (unsigned)i));
+        CAmount expect = parts[i];
+        if (i == 0)
+            expect += (paid - subsidy);
+        if (pays[i].nValue != expect)
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-split", false,
+                             strprintf("payout %u amount mismatch", (unsigned)i));
+    }
+    (void)IsWitnessCommitment; // used only as documentation of skipped OP_RETURNs
+    return true;
+}
+
 static CWallet* FirstWalletOrNull()
 {
 #ifdef ENABLE_WALLET
@@ -267,6 +482,7 @@ static bool ProduceOneBlock(const CChainParams& chainparams)
         LogPrintf("lottery: no coinbase script (empty keypool?)\n");
         return false;
     }
+    GetRegistry().SetLocalScript(coinbaseScript->reserveScript);
 
     std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(chainparams).CreateNewBlock(coinbaseScript->reserveScript));
     if (!pblocktemplate) {
@@ -304,16 +520,25 @@ static void ProducerThread(const CChainParams& chainparams)
     RenameThread("xcoin-lottery");
     LogPrintf("lottery: producer started\n");
 
-    GetRegistry().SetLocalId(LoadOrCreateLocalId());
+    GetRegistry().SetLocalScript(LoadOrCreateLocalScript());
     int64_t lastProducedSlot = -1;
 
     try {
         while (true) {
             boost::this_thread::interruption_point();
             const int64_t now = GetTime();
+
+#ifdef ENABLE_WALLET
+            CWallet* pWallet = FirstWalletOrNull();
+            if (pWallet) {
+                std::shared_ptr<CReserveScript> coinbaseScript;
+                pWallet->GetScriptForMining(coinbaseScript);
+                if (coinbaseScript && !coinbaseScript->reserveScript.empty())
+                    GetRegistry().SetLocalScript(coinbaseScript->reserveScript);
+            }
+#endif
             GetRegistry().HeartbeatLocal(now);
 
-            // Regtest / mine-on-demand: heartbeat only; blocks come from RPC.
             if (chainparams.MineBlocksOnDemand()) {
                 MilliSleep(1000);
                 continue;
@@ -334,7 +559,6 @@ static void ProducerThread(const CChainParams& chainparams)
             const int64_t slot = SlotFromHeight(nextHeight, chainparams.GenesisBlock().nTime);
             const int64_t currentSlot = SlotFromTime(now);
 
-            // One block per minute: wait until wall-clock slot catches the height slot.
             if (currentSlot < slot) {
                 MilliSleep(1000);
                 continue;
@@ -351,14 +575,11 @@ static void ProducerThread(const CChainParams& chainparams)
                                     subsidy, now);
 
             if (draw.winners.empty()) {
-                // Solo / first node: if the set is empty we still registered
-                // ourselves this loop; retry next second.
                 MilliSleep(1000);
                 continue;
             }
 
-            if (IsWinner(GetRegistry().LocalId(), draw.winners) ||
-                draw.winners.front() == GetRegistry().LocalId()) {
+            if (IsWinner(GetRegistry().LocalId(), draw.winners)) {
                 if (ProduceOneBlock(chainparams))
                     lastProducedSlot = slot;
             }
@@ -375,7 +596,7 @@ void StartProducer(const CChainParams& chainparams)
     LOCK(cs_producer);
     if (g_producerThreads)
         return;
-    GetRegistry().SetLocalId(LoadOrCreateLocalId());
+    GetRegistry().SetLocalScript(LoadOrCreateLocalScript());
     GetRegistry().HeartbeatLocal(GetTime());
     g_producerThreads = new boost::thread_group();
     g_producerThreads->create_thread(boost::bind(&ProducerThread, boost::cref(chainparams)));

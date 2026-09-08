@@ -1,13 +1,13 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=Raven Core
-Comment=Connect to the Raven P2P Network
-Comment[de]=Verbinde mit dem Raven peer-to-peer Netzwerk
-Comment[fr]=Raven, monnaie virtuelle cryptographique pair à pair
-Comment[tr]=Raven, eşten eşe kriptografik sanal para birimi
-Exec=raven-qt %u
+Name=X Coin
+Comment=Connect to the X Coin (XFER) P2P Network
+Comment[de]=Verbinde mit dem X Coin peer-to-peer Netzwerk
+Comment[fr]=X Coin, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=X Coin, eşten eşe kriptografik sanal para birimi
+Exec=xcoin-qt %u
 Terminal=false
 Type=Application
-Icon=raven128
-MimeType=x-scheme-handler/raven;
+Icon=xcoin
+MimeType=x-scheme-handler/xcoin;
 Categories=Office;Finance;

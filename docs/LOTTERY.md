@@ -1,13 +1,10 @@
 # X Coin lottery consensus
 
-X Coin does **not** use Proof-of-Work. Once `xcoind` (or the Qt wallet) is
+X Coin does **not** use Proof-of-Work. Once `xcoind` (or `xcoin-qt`) is
 running, that process is an **active node**. Every **minute** a lottery picks
 who may produce the next block and who shares that minute’s subsidy.
 
-This document is the source of truth for the algorithm. Phase 1 implements the
-math, an in-memory active-node registry, a producer thread, and RPCs
-(`getlotteryinfo`, `getactivenodes`, `registeractivenode`). Phase 2 must make
-the active set identical across honest peers and enforce the coinbase split.
+This document is the source of truth for the algorithm.
 
 ## Units and schedule
 
@@ -26,14 +23,16 @@ Genesis (height 0) is not a lottery block.
 
 A node is **active** if it has heartbeated within the last **180 seconds**.
 
-Phase 1:
-
-- On start, the node loads or creates a 160-bit id in `lottery-nodeid.dat` under the data directory (`~/.xcoin` on Unix).
-- The producer thread heartbeats that id every second.
-- `registeractivenode` records a heartbeat for the local id or a supplied id.
-- The registry is **in-memory** and **not yet gossiped**. Two isolated nodes do not see each other.
-
-Phase 2 leftover: a P2P heartbeat inventory so every honest node computes the same sorted active set for a given slot.
+- Node **id** = `Hash160(payout script)`. The script is what coinbase will pay.
+- On start, the node loads or creates a payout script in `lottery-payout.dat`
+  under the data directory (`~/.xcoin` on Unix). When a wallet is present the
+  producer adopts the wallet mining script as the local payout.
+- The producer thread heartbeats that script every second.
+- `registeractivenode` records a heartbeat for the local script or a supplied
+  **address / script hex**.
+- Peers gossip `xhb` messages (`int64 timestamp` + `CScript`) after `verack`
+  and about every 30 seconds. Honest nodes that can talk to each other
+  therefore share one sorted active set for a given slot.
 
 ## Deterministic seed
 
@@ -70,7 +69,7 @@ If the active set is smaller than `winnerCount`, every active node wins.
 
 Same active set + same seed ⇒ same winner list on every honest node.
 
-## Rewards
+## Rewards and coinbase
 
 The Ravencoin subsidy function is unchanged (5000 XFER, right-shifted each
 halving). That amount is split across the winners:
@@ -80,19 +79,26 @@ base = total / k
 remainder = total % k   // extra xferons go to the first `remainder` winners
 ```
 
-Phase 1 still builds a single coinbase output (the producing node’s wallet
-script) via `BlockAssembler`. `SplitReward` is implemented and returned by
-`getlotteryinfo`. Phase 2 leftover: coinbase must pay each winner its share,
-and validation must reject a mismatch.
+Fees (if any) are added to the **first** winner’s output.
 
-## Block production (Phase 1)
+The producer writes:
+
+1. One `CTxOut` per winner, in selection order, paying `Hash160(script) == winner id`.
+2. An `OP_RETURN` commitment: magic `XHB1` + uint32 LE count + concatenated
+   20-byte ids (must be sorted unique). This is the active set used for the draw.
+
+`ContextualCheckBlock` rejects a height ≥ 1 coinbase that is missing the
+commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
+
+## Block production
 
 - **Main / test:** the producer thread heartbeats, waits until wall-clock slot
   ≥ height slot, and if this node is a winner it calls `CreateNewBlock` and
   `ProcessNewBlock`. There is **no** nonce grind. `CheckProofOfWork` is a
   no-op.
 - **Regtest:** the producer only heartbeats. Use `generatetoaddress` /
-  `generate` to assemble blocks on demand (still no PoW).
+  `generate` to assemble blocks on demand (still no PoW). The destination
+  script is heartbeated so it is in the active set.
 - Removed / gutted: `RavenMiner` hash loop, `-gen` / `setgenerate` as a miner,
   KawPoW submit helpers (`pprpcsb`, `getkawpowhash`).
 
@@ -101,18 +107,17 @@ and validation must reject a mismatch.
 | Command | Purpose |
 | --- | --- |
 | `getlotteryinfo` | Next-height draw: slot, seed, winners, split, local id |
-| `getactivenodes` | Current registry |
-| `registeractivenode (id)` | Heartbeat this node or a hex id |
+| `getactivenodes` | Current registry (id, script hex, lastseen) |
+| `registeractivenode (payout)` | Heartbeat this node or an address / script hex |
 | `generatetoaddress` | Regtest / on-demand assembly (not mining) |
 
-## Security notes (honest TODOs)
+## Security notes
 
-Phase 1 is a scaffold for a distinct chain identity and a working
-single-node / regtest loop. It is **not** a production consensus:
-
-- Sybil: one operator can run many processes and win more often.
-- Registry split: peers do not yet share heartbeats, so they can disagree on winners.
-- Nothing yet proves a produced block’s coinbase matches the draw.
-- Clock skew can delay a slot; height still maps deterministically once a block exists.
+- **Sybil:** one operator can run many processes, or a producer can commit an
+  active set of scripts they control. Validation only proves the coinbase
+  matches the *committed* set. Acceptable for a private trusted mesh; not a
+  bonded public lottery.
+- Clock skew can delay a slot; height still maps deterministically once a
+  block exists.
 
 Treat the lottery as specified here; do not reintroduce PoW as the production path.

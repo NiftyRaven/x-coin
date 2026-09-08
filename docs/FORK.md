@@ -38,41 +38,36 @@ Ravencoin defaults (8767/8766, 18770/18766, 18444/18443, magic `RAVN` / `RVNT` /
 
 **Unit:** ticker **XFER**, subunit **xferon** (1 XFER = 1e8 xferons). Display currency is `XFER` (`CURRENCY_UNIT`).
 
-**Genesis:** new timestamp string and times; hashes are computed at runtime. These are **placeholders** — not mined against a difficulty target and not Ravencoin’s genesis. `nMinimumChainWork` and `defaultAssumeValid` are zero; checkpoints and DNS seeds are empty.
+**Genesis:** timestamp string and times frozen 2026-09-08 (see [LAUNCH.md](LAUNCH.md)). Hashes are X16R of that block (not Ravencoin’s genesis and not PoW-ground). `nMinimumChainWork` and `defaultAssumeValid` are zero; checkpoints and DNS seeds are empty — publish a seed with `addnode` / `seednode`.
 
-**Address prefixes:** Phase 1 keeps Ravencoin base58 version bytes so the existing asset burn addresses still decode. Addresses still look like Ravencoin `R…` / testnet `n…`. Changing prefixes is a Phase 2 leftover (requires new burn addresses).
+**Address prefixes:** main P2PKH version **76** (`X…`), P2SH **139** (`x…`); test/regtest P2PKH **140** (`y…`). Asset burn addresses were regenerated for those versions.
 
 ## Intentional deltas vs v4.8.0
 
-1. **Rebrand** of operator-facing strings, ports, magic, datadir, client name, binaries (`xcoind`, `xcoin-cli`, `xcoin-tx`; Qt still built as `raven-qt` unless the Qt makefile is updated).
+1. **Rebrand** of operator-facing strings, ports, magic, datadir, client name, binaries (`xcoind`, `xcoin-cli`, `xcoin-tx`, `xcoin-qt`).
 2. **PoW gutted:** `RavenMiner` hash loop deleted; `CheckProofOfWork` always succeeds; `-gen` / `setgenerate` removed as a miner; KawPoW submit RPCs unregistered.
-3. **Lottery module** in `src/lottery.{h,cpp}` + `src/rpc/lottery.cpp`, started from `init.cpp`.
+3. **Lottery module** in `src/lottery.{h,cpp}` + `src/rpc/lottery.cpp`, started from `init.cpp`. P2P `xhb` gossip + coinbase `XHB1` commitment / multi-winner validation.
 4. **Assets retained** and turned on from height 0 (`nAssetActivationHeight = 0`, messaging/restricted activation 0). Reserved root names now include `XFER` / `XCOIN` as well as `RVN` / `RAVEN` / `RAVENCOIN`. Asset script opcodes (`OP_RVN_ASSET`, `rvnq` / `rvnt` markers) are **unchanged** so the Ravencoin asset protocol still works.
 5. KawPoW activation time pushed to the far future; header hashing stays on the pre-KawPoW path. Lottery does not use that hash as a work function.
 
 ## Assets (kept)
 
-Ravencoin’s user-created asset layer is still in `src/assets/` and the `issue` / `transfer` / `listassets` RPC family. Burn fees and burn addresses are the same *values* as v4.8.0 (500 XFER to issue a root, etc.) so the economics of asset creation stay familiar.
+Ravencoin’s user-created asset layer is still in `src/assets/` and the `issue` / `transfer` / `listassets` RPC family. Burn *fees* are the same amounts as v4.8.0 (500 XFER to issue a root, etc.). Burn *addresses* are new X Coin base58 strings (see [LAUNCH.md](LAUNCH.md)).
 
 See also `assets/asset_metadata_spec.md` from upstream.
 
 ## What we did not change (on purpose)
 
 - Internal C++ type names (`CRavenAddress`, `libraven_server`, `raven-config.h`, `OP_RVN_ASSET`, …) — renaming them is a compile-wide churn with no consensus benefit.
-- Qt binary name / most GUI artwork (Phase 2).
+- Internal C++ type names in Qt (`RavenGUI`, `raven.cpp` entry). The installed binary is `xcoin-qt`; source SVG is also `qt/res/src/xcoin.svg`.
 - Full clean of every “Raven” comment in third-party and test trees.
 
-## Phase 2 leftovers
+## Honest leftovers (not private-launch blockers)
 
-- P2P heartbeat gossip so the active set is deterministic across nodes.
-- Validate that a block’s coinbase pays the lottery winners (multi-output split).
-- Freeze a real genesis hash once the network launch time is chosen; publish seeds.
-- New address prefixes + regenerated burn addresses.
-- Rename remaining `raven-*` artifacts (Qt, man pages, bash completion).
 - Sybil / stake weighting if a free “run a process” lottery is not enough.
 - Re-audit asset BIP9 vs height-0 force-on.
 - Make `make check` green against the new genesis (many upstream tests hard-code Ravencoin hashes).
-- X.com API / OAuth, mobile, explorers — out of scope.
+- DNS seeds, explorers, X.com API / OAuth, mobile — out of scope. See [LAUNCH.md](LAUNCH.md).
 
 ## Build
 

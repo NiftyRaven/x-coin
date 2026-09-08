@@ -8,6 +8,7 @@
 #include "chainparams.h"
 #include "lottery.h"
 #include "rpc/server.h"
+#include "script/standard.h"
 #include "util.h"
 #include "utilstrencodings.h"
 #include "validation.h"
@@ -33,11 +34,11 @@ UniValue getlotteryinfo(const JSONRPCRequest& request)
             "  \"winner_count\": n,           (numeric) winners this slot (grows on halvings)\n"
             "  \"halving_interval\": n,       (numeric) heights per subsidy/winner step\n"
             "  \"active_nodes\": n,           (numeric) nodes with a fresh heartbeat\n"
-            "  \"local_id\": \"hex\",           (string) this node's lottery id\n"
+            "  \"local_id\": \"hex\",           (string) Hash160 of this node's payout script\n"
             "  \"local_is_winner\": true|false,\n"
             "  \"seed\": \"hex\",               (string) deterministic seed\n"
             "  \"winners\": [\"hex\", ...],     (array) selected node ids\n"
-            "  \"rewards\": [n, ...],         (array) xferon amounts per winner\n"
+            "  \"rewards\": [n, ...],         (array) xferon amounts per winner (subsidy only)\n"
             "  \"producer_running\": true|false\n"
             "}\n"
             "\nExamples:\n"
@@ -89,11 +90,12 @@ UniValue getactivenodes(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() > 0)
         throw std::runtime_error(
             "getactivenodes\n"
-            "\nList active lottery nodes (in-memory registry, Phase 1).\n"
+            "\nList active lottery nodes (local registry, filled by heartbeats and P2P xhb gossip).\n"
             "A node is active if it has heartbeated within the last 180 seconds.\n"
+            "id is Hash160(payout script).\n"
             "\nResult:\n"
             "[\n"
-            "  {\"id\":\"hex\", \"lastseen\": n}\n"
+            "  {\"id\":\"hex\", \"script\":\"hex\", \"lastseen\": n, \"local\": bool}\n"
             "]\n"
             "\nExamples:\n"
             + HelpExampleCli("getactivenodes", "")
@@ -106,6 +108,7 @@ UniValue getactivenodes(const JSONRPCRequest& request)
     for (const auto& n : lottery::GetRegistry().ActiveNodes(now)) {
         UniValue obj(UniValue::VOBJ);
         obj.push_back(Pair("id", n.id.GetHex()));
+        obj.push_back(Pair("script", HexStr(n.script.begin(), n.script.end())));
         obj.push_back(Pair("lastseen", n.lastSeen));
         obj.push_back(Pair("local", n.id == lottery::GetRegistry().LocalId()));
         ret.push_back(obj);
@@ -113,33 +116,49 @@ UniValue getactivenodes(const JSONRPCRequest& request)
     return ret;
 }
 
+static CScript ParsePayoutArg(const std::string& s)
+{
+    if (IsHex(s) && s.size() >= 4 && (s.size() % 2) == 0 && s.size() != 40) {
+        std::vector<unsigned char> raw = ParseHex(s);
+        if (raw.empty() || raw.size() > lottery::MAX_HEARTBEAT_SCRIPT)
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "script hex empty or too large");
+        return CScript(raw.begin(), raw.end());
+    }
+    CTxDestination dest = DecodeDestination(s);
+    if (!IsValidDestination(dest))
+        throw JSONRPCError(RPC_INVALID_PARAMETER,
+                           "pass a payout address or script hex (not a bare 40-hex id)");
+    return GetScriptForDestination(dest);
+}
+
 UniValue registeractivenode(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() > 1)
         throw std::runtime_error(
-            "registeractivenode ( id )\n"
+            "registeractivenode ( payout )\n"
             "\nRecord a heartbeat for an active node. With no argument, heartbeats this node.\n"
-            "Phase 1: in-memory only. Phase 2 will gossip heartbeats on P2P.\n"
+            "Heartbeats also gossip to peers as `xhb` (timestamp + payout script).\n"
             "\nArguments:\n"
-            "1. id    (string, optional) 40-hex node id. Default: local id.\n"
+            "1. payout  (string, optional) X Coin address or script hex. Default: local payout script.\n"
             "\nResult:\n"
-            "{ \"id\": \"hex\", \"lastseen\": n, \"active_nodes\": n }\n"
+            "{ \"id\": \"hex\", \"script\": \"hex\", \"lastseen\": n, \"active_nodes\": n }\n"
             "\nExamples:\n"
             + HelpExampleCli("registeractivenode", "")
             + HelpExampleRpc("registeractivenode", "")
         );
 
-    uint160 id = lottery::GetRegistry().LocalId();
-    if (!request.params[0].isNull()) {
-        std::string hex = request.params[0].get_str();
-        if (!IsHex(hex) || hex.size() != 40)
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "id must be 40 hex characters (uint160)");
-        id.SetHex(hex);
-    }
+    CScript script = lottery::GetRegistry().LocalScript();
+    if (!request.params[0].isNull())
+        script = ParsePayoutArg(request.params[0].get_str());
+    if (script.empty())
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "no payout script available");
+
     const int64_t now = GetTime();
-    lottery::GetRegistry().Heartbeat(id, now);
+    lottery::GetRegistry().Heartbeat(script, now);
+    const uint160 id = lottery::IdFromScript(script);
     UniValue ret(UniValue::VOBJ);
     ret.push_back(Pair("id", id.GetHex()));
+    ret.push_back(Pair("script", HexStr(script.begin(), script.end())));
     ret.push_back(Pair("lastseen", now));
     ret.push_back(Pair("active_nodes", (int)lottery::GetRegistry().Count(now)));
     return ret;
@@ -149,7 +168,7 @@ static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
     { "lottery",            "getlotteryinfo",         &getlotteryinfo,         {} },
     { "lottery",            "getactivenodes",         &getactivenodes,         {} },
-    { "lottery",            "registeractivenode",     &registeractivenode,     {"id"} },
+    { "lottery",            "registeractivenode",     &registeractivenode,     {"payout"} },
 };
 
 void RegisterLotteryRPCCommands(CRPCTable &t)

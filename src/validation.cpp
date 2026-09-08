@@ -34,6 +34,7 @@
 #include "tinyformat.h"
 #include "txdb.h"
 #include "txmempool.h"
+#include "lottery.h"
 #include "ui_interface.h"
 #include "undo.h"
 #include "util.h"
@@ -59,6 +60,7 @@
 
 #include "assets/snapshotrequestdb.h"
 #include "assets/assetsnapshotdb.h"
+#include "lottery.h"
 
 // Fixing Boost 1.73 compile errors
 #include <boost/bind/bind.hpp>
@@ -4270,6 +4272,18 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
     // failed).
     if (GetBlockWeight(block) > GetMaxBlockWeight()) {
         return state.DoS(100, false, REJECT_INVALID, "bad-blk-weight", false, strprintf("%s : weight limit failed", __func__));
+    }
+
+    if (nHeight >= 1) {
+        const CChainParams& params = GetParams();
+        const uint256 prevHash = pindexPrev ? pindexPrev->GetBlockHash() : uint256();
+        const CAmount subsidy = GetBlockSubsidy(nHeight, consensusParams);
+        if (!lottery::CheckLotteryCoinbase(block, nHeight, prevHash,
+                                           params.GenesisBlock().nTime,
+                                           consensusParams.nSubsidyHalvingInterval,
+                                           subsidy, state)) {
+            return error("%s: lottery coinbase: %s", __func__, FormatStateMessage(state));
+        }
     }
 
     return true;

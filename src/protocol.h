@@ -262,6 +262,11 @@ extern const char *ASSETDATA;
  * @since protocol version 70018.
  */
     extern const char *ASSETNOTFOUND;
+/**
+ * X Coin lottery heartbeat: int64 timestamp + payable CScript.
+ * id = Hash160(script). Honest peers relay so they share one active set.
+ */
+extern const char *XHB;
 };
 
 /* Get a vector of all valid message types (see above) */
