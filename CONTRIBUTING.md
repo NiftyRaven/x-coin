@@ -1,6 +1,10 @@
 Contributing to X Coin
 ============================
 
+Private test. Do not publish this repository. Product spec:
+[whitepaper/XCOIN.md](whitepaper/XCOIN.md), [README.md](README.md).
+Credit **Nifty Raven (@NFTRVN on X)** only.
+
 The X Coin project operates an open contributor model where anyone is
 welcome to contribute towards development in the form of peer review, testing
 and patches. This document explains the practical process and guidelines for

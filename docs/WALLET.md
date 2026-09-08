@@ -46,3 +46,7 @@ Every signed-in user can send and receive.
 
 See [XSIGNIN.md](XSIGNIN.md) for the OAuth loopback. Home / Receive /
 Send show the linked `@handle` when the proof is present. The GUI does not show X user ids or session file paths.
+
+Optional lottery pools store the join password in `pools.secret.json`
+(mode `0600`) on this datadir only. That file is not the seed and is
+not gossiped. [LOTTERY.md](LOTTERY.md).

@@ -117,7 +117,10 @@ The node never pretends login succeeded without a real access token
    then **Claim my root asset**.
 5. **Receive** (address + Copy) / **Send** (paste address, amount, Send).
 6. **Activity** (history). Issue sub / unique from Home. Lottery status is on Home.
-7. Home shows **this wallet is yours / linked to @handle**. Transfer assets is a Home button (and the left tab).
+7. Optional **POOL** — create or join (id + password). Public card is name +
+   addresses only. Copy pool id does not copy the password.
+8. Home shows **this wallet is yours / linked to @handle**. Transfer assets is a Home button (and the left tab).
+   **Provide my node IP** is off by default.
 
 This wallet + this X session = you. Another user cannot send from inside
 your wallet. RPC console is under **Advanced** (not required for the

@@ -7,7 +7,7 @@
 #               >> https://github.com/Jorgen-VikingGod                        #
 #                                                                             #
 # Sources: https://github.com/Jorgen-VikingGod/Qt-Frameless-Window-DarkStyle  #
-# X Coin 1.0 restyle: black / white / sharp.                                  #
+# X Coin 1.1 restyle: black / white / sharp.                                  #
 #                                                                             #
 ###############################################################################
 */

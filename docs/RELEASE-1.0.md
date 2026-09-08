@@ -1,10 +1,13 @@
 # X Coin 1.0 (private)
 
+**Superseded for operators by [RELEASE-1.1.md](RELEASE-1.1.md)** (pools,
+private login, X Verified = blue check). This page is the 1.0 snapshot.
+
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
 
-Product version **1.0.0**. Tag on this branch: `v1.0.0` (see git tags).
-This is a **private** release. Do not make the repository public.
+Product version **1.0.0**. This is a **private** release. Do not make
+the repository public. The current Linux tarball is **1.1.0**.
 
 ## What shipped
 
@@ -54,20 +57,13 @@ src/qt/xcoin-qt -regtest        # local practice
 (default `/usr/local`). Pack a Linux tarball with
 `contrib/xcoin/package-linux.sh` — output is
 `dist/xcoin-1.0.0-linux-x86_64.tar.gz` (`bin/xcoin-qt` plus CLI).
+Current pack script emits **1.1.0**.
 
 ## Screenshots
 
-Running-GUI captures (regtest) are in [docs/gui/](gui/):
-
-- `home.png` — linked wallet (@handle + X user id) on Home
-- `overview.png` — Home (legacy name kept)
-- `send.png`
-- `receive.png` — address + Copy
-- `assets.png` — Transfer Assets (Advanced)
-- `lottery.png` — lottery card on Home
-- `about.png` — Help → About (Nifty Raven @NFTRVN, 1.0)
-
-Brand stills: [assets/brand/](../assets/brand/).
+1.0 running-GUI captures were taken on regtest. In-tree brand stills:
+[assets/brand/](../assets/brand/). Home in 1.1 shows @handle only (no X
+user id) plus POOL and optional Provide my node IP.
 
 ## Known limits
 

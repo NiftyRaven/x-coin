@@ -139,10 +139,13 @@ within the last **180 seconds**. Unverified gossip is dropped (zero chance).
   **address / script hex**. The handle and user id must match the signed-in
   session. Unlinked/unverified registrations are rejected.
 - Peers gossip `xhb` messages (`int64 timestamp` + `CScript` + X handle +
-  user id + compact payout signature) after `verack` and about every 30
-  seconds. Unsigned, unlisted, userid-only, pinned-mismatch, or
+  user id **0** + compact payout signature) after `verack` and about every 30
+  seconds. The numeric X user id is never put on the wire (login stays
+  local). Unsigned, unlisted, userid-only, pinned-mismatch, or
   live-handle-rebind heartbeats are not added to the active set. Forged
   signatures cost banscore.
+- Peers also gossip signed pool adverts (`xpl`). The pool password never
+  goes on the wire.
 
 ## Deterministic seed
 
@@ -212,8 +215,10 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
   among active nodes more meaningful; they are not required for the
   chain to exist.
 - **Regtest:** the producer only heartbeats. Use `generatetoaddress` /
-  `generate` to assemble blocks on demand (still no PoW). The destination
-  script is heartbeated so it is in the active set.
+  `generate` to assemble blocks on demand (still no PoW). If this wallet
+  is already in a pool, generate does **not** replace the pooled payout
+  script (keeps the ticket). Otherwise the destination script is
+  heartbeated so it is in the active set.
 - Removed / gutted: the legacy miner hash loop, `-gen` / `setgenerate` as a miner,
   KawPoW submit helpers (`pprpcsb`, `getkawpowhash`).
 
@@ -244,8 +249,8 @@ pool adverts (`xpl`); the password never goes on the wire.
 | Command | Purpose |
 | --- | --- |
 | `getlotteryinfo` | Next-height draw: slot, seed, winners, split, local id / X handle / eligibility |
-| `getactivenodes` | Current registry (id, script, lastseen, xaccount, xuserid) |
-| `registeractivenode (payout xaccount xuserid)` | Heartbeat this node or an address / script hex; rejects unlinked/unverified |
+| `getactivenodes` | Current registry (id, script, lastseen, xaccount). P2P heartbeats do not carry X user id |
+| `registeractivenode (payout xaccount xuserid)` | Heartbeat this node or an address / script hex; rejects unlinked/unverified. User id must match the **local** session; it is not gossiped |
 | `addxverified` / `listxverified` / `removexverified` | Mutate / read the operator invite list (not X Verified) |
 | `loadxverified (path)` | Merge a published invite-list file (no API keys) |
 | `createpool` / `joinpool` / `leavepool` | GUI Home buttons too. Tickets = verified running members; even split to every member address |
@@ -277,6 +282,9 @@ Honest write-up: [SECURITY.md](SECURITY.md). This is not hacker-proof.
   You cannot skip or double-pay a height on one chain. Catch-up produces one
   height per loop when wall-clock is ahead; `generatetoaddress` is regtest-only
   so RPC cannot burst-mint on main/test.
+- **Pools:** password never on the wire. Public list is name + addresses.
+  Honest nodes emit `XPL1` and split; a cheater can omit it. Last member
+  leaving dissolves the local pool.
 - Empty committed set ⇒ invalid coinbase (no unpaid extra outputs).
 
 Treat the lottery as specified here; do not reintroduce PoW as the production path.

@@ -726,7 +726,7 @@ void RavenGUI::createToolBars()
         comboRvnUnit->hide();
         labelCurrentPrice->setText(tr("—"));
 
-        labelVersionUpdate->setText("<a href=\"https://github.com/NiftyRaven/x-coin\">X Coin 1.0</a>");
+        labelVersionUpdate->setText("<a href=\"https://github.com/NiftyRaven/x-coin\">X Coin 1.1</a>");
         labelVersionUpdate->setTextFormat(Qt::RichText);
         labelVersionUpdate->setTextInteractionFlags(Qt::TextBrowserInteraction);
         labelVersionUpdate->setOpenExternalLinks(true);

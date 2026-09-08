@@ -81,10 +81,11 @@ for those versions.
 2. **PoW gutted:** miner hash loop deleted; `CheckProofOfWork` always succeeds;
    `-gen` / `setgenerate` removed as a miner; KawPoW submit RPCs unregistered.
 3. **Lottery module** in `src/lottery.{h,cpp}` + `src/rpc/lottery.cpp`, started
-   from `init.cpp`. P2P `xhb` gossip + coinbase `XHB1` commitment / multi-winner
-   validation. Active set requires a linked X session that is **X Verified**
-   (users/me blue check) and a running wallet. Unverified = zero chance.
-   The operator invite list cannot exclude a verified wallet.
+   from `init.cpp`. P2P `xhb` gossip (handle, user id 0) + coinbase `XHB1`
+   commitment / multi-winner validation. Optional pools: `src/pool.{h,cpp}`,
+   P2P `xpl`, coinbase `XPL1`. Active set requires a linked X session that is
+   **X Verified** (users/me blue check) and a running wallet. Unverified =
+   zero chance. The operator invite list cannot exclude a verified wallet.
 4. **Assets** on from height 0. Main roots are protocol-assigned on X-link
    (zero burn, `XID1`). User `issue` of a new root is consensus-invalid.
    Restricted assets are not activated (`AreRestrictedAssetsDeployed()` is false).
@@ -121,7 +122,7 @@ These still match a naive `rg -i 'ravencoin|\braven\b|\brvn\b'` and are
 4. **Copyright-holder guard** in `src/util.cpp` (`CopyrightHolders`) — refuses
    to drop the Raven Core line from `--version`.
 5. **Qt class names** — `RavenGUI`, `RavenUnits`, `RavenAmountField`, locale
-   files `raven_*.ts`. User-facing 1.0 copy is X Coin / XFER; the X theme is
+   files `raven_*.ts`. User-facing 1.1 copy is X Coin / XFER; the X theme is
    black/white, not Ravencoin orange/green.
 6. **Vendored third-party** — `src/leveldb`, `src/secp256k1`, `src/univalue`,
    `src/crypto/ctaes` (including sipa’s unrelated `raven.sipa.be` URL).
@@ -149,8 +150,9 @@ See also `assets/asset_metadata_spec.md` for the wire format.
   genesis; height-0 force-on covers assets, messaging, transfer-script size,
   enforce-value, coinbase-asset checks, and transfer-overflow.
 - Public DNS seeds, public explorers, live X API keys, mobile — out of
-  scope. Verified-X eligibility is a shared allowlist. Sign in with X
-  is in-tree (OAuth PKCE + `users/me`). Leftover imported IPs were
+  scope. Lottery eligibility is **X Verified** from `users/me` (blue check),
+  not a shared allowlist. The invite list is optional pins. Sign in with X
+  is in-tree (OAuth PKCE + `users/me`; tokens never written). Leftover imported IPs were
   removed from `chainparamsseeds.h`; arrays stay unused.
   See [LAUNCH.md](LAUNCH.md) and [AUDIT.md](AUDIT.md).
 
@@ -158,7 +160,7 @@ See also `assets/asset_metadata_spec.md` for the wire format.
 
 See the root README. Autotools path:
 
-Release 1.0 ships the Qt wallet. GUI:
+Release 1.1 ships the Qt wallet. GUI:
 
 ```bash
 ./autogen.sh && ./configure --with-gui=qt5 --disable-bench --disable-tests --with-incompatible-bdb && make
