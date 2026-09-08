@@ -74,6 +74,28 @@ def main():
     assert w1 == w2
     assert len(set(w1)) == 2
     assert slot_from_height(1, 1788825600) == 1788825600 // 60 + 1
+
+    # Fair-launch subsidy: height 0 unpaid; 5000 XFER >> halvings; 64-shift cap.
+    COIN = 10**8
+    interval = 2100000
+    def subsidy(h):
+        if h < 1:
+            return 0
+        halvings = h // interval
+        if halvings >= 64:
+            return 0
+        return (5000 * COIN) >> halvings
+    assert subsidy(0) == 0
+    assert subsidy(1) == 5000 * COIN
+    assert subsidy(2099999) == 5000 * COIN
+    assert subsidy(2100000) == 2500 * COIN
+    lifetime = 0
+    for k in range(64):
+        sub = (5000 * COIN) >> k
+        nblocks = (interval - 1) if k == 0 else interval
+        lifetime += sub * nblocks
+    # 20,999,994,999.727 XFER (integer >>= dust vs a clean 21B)
+    assert lifetime == 2099999499972700000
     print("lottery_vector: ok")
 
 

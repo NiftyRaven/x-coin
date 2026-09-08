@@ -17,12 +17,10 @@ static const CAmount CENT = 1000000;
 
 /** No amount larger than this (in xferons) is valid.
  *
- * Note that this constant is *not* the total money supply, which in X Coin
- * currently happens to be less than 21,000,000,000 XFER for various reasons, but
- * rather a sanity check. As this sanity check is used by consensus-critical
- * validation code, the exact value of the MAX_MONEY constant is consensus
- * critical; in unusual circumstances like a(nother) overflow bug that allowed
- * for the creation of coins out of thin air modification could lead to a fork.
+ * Note that this constant is *not* the total money supply. Spendable lifetime
+ * subsidy (height ≥ 1, integer `>>=` halvings, height 0 unpaid) is
+ * 20,999,994,999.727 XFER. This cap is a sanity check used by consensus-critical
+ * validation code; the exact value of MAX_MONEY is consensus critical.
  * */
 static const CAmount MAX_MONEY = 21000000000 * COIN;
 inline bool MoneyRange(const CAmount& nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }

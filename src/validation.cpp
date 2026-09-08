@@ -1323,6 +1323,13 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
 
 CAmount GetBlockSubsidy(int nHeight, const Consensus::Params& consensusParams)
 {
+    // Height 0 is genesis: not a lottery payday. The genesis coinbase value
+    // is serialized in the frozen block but never enters the UTXO set
+    // (ConnectBlock skips genesis). Spendable subsidy starts at height 1.
+    if (nHeight < 1)
+        return 0;
+    if (consensusParams.nSubsidyHalvingInterval <= 0)
+        return 0;
     int halvings = nHeight / consensusParams.nSubsidyHalvingInterval;
     // Force block reward to zero when right shift is undefined.
     if (halvings >= 64)

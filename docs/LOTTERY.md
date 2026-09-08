@@ -16,9 +16,10 @@ This document is the source of truth for the algorithm.
 | Slot length | 60 seconds (one lottery minute) |
 | Height mapping | height `h` uses slot `floor(genesisTime / 60) + h` |
 | Target spacing | 1 block per minute (same as Ravencoin’s clock, without hashing) |
-| Subsidy | 5000 XFER at height 1, halved every `nSubsidyHalvingInterval` blocks (2,100,000 on main/test, 150 on regtest) |
+| Subsidy | 5000 XFER at height **1**, halved every `nSubsidyHalvingInterval` blocks (2,100,000 on main/test, 150 on regtest). Height 0 pays **0**. |
+| Spendable lifetime | **20,999,994,999.727 XFER** (integer `>>=` halvings; ~21B minus unpaid genesis and shift dust) |
 
-Genesis (height 0) is not a lottery block.
+Genesis (height 0) is not a lottery block and is not a payday. The serialized genesis coinbase is never added to the UTXO set (`ConnectBlock` skips it).
 
 ## Verified X eligibility (anti-bot)
 
@@ -134,8 +135,9 @@ Same active set + same seed ⇒ same winner list on every honest node.
 
 ## Rewards and coinbase
 
-The Ravencoin subsidy function is unchanged (5000 XFER, right-shifted each
-halving). That amount is split across the winners:
+`GetBlockSubsidy(h)` is 0 at `h < 1`, else `5000 XFER >> floor(h / interval)`,
+forced to 0 after 64 shifts (same cap as Bitcoin/Ravencoin; XFER’s 5000·COIN
+already reaches 0 xferons at shift 39). That amount is split across the winners:
 
 ```
 base = total / k
@@ -174,15 +176,25 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 | `registeractivenode (payout xaccount xuserid)` | Heartbeat this node or an address / script hex; rejects unlinked/unverified |
 | `addxverified` / `listxverified` / `removexverified` | Mutate / read the verified X allowlist |
 | `loadxverified (path)` | Merge a published allowlist file (no API keys) |
-| `generatetoaddress` | Regtest / on-demand assembly (not mining) |
+| `generatetoaddress` | **Regtest only** on-demand assembly (not mining; rejected on main/test) |
 
 ## Security notes
 
 - **Sybil:** the verified-X allowlist stops anonymous/bot process spam for a
-  private launch. It is not a bonded public lottery: a producer can still
-  commit an active set of allowlisted scripts, and validation only proves the
-  coinbase matches the *committed* set. Honest operators share one list.
-- Clock skew can delay a slot; height still maps deterministically once a
-  block exists.
+  private launch. Skip or leave it empty and anyone can heartbeat. It is not a
+  bonded public lottery: a producer can still commit an active set of
+  allowlisted scripts, and validation only proves the coinbase matches the
+  *committed* set. Honest operators share one list.
+- **xhb impersonation:** gossip carries a handle, not a signature binding that
+  handle to a script. A malicious peer can claim an allowlisted handle.
+  Consensus still binds coinbase to committed **scripts**, not handles.
+- **Unlinked wallets:** X-link is **not** required to hold, receive, or send
+  XFER (or to receive/transfer assets sent to you). Linking is lottery
+  eligibility (and, when the sibling assigner lands, being given a main asset).
+- Clock skew can delay a slot; height still maps 1:1 (`slot = genesisSlot + h`).
+  You cannot skip or double-pay a height on one chain. Catch-up produces one
+  height per loop when wall-clock is ahead; `generatetoaddress` is regtest-only
+  so RPC cannot burst-mint on main/test.
+- Empty committed set ⇒ invalid coinbase (no unpaid extra outputs).
 
 Treat the lottery as specified here; do not reintroduce PoW as the production path.

@@ -784,9 +784,16 @@ bool CheckLotteryCoinbase(const CBlock& block,
                                    (unsigned)winners.size(), (unsigned)pays.size()));
 
     CAmount paid = 0;
-    for (const auto& p : pays)
+    for (const auto& p : pays) {
+        if (p.nValue < 0 || !MoneyRange(p.nValue))
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-range", false,
+                             "winner output value out of range");
+        if (paid > MAX_MONEY - p.nValue)
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-overflow", false,
+                             "winner output sum overflows");
         paid += p.nValue;
-    if (paid < subsidy)
+    }
+    if (!MoneyRange(paid) || paid < subsidy)
         return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-amount", false,
                          "coinbase pays less than subsidy");
 

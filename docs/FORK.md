@@ -13,9 +13,11 @@ The first product commit on this branch is a verbatim import of that tag. Everyt
 
 ## What this fork is
 
-X Coin (**XFER**) is a Ravencoin hard-fork aimed at simple peer-to-peer transfers (including between users on X) plus Ravencoin-style **user-created assets/tokens**.
+X Coin (**XFER**) is a Ravencoin hard-fork aimed at simple peer-to-peer transfers (including between users on X) plus a simplified asset layer: **tokenize the world, and yourself**.
 
-- **Keep** the asset system (issue / reissue / unique / qualifier / restricted / messaging). Do not rip it out.
+- **Keep** Ravencoin assets as the backbone (sub / unique / transfer / messaging channels).
+- **Each user is a main asset.** A verified X-link assigns one free root. Users cannot create roots.
+- **Delete restricted assets** (qualifier / tag / freeze / restricted RPC and UI).
 - **Remove** Proof-of-Work as the block-production mechanism.
 - **Replace** mining with a **minute lottery** among active nodes. See [LOTTERY.md](LOTTERY.md).
 
@@ -38,7 +40,7 @@ Ravencoin defaults (8767/8766, 18770/18766, 18444/18443, magic `RAVN` / `RVNT` /
 
 **Unit:** ticker **XFER**, subunit **xferon** (1 XFER = 1e8 xferons). Display currency is `XFER` (`CURRENCY_UNIT`).
 
-**Genesis:** timestamp string and times frozen 2026-09-08 (see [LAUNCH.md](LAUNCH.md)). Hashes are X16R of that block (not Ravencoin’s genesis and not PoW-ground). `nMinimumChainWork` and `defaultAssumeValid` are zero; checkpoints and DNS seeds are empty — publish a seed with `addnode` / `seednode`.
+**Genesis:** timestamp string and times frozen 2026-09-08 (see [LAUNCH.md](LAUNCH.md)). Hashes are X16R of that block (not Ravencoin’s genesis and not PoW-ground). `nMinimumChainWork` and `defaultAssumeValid` are zero; checkpoints and DNS seeds are empty — publish a seed with `addnode` / `seednode`. Fair launch: no IPO, no premine, no founder allocation. Height 0 is unspendable / not a payday. Spendable lifetime subsidy is **20,999,994,999.727 XFER**. `generatetoaddress` is regtest-only. Unlinked addresses can send and receive XFER.
 
 **Address prefixes:** main P2PKH version **76** (`X…`), P2SH **139** (`x…`); test/regtest P2PKH **140** (`y…`). Asset burn addresses were regenerated for those versions.
 
@@ -47,14 +49,14 @@ Ravencoin defaults (8767/8766, 18770/18766, 18444/18443, magic `RAVN` / `RVNT` /
 1. **Rebrand** of operator-facing strings, ports, magic, datadir, client name, binaries (`xcoind`, `xcoin-cli`, `xcoin-tx`, `xcoin-qt`).
 2. **PoW gutted:** `RavenMiner` hash loop deleted; `CheckProofOfWork` always succeeds; `-gen` / `setgenerate` removed as a miner; KawPoW submit RPCs unregistered.
 3. **Lottery module** in `src/lottery.{h,cpp}` + `src/rpc/lottery.cpp`, started from `init.cpp`. P2P `xhb` gossip + coinbase `XHB1` commitment / multi-winner validation. Active set requires a linked X account on the operator-shared verified allowlist.
-4. **Assets retained** and turned on from height 0 (`nAssetActivationHeight = 0`, messaging/restricted activation 0). Reserved root names now include `XFER` / `XCOIN` as well as `RVN` / `RAVEN` / `RAVENCOIN`. Asset script opcodes (`OP_RVN_ASSET`, `rvnq` / `rvnt` markers) are **unchanged** so the Ravencoin asset protocol still works.
+4. **Assets** on from height 0. Main roots are protocol-assigned on X-link (zero burn, `XID1`). User `issue` of a new root is consensus-invalid. Restricted assets are not activated (`AreRestrictedAssetsDeployed()` is false). Reserved root names include `XFER` / `XCOIN` as well as `RVN` / `RAVEN` / `RAVENCOIN`. Asset script opcodes (`OP_RVN_ASSET`, `rvnq` / `rvnt` markers) are **unchanged**.
 5. KawPoW activation time pushed to the far future; header hashing stays on the pre-KawPoW path. Lottery does not use that hash as a work function.
 
-## Assets (kept)
+## Assets (simplified)
 
-Ravencoin’s user-created asset layer is still in `src/assets/` and the `issue` / `transfer` / `listassets` RPC family. Burn *fees* are the same amounts as v4.8.0 (500 XFER to issue a root, etc.). Burn *addresses* are new X Coin base58 strings (see [LAUNCH.md](LAUNCH.md)).
+See [ASSETS.md](ASSETS.md). `issue` / `transfer` / `listassets` remain for **sub and unique** assets under a main asset the wallet owns. Main roots are assigned by `AssignLinkedUserMainAsset` / `linkxaccount`. Sub burn 100 XFER, unique 5 XFER (Ravencoin amounts, new burn addresses). Restricted/qualifier RPCs are unregistered.
 
-See also `assets/asset_metadata_spec.md` from upstream.
+See also `assets/asset_metadata_spec.md` from upstream for the wire format.
 
 ## What we did not change (on purpose)
 

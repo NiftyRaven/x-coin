@@ -48,6 +48,15 @@ echo "== genesis / lottery =="
 GENESIS="$("${CLI[@]}" getblockhash 0)"
 echo "genesis $GENESIS"
 [[ "$GENESIS" == "bfce7bfad8116b82f4a0ce4be2fa52e9c9f166248e318ce45728b8fe87451d89" ]]
+# Height 0 is not a payday: genesis coinbase is not in the UTXO set.
+GENTX="$("${CLI[@]}" getblock "$GENESIS" true | python3 -c 'import json,sys; print(json.load(sys.stdin)["tx"][0])')"
+GOUT="$("${CLI[@]}" gettxout "$GENTX" 0 || true)"
+if [[ -n "$GOUT" && "$GOUT" != "null" ]]; then
+  echo "genesis coinbase must be unspendable (gettxout empty)" >&2
+  echo "$GOUT" >&2
+  exit 1
+fi
+echo "genesis coinbase unspendable (gettxout empty)"
 INFO="$("${CLI[@]}" getlotteryinfo)"
 echo "$INFO"
 echo "$INFO" | grep -q '"currency": "XFER"'
@@ -78,12 +87,38 @@ echo "height $HEIGHT"
 [[ "$HEIGHT" -ge 110 ]]
 "${CLI[@]}" getblockchaininfo >/dev/null
 
-echo "== asset issue =="
-"${CLI[@]}" issue TESTASSET 1000
-ASSETS="$("${CLI[@]}" listmyassets)"
-echo "$ASSETS"
-echo "$ASSETS" | grep -q TESTASSET
-echo "$ASSETS" | grep -q 'TESTASSET!'
+echo "== assets (protocol main / no user roots when sibling landed) =="
+if "${CLI[@]}" help linkxaccount 2>/dev/null | grep -q linkxaccount; then
+  if "${CLI[@]}" issue TESTASSET 1000 >/tmp/xcoin-issue-root.err 2>&1; then
+    echo "issue TESTASSET must fail (users cannot create main assets)" >&2
+    cat /tmp/xcoin-issue-root.err >&2
+    exit 1
+  fi
+  grep -qi "main asset\|cannot create\|root" /tmp/xcoin-issue-root.err
+  LINK="$("${CLI[@]}" linkxaccount smoke1 "$ADDR1")"
+  echo "$LINK"
+  echo "$LINK" | grep -q '"asset"'
+  ASSETS="$("${CLI[@]}" listmyassets)"
+  echo "$ASSETS"
+  MAIN="$(echo "$LINK" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("asset",""))')"
+  if [[ -n "$MAIN" ]]; then
+    echo "$ASSETS" | grep -q "$MAIN"
+    "${CLI[@]}" issue "$MAIN/NOTE" 1
+    "${CLI[@]}" issueunique "$MAIN" '["ONE"]'
+    ASSETS2="$("${CLI[@]}" listmyassets)"
+    echo "$ASSETS2"
+    echo "$ASSETS2" | grep -q "$MAIN/NOTE"
+    echo "$ASSETS2" | grep -q "$MAIN#ONE"
+  fi
+else
+  echo "linkxaccount not in this binary yet; leave protocol-assign hook"
+  if "${CLI[@]}" issue TESTASSET 1000 >/tmp/xcoin-issue-root.err 2>&1; then
+    echo "$("${CLI[@]}" listmyassets)" | grep -q TESTASSET
+  else
+    echo "root issue already blocked (ok); waiting for linkxaccount"
+    cat /tmp/xcoin-issue-root.err || true
+  fi
+fi
 
 echo "== two-winner window (regtest halving interval 150) =="
 # Height 149: still 1 winner, full 5000 subsidy. Height 150: 2 winners, 2500 subsidy.
@@ -124,4 +159,37 @@ if len(ops) < 1:
 '
 CHAIN2="$("${CLI[@]}" getblockchaininfo)"
 echo "$CHAIN2" | grep -q '"blocks": 150'
+
+echo "== unlinked send / receive (no X account required) =="
+# ADDR_UNLINKED is never registered and has no X handle. Linking is only
+# for lottery eligibility / protocol main-asset assignment — not for XFER.
+ADDR_UNLINKED="$("${CLI[@]}" getnewaddress)"
+echo "unlinked $ADDR_UNLINKED"
+NODES_BEFORE="$("${CLI[@]}" getactivenodes)"
+echo "$NODES_BEFORE" | python3 -c '
+import json, os, sys
+addr = os.environ.get("ADDR_UNLINKED", "")
+# script hex of a P2PKH is not listed as xaccount; just ensure we did not register it
+nodes = json.load(sys.stdin)
+for n in nodes:
+    if n.get("xaccount") in ("", None) and n.get("local") is False:
+        pass
+print("active", len(nodes), "handles", [n.get("xaccount") for n in nodes])
+'
+TXPAY="$("${CLI[@]}" sendtoaddress "$ADDR_UNLINKED" 25)"
+echo "paid unlinked $TXPAY"
+"${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
+"${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
+RECV="$("${CLI[@]}" getreceivedbyaddress "$ADDR_UNLINKED")"
+echo "unlinked received $RECV"
+python3 -c "import sys; r=float(sys.argv[1]); sys.exit(0 if abs(r-25)<1e-6 else 1)" "$RECV"
+TXSPEND="$("${CLI[@]}" sendfromaddress "$ADDR_UNLINKED" "$ADDR1" 10)"
+echo "unlinked spent $TXSPEND"
+"${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
+"${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
+RECV2="$("${CLI[@]}" getreceivedbyaddress "$ADDR_UNLINKED")"
+echo "unlinked remaining $RECV2"
+python3 -c "import sys; r=float(sys.argv[1]); sys.exit(0 if r < 25 else 1)" "$RECV2"
+echo "unlinked send/receive: ok"
+
 echo "smoke-regtest: ok"

@@ -115,6 +115,12 @@ UniValue getnetworkhashps(const JSONRPCRequest& request)
 
 UniValue generateBlocks(std::shared_ptr<CReserveScript> coinbaseScript, int nGenerate, uint64_t nMaxTries, bool keepScript)
 {
+    // CheckProofOfWork is a no-op on X Coin. On-demand assembly must stay
+    // regtest-only so RPC cannot print blocks on main/test.
+    if (!GetParams().MineBlocksOnDemand()) {
+        throw JSONRPCError(RPC_METHOD_NOT_FOUND,
+                           "generatetoaddress/generate are regtest-only; main/test use the lottery producer");
+    }
     static const int nInnerLoopCount = 0x10000;
     int nHeightEnd = 0;
     int nHeight = 0;
@@ -177,7 +183,7 @@ UniValue generatetoaddress(const JSONRPCRequest& request)
         throw std::runtime_error(
             "generatetoaddress nblocks address (maxtries)\n"
             "\nAssemble and submit blocks immediately to a specified address (no PoW).\n"
-            "Used for regtest and for forcing a lottery-style block without hashing.\n"
+            "Regtest only. Main/test produce via the lottery thread, not this RPC.\n"
             "\nArguments:\n"
             "1. nblocks      (numeric, required) How many blocks are generated immediately.\n"
             "2. address      (string, required) The address to send the newly generated XFER to.\n"

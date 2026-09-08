@@ -48,6 +48,20 @@ headers — no leading-zero PoW grind):
 | Regtest | `bfce7bfad8116b82f4a0ce4be2fa52e9c9f166248e318ce45728b8fe87451d89` | same merkle |
 
 `nMinimumChainWork` and `defaultAssumeValid` are zero. Checkpoints are empty.
+No Ravencoin UTXO, assumevalid hash, or checkpoint is inherited.
+
+**Fair launch:** no IPO, no premine, no founder allocation. Height 0 is not a
+payday. The genesis coinbase (5000 XFER in the serialized tx) is **never
+added to the UTXO set** (`ConnectBlock` special-case, same as Bitcoin).
+Subsidy starts at height 1 via the lottery. Spendable lifetime supply is
+**20,999,994,999.727 XFER** (`5000 >> floor(h / 2,100,000)` for `h ≥ 1`,
+integer right-shift; ~21 billion minus unpaid genesis and `>>=` dust).
+`MAX_MONEY` is 21,000,000,000 XFER (sanity cap, not the minted total).
+
+**Unlinked users can transact.** Linking X is required for lottery
+eligibility (and for being assigned a main asset). It is **not** required to
+hold, receive, or send XFER. `sendtoaddress` / P2P / mempool / validation do
+not check for an X handle.
 
 ## Publish a seed node
 
@@ -130,7 +144,8 @@ not produce. On main/test the producer thread emits at most one block per
 minute when this node is a winner. A wallet is required to produce
 (coinbase script).
 
-Regtest does **not** wait on the clock: use `generatetoaddress`.
+Regtest does **not** wait on the clock: use `generatetoaddress` (regtest-only;
+rejected on main/test so RPC cannot print blocks).
 
 ## Lottery rewards
 
@@ -145,15 +160,20 @@ See [LOTTERY.md](LOTTERY.md). Short form:
 - Coinbase must contain an `OP_RETURN` `XHB1` commitment of the sorted active
   ids and must pay each winner’s script. Mismatches are invalid.
 
-Asset issue burns (same *amounts* as Ravencoin, new addresses):
+Assets: see [ASSETS.md](ASSETS.md). Main/root identity assets are **free**
+(protocol assignment on verified X-link). Users cannot `issue` a new root.
+Sub-asset burn **100 XFER**, unique **5 XFER** (same Ravencoin amounts, new
+addresses). Restricted/qualifier assets are removed.
 
 | Action | Burn | Main address |
 | --- | --- | --- |
-| Issue root | 500 XFER | `XissueAssetXXXXXXXXXXXXXXXXXXwTyxt` |
+| Main / root | 0 (protocol `linkxaccount` / `AssignLinkedUserMainAsset` only) | — |
+| Sub | 100 XFER | `XissueSubAssetXXXXXXXXXXXXXXcHkFpF` |
 | Reissue | 100 XFER | `XreissueAssetXXXXXXXXXXXXXXXZNfDqa` |
 | Unique | 5 XFER | `XissueUniqueAssetXXXXXXXXXXXagKZDZ` |
 
-Coinbase is immature for 100 blocks — generate ~110 on regtest before `issue`.
+Coinbase is immature for 100 blocks — generate ~110 on regtest before
+`linkxaccount` / `issue` of a sub.
 
 ## Operator ports / firewall
 
@@ -169,13 +189,16 @@ Coinbase is immature for 100 blocks — generate ~110 on regtest before `issue`.
 - `src/xcoin-tx` — transaction utility
 - `src/qt/xcoin-qt` — GUI (optional; configure without `--without-gui`)
 
-## Known risks (not blockers for a private launch)
+## Known risks (accepted for a private launch)
 
-- **Sybil:** anonymous/bot processes are kept out of the active set by the
-  verified-X allowlist. A producer can still commit an allowlisted set they
-  control; the coinbase check proves they paid *that* draw. Fine for a
-  trusted operator set; not a public-PoS.
-- **Clock skew:** main/test wait for wall-clock slot ≥ height slot.
+- **Sybil if the allowlist is skipped or empty:** anyone can heartbeat. The
+  allowlist is operator-shared, not a bonded identity. A producer can commit
+  any script set; validation only checks the coinbase matches that commitment.
+- **xhb handle spoofing:** gossip is not signed. A peer can claim an
+  allowlisted handle. Fine on a trusted mesh; not a public anti-impersonation
+  proof.
+- **Clock skew / catch-up:** main/test wait for wall-clock slot ≥ height slot.
+  Height still maps 1:1; no skip-pay or double-pay of a slot in consensus.
 - **No DNS seeds / explorers / audit** — you are the network.
 - Upstream `make check` still hard-codes Ravencoin genesis hashes; do not treat
   a red `make check` as a launch blocker. Use the regtest smoke instead.
@@ -186,9 +209,10 @@ Coinbase is immature for 100 blocks — generate ~110 on regtest before `issue`.
 contrib/xcoin/smoke-regtest.sh
 ```
 
-Exercises `getlotteryinfo`, on-demand blocks, a single-winner 5000 XFER
-coinbase at height 149, a two-winner 2500 XFER split at height 150 (first
-regtest halving), and `issue TESTASSET`.
+Exercises `getlotteryinfo`, genesis unspendable, on-demand blocks, a
+single-winner 5000 XFER coinbase at height 149, a two-winner 2500 XFER split
+at height 150, protocol main / sub / unique when `linkxaccount` is present,
+and **unlinked** `sendtoaddress` / `sendfromaddress`.
 
 ```bash
 contrib/xcoin/smoke-gossip.sh
