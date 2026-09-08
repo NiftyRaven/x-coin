@@ -142,6 +142,46 @@ while True:
 PY
 }
 
+# Windows labeled starts are -mwindows launchers that spawn xcoin-qt.exe and exit.
+# xvfb-run must not wrap the launcher or X dies when the launcher returns.
+wine_labeled_start() {
+  local datadir="$1"
+  local logfile="$2"
+  local bin="$3"
+  shift 3
+  rm -rf "$datadir"
+  mkdir -p "$datadir"
+  local display_num
+  display_num="$((80 + RANDOM % 40))"
+  Xvfb ":$display_num" -screen 0 1280x720x24 >/tmp/xcoin-wine-xvfb.log 2>&1 &
+  local xvfb_pid=$!
+  sleep 0.5
+  DISPLAY=":$display_num" WINEDEBUG=-all WINEPREFIX="$WINEPREFIX" WINEDLLOVERRIDES="mscoree,mshtml=" \
+    "$WINEBIN" "$bin" "$@" >"$logfile" 2>&1 &
+  local wine_pid=$!
+  local found=0
+  local i
+  for i in $(seq 1 50); do
+    if [[ -f "$datadir/regtest/debug.log" ]]; then
+      found=1
+      break
+    fi
+    sleep 0.4
+  done
+  sleep 1
+  # Stop the GUI child (launcher already exited).
+  WINEPREFIX="$WINEPREFIX" wineserver -k 2>/dev/null || true
+  kill "$wine_pid" 2>/dev/null || true
+  wait "$wine_pid" 2>/dev/null || true
+  kill "$xvfb_pid" 2>/dev/null || true
+  wait "$xvfb_pid" 2>/dev/null || true
+  if [[ "$found" -eq 1 && -d "$datadir/regtest" && ! -f "$datadir/wallet.dat" ]] \
+     && grep -qiE 'regtest|chain=regtest' "$datadir/regtest/debug.log"; then
+    return 0
+  fi
+  return 1
+}
+
 echo "== existing smokes (regtest only) =="
 run_smoke smoke-regtest "$ROOT/contrib/xcoin/smoke-regtest.sh"
 run_smoke smoke-xsession "$ROOT/contrib/xcoin/smoke-xsession.sh"
@@ -176,7 +216,7 @@ if links[:2] != need:
 if "Code → Download ZIP" not in text and "Code -> Download ZIP" not in text:
     print("README must warn against Code → Download ZIP")
     sys.exit(1)
-if re.search(r"(?i)do not use.{0,40}Code", text) is None and "not use **Code" not in text:
+if not re.search(r"(?i)do\s+(\*\*)?not(\*\*)?\s+use.{0,80}Code", text):
     print("README must tell people not to use Code → Download ZIP")
     sys.exit(1)
 print("README_DOWNLOAD_OK")
@@ -463,7 +503,7 @@ if [[ -f "$WIN_ZIP" ]]; then
       export WINEPREFIX="$PKG_DIR/wineprefix"
       rm -rf "$WINEPREFIX"
       mkdir -p "$WINEPREFIX"
-      if command -v xvfb-run >/dev/null 2>&1; then
+      if command -v Xvfb >/dev/null 2>&1; then
         xvfb-run -a -s "-screen 0 1280x720x24" env WINEDEBUG=-all WINEPREFIX="$WINEPREFIX" timeout -k 5 40 \
           "$WINEBIN" "$WROOT/xcoind.exe" -regtest -datadir="Z:$WD" -server -listen=0 \
           -printtoconsole -xoauthmock=NFTRVN >/tmp/xcoin-wine-xcoind.log 2>&1 || true
@@ -474,29 +514,26 @@ if [[ -f "$WIN_ZIP" ]]; then
           record FAIL windows-wine-regtest "see /tmp/xcoin-wine-xcoind.log"
           tail -20 /tmp/xcoin-wine-xcoind.log 2>/dev/null || true
         fi
-        xvfb-run -a -s "-screen 0 1280x720x24" env WINEDEBUG=-all WINEPREFIX="$WINEPREFIX" timeout -k 5 35 \
-          "$WINEBIN" "$WROOT/X Coin Practice Wallet.exe" -datadir="Z:$WD" -server -listen=0 \
-          -rpcuser=xcoin -rpcpassword=xcoin -rpcport=28982 -splash=0 \
-          >/tmp/xcoin-wine-practice.log 2>&1 || true
-        if grep -qi "regtest" /tmp/xcoin-wine-practice.log 2>/dev/null || find "$WD" -name debug.log | grep -q .; then
-          record PASS windows-wine-practice "wine Practice produced a regtest debug.log"
+        WP="$PKG_DIR/wine-datadir-practice"
+        if wine_labeled_start "$WP" /tmp/xcoin-wine-practice.log \
+            "$WROOT/X Coin Practice Wallet.exe" -datadir="Z:$WP" -server -listen=0 \
+            -rpcuser=xcoin -rpcpassword=xcoin -rpcport=28982 -splash=0; then
+          record PASS windows-wine-practice "wine Practice wrote throwaway datadir/regtest/debug.log"
         else
-          record FAIL windows-wine-practice "wine Practice did not produce a debug.log; see /tmp/xcoin-wine-practice.log"
+          record FAIL windows-wine-practice "see /tmp/xcoin-wine-practice.log and $WP/regtest/debug.log"
           tail -20 /tmp/xcoin-wine-practice.log 2>/dev/null || true
+          tail -20 "$WP/regtest/debug.log" 2>/dev/null || true
         fi
         # Real labeled start, but pass -regtest so this never opens the main ledger.
         WD2="$PKG_DIR/wine-datadir-wallet"
-        rm -rf "$WD2"
-        mkdir -p "$WD2"
-        xvfb-run -a -s "-screen 0 1280x720x24" env WINEDEBUG=-all WINEPREFIX="$WINEPREFIX" timeout -k 5 35 \
-          "$WINEBIN" "$WROOT/X Coin Wallet.exe" -regtest -datadir="Z:$WD2" -server -listen=0 \
-          -rpcuser=xcoin -rpcpassword=xcoin -rpcport=28983 -splash=0 \
-          >/tmp/xcoin-wine-wallet.log 2>&1 || true
-        if find "$WD2" -name debug.log | grep -q . && [[ ! -f "$WD2/wallet.dat" ]]; then
-          record PASS windows-wine-wallet-start "wine X Coin Wallet.exe with extra -regtest wrote throwaway datadir only"
+        if wine_labeled_start "$WD2" /tmp/xcoin-wine-wallet.log \
+            "$WROOT/X Coin Wallet.exe" -regtest -datadir="Z:$WD2" -server -listen=0 \
+            -rpcuser=xcoin -rpcpassword=xcoin -rpcport=28983 -splash=0; then
+          record PASS windows-wine-wallet-start "wine X Coin Wallet.exe with extra -regtest wrote throwaway datadir/regtest only"
         else
-          record FAIL windows-wine-wallet-start "see /tmp/xcoin-wine-wallet.log"
+          record FAIL windows-wine-wallet-start "see /tmp/xcoin-wine-wallet.log and $WD2/regtest/debug.log"
           tail -20 /tmp/xcoin-wine-wallet.log 2>/dev/null || true
+          tail -20 "$WD2/regtest/debug.log" 2>/dev/null || true
         fi
       else
         record SKIP windows-wine-regtest "no xvfb"
@@ -546,6 +583,13 @@ cov_row() {
   echo "**Nifty Raven** (@NFTRVN on X) — display name and handle only."
   echo
   echo "Runner: \`contrib/xcoin/run-release-audit.sh\` (${RUN_UTC})."
+  echo
+  echo "Smokes used \`$XCOIND\`"
+  if [[ "$XCOIND" == *linux-runtime* || "$XCOIND" == */bin/xcoind ]]; then
+    echo "(packaged Linux archive; \`src/xcoind\` was not built in this tree)."
+  else
+    echo "(in-tree build)."
+  fi
   echo
   echo "All runs used throwaway \`-regtest\` datadirs. No mainnet node. No launch"
   echo "\`wallet.dat\`. \`~/.xcoin/wallet.dat\` was not created."
