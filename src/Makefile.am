@@ -66,15 +66,15 @@ TESTS =
 BENCHMARKS =
 
 if BUILD_RAVEND
-  bin_PROGRAMS += ravend
+  bin_PROGRAMS += xcoind
 endif
 
 if BUILD_RAVEN_CLI
-  bin_PROGRAMS += raven-cli
+  bin_PROGRAMS += xcoin-cli
 endif
 
 if BUILD_RAVEN_TX
-  bin_PROGRAMS += raven-tx
+  bin_PROGRAMS += xcoin-tx
 endif
 
 .PHONY: FORCE check-symbols check-security
@@ -170,6 +170,7 @@ RAVEN_CORE_H = \
   memusage.h \
   merkleblock.h \
   miner.h \
+  lottery.h \
   net.h \
   net_processing.h \
   netaddress.h \
@@ -260,6 +261,7 @@ libraven_server_a_SOURCES = \
   dbwrapper.cpp \
   merkleblock.cpp \
   miner.cpp \
+  lottery.cpp \
   net.cpp \
   net_processing.cpp \
   noui.cpp \
@@ -281,6 +283,7 @@ libraven_server_a_SOURCES = \
   rpc/blockchain.cpp \
   rpc/messages.cpp \
   rpc/mining.cpp \
+  rpc/lottery.cpp \
   rpc/misc.cpp \
   rpc/net.cpp \
   rpc/rawtransaction.cpp \
@@ -475,17 +478,17 @@ libraven_cli_a_SOURCES = \
 nodist_libraven_util_a_SOURCES = $(srcdir)/obj/build.h
 #
 
-# ravend binary #
-ravend_SOURCES = ravend.cpp
-ravend_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
-ravend_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-ravend_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# xcoind binary (sources remain ravend.cpp from upstream) #
+xcoind_SOURCES = ravend.cpp
+xcoind_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
+xcoind_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+xcoind_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-ravend_SOURCES += ravend-res.rc
+xcoind_SOURCES += ravend-res.rc
 endif
 
-ravend_LDADD = \
+xcoind_LDADD = \
   $(LIBRAVEN_SERVER) \
   $(LIBRAVEN_COMMON) \
   $(LIBUNIVALUE) \
@@ -499,38 +502,38 @@ ravend_LDADD = \
   $(LIBMEMENV) \
   $(LIBSECP256K1)
 
-ravend_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
+xcoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
 
-# raven-cli binary #
-raven_cli_SOURCES = raven-cli.cpp
-raven_cli_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES) $(EVENT_CFLAGS)
-raven_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-raven_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# xcoin-cli binary #
+xcoin_cli_SOURCES = raven-cli.cpp
+xcoin_cli_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES) $(EVENT_CFLAGS)
+xcoin_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+xcoin_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-raven_cli_SOURCES += raven-cli-res.rc
+xcoin_cli_SOURCES += raven-cli-res.rc
 endif
 
-raven_cli_LDADD = \
+xcoin_cli_LDADD = \
   $(LIBRAVEN_CLI) \
   $(LIBUNIVALUE) \
   $(LIBRAVEN_UTIL) \
   $(LIBRAVEN_CRYPTO)
 
-raven_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
+xcoin_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
 
-# raven-tx binary #
-raven_tx_SOURCES = raven-tx.cpp
-raven_tx_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
-raven_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-raven_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# xcoin-tx binary #
+xcoin_tx_SOURCES = raven-tx.cpp
+xcoin_tx_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
+xcoin_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+xcoin_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
 if TARGET_WINDOWS
-raven_tx_SOURCES += raven-tx-res.rc
+xcoin_tx_SOURCES += raven-tx-res.rc
 endif
 
-raven_tx_LDADD = \
+xcoin_tx_LDADD = \
   $(LIBUNIVALUE) \
   $(LIBRAVEN_COMMON) \
   $(LIBRAVEN_UTIL) \
@@ -538,7 +541,7 @@ raven_tx_LDADD = \
   $(LIBRAVEN_CRYPTO) \
   $(LIBSECP256K1)
 
-raven_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
+xcoin_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 #
 
 # ravenconsensus library #

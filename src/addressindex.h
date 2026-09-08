@@ -10,7 +10,7 @@
 #include "amount.h"
 #include "script/script.h"
 
-static const std::string RVN = "RVN";
+static const std::string RVN = "XFER"; // native unit ticker (historical identifier name kept)
 
 struct CAddressUnspentKey {
     unsigned int type;

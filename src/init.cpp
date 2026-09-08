@@ -9,6 +9,7 @@
 #endif
 
 #include "init.h"
+#include "lottery.h"
 
 #include "addrman.h"
 #include "amount.h"
@@ -204,6 +205,7 @@ void PrepareShutdown()
 #ifdef ENABLE_WALLET
     FlushWallets();
 #endif
+    lottery::StopProducer();
     GenerateRavens(false, 0, GetParams());
 
     MapPort(false);
@@ -628,8 +630,8 @@ std::string HelpMessage(HelpMessageMode mode)
 
 std::string LicenseInfo()
 {
-    const std::string URL_SOURCE_CODE = "<https://github.com/RavenProject/Ravencoin>";
-    const std::string URL_WEBSITE = "<https://ravencoin.org>";
+    const std::string URL_SOURCE_CODE = "<https://github.com/NiftyRaven/x-coin>";
+    const std::string URL_WEBSITE = "<https://github.com/NiftyRaven/x-coin>";
 
     return CopyrightHolders(strprintf(_("Copyright (C) %i-%i"), 2009, COPYRIGHT_YEAR) + " ") + "\n" +
            "\n" +
@@ -1380,10 +1382,6 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
         return false;
 #endif
 
-    bool fGenerate = gArgs.GetBoolArg("-regtest", false) ? false : DEFAULT_GENERATE;
-    // Generate coins in the background
-    GenerateRavens(fGenerate, gArgs.GetArg("-genproclimit", DEFAULT_GENERATE_THREADS), chainparams);
-
     // ********************************************************* Step 6: network initialization
     // Note that we absolutely cannot open any actual connections
     // until the very end ("start node") as the UTXO/block state
@@ -1890,6 +1888,9 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
         chain_active_height = chainActive.Height();
     }
     LogPrintf("nBestHeight = %d\n", chain_active_height);
+
+    // Lottery producer (not PoW). A running node is an active node.
+    lottery::StartProducer(chainparams);
 
     if (gArgs.GetBoolArg("-listenonion", DEFAULT_LISTEN_ONION))
         StartTorControl(threadGroup, scheduler);

@@ -9,16 +9,16 @@
 
 #include <stdint.h>
 
-/** Amount in corbies (Can be negative) */
+/** Amount in xferons (Can be negative). 1 XFER = 100,000,000 xferons. */
 typedef int64_t CAmount;
 
 static const CAmount COIN = 100000000;
 static const CAmount CENT = 1000000;
 
-/** No amount larger than this (in satoshi) is valid.
+/** No amount larger than this (in xferons) is valid.
  *
- * Note that this constant is *not* the total money supply, which in Raven
- * currently happens to be less than 21,000,000,000 RVN for various reasons, but
+ * Note that this constant is *not* the total money supply, which in X Coin
+ * currently happens to be less than 21,000,000,000 XFER for various reasons, but
  * rather a sanity check. As this sanity check is used by consensus-critical
  * validation code, the exact value of the MAX_MONEY constant is consensus
  * critical; in unusual circumstances like a(nother) overflow bug that allowed

@@ -206,5 +206,6 @@ private:
 void IncrementExtraNonce(CBlock* pblock, const CBlockIndex* pindexPrev, unsigned int& nExtraNonce);
 int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev);
 
+/** @deprecated PoW mining entry point. Always a no-op; lottery produces blocks. */
 int GenerateRavens(bool fGenerate, int nThreads, const CChainParams& chainparams);
 #endif // RAVEN_MINER_H

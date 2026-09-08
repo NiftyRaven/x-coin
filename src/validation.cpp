@@ -126,7 +126,7 @@ static void CheckBlockIndex(const Consensus::Params& consensusParams);
 /** Constant stuff for coinbase transactions we create: */
 CScript COINBASE_FLAGS;
 
-const std::string strMessageMagic = "Raven Signed Message:\n";
+const std::string strMessageMagic = "X Coin Signed Message:\n";
 
 // Internal stuff
 namespace {
@@ -5831,6 +5831,12 @@ bool AreAssetsDeployed()
     if (fAssetsIsActive)
         return true;
 
+    // X Coin: assets are first-class. Height 0 means on from genesis.
+    if (GetParams().GetAssetActivationHeight() <= 0) {
+        fAssetsIsActive = true;
+        return true;
+    }
+
     const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_ASSETS);
     if (thresholdState == THRESHOLD_ACTIVE)
         fAssetsIsActive = true;
@@ -5842,6 +5848,11 @@ bool IsRip5Active()
 {
     if (fRip5IsActive)
         return true;
+
+    if (GetParams().MessagingActivationBlock() == 0) {
+        fRip5IsActive = true;
+        return true;
+    }
 
     const ThresholdState thresholdState = VersionBitsTipState(GetParams().GetConsensus(), Consensus::DEPLOYMENT_MSG_REST_ASSETS);
     if (thresholdState == THRESHOLD_ACTIVE)

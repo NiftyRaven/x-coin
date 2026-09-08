@@ -40,10 +40,9 @@ struct ChainTxData {
 
 /**
  * CChainParams defines various tweakable parameters of a given instance of the
- * Raven system. There are three: the main network on which people trade goods
- * and services, the public test network which gets reset from time to time and
- * a regression test mode which is intended for private networks only. It has
- * minimal difficulty to ensure that blocks can be found instantly.
+ * X Coin system. There are three: the main network, the public test network,
+ * and a regression test mode for private networks. Block production is a
+ * minute lottery among active nodes (see docs/LOTTERY.md), not Proof-of-Work.
  */
 class CChainParams
 {

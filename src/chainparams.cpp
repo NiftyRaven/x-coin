@@ -54,7 +54,7 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
  */
 static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
-    const char* pszTimestamp = "The Times 03/Jan/2018 Bitcoin is name of the game for new generation of firms";
+    const char* pszTimestamp = "X Coin / XFER: Ravencoin hard-fork, assets kept, lottery not mining. 2026-09-08";
     const CScript genesisOutputScript = CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG;
     return CreateGenesisBlock(pszTimestamp, genesisOutputScript, nTime, nNonce, nBits, nVersion, genesisReward);
 }
@@ -123,7 +123,7 @@ public:
         consensus.nBIP66Enabled = true;
         consensus.nSegwitEnabled = true;
         consensus.nCSVEnabled = true;
-        consensus.nHeightHeaderCheckActivation = 4487776;
+        consensus.nHeightHeaderCheckActivation = 0;
         consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.kawpowLimit = uint256S("0000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffff"); // Estimated starting diff for first 180 kawpow blocks
         consensus.nPowTargetTimespan = 2016 * 60; // 1.4 days
@@ -169,34 +169,28 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].nOverrideMinerConfirmationWindow = 2016;
 
 
-        // The best chain should have at least this much work
-        consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000355cd0ac1503c83052"); // Block 2383567
-
-        // By default assume that the signatures in ancestors of this block are valid. Block# 1040000
-        consensus.defaultAssumeValid = uint256S("0x0000000000018d2fdcf4ac8eaac8db059584bd2840be5629562bb8599d39998c"); // Block 2383560
+        // New chain: no inherited Ravencoin work or assume-valid shortcuts
+        consensus.nMinimumChainWork = uint256S("0x00");
+        consensus.defaultAssumeValid = uint256S("0x00");
 
         /**
-         * The message start string is designed to be unlikely to occur in normal data.
-         * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
-         * a large 32-bit integer with any alignment.
+         * X Coin magic: "XFER" — must not collide with Ravencoin RAVN/RVNT/CROW.
          */
-        pchMessageStart[0] = 0x52; // R
-        pchMessageStart[1] = 0x41; // A
-        pchMessageStart[2] = 0x56; // V
-        pchMessageStart[3] = 0x4e; // N
-        nDefaultPort = 8767;
+        pchMessageStart[0] = 0x58; // X
+        pchMessageStart[1] = 0x46; // F
+        pchMessageStart[2] = 0x45; // E
+        pchMessageStart[3] = 0x52; // R
+        nDefaultPort = 38443;
         nPruneAfterHeight = 100000;
 
-        genesis = CreateGenesisBlock(1514999494, 25023712, 0x1e00ffff, 4, 5000 * COIN);
+        // Placeholder genesis (lottery chain: no PoW grind). Hash is computed at runtime.
+        genesis = CreateGenesisBlock(1788825600, 1, 0x207fffff, 4, 5000 * COIN);
 
         consensus.hashGenesisBlock = genesis.GetX16RHash();
+        // Distinct from Ravencoin mainnet; do not assert upstream hashes.
 
-        assert(consensus.hashGenesisBlock == uint256S("0000006b444bc2f2ffe627be9d9e7e7a0730000870ef6eb6da46c8eae389df90"));
-        assert(genesis.hashMerkleRoot == uint256S("28ff00a867739a352523808d301f504bc4547699398d70faf2266a8bae5f3516"));
-
-        vSeeds.emplace_back("seed-raven.bitactivate.com", false);
-        vSeeds.emplace_back("seed-raven.ravencoin.com", false);
-        vSeeds.emplace_back("seed-raven.ravencoin.org", false);
+        vSeeds.clear();
+        vFixedSeeds.clear();
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,60);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,122);
@@ -204,26 +198,16 @@ public:
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x88, 0xB2, 0x1E};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x88, 0xAD, 0xE4};
 
-        // Raven BIP44 cointype in mainnet is '175'
-        nExtCoinType = 175;
-
-        vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
+        // Unofficial BIP44 type for XFER (not Ravencoin 175)
+        nExtCoinType = 3844;
 
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
         fMineBlocksOnDemand = false;
-        fMiningRequiresPeers = true;
+        fMiningRequiresPeers = false;
 
         checkpointData = (CCheckpointData) {
             {
-                { 535721, uint256S("0x000000000001217f58a594ca742c8635ecaaaf695d1a63f6ab06979f1c159e04")},
-                { 697376, uint256S("0x000000000000499bf4ebbe61541b02e4692b33defc7109d8f12d2825d4d2dfa0")},
-                { 740000, uint256S("0x00000000000027d11bf1e7a3b57d3c89acc1722f39d6e08f23ac3a07e16e3172")},
-                { 909251, uint256S("0x000000000000694c9a363eff06518aa7399f00014ce667b9762f9a4e7a49f485")},
-                { 1040000, uint256S("0x000000000000138e2690b06b1ddd8cf158c3a5cf540ee5278debdcdffcf75839")},
-                { 1186833, uint256S("0x0000000000000d4840d4de1f7d943542c2aed532bd5d6527274fc0142fa1a410")},
-                { 2383550, uint256S("0x0000000000008927ed21a1e3bb87d3e1020646e8cc94354a1f8fc608395e15dc")},
-                { 4487775, uint256S("0x000000000002d64509e06e76ddbbe418c725291687ec62b41ecfc40386a091fd")}
             }
         };
 
@@ -265,17 +249,18 @@ public:
         strGlobalBurnAddress = "RXBurnXXXXXXXXXXXXXXXXXXXXXXWUo9FV";
 
         // DGW Activation
-        nDGWActivationBlock = 338778;
+        nDGWActivationBlock = 1;
 
         nMaxReorganizationDepth = 60; // 60 at 1 minute block timespan is +/- 60 minutes.
         nMinReorganizationPeers = 4;
         nMinReorganizationAge = 60 * 60 * 12; // 12 hours
 
-        nAssetActivationHeight = 435456; // Asset activated block height
-        nMessagingActivationBlock = 1092672; // Messaging activated block height
-        nRestrictedActivationBlock = 1092672; // Restricted activated block height
+        // New chain: Ravencoin-style assets on from genesis (height 0)
+        nAssetActivationHeight = 0;
+        nMessagingActivationBlock = 0;
+        nRestrictedActivationBlock = 0;
 
-        nKAAAWWWPOWActivationTime = 1588788000; // UTC: Wed May 06 2020 18:00:00
+        nKAAAWWWPOWActivationTime = 4102444800; // far future: KawPoW unused (lottery, not PoW)
         nKAWPOWActivationTime = nKAAAWWWPOWActivationTime;
         /** RVN End **/
     }
@@ -340,18 +325,14 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].nOverrideRuleChangeActivationThreshold = 1411; // Approx 70% of 2016
         consensus.vDeployments[Consensus::DEPLOYMENT_TRANSFER_OVERFLOW].nOverrideMinerConfirmationWindow = 2016;
 
-        // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x000000000000000000000000000000000000000000000000000168050db560b4");
+        consensus.nMinimumChainWork = uint256S("0x00");
+        consensus.defaultAssumeValid = uint256S("0x00");
 
-        // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x000000006272208605c4df3b54d4d5515759105e7ffcb258e8cd8077924ffef1");
-
-
-        pchMessageStart[0] = 0x52; // R
-        pchMessageStart[1] = 0x56; // V
-        pchMessageStart[2] = 0x4E; // N
-        pchMessageStart[3] = 0x54; // T
-        nDefaultPort = 18770;
+        pchMessageStart[0] = 0x58; // X
+        pchMessageStart[1] = 0x46; // F
+        pchMessageStart[2] = 0x54; // T
+        pchMessageStart[3] = 0x4E; // N
+        nDefaultPort = 48443;
         nPruneAfterHeight = 1000;
 
         uint32_t nGenesisTime = 1537466400;  // Thursday, September 20, 2018 12:00:00 PM GMT-06:00
@@ -417,19 +398,12 @@ public:
 
 //        /////////////////////////////////////////////////////////////////
 
-        genesis = CreateGenesisBlock(nGenesisTime, 15615880, 0x1e00ffff, 2, 5000 * COIN);
+        genesis = CreateGenesisBlock(nGenesisTime, 1, 0x207fffff, 2, 5000 * COIN);
         consensus.hashGenesisBlock = genesis.GetX16RHash();
-
-        //Test MerkleRoot and GenesisBlock
-        assert(consensus.hashGenesisBlock == uint256S("0x000000ecfc5e6324a079542221d00e10362bdc894d56500c414060eea8a3ad5a"));
-        assert(genesis.hashMerkleRoot == uint256S("28ff00a867739a352523808d301f504bc4547699398d70faf2266a8bae5f3516"));
+        // Placeholder genesis — not Ravencoin testnet.
 
         vFixedSeeds.clear();
         vSeeds.clear();
-
-        vSeeds.emplace_back("seed-testnet-raven.bitactivate.com", false);
-        vSeeds.emplace_back("seed-testnet-raven.ravencoin.com", false);
-        vSeeds.emplace_back("seed-testnet-raven.ravencoin.org", false);
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,196);
@@ -440,19 +414,13 @@ public:
         // Raven BIP44 cointype in testnet
         nExtCoinType = 1;
 
-        vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_test, pnSeed6_test + ARRAYLEN(pnSeed6_test));
-
         fDefaultConsistencyChecks = false;
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
-        fMiningRequiresPeers = true;
+        fMiningRequiresPeers = false;
 
         checkpointData = (CCheckpointData) {
             {
-                    { 225, uint256S("0x000003465e3e0167322eb8269ce91246bbc211e293bc5fbf6f0a0d12c1ccb363")},
-                    {223408, uint256S("0x000000012a0c09dd6456ab19018cc458648dec762b04f4ddf8ef8108eae69db9")},
-                    {232980, uint256S("0x000000007b16ae547fce76c3308dbeec2090cde75de74ab5dfcd6f60d13f089b")},
-                    {257610, uint256S("0x000000006272208605c4df3b54d4d5515759105e7ffcb258e8cd8077924ffef1")}
             }
         };
 
@@ -498,11 +466,11 @@ public:
         nMinReorganizationPeers = 4;
         nMinReorganizationAge = 60 * 60 * 12; // 12 hours
 
-        nAssetActivationHeight = 6048; // Asset activated block height
-        nMessagingActivationBlock = 10080; // Messaging activated block height
-        nRestrictedActivationBlock = 10080; // Restricted activated block height
+        nAssetActivationHeight = 0;
+        nMessagingActivationBlock = 0;
+        nRestrictedActivationBlock = 0;
 
-        nKAAAWWWPOWActivationTime = 1585159200; //Wed Mar 25 2020 18:00:00 UTC
+        nKAAAWWWPOWActivationTime = 4102444800; // far future: KawPoW unused
         nKAWPOWActivationTime = nKAAAWWWPOWActivationTime;
         /** RVN End **/
     }
@@ -572,11 +540,11 @@ public:
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x00");
 
-        pchMessageStart[0] = 0x43; // C
-        pchMessageStart[1] = 0x52; // R
-        pchMessageStart[2] = 0x4F; // O
-        pchMessageStart[3] = 0x57; // W
-        nDefaultPort = 18444;
+        pchMessageStart[0] = 0x58; // X
+        pchMessageStart[1] = 0x46; // F
+        pchMessageStart[2] = 0x52; // R
+        pchMessageStart[3] = 0x54; // T
+        nDefaultPort = 28443;
         nPruneAfterHeight = 1000;
 
 // This is used inorder to mine the genesis block. Once found, we can use the nonce and block hash found to create a valid genesis block
@@ -642,9 +610,7 @@ public:
 
         genesis = CreateGenesisBlock(1524179366, 1, 0x207fffff, 4, 5000 * COIN);
         consensus.hashGenesisBlock = genesis.GetX16RHash();
-
-        assert(consensus.hashGenesisBlock == uint256S("0x0b2c703dc93bb63a36c4e33b85be4855ddbca2ac951a7a0a29b8de0408200a3c "));
-        assert(genesis.hashMerkleRoot == uint256S("0x28ff00a867739a352523808d301f504bc4547699398d70faf2266a8bae5f3516"));
+        // Placeholder genesis — not Ravencoin regtest. Hash computed at runtime.
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.
