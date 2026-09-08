@@ -446,7 +446,7 @@ void XHome::showRpcOutcome(const QString& raw, const QString& okPrefix)
     if (ok) {
         if (okPrefix.isEmpty())
             statusLabel->setText(text);
-        else if (text.isEmpty())
+        else if (text.isEmpty() || text.startsWith("{") || text.startsWith("["))
             statusLabel->setText(okPrefix);
         else
             statusLabel->setText(okPrefix + " — " + text);
