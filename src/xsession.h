@@ -5,6 +5,7 @@
 #ifndef XCOIN_XSESSION_H
 #define XCOIN_XSESSION_H
 
+#include <cstdint>
 #include <string>
 
 class UniValue;

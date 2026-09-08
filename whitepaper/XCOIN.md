@@ -288,27 +288,36 @@ under that session’s root. How to wire one:
 
 ## 7. The wallet (honest status)
 
-The wallet **is** the core wallet that ships with the node:
+The wallet **is** the buttons-first desktop GUI that ships with the node:
 
+- `xcoin-qt` — desktop GUI (X theme: black / white / sharp). This is
+  the wallet people run.
 - `xcoind` — daemon, lottery producer, wallet
 - `xcoin-cli` — RPC
-- `xcoin-qt` — desktop GUI (X theme: black / white / sharp). This is
-  the 1.1 wallet. CLI remains supported.
+
+**Linux x86_64** and **Windows x86_64** packages are folders you open.
+Each package has two labeled starts: the real wallet (no `-regtest`) and
+**Practice**, which always passes `-regtest`. Practice writes only the
+regtest datadir (`~/.xcoin/regtest` on Linux, `%APPDATA%\XCoin\regtest`
+on Windows) and never the main ledger or the main `wallet.dat`. The
+practice window title includes **[regtest]**. Practice coins are not
+main XFER.
 
 There is **no** new mobile wallet and **no** X-app wallet. Sign in with
 X is OAuth in `xcoin-qt` / the node (PKCE → `users/me` → datadir proof).
 It is an identity gate on this node, not a hosted X.com wallet and not
-a replacement for the seed.
+a replacement for the seed. **Sign in with X is required** to send,
+receive, and claim the one free root per signed-in X account.
 
 **12-word BIP39 / BIP44 generation is unchanged** and still required
 to create or restore keys. Seed = keys. X session = proof that this
 datadir is linked to that X account. [docs/WALLET.md](../docs/WALLET.md).
 
 Creating an address, sending XFER, linking a handle, and creating or
-joining a lottery pool are RPC or Qt operations against the core
-`wallet.dat` in `~/.xcoin`. Send and receive require the session proof.
-Home has **POOL** (create / join / leave / copy pool id) and optional
-**Provide my node IP** (off by default).
+joining a lottery pool are Home buttons or RPC against `wallet.dat`.
+Send and receive require the session proof. Home has **POOL** (create /
+join / leave / copy pool id) and optional **Provide my node IP** (off
+by default).
 
 What this release changed on top of that core:
 
@@ -316,14 +325,16 @@ What this release changed on top of that core:
 - Lottery instead of mining; optional lottery pools from Home
 - Sign in with X session + X Verified (blue check) and `linkxaccount`
   (tokens RAM-only; GUI @handle only; P2P user id 0)
-- One free root per handle; user roots forbidden; restricted assets
-  removed
+- One free root per signed-in X account; user roots forbidden;
+  restricted assets removed; handles up to 32 characters (a 26-character
+  handle maps 1:1)
+- Linux and Windows folders with real / Practice starts
 - Optional **Provide my node IP** on Home (off by default)
 
 What is still inherited core behavior: UTXO wallet, BIP39 12-word HD
 seed, `wallet.dat`, `encryptwallet` / `backupwallet`, fee estimates,
-P2P, mempool, the asset script format. How to use it:
-[README.md](../README.md).
+P2P, mempool, the asset script format. How to use it (which file to
+open — do not compile): [README.md](../README.md).
 
 ## 8. Risks (accepted for private launch)
 

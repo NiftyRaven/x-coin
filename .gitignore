@@ -69,6 +69,8 @@ src/qt/test/moc*.cpp
 *.o
 *.o-*
 *.patch
+!depends/patches/**/*.patch
+!depends/patches/**/*.conf
 *.a
 *.pb.cc
 *.pb.h
@@ -87,6 +89,7 @@ src/qt/test/moc*.cpp
 # Compilation and Qt preprocessor part
 *.qm
 Makefile
+!depends/Makefile
 raven-qt
 Raven-Qt.app
 
@@ -142,7 +145,16 @@ gui-demo-datadir/
 src/qt/xcoin-qt
 src/xcoin-qt
 
-# packaged Linux tarball is tracked under dist/
+# packaged Linux tarball / Windows zip are tracked under dist/
 dist/*/
 !dist/
 !dist/*.tar.gz
+!dist/*.zip
+!dist/SHA256SUMS
+
+# local smoke / audit output
+smoke-pool-datadir/
+smoke-extra-datadir/
+audit-logs/
+audit-pkg/
+audit-extra-datadir/

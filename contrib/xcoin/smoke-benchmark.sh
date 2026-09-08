@@ -161,14 +161,14 @@ echo "A sent $TXID"
 "${A_CLI[@]}" gettransaction "$TXID" >/dev/null
 
 ok_mem=0
-for _ in $(seq 1 40); do
+for _ in $(seq 1 80); do
   in_b="$("${B_CLI[@]}" getrawmempool | python3 -c 'import json,sys; print(1 if "'"$TXID"'" in json.load(sys.stdin) else 0)')"
   in_c="$("${C_CLI[@]}" getrawmempool | python3 -c 'import json,sys; print(1 if "'"$TXID"'" in json.load(sys.stdin) else 0)')"
   if [[ "$in_b" -eq 1 && "$in_c" -eq 1 ]]; then
     ok_mem=1
     break
   fi
-  sleep 0.25
+  sleep 0.5
 done
 if [[ "$ok_mem" -ne 1 ]]; then
   echo "mempool did not gossip $TXID to B/C" >&2

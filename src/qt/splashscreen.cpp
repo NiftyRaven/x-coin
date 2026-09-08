@@ -149,8 +149,11 @@ SplashScreen::SplashScreen(const NetworkStyle* networkStyle)
 
     pixPaint.end();
 
-    // Set window title
-    setWindowTitle(titleText + " " + titleAddText);
+    // Set window title. Practice / -regtest must say regtest.
+    if (titleAddText.contains(QStringLiteral("regtest"), Qt::CaseInsensitive))
+        setWindowTitle(titleText + tr(" - Practice Wallet ") + titleAddText);
+    else
+        setWindowTitle(titleText + " " + titleAddText);
 
     // Resize window and move to center of desktop, disallow resizing
     QRect r(QPoint(), QSize(pixmap.size().width()/devicePixelRatio,pixmap.size().height()/devicePixelRatio));

@@ -47,7 +47,14 @@
 #endif
 
 const int RAVEN_IPC_CONNECT_TIMEOUT = 1000; // milliseconds
-const QString RAVEN_IPC_PREFIX("raven:");
+const QString RAVEN_IPC_PREFIX("xcoin:");
+const QString RAVEN_IPC_PREFIX_LEGACY("raven:");
+
+static bool isPaymentUri(const QString& s)
+{
+    return s.startsWith(RAVEN_IPC_PREFIX, Qt::CaseInsensitive)
+        || s.startsWith(RAVEN_IPC_PREFIX_LEGACY, Qt::CaseInsensitive);
+}
 // BIP70 payment protocol messages
 const char* BIP70_MESSAGE_PAYMENTACK = "PaymentACK";
 const char* BIP70_MESSAGE_PAYMENTREQUEST = "PaymentRequest";
@@ -212,7 +219,7 @@ void PaymentServer::ipcParseCommandLine(int argc, char* argv[])
         // network as that would require fetching and parsing the payment request.
         // That means clicking such an URI which contains a testnet payment request
         // will start a mainnet instance and throw a "wrong network" error.
-        if (arg.startsWith(RAVEN_IPC_PREFIX, Qt::CaseInsensitive)) // raven: URI
+        if (isPaymentUri(arg))
         {
             savedPaymentRequests.append(arg);
 
@@ -325,7 +332,7 @@ PaymentServer::PaymentServer(QObject* parent, bool startLocalServer) :
         if (!uriServer->listen(name)) {
             // constructor is called early in init, so don't use "Q_EMIT message()" here
             QMessageBox::critical(0, tr("Payment request error"),
-                tr("Cannot start raven: click-to-pay handler"));
+                tr("Cannot start X Coin click-to-pay handler"));
         }
         else {
             connect(uriServer, SIGNAL(newConnection()), this, SLOT(handleURIConnection()));
@@ -406,7 +413,7 @@ void PaymentServer::handleURIOrFile(const QString& s)
         return;
     }
 
-    if (s.startsWith(RAVEN_IPC_PREFIX, Qt::CaseInsensitive)) // raven: URI
+    if (isPaymentUri(s))
     {
         QUrlQuery uri((QUrl(s)));
         if (uri.hasQueryItem("r")) // payment request URI
