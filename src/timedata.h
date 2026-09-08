@@ -11,7 +11,8 @@
 #include <stdint.h>
 #include <vector>
 
-static const int64_t DEFAULT_MAX_TIME_ADJUSTMENT = 70 * 60;
+/** Cap peer clock skew to one lottery slot so peers cannot mint a burst. */
+static const int64_t DEFAULT_MAX_TIME_ADJUSTMENT = 60;
 
 class CNetAddr;
 

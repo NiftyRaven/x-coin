@@ -6,6 +6,7 @@
 #include <lottery.h>
 #include <key.h>
 #include <script/standard.h>
+#include <consensus/validation.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -103,6 +104,58 @@ BOOST_AUTO_TEST_CASE(unlisted_heartbeat_ignored)
     key.MakeNewKey(true);
     BOOST_CHECK(!lottery::GetRegistry().Heartbeat(P2PKHFromKey(key), 10, "ghost", 0));
     BOOST_CHECK_EQUAL(lottery::GetRegistry().Count(10), 0U);
+}
+
+BOOST_AUTO_TEST_CASE(slot_seconds_is_sixty_and_compile_time)
+{
+    BOOST_CHECK_EQUAL(lottery::SLOT_SECONDS, 60);
+    BOOST_CHECK_EQUAL(lottery::MAX_FUTURE_SLOTS, 1);
+}
+
+BOOST_AUTO_TEST_CASE(block_time_must_sit_in_height_slot)
+{
+    const int64_t genesis = 1788825600; // frozen main genesis nTime
+    const int height = 1;
+    const int64_t slotStart = lottery::SlotStartTime(height, genesis);
+    const int64_t now = slotStart + 5;
+    CValidationState state;
+
+    BOOST_CHECK(lottery::CheckBlockTime(height, slotStart, genesis, now, false, state));
+    BOOST_CHECK(lottery::CheckBlockTime(height, slotStart + 59, genesis, now, false, state));
+
+    CValidationState tooOld;
+    BOOST_CHECK(!lottery::CheckBlockTime(height, slotStart - 1, genesis, now, false, tooOld));
+    BOOST_CHECK_EQUAL(tooOld.GetRejectReason(), "bad-lottery-slot-time");
+
+    CValidationState tooNewSlot;
+    BOOST_CHECK(!lottery::CheckBlockTime(height, slotStart + 60, genesis, now, false, tooNewSlot));
+    BOOST_CHECK_EQUAL(tooNewSlot.GetRejectReason(), "bad-lottery-slot-time");
+}
+
+BOOST_AUTO_TEST_CASE(clock_advance_cannot_mint_many_future_slots)
+{
+    const int64_t genesis = 1788825600;
+    const int64_t now = lottery::SlotStartTime(1, genesis) + 10;
+    CValidationState state;
+    // Height 3 is two slots ahead of height 1 — rejected.
+    const int64_t futureStart = lottery::SlotStartTime(3, genesis);
+    BOOST_CHECK(!lottery::CheckBlockTime(3, futureStart, genesis, now, false, state));
+    BOOST_CHECK_EQUAL(state.GetRejectReason(), "time-too-new");
+}
+
+BOOST_AUTO_TEST_CASE(regtest_skips_slot_lock)
+{
+    CValidationState state;
+    BOOST_CHECK(lottery::CheckBlockTime(99, 1, 1788825600, 10, true, state));
+}
+
+BOOST_AUTO_TEST_CASE(historical_slot_is_a_function_of_height_not_peer_data)
+{
+    const int64_t genesis = 1788825600;
+    BOOST_CHECK_EQUAL(lottery::SlotFromHeight(1, genesis), lottery::SlotFromTime(genesis) + 1);
+    BOOST_CHECK_EQUAL(lottery::SlotStartTime(2, genesis), lottery::SlotStartTime(1, genesis) + lottery::SLOT_SECONDS);
+    // Peer messages cannot change SLOT_SECONDS; it is a compile-time constant.
+    BOOST_CHECK_EQUAL(lottery::SLOT_SECONDS, 60);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

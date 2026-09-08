@@ -400,11 +400,11 @@ void SendAssetsEntry::onAssetSelected(int index)
 
     // Get the asset metadata if it exists. This isn't called on the administrator token because that doesn't have metadata
     if (!currentActiveAssetCache->GetAssetMetaDataIfExists(name.toStdString(), asset)) {
-        // This should only happen if the user, selected an asset that was issued from assetcontrol and tries to transfer it before it is mined.
+        // This should only happen if the user selected an asset that was issued from assetcontrol and tries to transfer it before it is in a block.
         clear();
         ui->messageLabel->show();
         ui->messageTextLabel->show();
-        ui->messageTextLabel->setText(tr("Failed to get asset metadata for: ") + name + "." + tr(" The transaction in which the asset was issued must be mined into a block before you can transfer it"));
+        ui->messageTextLabel->setText(tr("Failed to get asset metadata for: ") + name + "." + tr(" The transaction in which the asset was issued must be included in a block before you can transfer it"));
         ui->assetAmountLabel->clear();
         return;
     }

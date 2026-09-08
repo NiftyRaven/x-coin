@@ -1734,7 +1734,7 @@ void ListTransactions(CWallet* const pwallet, const CWalletTx& wtx, const std::s
                     else if (wtx.GetBlocksToMaturity() > 0)
                         entry.push_back(Pair("category", "immature"));
                     else
-                        entry.push_back(Pair("category", "generate"));
+                        entry.push_back(Pair("category", "lottery"));
                 }
                 else
                 {
@@ -1852,7 +1852,7 @@ UniValue listtransactions(const JSONRPCRequest& request)
             "                                                It will be \"\" for the default account.\n"
             "    \"address\":\"address\",    (string) The X Coin address of the transaction. Not present for \n"
             "                                                move transactions (category = move).\n"
-            "    \"category\":\"send|receive|move\", (string) The transaction category. 'move' is a local (off blockchain)\n"
+            "    \"category\":\"send|receive|move|lottery\", (string) The transaction category. 'lottery' is a coinbase lottery win / block reward. 'move' is a local (off blockchain)\n"
             "                                                transaction between accounts, and not associated with an address,\n"
             "                                                transaction id or block. 'send' and 'receive' transactions are \n"
             "                                                associated with an address, transaction id and block details\n"

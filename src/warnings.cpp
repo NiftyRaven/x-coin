@@ -48,8 +48,8 @@ std::string GetWarnings(const std::string& strFor)
     LOCK(cs_warnings);
 
     if (!CLIENT_VERSION_IS_RELEASE) {
-        strStatusBar = "This is a pre-release test build - use at your own risk - do not use for mining or merchant applications";
-        strGUI = _("This is a pre-release test build - use at your own risk - do not use for mining or merchant applications");
+        strStatusBar = "This is a pre-release test build - use at your own risk - do not use for lottery production or merchant applications";
+        strGUI = _("This is a pre-release test build - use at your own risk - do not use for lottery production or merchant applications");
     }
 
     if (gArgs.GetBoolArg("-testsafemode", DEFAULT_TESTSAFEMODE))
@@ -64,8 +64,8 @@ std::string GetWarnings(const std::string& strFor)
 
     if (fLargeWorkForkFound)
     {
-        strStatusBar = strRPC = "Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.";
-        strGUI += (strGUI.empty() ? "" : uiAlertSeperator) + _("Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.");
+        strStatusBar = strRPC = "Warning: The network does not appear to fully agree! Some lottery producers appear to be experiencing issues.";
+        strGUI += (strGUI.empty() ? "" : uiAlertSeperator) + _("Warning: The network does not appear to fully agree! Some lottery producers appear to be experiencing issues.");
     }
     else if (fLargeWorkInvalidChainFound)
     {

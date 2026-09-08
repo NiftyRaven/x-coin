@@ -217,7 +217,7 @@ UniValue getmininginfo(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() != 0)
         throw std::runtime_error(
             "getmininginfo\n"
-            "\nReturns a json object containing mining-related information."
+            "\nReturns a json object containing lottery / block-assembly information."
             "\nResult:\n"
             "{\n"
             "  \"blocks\": nnn,             (numeric) The current block\n"
@@ -231,9 +231,12 @@ UniValue getmininginfo(const JSONRPCRequest& request)
             "  \"warnings\": \"...\"          (string) any network and blockchain warnings\n"
             "  \"errors\": \"...\"            (string) DEPRECATED. Same as warnings. Only shown when xcoind is started with -deprecatedrpc=getmininginfo\n"
             "}\n"
+            "\nPrefer getlotteryinfo for X Coin lottery state.\n"
             "\nExamples:\n"
             + HelpExampleCli("getmininginfo", "")
             + HelpExampleRpc("getmininginfo", "")
+            + HelpExampleCli("getlotteryinfo", "")
+            + HelpExampleRpc("getlotteryinfo", "")
         );
 
     LOCK(cs_main);
@@ -262,7 +265,7 @@ UniValue prioritisetransaction(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() != 3)
         throw std::runtime_error(
             "prioritisetransaction <txid> <dummy value> <fee delta>\n"
-            "Accepts the transaction into mined blocks at a higher (or lower) priority\n"
+            "Accepts the transaction into lottery blocks at a higher (or lower) priority\n"
             "\nArguments:\n"
             "1. \"txid\"       (string, required) The transaction id.\n"
             "2. dummy          (numeric, optional) API-Compatibility for previous API. Must be zero or null.\n"

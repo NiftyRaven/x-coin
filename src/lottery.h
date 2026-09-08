@@ -45,6 +45,8 @@ class CValidationState;
 namespace lottery {
 
 static const int64_t SLOT_SECONDS = 60;
+/** How many future slots a header may sit in vs the local clock (clock skew). */
+static const int64_t MAX_FUTURE_SLOTS = 1;
 static const int64_t HEARTBEAT_TTL_SECONDS = 180;
 static const size_t MAX_ACTIVE_NODES = 4096;
 static const size_t MAX_HEARTBEAT_SCRIPT = 520;
@@ -181,6 +183,29 @@ int64_t SlotFromTime(int64_t unixTime);
 
 /** Height 0 is genesis (no lottery). Height n maps to genesisSlot + n. */
 int64_t SlotFromHeight(int nHeight, int64_t genesisTime);
+
+/** Inclusive start of the locked 60-second window for this height. */
+int64_t SlotStartTime(int nHeight, int64_t genesisTime);
+
+/**
+ * Permanent mainnet/testnet lock: one height per compile-time 60-second slot.
+ * Slot length is not a P2P field and cannot be changed by a peer message.
+ *
+ * Rejects blocks whose nTime is outside [slotStart, slotStart+60) for that
+ * height, and slots more than MAX_FUTURE_SLOTS ahead of the local clock
+ * (stops minting many blocks by advancing the clock). Header nTime is part of
+ * the block hash, so rewriting a timestamp after accept is a different block
+ * and must still satisfy this rule.
+ *
+ * fMineBlocksOnDemand (regtest) skips the lock so generatetoaddress can
+ * assemble blocks immediately.
+ */
+bool CheckBlockTime(int nHeight, int64_t nTime, int64_t genesisTime,
+                    int64_t nowLocal, bool fMineBlocksOnDemand,
+                    CValidationState& state);
+
+/** Clamp a producer timestamp into the locked slot for nHeight. */
+int64_t ClampTimeToSlot(int nHeight, int64_t genesisTime, int64_t now, int64_t mtp);
 
 /** 1 winner before the first halving, 2 after the first, 3 after the second, … */
 int WinnerCount(int nHeight, int nSubsidyHalvingInterval);

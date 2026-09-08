@@ -718,6 +718,49 @@ int64_t SlotFromHeight(int nHeight, int64_t genesisTime)
     return SlotFromTime(genesisTime) + nHeight;
 }
 
+int64_t SlotStartTime(int nHeight, int64_t genesisTime)
+{
+    return SlotFromHeight(nHeight, genesisTime) * SLOT_SECONDS;
+}
+
+bool CheckBlockTime(int nHeight, int64_t nTime, int64_t genesisTime,
+                    int64_t nowLocal, bool fMineBlocksOnDemand,
+                    CValidationState& state)
+{
+    if (fMineBlocksOnDemand)
+        return true;
+    if (nHeight <= 0)
+        return true;
+
+    const int64_t slot = SlotFromHeight(nHeight, genesisTime);
+    const int64_t slotStart = slot * SLOT_SECONDS;
+    const int64_t slotEnd = slotStart + SLOT_SECONDS;
+    if (nTime < slotStart || nTime >= slotEnd) {
+        return state.DoS(100, false, REJECT_INVALID, "bad-lottery-slot-time", false,
+                         "block time is outside the locked 60-second lottery slot for this height");
+    }
+    const int64_t nowSlot = SlotFromTime(nowLocal);
+    if (slot > nowSlot + MAX_FUTURE_SLOTS) {
+        return state.Invalid(false, REJECT_INVALID, "time-too-new",
+                             "lottery slot is too far in the future");
+    }
+    return true;
+}
+
+int64_t ClampTimeToSlot(int nHeight, int64_t genesisTime, int64_t now, int64_t mtp)
+{
+    const int64_t slotStart = SlotStartTime(nHeight, genesisTime);
+    const int64_t slotEnd = slotStart + SLOT_SECONDS;
+    int64_t t = now;
+    if (t < slotStart)
+        t = slotStart;
+    if (t >= slotEnd)
+        t = slotEnd - 1;
+    if (t <= mtp)
+        t = mtp + 1;
+    return t;
+}
+
 int WinnerCount(int nHeight, int nSubsidyHalvingInterval)
 {
     if (nHeight < 0)
@@ -1034,6 +1077,13 @@ static bool ProduceOneBlock(const CChainParams& chainparams)
             return false;
         unsigned int extra = 0;
         IncrementExtraNonce(pblock, pindexPrev, extra);
+        if (!chainparams.MineBlocksOnDemand()) {
+            const int nHeight = pindexPrev->nHeight + 1;
+            pblock->nTime = ClampTimeToSlot(nHeight,
+                                            chainparams.GenesisBlock().nTime,
+                                            GetTime(),
+                                            pindexPrev->GetMedianTimePast());
+        }
     }
 
     std::shared_ptr<const CBlock> shared = std::make_shared<const CBlock>(*pblock);
@@ -1066,7 +1116,7 @@ static void ProducerThread(const CChainParams& chainparams)
             const int64_t now = GetTime();
 
 #ifdef ENABLE_WALLET
-            // Adopt the wallet mining script once. Do not touch the keypool
+            // Adopt the wallet coinbase/payout script once. Do not touch the keypool
             // every second from this thread (that raced and OOMed on start).
             static bool fAdoptedWallet = false;
             if (!fAdoptedWallet) {

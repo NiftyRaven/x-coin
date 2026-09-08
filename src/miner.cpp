@@ -504,6 +504,6 @@ int GenerateRavens(bool fGenerate, int nThreads, const CChainParams& chainparams
     (void)fGenerate;
     (void)nThreads;
     (void)chainparams;
-    LogPrintf("GenerateRavens: ignored — X Coin has no PoW miner. See docs/LOTTERY.md\n");
+    LogPrintf("GenerateRavens: ignored — X Coin has no PoW miner; lottery produces blocks. See docs/LOTTERY.md\n");
     return 0;
 }

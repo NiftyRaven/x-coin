@@ -334,7 +334,7 @@ QString TransactionTableModel::formatTxStatus(const TransactionRecord *wtx) cons
         status = tr("Immature (%1 confirmations, will be available after %2)").arg(wtx->status.depth).arg(wtx->status.depth + wtx->status.matures_in);
         break;
     case TransactionStatus::NotAccepted:
-        status = tr("Generated but not accepted");
+        status = tr("Lottery win not accepted");
         break;
     }
 
@@ -382,7 +382,7 @@ QString TransactionTableModel::formatTxType(const TransactionRecord *wtx) const
     case TransactionRecord::SendToSelf:
         return tr("Payment to yourself");
     case TransactionRecord::Generated:
-        return tr("Mined");
+        return tr("Lottery win");
     case TransactionRecord::Issue:
         return tr("Asset Issued");
     case TransactionRecord::Reissue:
@@ -752,7 +752,7 @@ QVariant TransactionTableModel::headerData(int section, Qt::Orientation orientat
             case Amount:
                 return tr("Amount removed from or added to balance.");
             case AssetName:
-                return tr("The asset (or RVN) removed or added to balance.");
+                return tr("The asset (or XFER) removed or added to balance.");
             }
         }
     }

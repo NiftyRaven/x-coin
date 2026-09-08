@@ -89,10 +89,12 @@ public explorer and nothing appears on Ravencoin explorers — XFER lives
 on **this** ledger only (own genesis, not an imported snapshot). A
 single node already stores that ledger; other people seeing the same
 tip need a **trusted peer IP in the config file** (`addnode=` on port
-**38443**). That is operator config, not a BIP39 seed and not a Home
-widget — the GUI shows only “Connected to N peers” / “Connecting…”,
-never addresses. Help → About credits **Nifty Raven (@NFTRVN on X)**
-only.
+**38443**). That is operator config, not a BIP39 seed. Home / Receive /
+Send never list other people’s IPs and never show yours unless you opt
+in: Home → **My node** → **Provide my node IP** (off by default). That
+only then shows or copies this machine’s listen endpoint, or lets you
+type the address you want to give out. Uncheck and the IP disappears
+again. Help → About credits **Nifty Raven (@NFTRVN on X)** only.
 
 First run still asks for a **12-word BIP39 seed** (create or restore).
 That did not change. Sign in with X is a separate identity proof on this

@@ -73,7 +73,7 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx, TransactionReco
     //
     if (wtx.IsCoinBase())
     {
-        strHTML += "<b>" + tr("Source") + ":</b> " + tr("Generated") + "<br>";
+        strHTML += "<b>" + tr("Source") + ":</b> " + tr("Lottery win") + "<br>";
     }
     else if (wtx.mapValue.count("from") && !wtx.mapValue["from"].empty())
     {
@@ -261,7 +261,7 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx, TransactionReco
     if (wtx.IsCoinBase())
     {
         quint32 numBlocksToMaturity = COINBASE_MATURITY +  1;
-        strHTML += "<br>" + tr("Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to \"not accepted\" and it won't be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.").arg(QString::number(numBlocksToMaturity)) + "<br>";
+        strHTML += "<br>" + tr("Lottery rewards must mature %1 blocks before they can be spent. When you won this block, it was broadcast to the network to be added to the chain. If it fails to get into the chain, its state will change to \"not accepted\" and it won't be spendable. This may occasionally happen if another node produces a block in the same minute slot.").arg(QString::number(numBlocksToMaturity)) + "<br>";
     }
 
     //
@@ -365,7 +365,7 @@ QString TransactionDesc::toAssetHTML(CWallet *wallet, CWalletTx &wtx, Transactio
         strHTML += "<b>" + tr("Debit") + ":</b> " + RavenUnits::formatWithCustomName(QString::fromStdString(rec->assetName), nAssetsRec, rec->units, true) + "<br>";
     }
 
-    strHTML += "<b>" + tr("Net RVN amount") + ":</b> " + RavenUnits::formatHtmlWithUnit(unit, nNet, true) + "<br>";
+    strHTML += "<b>" + tr("Net XFER amount") + ":</b> " + RavenUnits::formatHtmlWithUnit(unit, nNet, true) + "<br>";
 
     //
     // Message
@@ -402,7 +402,7 @@ QString TransactionDesc::toAssetHTML(CWallet *wallet, CWalletTx &wtx, Transactio
     if (wtx.IsCoinBase())
     {
         quint32 numBlocksToMaturity = COINBASE_MATURITY +  1;
-        strHTML += "<br>" + tr("Generated coins must mature %1 blocks before they can be spent. When you generated this block, it was broadcast to the network to be added to the block chain. If it fails to get into the chain, its state will change to \"not accepted\" and it won't be spendable. This may occasionally happen if another node generates a block within a few seconds of yours.").arg(QString::number(numBlocksToMaturity)) + "<br>";
+        strHTML += "<br>" + tr("Lottery rewards must mature %1 blocks before they can be spent. When you won this block, it was broadcast to the network to be added to the chain. If it fails to get into the chain, its state will change to \"not accepted\" and it won't be spendable. This may occasionally happen if another node produces a block in the same minute slot.").arg(QString::number(numBlocksToMaturity)) + "<br>";
     }
 
     //

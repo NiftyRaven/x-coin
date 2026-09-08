@@ -13,17 +13,22 @@
 #include "ravenunits.h"
 #include "xoauth.h"
 #include "xsession.h"
+#include "net.h"
 
 #include <QApplication>
+#include <QCheckBox>
+#include <QClipboard>
 #include <QFont>
 #include <QFrame>
 #include <QHBoxLayout>
+#include <QHostInfo>
 #include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
 #include <QScrollArea>
+#include <QSettings>
 #include <QStyle>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -44,15 +49,24 @@ static const char *kTheme =
     "QPushButton#xprimary:disabled { background: #27272a; color: #71717a; }"
     "QPushButton#xghost { background: #000000; color: #ffffff; border: 1px solid #52525b; border-radius: 0px; padding: 10px 18px; font-weight: 600; }"
     "QPushButton#xghost:hover { border-color: #ffffff; }"
+    "QCheckBox#xcheck { color: #a1a1aa; font-size: 13px; spacing: 8px; }"
+    "QCheckBox#xcheck:hover { color: #ffffff; }"
+    "QCheckBox#xcheck::indicator { width: 16px; height: 16px; border: 1px solid #52525b; background: #000000; }"
+    "QCheckBox#xcheck::indicator:checked { background: #ffffff; border-color: #ffffff; }"
     "QLineEdit { background: #0a0a0a; color: #ffffff; border: 1px solid #3f3f46; border-radius: 0px; padding: 10px 12px; selection-background-color: #ffffff; selection-color: #000000; }"
     "QLineEdit:focus { border-color: #ffffff; }";
 
-XHome::XHome(WalletView* walletViewIn, QWidget* parent)
+    XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     : QWidget(parent)
     , walletView(walletViewIn)
     , clientModel(0)
     , walletModel(0)
     , oauth(new XOAuth(this))
+    , nodeIpEdit(0)
+    , copyNodeBtn(0)
+    , shareNodeChk(0)
+    , nodeSharePanel(0)
+    , nodeEndpointLabel(0)
 {
     applyTheme();
 
@@ -83,9 +97,9 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     tag->setWordWrap(true);
     root->addWidget(tag);
 
-    // Count only. Never list peer addresses here — every xcoin-qt is already a node.
-    // Trusted peer IP belongs in xcoin.conf (addnode=) / operator docs only.
-    // Do not add a Home "Provide my node IP" / addnode / listen-address widget.
+    // Count only. Never list other people's addresses here — every xcoin-qt is already a node.
+    // Sharing *your* listen address is opt-in under My node (off by default).
+    // Joining a mesh still uses addnode= in xcoin.conf (operator docs).
     peersLabel = new QLabel("Connecting…");
     peersLabel->setObjectName("xtag");
     peersLabel->setAlignment(Qt::AlignHCenter);
@@ -231,6 +245,50 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     moneyHint->setWordWrap(true);
     root->addWidget(moneyHint);
 
+    QLabel* nodeHead = new QLabel("MY NODE");
+    nodeHead->setObjectName("xsection");
+    root->addWidget(nodeHead);
+
+    shareNodeChk = new QCheckBox("Provide my node IP");
+    shareNodeChk->setObjectName("xcheck");
+    shareNodeChk->setCursor(Qt::PointingHandCursor);
+    shareNodeChk->setToolTip("Optional. Off by default. Only then show or copy this machine's listen address.");
+    root->addWidget(shareNodeChk);
+
+    nodeSharePanel = new QWidget;
+    QVBoxLayout* nodeLay = new QVBoxLayout(nodeSharePanel);
+    nodeLay->setContentsMargins(0, 0, 0, 0);
+    nodeLay->setSpacing(10);
+
+    QLabel* nodeHint = new QLabel(
+        "Optional. This is your listen address — give it to a friend or seed operator if you want. "
+        "Nobody is required to share. Other people's IPs are never listed here. "
+        "Joining a mesh still uses addnode= in xcoin.conf.");
+    nodeHint->setObjectName("xhint");
+    nodeHint->setWordWrap(true);
+    nodeLay->addWidget(nodeHint);
+
+    nodeEndpointLabel = new QLabel;
+    nodeEndpointLabel->setObjectName("xcard");
+    nodeEndpointLabel->setWordWrap(true);
+    nodeEndpointLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    nodeLay->addWidget(nodeEndpointLabel);
+
+    QHBoxLayout* giveRow = new QHBoxLayout;
+    nodeIpEdit = new QLineEdit;
+    nodeIpEdit->setPlaceholderText("host:38443 — type the address you want to give out");
+    copyNodeBtn = new QPushButton("Copy my node address");
+    copyNodeBtn->setObjectName("xghost");
+    copyNodeBtn->setCursor(Qt::PointingHandCursor);
+    giveRow->addWidget(nodeIpEdit, 1);
+    giveRow->addWidget(copyNodeBtn);
+    nodeLay->addLayout(giveRow);
+    root->addWidget(nodeSharePanel);
+
+    QSettings shareSettings;
+    shareNodeChk->setChecked(shareSettings.value("xhomeShareNodeIp", false).toBool());
+    applyNodeShareVisibility(shareNodeChk->isChecked());
+
     statusLabel = new QLabel;
     statusLabel->setObjectName("xhint");
     statusLabel->setWordWrap(true);
@@ -257,6 +315,8 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     connect(oauth, SIGNAL(signedIn(QString,QString)), this, SLOT(onOAuthSuccess(QString,QString)));
     connect(oauth, SIGNAL(failed(QString)), this, SLOT(onOAuthFailed(QString)));
     connect(oauth, SIGNAL(status(QString)), this, SLOT(onOAuthStatus(QString)));
+    connect(shareNodeChk, SIGNAL(toggled(bool)), this, SLOT(onShareNodeToggled(bool)));
+    connect(copyNodeBtn, SIGNAL(clicked()), this, SLOT(onCopyNodeAddress()));
 
     QTimer* t = new QTimer(this);
     connect(t, SIGNAL(timeout()), this, SLOT(refresh()));
@@ -362,6 +422,9 @@ void XHome::refresh()
         peersLabel->setText("Connecting…");
     }
 
+    if (shareNodeChk && shareNodeChk->isChecked())
+        fillNodeShareWidgets();
+
     UniValue l;
     if (l.read(rpc("getlotteryinfo").toStdString()) && l.isObject()) {
         const bool elig = l["local_eligible"].isTrue();
@@ -396,6 +459,103 @@ void XHome::refresh()
 
     claimBtn->setEnabled(signedIn && rootName.isEmpty());
     allowlistBtn->setEnabled(signedIn);
+}
+
+QString XHome::localListenEndpoint() const
+{
+    int port = GetListenPort();
+    if (port <= 0)
+        port = 38443;
+
+    QString host;
+    int bestScore = -1;
+    UniValue n;
+    if (n.read(rpc("getnetworkinfo").toStdString()) && n.isObject()) {
+        const UniValue& addrs = n["localaddresses"];
+        if (addrs.isArray()) {
+            for (size_t i = 0; i < addrs.size(); ++i) {
+                const UniValue& rec = addrs[i];
+                if (!rec.isObject())
+                    continue;
+                const QString addr = QString::fromStdString(rec["address"].getValStr());
+                const int score = rec["score"].isNum() ? rec["score"].get_int() : 0;
+                if (rec["port"].isNum())
+                    port = rec["port"].get_int();
+                if (addr.isEmpty() || addr.startsWith("127.") || addr == "::1")
+                    continue;
+                if (score >= bestScore) {
+                    bestScore = score;
+                    host = addr;
+                }
+            }
+        }
+    }
+    if (host.isEmpty()) {
+        host = QHostInfo::localHostName();
+        if (host.isEmpty())
+            host = QString("localhost");
+    }
+    if (host.contains(QLatin1Char(':')) && !host.startsWith(QLatin1Char('[')))
+        return QString("[%1]:%2").arg(host).arg(port);
+    return QString("%1:%2").arg(host).arg(port);
+}
+
+void XHome::fillNodeShareWidgets()
+{
+    if (!nodeEndpointLabel || !nodeIpEdit)
+        return;
+    const QString detected = localListenEndpoint();
+    nodeEndpointLabel->setText(QString(
+        "This machine's listen endpoint\n%1\n\n"
+        "Copy this, or type the IP you want to give out (public, VPN, or LAN).")
+        .arg(detected));
+    if (nodeIpEdit->text().trimmed().isEmpty()) {
+        QSettings settings;
+        const QString saved = settings.value("xhomeShareNodeIpText").toString().trimmed();
+        nodeIpEdit->setText(saved.isEmpty() ? detected : saved);
+    }
+}
+
+void XHome::applyNodeShareVisibility(bool on)
+{
+    if (nodeSharePanel)
+        nodeSharePanel->setVisible(on);
+    if (!on) {
+        if (nodeEndpointLabel)
+            nodeEndpointLabel->clear();
+        if (nodeIpEdit)
+            nodeIpEdit->clear();
+    } else {
+        fillNodeShareWidgets();
+    }
+}
+
+void XHome::onShareNodeToggled(bool on)
+{
+    QSettings settings;
+    settings.setValue("xhomeShareNodeIp", on);
+    if (!on && nodeIpEdit) {
+        const QString typed = nodeIpEdit->text().trimmed();
+        if (!typed.isEmpty())
+            settings.setValue("xhomeShareNodeIpText", typed);
+    }
+    applyNodeShareVisibility(on);
+}
+
+void XHome::onCopyNodeAddress()
+{
+    QString text = nodeIpEdit ? nodeIpEdit->text().trimmed() : QString();
+    if (text.isEmpty())
+        text = localListenEndpoint();
+    if (text.isEmpty()) {
+        QMessageBox::information(this, "X-Coin",
+            "Type the address you want to give out, or wait for the node to bind.");
+        return;
+    }
+    QSettings settings;
+    settings.setValue("xhomeShareNodeIpText", text);
+    QApplication::clipboard()->setText(text);
+    statusLabel->setText("Copied your node address. Give it only if you choose to.");
 }
 
 void XHome::onSignIn()
