@@ -602,8 +602,8 @@ UniValue issueunique(const JSONRPCRequest& request)
         throw std::runtime_error(
                 "issueunique \"root_name\" [asset_tags] ( [ipfs_hashes] ) \"( to_address )\" \"( change_address )\"\n"
                 + AssetActivationWarning() +
-                "\nIssue unique asset(s).\n"
-                "root_name must be an asset you own.\n"
+                "\nIssue unique asset(s) under this wallet’s signed-in main asset.\n"
+                "root_name must be the identity root assigned to the Sign in with X session.\n"
                 "An asset will be created for each element of asset_tags.\n"
                 "If provided ipfs_hashes must be the same length as asset_tags.\n"
                 "Five (5) RVN will be burned for each asset created.\n"
@@ -3151,11 +3151,13 @@ UniValue getmainasset(const JSONRPCRequest& request)
             + HelpExampleRpc("getmainasset", "\"alice\"")
         );
 
-    std::string spec = gArgs.GetArg("-xaccount", "");
-    if (!request.params[0].isNull())
+    std::string spec = xsession::SignedInHandle();
+    if (!request.params[0].isNull() && !request.params[0].get_str().empty())
         spec = request.params[0].get_str();
     if (spec.empty())
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "no X account; pass xaccount or set -xaccount=");
+        spec = gArgs.GetArg("-xaccount", "");
+    if (spec.empty())
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Sign in with X required (or pass xaccount)");
 
     std::string handle;
     uint64_t userId = 0;

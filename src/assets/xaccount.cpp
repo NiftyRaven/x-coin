@@ -204,6 +204,37 @@ bool ParseXAccountAssignment(const CTransaction& tx, std::string& xId)
     return false;
 }
 
+std::string TopLevelRootName(const std::string& assetName)
+{
+    std::string root = assetName;
+    for (int i = 0; i < 32; i++) {
+        const std::string parent = GetParentName(root);
+        if (parent.empty() || parent == root)
+            break;
+        root = parent;
+    }
+    return root;
+}
+
+bool RequireIssueUnderOwnMain(const std::string& assetName, std::string& err)
+{
+    err.clear();
+    if (!xsession::RequireSession(err))
+        return false;
+    const std::string handle = xsession::SignedInHandle();
+    std::string ownRoot;
+    if (!CheckIfXAccountAssigned(handle, &ownRoot) || ownRoot.empty()) {
+        err = "Claim your main asset first (Sign in with X, then linkxaccount). Subs and uniques are issued under that root.";
+        return false;
+    }
+    const std::string root = TopLevelRootName(assetName);
+    if (root.empty() || root != ownRoot) {
+        err = "Subs and uniques can only be issued under your signed-in main asset (" + ownRoot + ")";
+        return false;
+    }
+    return true;
+}
+
 bool CheckIfXAccountAssigned(const std::string& xId, std::string* assetName)
 {
     {

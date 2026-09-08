@@ -154,6 +154,14 @@ RECV="$("${CLI[@]}" getnewaddress)"
 echo "session receive $RECV"
 [[ "$RECV" == y* ]]
 
+echo "== signed-in but no claimed root cannot issue a sub =="
+if "${CLI[@]}" issue ALICE/NOTE 1 >/tmp/xcoin-xsession-subbefore.err 2>&1; then
+  echo "issue ALICE/NOTE must fail before linkxaccount" >&2
+  cat /tmp/xcoin-xsession-subbefore.err >&2
+  exit 1
+fi
+grep -qi "claim your main\|linkxaccount\|main asset" /tmp/xcoin-xsession-subbefore.err
+
 if "${CLI[@]}" linkxaccount nftrvn >/tmp/xcoin-xsession-imp.err 2>&1; then
   echo "linkxaccount nftrvn must fail when signed in as alice" >&2
   cat /tmp/xcoin-xsession-imp.err >&2
@@ -207,5 +215,15 @@ if j.get("asset") != "ALICE":
 '
 "${CLI[@]}" listmyassets | grep -q ALICE
 "${CLI[@]}" getmainasset alice | grep -q ALICE
+
+echo "== subs only under this signed-in main asset =="
+if "${CLI[@]}" issue OTHER/NOTE 1 >/tmp/xcoin-xsession-foreignsub.err 2>&1; then
+  echo "issue OTHER/NOTE must fail (not alice's main)" >&2
+  cat /tmp/xcoin-xsession-foreignsub.err >&2
+  exit 1
+fi
+grep -qi "under your signed-in main\|ALICE" /tmp/xcoin-xsession-foreignsub.err
+"${CLI[@]}" issue ALICE/NOTE 1
+"${CLI[@]}" listmyassets | grep -q ALICE/NOTE
 
 echo "smoke-xsession: ok"
