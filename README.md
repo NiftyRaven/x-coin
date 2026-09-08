@@ -8,14 +8,16 @@ Verified** (blue check) active nodes; halvings add winners. Optional
 pools: tickets from verified members, even split to everyone in the
 pool. Fair launch, no premine. ~21 billion XFER. One free root identity
 asset per signed-in X handle (no login → no main asset; subs under that
-root). Genesis is frozen at 2026-09-08 00:00:00 UTC; height 1 is the
-first payday when an eligible node produces.
+root). Genesis is frozen **at go-live** so explorers show first-connect
+time; height 1 is the first payday. [docs/GO-LIVE.md](docs/GO-LIVE.md).
 
 Whitepaper: [whitepaper/XCOIN.md](whitepaper/XCOIN.md).  
 Release 1.1 (private): [docs/RELEASE-1.1.md](docs/RELEASE-1.1.md).  
 Private-test audit: [docs/AUDIT.md](docs/AUDIT.md).  
 Release-day threat model (not hacker-proof): [docs/SECURITY.md](docs/SECURITY.md).  
-DEX listing criteria (private; do not apply): [docs/DEX.md](docs/DEX.md).
+DEX listing criteria (private; do not apply): [docs/DEX.md](docs/DEX.md).  
+Go-live (wait for the order): [docs/GO-LIVE.md](docs/GO-LIVE.md).  
+Explorers / third-party wallets: [docs/THIRD-PARTY.md](docs/THIRD-PARTY.md).
 
 ## How to use the wallet
 

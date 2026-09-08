@@ -13,7 +13,22 @@
 #include "arith_uint256.h"
 
 #include <assert.h>
+#include <cstdio>
 #include "chainparamsseeds.h"
+
+// When hashes drift (go-live freeze), print the new values before assert so
+// contrib/xcoin/freeze-genesis.sh can patch chainparams.cpp.
+static void CheckGenesis(const char* net, const CBlock& genesis, const uint256& hash,
+                         const char* expectHash, const char* expectMerkle)
+{
+    if (hash != uint256S(expectHash) || genesis.hashMerkleRoot != uint256S(expectMerkle)) {
+        fprintf(stderr, "XCOIN_GENESIS %s nTime=%u hash=%s merkle=%s\n",
+                net, genesis.nTime, hash.GetHex().c_str(), genesis.hashMerkleRoot.GetHex().c_str());
+        fflush(stderr);
+    }
+    assert(hash == uint256S(expectHash));
+    assert(genesis.hashMerkleRoot == uint256S(expectMerkle));
+}
 
 //TODO: Take these out
 extern double algoHashTotal[16];
@@ -183,12 +198,15 @@ public:
         nDefaultPort = 38443;
         nPruneAfterHeight = 100000;
 
-        // Launch genesis (lottery chain: no PoW grind). Times/nonce/bits frozen 2026-09-08.
-        genesis = CreateGenesisBlock(1788825600, 1, 0x207fffff, 4, 5000 * COIN);
+        // Main genesis nTime is the public birth clock. Freeze it at go-live with
+        // contrib/xcoin/freeze-genesis.sh so explorers show first-connect time, not
+        // a development midnight. Lottery height maps 1:1 to minutes from this nTime.
+        genesis = CreateGenesisBlock(1788825600, 1, 0x207fffff, 4, 5000 * COIN); // mainnet-genesis
 
         consensus.hashGenesisBlock = genesis.GetX16RHash();
-        assert(consensus.hashGenesisBlock == uint256S("0xdb9bcd7597648d68a0f8f1491e0c068faa626090fab516b355cb70e46e5347d0"));
-        assert(genesis.hashMerkleRoot == uint256S("0x57622a8eb1e132f766eb4e9df94c6acc963860cefe9bea0d25861ef2d1a92a6e"));
+        CheckGenesis("main", genesis, consensus.hashGenesisBlock,
+                     "0xdb9bcd7597648d68a0f8f1491e0c068faa626090fab516b355cb70e46e5347d0",
+                     "0x57622a8eb1e132f766eb4e9df94c6acc963860cefe9bea0d25861ef2d1a92a6e");
 
         vSeeds.clear();
         vFixedSeeds.clear();
@@ -402,8 +420,9 @@ public:
 
         genesis = CreateGenesisBlock(nGenesisTime, 1, 0x207fffff, 2, 5000 * COIN);
         consensus.hashGenesisBlock = genesis.GetX16RHash();
-        assert(consensus.hashGenesisBlock == uint256S("0x9a3909c86638c73c5cd3e8921936cbdeb7273524ecb85048caa7c62cfe23429b"));
-        assert(genesis.hashMerkleRoot == uint256S("0x57622a8eb1e132f766eb4e9df94c6acc963860cefe9bea0d25861ef2d1a92a6e"));
+        CheckGenesis("test", genesis, consensus.hashGenesisBlock,
+                     "0x9a3909c86638c73c5cd3e8921936cbdeb7273524ecb85048caa7c62cfe23429b",
+                     "0x57622a8eb1e132f766eb4e9df94c6acc963860cefe9bea0d25861ef2d1a92a6e");
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -614,8 +633,9 @@ public:
 
         genesis = CreateGenesisBlock(1524179366, 1, 0x207fffff, 4, 5000 * COIN);
         consensus.hashGenesisBlock = genesis.GetX16RHash();
-        assert(consensus.hashGenesisBlock == uint256S("0xbfce7bfad8116b82f4a0ce4be2fa52e9c9f166248e318ce45728b8fe87451d89"));
-        assert(genesis.hashMerkleRoot == uint256S("0x57622a8eb1e132f766eb4e9df94c6acc963860cefe9bea0d25861ef2d1a92a6e"));
+        CheckGenesis("regtest", genesis, consensus.hashGenesisBlock,
+                     "0xbfce7bfad8116b82f4a0ce4be2fa52e9c9f166248e318ce45728b8fe87451d89",
+                     "0x57622a8eb1e132f766eb4e9df94c6acc963860cefe9bea0d25861ef2d1a92a6e");
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.

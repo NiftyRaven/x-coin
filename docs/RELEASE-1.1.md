@@ -5,7 +5,8 @@ Anonymous public identity — display name and handle only.
 
 Private package **1.1.0** (`contrib/xcoin/package-linux.sh` →
 `dist/xcoin-1.1.0-linux-x86_64.tar.gz`). This is **not** a public GitHub
-Release. Do not make the repository public. 1.0 notes:
+Release. Do not make the repository public until go-live ([GO-LIVE.md](GO-LIVE.md)).
+Explorers / third-party wallets: [THIRD-PARTY.md](THIRD-PARTY.md). 1.0 notes:
 [RELEASE-1.0.md](RELEASE-1.0.md).
 
 ## What 1.1 adds on top of 1.0

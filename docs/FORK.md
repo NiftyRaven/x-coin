@@ -53,8 +53,10 @@ versions 60 (`R…`) / 111 (`n…`).
 
 **Unit:** ticker **XFER**, subunit **xferon** (1 XFER = 1e8 xferons).
 
-**Genesis:** timestamp string and times frozen 2026-09-08 (see [LAUNCH.md](LAUNCH.md)).
-The coinbase timestamp is consensus-critical and still reads:
+**Genesis:** coinbase timestamp string frozen 2026-09-08 (see [LAUNCH.md](LAUNCH.md)).
+Main **header `nTime` is re-frozen at go-live** so explorer timestamps
+match first connect ([GO-LIVE.md](GO-LIVE.md)). The coinbase string is
+consensus-critical and still reads:
 
 ```
 X Coin / XFER: Ravencoin hard-fork, assets kept, lottery not mining. 2026-09-08

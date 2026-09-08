@@ -31,6 +31,8 @@ strip -s "$STAGE/bin/"* || strip "$STAGE/bin/"*
 cp "$ROOT/README.md" "$STAGE/docs/"
 cp "$ROOT/docs/RELEASE-1.1.md" "$STAGE/docs/"
 cp "$ROOT/docs/LOTTERY.md" "$STAGE/docs/"
+cp "$ROOT/docs/GO-LIVE.md" "$STAGE/docs/"
+cp "$ROOT/docs/THIRD-PARTY.md" "$STAGE/docs/"
 cp "$ROOT/whitepaper/XCOIN.md" "$STAGE/docs/WHITEPAPER.md"
 cat > "$STAGE/README.txt" <<EOF
 X Coin (XFER) ${VER} — Linux x86_64 (private)
