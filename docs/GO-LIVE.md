@@ -53,7 +53,7 @@ Do **not** add public DNS seeds. Do not invent a host or a Client ID.
 
 Developer-only genesis freeze (not the launch-night double-click):
 `contrib/xcoin/freeze-genesis.sh` is documented for a source rebuild
-so explorer timestamps match first connect. The shipped 1.0.1 wallet
+so explorer timestamps match first connect. The shipped 1.0.2 wallet
 is what you double-click on launch night.
 
 ## Related
