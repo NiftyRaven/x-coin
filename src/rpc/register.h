@@ -28,6 +28,8 @@ void RegisterMessageRPCCommands(CRPCTable &tableRPC);
 void RegisterRewardsRPCCommands(CRPCTable &tableRPC);
 /** Register lottery consensus RPC commands */
 void RegisterLotteryRPCCommands(CRPCTable &tableRPC);
+/** Register lottery pool RPC commands */
+void RegisterPoolRPCCommands(CRPCTable &tableRPC);
 
 static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
 {
@@ -40,6 +42,7 @@ static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
     RegisterMessageRPCCommands(t);
     RegisterRewardsRPCCommands(t);
     RegisterLotteryRPCCommands(t);
+    RegisterPoolRPCCommands(t);
 }
 
 #endif

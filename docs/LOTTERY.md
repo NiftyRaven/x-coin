@@ -217,6 +217,28 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 - Removed / gutted: the legacy miner hash loop, `-gen` / `setgenerate` as a miner,
   KawPoW submit helpers (`pprpcsb`, `getkawpowhash`).
 
+## Optional pools
+
+A wallet can **create** or **join** a pool from Home (buttons) or RPC
+(`createpool` / `joinpool` / `leavepool`). The creator chooses a **pool id**
+and **password** and shares them only if they want someone else in.
+
+| Rule | Meaning |
+| --- | --- |
+| Lottery tickets | One ticket per **X Verified** member who is running (same as solo nodes). Unverified members have **zero** tickets. |
+| Win payout | That slot’s winner share is split **evenly** across every member payout address — verified or not. |
+| Public | Pool **name** and member **addresses** only (`listpools`). No password. Pool id is shown only on the wallet that created/joined (`getmypool`). |
+
+If you share id + password with an unverified user, they can leech an even
+cut of wins without adding tickets. That is the members’ choice.
+
+Honest `xcoin-qt` / `xcoind` always emit `XPL1` and split when the winner is
+in a pool this node knows. A cheating producer can omit `XPL1` and pay only
+themselves; keep id + password private if you do not want extra members.
+
+Coinbase commits pooled splits as `XPL1` next to `XHB1`. Peers gossip signed
+pool adverts (`xpl`); the password never goes on the wire.
+
 ## RPCs
 
 | Command | Purpose |
@@ -226,6 +248,9 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 | `registeractivenode (payout xaccount xuserid)` | Heartbeat this node or an address / script hex; rejects unlinked/unverified |
 | `addxverified` / `listxverified` / `removexverified` | Mutate / read the operator invite list (not X Verified) |
 | `loadxverified (path)` | Merge a published invite-list file (no API keys) |
+| `createpool` / `joinpool` / `leavepool` | GUI Home buttons too. Tickets = verified running members; even split to every member address |
+| `listpools` | Public: name + addresses only |
+| `getmypool` | This wallet’s pool, including id for sharing (never the password) |
 | `generatetoaddress` | **Regtest only** on-demand assembly (not mining; rejected on main/test) |
 
 ## Security notes
