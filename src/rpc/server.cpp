@@ -284,7 +284,7 @@ UniValue stop(const JSONRPCRequest& jsonRequest)
     if (jsonRequest.params[0].isNum()) {
         MilliSleep(jsonRequest.params[0].get_int());
     }
-    return "Raven server stopping";
+    return "X Coin server stopping";
 }
 
 UniValue uptime(const JSONRPCRequest& jsonRequest)

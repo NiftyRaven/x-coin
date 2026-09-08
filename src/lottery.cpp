@@ -20,7 +20,7 @@
 extern std::vector<CWalletRef> vpwallets;
 #endif
 
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/thread.hpp>
 
 #include <algorithm>

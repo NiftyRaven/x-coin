@@ -7,6 +7,9 @@ src/raven
 src/ravend
 src/raven-cli
 src/raven-tx
+src/xcoind
+src/xcoin-cli
+src/xcoin-tx
 src/test/test_raven
 src/test/test_raven_fuzzy
 src/test/test_raven_hash

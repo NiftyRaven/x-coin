@@ -32,12 +32,14 @@ Dependencies are the same as Ravencoin Core 4.8 (Autotools, Boost, libevent, Ope
 ```bash
 sudo apt-get update
 sudo apt-get install -y build-essential libtool autotools-dev automake pkg-config \
-    bsdmainutils python3 libevent-dev libboost-system-dev libboost-filesystem-dev \
-    libboost-chrono-dev libboost-test-dev libboost-thread-dev libssl-dev libdb++-dev
+    bsdmainutils python3 libevent-dev libboost-all-dev libssl-dev libdb++-dev
 ./autogen.sh
-./configure --without-gui --disable-bench --disable-tests
+# BDB 4.8 is the portable wallet default. On modern Debian/Ubuntu use 5.3:
+./configure --without-gui --disable-bench --disable-tests --with-incompatible-bdb
 make -j$(nproc)
 ```
+
+Verified in this pass: `xcoind` + `xcoin-cli` linked on Ubuntu 24.04 / gcc 13 / Boost 1.83 / BDB 5.3. Two small compile fixes for that toolchain are in-tree (`init.cpp` Boost.Signals2 disconnect, `lockedpool.cpp` `<stdexcept>`).
 
 `--disable-wallet` works if you omit BDB; a wallet is required to *produce* lottery blocks (coinbase script).
 
@@ -60,7 +62,9 @@ src/xcoin-cli -regtest generatetoaddress 1 <address>
 src/xcoin-cli -regtest issue TEST_ASSET 1000
 ```
 
-`generatetoaddress` **assembles** a block; it does not hash. On main/test the producer thread emits at most one block per minute when this node wins.
+`generatetoaddress` **assembles** a block; it does not hash. Coinbase is immature for 100 blocks — generate ~110 before `issue`. On main/test the producer thread emits at most one block per minute when this node wins.
+
+Verified on regtest in this pass: distinct genesis, `getlotteryinfo` (1 winner, 5000 XFER), on-demand block, `issue TESTASSET` + owner token `TESTASSET!`.
 
 ## RPC (lottery)
 
