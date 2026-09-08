@@ -6,6 +6,30 @@ This is the operator runbook for a **private launch**. There is no public
 seed DNS and no exchange listing. Lottery eligibility uses a **shared
 verified-X allowlist** (no live X API keys required).
 
+## Ledger, visibility, and how many nodes
+
+Answered from consensus / wallet / P2P code (see [AUDIT.md](AUDIT.md)):
+
+1. **Transactions are visible on this node and to peers on this mesh.
+   They are not on a public explorer and not on Ravencoin explorers.**
+   GUI **Activity** lists wallet history. RPC: `listtransactions`,
+   `gettransaction`, `getrawtransaction`, `getblock`. There is no
+   in-tree explorer (`DEFAULT_THIRD_PARTY_BROWSERS` is empty). Peers
+   see mempool and blocks over P2P. Different genesis / magic / ports
+   mean Ravencoin explorers cannot show XFER.
+
+2. **A lone node already has a ledger.** One `xcoind` / `xcoin-qt`
+   stores genesis and can extend the chain (regtest `generatetoaddress`;
+   main lottery producer when this node is eligible — 
+   `fMiningRequiresPeers` is false). A *network* of other people seeing
+   the same tip needs ≥2 peers (`addnode` / `seednode`, port **38443**).
+   Lottery among active nodes is more meaningful with more than one
+   eligible heartbeat; a lone eligible node still produces.
+
+3. **Own ledger, like Ravencoin has its own.** This is a hard fork with
+   its own genesis, UTXO, assets (`XID1`, 32-char roots), and lottery.
+   No imported snapshot. Users’ XFER lives here only. Hashes: below.
+
 ## Frozen identity
 
 | | Main | Testnet | Regtest |
@@ -202,9 +226,10 @@ Coinbase is immature for 100 blocks — generate ~110 on regtest before
   proof.
 - **Clock skew / catch-up:** main/test wait for wall-clock slot ≥ height slot.
   Height still maps 1:1; no skip-pay or double-pay of a slot in consensus.
-- **No DNS seeds / explorers / audit** — you are the network.
+- **No DNS seeds / public explorers** — you are the network. Private-test
+  audit: [AUDIT.md](AUDIT.md).
 - Upstream `make check` still hard-codes imported genesis hashes; do not treat
-  a red `make check` as a launch blocker. Use the regtest smoke instead.
+  a red `make check` as a launch blocker. Use the smokes instead.
 
 ## Smoke (regtest)
 
@@ -215,7 +240,7 @@ contrib/xcoin/smoke-regtest.sh
 Exercises `getlotteryinfo`, genesis unspendable, on-demand blocks, a
 single-winner 5000 XFER coinbase at height 149, a two-winner 2500 XFER split
 at height 150, protocol main / sub / unique when `linkxaccount` is present
-(including owner handle **NFTRVN**), and **unlinked** `sendtoaddress` /
+(including owner handle **NFTRVN**), and **signed-in** `sendtoaddress` /
 `sendfromaddress`.
 
 ```bash
@@ -226,8 +251,21 @@ Two regtest nodes: after `addnode`, both `getactivenodes` lists match (P2P `xhb`
 
 ```bash
 contrib/xcoin/smoke-eligibility.sh
+contrib/xcoin/smoke-xsession.sh
+contrib/xcoin/smoke-gui.sh
 ```
 
 Unlinked node is not eligible; `registeractivenode` is rejected until the
 handle is linked **and** allowlisted. Linked+allowlisted identities appear
-in the active set.
+in the active set. `smoke-xsession.sh` proves typed handles cannot send /
+receive / claim. `smoke-gui.sh` needs `XDG_RUNTIME_DIR` (the script sets
+it); do not `pkill -f xcoin-qt`.
+
+```bash
+contrib/xcoin/smoke-benchmark.sh
+```
+
+Three regtest nodes: lone A already has a ledger; B (signed-in) and C
+(unsigned observer) connect; A sends to B; B sees the tx
+(`listtransactions` / `gettransaction`); all three share one best block;
+C inspects the same tx with `getrawtransaction` / `getblock`.

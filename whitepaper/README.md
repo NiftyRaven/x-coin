@@ -27,4 +27,4 @@ X Coin is a peer-to-peer coin for **transfers between users on X**.
 There is no older paper here. [XCOIN.md](XCOIN.md) is the release paper:
 purpose, lottery, supply, verified-X eligibility, assets, and network
 identity. How to run the core wallet is in the repository
-[README](../README.md).
+[README](../README.md). Private-test audit: [docs/AUDIT.md](../docs/AUDIT.md).

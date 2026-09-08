@@ -183,7 +183,11 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 - **Main / test:** the producer thread heartbeats, waits until wall-clock slot
   ≥ height slot, and if this node is a winner it calls `CreateNewBlock` and
   `ProcessNewBlock`. There is **no** nonce grind. `CheckProofOfWork` is a
-  no-op.
+  no-op. `fMiningRequiresPeers` is false: a **lone eligible node** can
+  produce and store the ledger. Other people seeing the same tip still
+  need `addnode` / `seednode`. More eligible heartbeats make the lottery
+  among active nodes more meaningful; they are not required for the
+  chain to exist.
 - **Regtest:** the producer only heartbeats. Use `generatetoaddress` /
   `generate` to assemble blocks on demand (still no PoW). The destination
   script is heartbeated so it is in the active set.

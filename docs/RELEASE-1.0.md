@@ -90,7 +90,12 @@ contrib/xcoin/smoke-xsession.sh    # typed handle rejected; session accepted
 contrib/xcoin/smoke-regtest.sh
 contrib/xcoin/smoke-gossip.sh
 contrib/xcoin/smoke-eligibility.sh
-contrib/xcoin/smoke-gui.sh          # headless Qt
+contrib/xcoin/smoke-gui.sh          # headless Qt (sets XDG_RUNTIME_DIR)
+contrib/xcoin/smoke-benchmark.sh    # lone ledger + 3-node visible send
 ```
 
 `smoke-regtest.sh` includes `linkxaccount` of a 26-character handle.
+`smoke-benchmark.sh` answers “are txs visible?” and “own ledger + more
+than one node” on a private mesh (no public explorer).
+
+Private-test audit: [AUDIT.md](AUDIT.md).

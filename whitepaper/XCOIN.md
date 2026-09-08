@@ -206,6 +206,13 @@ Details: [docs/ASSETS.md](../docs/ASSETS.md).
 There are no public DNS seeds in-tree. A private mesh uses `addnode` /
 `seednode`. Do not publish this repository.
 
+This is **X Coin’s own ledger** (own genesis, UTXO, assets, lottery) —
+not Ravencoin’s chain and not an imported snapshot. A lone node already
+stores it. Other people seeing the same tip need two or more peers on
+port 38443. Wallet **Activity** / `listtransactions` show sends and
+receives on this node; peers see mempool and blocks. There is no public
+explorer and nothing appears on Ravencoin explorers.
+
 User agent is `XCoin`. Signed messages use `X Coin Signed Message:\n`.
 
 ## 7. The wallet (honest status)
@@ -250,6 +257,7 @@ P2P, mempool, the asset script format. How to use it:
   script.
 - Clock skew can delay a slot; height still maps 1:1.
 - No public explorer, no DNS seeds, no exchange listing.
+  Private-test audit: [docs/AUDIT.md](../docs/AUDIT.md).
 
 Treat the lottery as specified here. Do not reintroduce Proof-of-Work
 as the production path.
