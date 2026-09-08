@@ -80,23 +80,26 @@ copy_if() {
   return 1
 }
 
-# Qt plugins from depends (static Qt may have none; still copy if present)
-for d in \
-  "$PREFIX/plugins/platforms" \
-  "$PREFIX/lib/qt5/plugins/platforms" \
-  "$PREFIX/share/qt5/plugins/platforms"
-do
-  if [[ -d "$d" ]]; then
-    cp -a "$d"/. "$STAGE/plugins/platforms/" 2>/dev/null || true
-  fi
-done
-for kind in imageformats platforminputcontexts iconengines styles; do
-  mkdir -p "$STAGE/plugins/$kind"
-  for d in "$PREFIX/plugins/$kind" "$PREFIX/lib/qt5/plugins/$kind"; do
-    if [[ -d "$d" ]]; then
-      cp -a "$d"/. "$STAGE/plugins/$kind/" 2>/dev/null || true
-    fi
+# Qt plugins: static Qt already Q_IMPORT_PLUGIN(QWindowsIntegrationPlugin).
+# Only copy loadable DLLs if present. Do not ship .a archives.
+copy_plugin_dlls() {
+  local dest="$1"
+  shift
+  mkdir -p "$dest"
+  local d f
+  for d in "$@"; do
+    [[ -d "$d" ]] || continue
+    for f in "$d"/*.dll "$d"/*.DLL; do
+      [[ -f "$f" ]] || continue
+      cp -a "$f" "$dest/"
+    done
   done
+}
+copy_plugin_dlls "$STAGE/plugins/platforms" \
+  "$PREFIX/plugins/platforms" "$PREFIX/lib/qt5/plugins/platforms" "$PREFIX/share/qt5/plugins/platforms"
+for kind in imageformats platforminputcontexts iconengines styles; do
+  copy_plugin_dlls "$STAGE/plugins/$kind" \
+    "$PREFIX/plugins/$kind" "$PREFIX/lib/qt5/plugins/$kind"
 done
 
 # windeployqt if the depends prefix built it
@@ -161,7 +164,7 @@ while [[ "$copied_any" -eq 1 && "$pass" -lt 12 ]]; do
     while read -r dll; do
       [[ -n "$dll" ]] || continue
       case "$dll" in
-        KERNEL32.dll|kernel32.dll|USER32.dll|user32.dll|GDI32.dll|gdi32.dll|ADVAPI32.dll|advapi32.dll|SHELL32.dll|shell32.dll|ole32.dll|OLE32.dll|OLEAUT32.dll|oleaut32.dll|COMCTL32.dll|comctl32.dll|COMDLG32.dll|comdlg32.dll|IMM32.dll|imm32.dll|WS2_32.dll|ws2_32.dll|WS2_32.DLL|SHLWAPI.dll|shlwapi.dll|WINMM.dll|winmm.dll|NETAPI32.dll|netapi32.dll|IPHLAPI.dll|iphlpapi.dll|CRYPT32.dll|crypt32.dll|bcrypt.dll|BCRYPT.dll|ntdll.dll|NTDLL.dll|msvcrt.dll|MSVCRT.dll|SETUPAPI.dll|setupapi.dll|VERSION.dll|version.dll|WINSPOOL.DRV|winspool.drv|dwmapi.dll|DWMAPI.dll|UXTHEME.dll|uxtheme.dll|DNSAPI.dll|dnsapi.dll|USERENV.dll|userenv.dll|RPCRT4.dll|rpcrt4.dll|sechost.dll|SECHOST.dll|combase.dll|COMBASE.dll)
+        KERNEL32.dll|kernel32.dll|USER32.dll|user32.dll|GDI32.dll|gdi32.dll|ADVAPI32.dll|advapi32.dll|SHELL32.dll|shell32.dll|ole32.dll|OLE32.dll|OLEAUT32.dll|oleaut32.dll|COMCTL32.dll|comctl32.dll|COMDLG32.dll|comdlg32.dll|IMM32.dll|imm32.dll|WS2_32.dll|ws2_32.dll|WS2_32.DLL|SHLWAPI.dll|shlwapi.dll|WINMM.dll|winmm.dll|NETAPI32.dll|netapi32.dll|IPHLAPI.dll|iphlpapi.dll|CRYPT32.dll|crypt32.dll|bcrypt.dll|BCRYPT.dll|ntdll.dll|NTDLL.dll|msvcrt.dll|MSVCRT.dll|SETUPAPI.dll|setupapi.dll|VERSION.dll|version.dll|WINSPOOL.DRV|winspool.drv|dwmapi.dll|DWMAPI.dll|UXTHEME.dll|uxtheme.dll|DNSAPI.dll|dnsapi.dll|USERENV.dll|userenv.dll|RPCRT4.dll|rpcrt4.dll|sechost.dll|SECHOST.dll|combase.dll|COMBASE.dll|WTSAPI32.dll|wtsapi32.dll)
           continue
           ;;
       esac

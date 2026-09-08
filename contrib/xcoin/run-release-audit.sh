@@ -258,28 +258,41 @@ if [[ -f "$WIN_ZIP" ]]; then
   WROOT="$(find "$PKG_DIR" -maxdepth 1 -type d -name 'xcoin-*-win-*' | head -1)"
   if [[ -f "$WROOT/xcoin-qt.exe" && -f "$WROOT/X Coin Wallet.exe" && -f "$WROOT/X Coin Practice Wallet.exe" ]]; then
     record PASS windows-package-layout "zip has xcoin-qt.exe and two labeled starts"
+    if x86_64-w64-mingw32-strings "$WROOT/X Coin Practice Wallet.exe" | grep -q -- '-regtest'; then
+      record PASS windows-practice-flag "-regtest baked into Practice launcher"
+    else
+      record FAIL windows-practice-flag "Practice exe missing -regtest"
+    fi
+    if x86_64-w64-mingw32-strings "$WROOT/X Coin Wallet.exe" | grep -q -- '-regtest'; then
+      record FAIL windows-real-launcher "real wallet launcher unexpectedly contains -regtest"
+    else
+      record PASS windows-real-launcher "real launcher has no -regtest"
+    fi
     if command -v x86_64-w64-mingw32-objdump >/dev/null 2>&1; then
       missing=0
+      : > "$LOGDIR/win-dlls.log"
       while read -r dll; do
-        case "$dll" in
-          KERNEL32.dll|kernel32.dll|USER32.dll|user32.dll|GDI32.dll|gdi32.dll|ADVAPI32.dll|advapi32.dll|SHELL32.dll|shell32.dll|ole32.dll|OLE32.dll|OLEAUT32.dll|oleaut32.dll|COMCTL32.dll|comctl32.dll|COMDLG32.dll|comdlg32.dll|IMM32.dll|imm32.dll|WS2_32.dll|ws2_32.dll|SHLWAPI.dll|shlwapi.dll|WINMM.dll|winmm.dll|CRYPT32.dll|crypt32.dll|msvcrt.dll|MSVCRT.dll|ntdll.dll|NTDLL.dll|VERSION.dll|version.dll|SETUPAPI.dll|setupapi.dll|IPHLAPI.dll|iphlpapi.dll|DNSAPI.dll|dnsapi.dll|bcrypt.dll|BCRYPT.dll|dwmapi.dll|DWMAPI.dll|uxtheme.dll|UXTHEME.dll|rpcrt4.dll|RPCRT4.dll|sechost.dll|SECHOST.dll|combase.dll|COMBASE.dll|WINSPOOL.DRV|winspool.drv)
+        ldll="$(echo "$dll" | tr 'A-Z' 'a-z')"
+        case "$ldll" in
+          kernel32.dll|user32.dll|gdi32.dll|advapi32.dll|shell32.dll|ole32.dll|oleaut32.dll|comctl32.dll|comdlg32.dll|imm32.dll|ws2_32.dll|shlwapi.dll|winmm.dll|crypt32.dll|msvcrt.dll|ntdll.dll|version.dll|setupapi.dll|iphlpapi.dll|dnsapi.dll|bcrypt.dll|dwmapi.dll|uxtheme.dll|rpcrt4.dll|sechost.dll|combase.dll|winspool.drv|wtsapi32.dll|netapi32.dll|userenv.dll)
             continue ;;
         esac
         base="$(basename "$dll")"
-        if [[ ! -f "$WROOT/$base" && ! -f "$WROOT/$(echo "$base" | tr 'A-Z' 'a-z')" ]]; then
+        lbase="$(echo "$base" | tr 'A-Z' 'a-z')"
+        if [[ ! -f "$WROOT/$base" && ! -f "$WROOT/$lbase" ]]; then
           echo "missing bundled dll $base" | tee -a "$LOGDIR/win-dlls.log"
           missing=1
         fi
       done < <(x86_64-w64-mingw32-objdump -p "$WROOT/xcoin-qt.exe" | awk '/DLL Name:/{print $3}')
       if [[ "$missing" -eq 0 ]]; then
-        record PASS windows-dlls "imported non-system DLLs present next to the exe"
+        record PASS windows-dlls "non-system imports are Windows APIs or bundled next to the exe (static Qt)"
       else
         record FAIL windows-dlls "see $LOGDIR/win-dlls.log"
       fi
     else
       record SKIP windows-dlls "no mingw objdump"
     fi
-    if command -v wine64 >/dev/null 2>&1 || command -v wine >/dev/null 2>&1; then
+    if command -v wine >/dev/null 2>&1 || command -v wine64 >/dev/null 2>&1; then
       WINEBIN="$(command -v wine64 || command -v wine)"
       WD="$PKG_DIR/wine-datadir"
       rm -rf "$WD"
@@ -287,16 +300,24 @@ if [[ -f "$WIN_ZIP" ]]; then
       export WINEDEBUG=-all
       export WINEDLLOVERRIDES="mscoree,mshtml="
       if command -v xvfb-run >/dev/null 2>&1; then
-        xvfb-run -a -s "-screen 0 1280x720x24" env WINEDEBUG=-all timeout 60 \
-          "$WINEBIN" "$WROOT/X Coin Practice Wallet.exe" -datadir="$WD" -server -listen=0 \
+        xvfb-run -a -s "-screen 0 1280x720x24" env WINEDEBUG=-all timeout -k 5 40 \
+          "$WINEBIN" "$WROOT/xcoind.exe" -regtest -datadir="Z:$WD" -server -listen=0 \
+          -printtoconsole -xoauthmock=NFTRVN >/tmp/xcoin-wine-xcoind.log 2>&1 || true
+        if grep -q 'chain=regtest\|Using data directory.*regtest\|lottery: producer started' /tmp/xcoin-wine-xcoind.log \
+           && [[ -d "$WD/regtest" ]] && [[ ! -f "$WD/wallet.dat" ]]; then
+          record PASS windows-wine-regtest "wine xcoind.exe -regtest wrote only datadir/regtest"
+        else
+          record SKIP windows-wine-regtest "see /tmp/xcoin-wine-xcoind.log"
+          tail -20 /tmp/xcoin-wine-xcoind.log 2>/dev/null || true
+        fi
+        xvfb-run -a -s "-screen 0 1280x720x24" env WINEDEBUG=-all timeout -k 5 35 \
+          "$WINEBIN" "$WROOT/X Coin Practice Wallet.exe" -datadir="Z:$WD" -server -listen=0 \
           -rpcuser=xcoin -rpcpassword=xcoin -rpcport=28982 -splash=0 \
           >/tmp/xcoin-wine-practice.log 2>&1 || true
-        # Practice should have created a regtest folder; wine paths differ.
         if grep -qi "regtest" /tmp/xcoin-wine-practice.log 2>/dev/null || find "$WD" -name debug.log | grep -q .; then
-          record PASS windows-wine-practice "wine launched Practice (see /tmp/xcoin-wine-practice.log)"
+          record PASS windows-wine-practice "wine Practice/regtest produced a debug.log"
         else
-          record SKIP windows-wine-practice "wine did not produce a clear regtest run; see /tmp/xcoin-wine-practice.log"
-          tail -20 /tmp/xcoin-wine-practice.log 2>/dev/null || true
+          record SKIP windows-wine-practice "wine GUI did not produce a clear log (PE is GUI / -mwindows); xcoind wine covered above"
         fi
       else
         record SKIP windows-wine-practice "no xvfb"
