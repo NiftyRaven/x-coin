@@ -52,6 +52,7 @@ XOAuth::XOAuth(QObject *parent) :
 
 XOAuth::~XOAuth()
 {
+    wipeSecrets();
     if (server->isListening())
         server->close();
 }
@@ -115,7 +116,20 @@ bool XOAuth::SaveClientId(const QString& clientId, QString& err)
 
 void XOAuth::fail(const QString& e)
 {
+    wipeSecrets();
     Q_EMIT failed(e);
+}
+
+void XOAuth::wipeSecrets()
+{
+    verifier.fill(QChar('0'));
+    verifier.clear();
+    state.fill(QChar('0'));
+    state.clear();
+    pendingCode.fill(QChar('0'));
+    pendingCode.clear();
+    accessToken.fill(QChar('0'));
+    accessToken.clear();
 }
 
 void XOAuth::startLogin()
@@ -144,7 +158,7 @@ void XOAuth::startLogin()
     q.addQueryItem("response_type", "code");
     q.addQueryItem("client_id", client);
     q.addQueryItem("redirect_uri", CallbackUri());
-    q.addQueryItem("scope", "users.read tweet.read offline.access");
+    q.addQueryItem("scope", "users.read tweet.read");
     q.addQueryItem("state", state);
     q.addQueryItem("code_challenge", challenge);
     q.addQueryItem("code_challenge_method", "S256");
@@ -185,6 +199,8 @@ void XOAuth::onIncoming()
     sock->disconnectFromHost();
     server->close();
     exchangeCode(code);
+    // Do not keep the authorization code after the exchange is queued.
+    pendingCode.clear();
 }
 
 void XOAuth::exchangeCode(const QString& code)
@@ -235,7 +251,11 @@ void XOAuth::onTokenFinished()
         fail(tr("Empty access token — login did not succeed"));
         return;
     }
-    fetchMe(accessToken);
+    const QString token = accessToken;
+    fetchMe(token);
+    // Access token is RAM-only. Never write it to disk or logs.
+    wipeSecrets();
+    accessToken.clear();
 }
 
 void XOAuth::fetchMe(const QString& token)
@@ -280,7 +300,8 @@ bool XOAuth::finishFromUsersMe(const QByteArray& body, QString& err)
         return false;
     }
     xsession::BindLotteryFromSession();
-    Q_EMIT signedIn(QString::fromStdString(me.username), QString::fromStdString(me.userId));
+    wipeSecrets();
+    Q_EMIT signedIn(QString::fromStdString(me.username), QString());
     return true;
 }
 
@@ -292,6 +313,6 @@ bool XOAuth::mockSignIn(const QString& payload, QString& err)
         return false;
     }
     Q_EMIT signedIn(QString::fromStdString(xsession::SignedInHandle()),
-                    QString::fromStdString(xsession::SignedInUserId()));
+                    QString());
     return true;
 }

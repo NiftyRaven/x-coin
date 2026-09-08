@@ -18,6 +18,10 @@
 
 #include <univalue.h>
 
+#ifndef WIN32
+#include <sys/stat.h>
+#endif
+
 #include <cctype>
 #include <cstdio>
 #include <cstring>
@@ -83,6 +87,13 @@ static bool ReadFileBytes(const fs::path& path, std::string& out)
     return true;
 }
 
+static void RestrictPrivateFile(const fs::path& path)
+{
+#ifndef WIN32
+    chmod(path.string().c_str(), S_IRUSR | S_IWUSR);
+#endif
+}
+
 static bool WriteFileBytes(const fs::path& path, const std::string& data)
 {
     FILE* f = fsbridge::fopen(path, "wb");
@@ -90,6 +101,8 @@ static bool WriteFileBytes(const fs::path& path, const std::string& data)
         return false;
     bool ok = fwrite(data.data(), 1, data.size(), f) == data.size();
     fclose(f);
+    if (ok)
+        RestrictPrivateFile(path);
     return ok;
 }
 
@@ -112,8 +125,10 @@ bool EnsureSecret(std::string& err)
 {
     LOCK(cs_xsession);
     const fs::path path = SecretPath();
-    if (fs::exists(path))
+    if (fs::exists(path)) {
+        RestrictPrivateFile(path);
         return true;
+    }
     unsigned char key[32];
     GetRandBytes(key, 32);
     if (!WriteFileBytes(path, std::string(reinterpret_cast<char*>(key), 32))) {
@@ -174,9 +189,8 @@ bool SaveSession(const std::string& userId, const std::string& usernameIn, int64
         err = "cannot write xsession.json";
         return false;
     }
-    LogPrintf("xsession: signed in as @%s (id %s) X-Verified=%s type=%s\n",
-              username, userId, xVerified ? "true" : "false",
-              verifiedType.empty() ? "-" : verifiedType);
+    LogPrintf("xsession: signed in as @%s X-Verified=%s (login stays on this node; no token stored)\n",
+              username, xVerified ? "true" : "false");
     return true;
 }
 
@@ -188,6 +202,7 @@ bool LoadSession(Session& out, std::string& err)
         err = "no Sign in with X session";
         return false;
     }
+    RestrictPrivateFile(SessionPath());
     UniValue obj;
     if (!obj.read(raw) || !obj.isObject()) {
         err = "xsession.json is not valid JSON";
@@ -445,8 +460,8 @@ void BindLotteryFromSession()
             LogPrintf("xsession: signed in @%s but not X Verified (users/me.verified); lottery closed, send/receive ok\n",
                       local.handle);
         } else {
-            LogPrintf("xsession: lottery identity @%s (id %s) X Verified type=%s — fair draw, invite list is not a gate\n",
-                      local.handle, s.userId,
+            LogPrintf("xsession: lottery identity @%s X Verified type=%s — fair draw, invite list is not a gate\n",
+                      local.handle,
                       s.verifiedType.empty() ? "blue" : s.verifiedType);
         }
         return;

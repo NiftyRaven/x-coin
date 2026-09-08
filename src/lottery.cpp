@@ -505,7 +505,8 @@ bool SignLocalHeartbeat(int64_t timestamp, std::vector<unsigned char>& sigOut)
     if (!keyID)
         return false;
     if (g_localPayoutKey.IsValid() && g_localPayoutKey.GetPubKey().GetID() == *keyID)
-        return SignHeartbeat(g_localPayoutKey, timestamp, script, x.handle, x.userId, sigOut,
+        // P2P xhb never carries the numeric X user id (login stays local).
+        return SignHeartbeat(g_localPayoutKey, timestamp, script, x.handle, 0, sigOut,
                              xsession::SessionIsXVerified());
 #ifdef ENABLE_WALLET
     CWallet* pwallet = FirstWalletOrNull();
@@ -514,7 +515,7 @@ bool SignLocalHeartbeat(int64_t timestamp, std::vector<unsigned char>& sigOut)
         {
             LOCK(pwallet->cs_wallet);
             if (pwallet->GetKey(*keyID, wkey) && wkey.IsValid())
-                return SignHeartbeat(wkey, timestamp, script, x.handle, x.userId, sigOut,
+                return SignHeartbeat(wkey, timestamp, script, x.handle, 0, sigOut,
                                      xsession::SessionIsXVerified());
         }
     }

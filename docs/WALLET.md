@@ -45,4 +45,4 @@ operator invite list cannot exclude a verified running wallet.
 Every signed-in user can send and receive.
 
 See [XSIGNIN.md](XSIGNIN.md) for the OAuth loopback. Home / Receive /
-Send show the linked `@handle` and X user id when the proof is present.
+Send show the linked `@handle` when the proof is present. The GUI does not show X user ids or session file paths.

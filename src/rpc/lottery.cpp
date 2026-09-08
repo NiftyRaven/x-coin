@@ -118,7 +118,8 @@ UniValue getactivenodes(const JSONRPCRequest& request)
             "\nResult:\n"
             "[\n"
             "  {\"id\":\"hex\", \"script\":\"hex\", \"lastseen\": n, \"local\": bool,\n"
-            "   \"xaccount\":\"handle\", \"xuserid\": n}\n"
+            "   \"xaccount\":\"handle\"}\n"
+            "Numeric X user ids are not gossiped and are not listed here.\n"
             "]\n"
             "\nExamples:\n"
             + HelpExampleCli("getactivenodes", "")
@@ -135,7 +136,6 @@ UniValue getactivenodes(const JSONRPCRequest& request)
         obj.push_back(Pair("lastseen", n.lastSeen));
         obj.push_back(Pair("local", n.id == lottery::GetRegistry().LocalId()));
         obj.push_back(Pair("xaccount", n.x.handle));
-        obj.push_back(Pair("xuserid", (uint64_t)n.x.userId));
         ret.push_back(obj);
     }
     return ret;
@@ -254,12 +254,13 @@ UniValue getxsession(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() > 0)
         throw std::runtime_error(
             "getxsession\n"
-            "\nReturn the local Sign in with X session (user id + username + X Verified from users/me).\n"
+            "\nReturn the local Sign in with X session on this node only.\n"
+            "This RPC is localhost-authenticated. Do not publish the result.\n"
+            "It does not return X login tokens (tokens are never saved).\n"
             "signed_in / linked are the same: this datadir holds a valid HMAC proof\n"
-            "(xsession.json + xsession.key) binding send/receive/own to that X account.\n"
-            "verified / verified_type are what GET /2/users/me reported (user.fields=verified,verified_type).\n"
+            "binding send/receive/own to that X account.\n"
+            "verified / verified_type are what GET /2/users/me reported.\n"
             "x_verified is true for X's blue / business / government checks.\n"
-            "X Verified is not the operator invite list.\n"
             "This is not a replacement for the 12-word BIP39 seed.\n"
         );
     UniValue ret(UniValue::VOBJ);

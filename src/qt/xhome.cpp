@@ -126,7 +126,7 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     keysLabel->setText(
         "This wallet + this X session = you. Another user cannot send from inside your wallet.\n"
         "12-word BIP39 seed — still required. It creates and restores the keys in this wallet.dat.\n"
-        "Sign in with X — session proof in this datadir (xsession.json + xsession.key). It gates send, receive, and own on this node. It does not import someone else's keys.\n"
+        "Sign in with X stays on this computer. Login tokens are never saved and never sent to peers.\n"
         "Spend only keys in this wallet.dat. Signing in as @alice on Bob's empty wallet cannot spend Alice's UTXOs. A typed handle cannot steal this.");
     root->addWidget(keysLabel);
 
@@ -362,17 +362,8 @@ void XHome::refresh()
     s.read(rpc("getxsession").toStdString());
     const bool signedIn = s.isObject() && (s["signed_in"].isTrue() || s["linked"].isTrue());
     if (signedIn) {
-        QString uid = QString::fromStdString(s["user_id"].getValStr());
-        if (uid.isEmpty())
-            uid = QString::fromStdString(s["id"].getValStr());
         const QString handle = QString::fromStdString(s["username"].getValStr());
         const bool xVerified = s["x_verified"].isTrue() || s["verified"].isTrue();
-        QString proof = QString::fromStdString(s["session_file"].getValStr());
-        QString secret = QString::fromStdString(s["secret_file"].getValStr());
-        if (proof.isEmpty())
-            proof = "xsession.json";
-        if (secret.isEmpty())
-            secret = "xsession.key";
         const QString vtype = QString::fromStdString(s["verified_type"].getValStr());
         QString verifiedLine;
         if (xVerified) {
@@ -389,27 +380,23 @@ void XHome::refresh()
         sessionLabel->setText(QString(
             "THIS WALLET IS YOURS\n"
             "Linked to @%1\n"
-            "X user id %2\n"
-            "%3\n"
-            "The session proof in this datadir is what links this wallet to that X account:\n"
-            "%4\n"
-            "%5\n\n"
-            "Send, receive, and own require that proof. Another signed-in identity cannot spend this wallet.dat.\n"
+            "%2\n"
+            "Sign-in stays on this computer. X login tokens are never saved and are never sent to peers.\n"
+            "Other people cannot see your login. Home does not show your X user id, session files, or secrets.\n\n"
+            "Send, receive, and own require that private session on this node. Another signed-in identity cannot spend this wallet.dat.\n"
             "You cannot open someone else's coins or assets just by typing their @handle.\n"
             "The 12-word seed still controls the keys. Sign in with X is the identity proof on this node.")
             .arg(handle)
-            .arg(uid)
-            .arg(verifiedLine.trimmed())
-            .arg(proof)
-            .arg(secret));
+            .arg(verifiedLine.trimmed()));
         signInBtn->setText("Wallet linked to @" + handle);
     } else {
         sessionLabel->setObjectName("xunlinked");
         sessionLabel->setText(
             "THIS WALLET IS NOT LINKED YET\n"
             "Sign in with X to bind this node to your X account.\n\n"
-            "Send, receive, and own require a session proof (xsession.json + xsession.key) "
+            "Send, receive, and own require a private session on this computer, "
             "written only after Sign in with X. A typed handle cannot steal this.\n"
+            "Login tokens are never saved and never sent to other nodes.\n"
             "This wallet + this X session = you. Another user cannot send from inside your wallet.\n"
             "The 12-word seed still controls the keys. Sign in with X is the identity gate, not a replacement for the seed.\n"
             "Only X Verified handles (X's blue check / X Premium, plus business and government org checks) enter the lottery. "
@@ -678,8 +665,9 @@ void XHome::onIssueUnique()
 
 void XHome::onOAuthSuccess(const QString& username, const QString& userId)
 {
-    statusLabel->setText(QString("This wallet is now linked to @%1 (X user id %2). Session proof written in this datadir.")
-        .arg(username).arg(userId));
+    Q_UNUSED(userId);
+    statusLabel->setText(QString("This wallet is now linked to @%1. Sign-in stays on this computer.")
+        .arg(username));
     refresh();
 }
 

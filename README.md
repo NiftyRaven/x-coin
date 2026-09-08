@@ -106,11 +106,12 @@ A typed handle is not an identity. Anyone could type `@someoneelse` if
 that name were merely on an allowlist.
 
 The wallet runs OAuth 2.0 PKCE, then **GET /2/users/me**. Only that
-username and X user id are stored, with an HMAC proof in the datadir
-(`xsession.json` + `xsession.key`). **Authentication is the key to
-asset ownership** — it proves it is you. Send, receive, and claiming a
-root require that proof. Only **X Verified** signed-in handles
-are lottery-eligible. **X Verified** is X’s blue check / X Premium
+username and X user id are stored **locally** (`xsession.json` + `xsession.key`,
+mode 0600). Access tokens are never saved. The GUI shows @handle, not
+your user id or secrets. Peers see lottery @handles only — not login.
+**Authentication is the key to asset ownership** — it proves it is you.
+Send, receive, and claiming a root require that proof. Only **X Verified**
+signed-in handles are lottery-eligible. **X Verified** is X’s blue check / X Premium
 (and business / government org checks) from `GET /2/users/me`
 ([about the blue check](https://help.x.com/en/managing-your-account/about-x-bluecheck)
 per [X’s verification policy](https://help.x.com/en/rules-and-policies/verification-policy)).

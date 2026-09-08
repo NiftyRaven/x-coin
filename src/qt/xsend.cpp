@@ -110,11 +110,10 @@ void XSend::refresh()
         return;
     }
     const QString handle = QString::fromStdString(xsession::SignedInHandle());
-    const QString uid = QString::fromStdString(xsession::SignedInUserId());
-    tagLabel->setText(QString("Sending from the wallet linked to @%1 (X user id %2). "
+    tagLabel->setText(QString("Sending from the wallet linked to @%1. "
                               "This wallet + this X session = you. Spend only keys in this wallet.dat. "
                               "Signing in as someone else does not import their coins. A typed handle cannot send as you.")
-        .arg(handle).arg(uid));
+        .arg(handle));
     if (!walletModel) {
         balanceLabel->setText("Balance\n(open a wallet)");
         return;

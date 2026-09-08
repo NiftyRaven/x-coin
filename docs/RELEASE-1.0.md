@@ -9,7 +9,7 @@ This is a **private** release. Do not make the repository public.
 ## What shipped
 
 - **Desktop GUI** `xcoin-qt` — X theme (black / white / sharp X mark).
-  Home (this wallet linked to @handle + X user id, lottery, claim root,
+  Home (this wallet linked to @handle, lottery, claim root,
   issue sub/unique, Receive / Send / Activity / Transfer assets),
   Receive (address + Copy), Send (paste + amount + Send), Activity.
   Same node/wallet as CLI. No CLI required for the happy path.
