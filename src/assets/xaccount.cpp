@@ -44,39 +44,56 @@ bool NormalizeXAccountId(const std::string& in, std::string& handleOut, uint64_t
     return true;
 }
 
-static std::string UpperHandleToRoot(const std::string& handle)
+static std::string CollapseUnderscores(const std::string& in)
 {
     std::string out;
-    out.reserve(handle.size());
+    out.reserve(in.size());
+    char prev = 0;
+    for (char c : in) {
+        if (c == '_' && prev == '_')
+            continue;
+        out.push_back(c);
+        prev = c;
+    }
+    return out;
+}
+
+bool MapXHandleToRootName(const std::string& handle, std::string& outName, std::string& err)
+{
+    outName.clear();
+    std::string out;
+    out.reserve(handle.size() + 2);
     for (unsigned char c : handle) {
         if (c >= 'a' && c <= 'z')
             out.push_back(static_cast<char>(c - 'a' + 'A'));
-        else
+        else if ((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_')
             out.push_back(static_cast<char>(c));
+        else {
+            err = "X handle contains a character that cannot map to a root asset name";
+            return false;
+        }
     }
-    while (!out.empty() && (out.front() == '.' || out.front() == '_'))
-        out.erase(out.begin());
-    while (!out.empty() && (out.back() == '.' || out.back() == '_'))
-        out.pop_back();
-    std::string collapsed;
-    collapsed.reserve(out.size());
-    char prev = 0;
-    for (char c : out) {
-        if ((c == '.' || c == '_') && (prev == '.' || prev == '_'))
-            continue;
-        collapsed.push_back(c);
-        prev = c;
-    }
-    out.swap(collapsed);
+    out = CollapseUnderscores(out);
+    // Asset names cannot start or end with `_`. X handles can. Replace the
+    // edge underscore with X so the mapping is explicit and 1:1 in length
+    // for the rest of the handle (tested; not a silent strip).
+    if (!out.empty() && out.front() == '_')
+        out.front() = 'X';
+    if (!out.empty() && out.back() == '_')
+        out.back() = 'X';
+    out = CollapseUnderscores(out);
     while (out.size() < MIN_ASSET_LENGTH)
         out.insert(out.begin(), 'X');
-    if (out.size() > 30)
-        out.resize(30);
-    while (!out.empty() && (out.back() == '.' || out.back() == '_'))
-        out.pop_back();
-    while (out.size() < MIN_ASSET_LENGTH)
-        out.push_back('X');
-    return out;
+    if (out.size() > MAX_ROOT_NAME_LENGTH) {
+        err = strprintf("handle-derived root would exceed %d characters (no truncation)", MAX_ROOT_NAME_LENGTH);
+        return false;
+    }
+    if (!IsAssetNameARoot(out)) {
+        err = strprintf("handle-derived name %s is not a valid root", out);
+        return false;
+    }
+    outName = out;
+    return true;
 }
 
 static bool NameTaken(const std::string& name, CAssetsCache* cache)
@@ -102,9 +119,11 @@ bool DeriveMainAssetName(const std::string& xHandleOrId, std::string& outName, s
     if (!NormalizeXAccountId(xHandleOrId, handle, userId, err))
         return false;
 
-    std::string base = UpperHandleToRoot(handle);
+    std::string base;
+    if (!MapXHandleToRootName(handle, base, err))
+        return false;
     auto tryName = [&](const std::string& n) -> bool {
-        if (n.size() < MIN_ASSET_LENGTH || n.size() > 30)
+        if (n.size() < MIN_ASSET_LENGTH || n.size() > MAX_ROOT_NAME_LENGTH)
             return false;
         if (!IsAssetNameARoot(n))
             return false;
@@ -125,15 +144,11 @@ bool DeriveMainAssetName(const std::string& xHandleOrId, std::string& outName, s
         suffixes.push_back(std::to_string(i));
 
     for (const auto& suf : suffixes) {
-        std::string n = base;
-        if (n.size() + suf.size() > 30) {
-            if (suf.size() >= 30)
-                continue;
-            n.resize(30 - suf.size());
-            while (!n.empty() && (n.back() == '.' || n.back() == '_'))
-                n.pop_back();
-        }
-        n += suf;
+        // Never truncate a valid handle-derived base. Skip suffixes that
+        // would push the name over MAX_ROOT_NAME_LENGTH.
+        if (base.size() + 1 + suf.size() > MAX_ROOT_NAME_LENGTH)
+            continue;
+        std::string n = base + "_" + suf;
         if (tryName(n)) {
             outName = n;
             return true;

@@ -793,8 +793,8 @@
         <translation>Valikud:</translation>
     </message>
     <message>
-        <source>Raven Core</source>
-        <translation>Raven Core</translation>
+        <source>X Coin</source>
+        <translation>X Coin</translation>
     </message>
     <message>
         <source>Information</source>

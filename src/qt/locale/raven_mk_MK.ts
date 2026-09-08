@@ -379,7 +379,7 @@
         <translation>Повторно индексирање на блокови од дискот...</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation>Испрати биткоини на Биткоин адреса</translation>
     </message>
     <message>
@@ -599,7 +599,7 @@
         <translation>Опции:</translation>
     </message>
     <message>
-        <source>Raven Core</source>
+        <source>X Coin</source>
         <translation>Биткоин Core</translation>
     </message>
     <message>

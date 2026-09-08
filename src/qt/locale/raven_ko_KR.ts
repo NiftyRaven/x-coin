@@ -62,11 +62,11 @@
         <translation>받는 주소</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your X Coin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation>레이븐코인 송금 주소입니다. 코인을 보내기 전, 잔고와 상대방 주소를 항상 확인하세요.</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your X Coin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation>레이븐코인 입금 주소입니다. 매 거래마다 새로운 주소 사용을 권장합니다. </translation>
     </message>
     <message>
@@ -585,7 +585,7 @@
         <translation>지불 요청이 만료됨.</translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>경고: 유효하지 않은 레이븐코인 주소</translation>
     </message>
     <message>
@@ -1081,7 +1081,7 @@
         <translation>IPFS/거래ID 해시값은 유효하지 않습니다. 유효한 IPFS/거래ID 해시값을 사용하세요.</translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>경고: 유효하지 않은 레이븐코인 주소</translation>
     </message>
     <message>
@@ -1200,7 +1200,7 @@
         <translation>보내는 주소 편집</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Raven address.</source>
+        <source>The entered address "%1" is not a valid X Coin address.</source>
         <translation>입력한 "%1" 주소는 올바른 비트코인 주소가 아닙니다.</translation>
     </message>
     <message>
@@ -1839,7 +1839,7 @@ Recommended action: Fully sync your wallet before sending a transaction.
         <translation>잘못된 지불 주소입니다 %1</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Raven address or malformed URI parameters.</source>
+        <source>URI cannot be parsed! This can be caused by an invalid X Coin address or malformed URI parameters.</source>
         <translation>URI의 파싱에 문제가 발생했습니다. 잘못된 비트코인 주소나 URI 파라미터 구성에 오류가 존재할 수 있습니다.</translation>
     </message>
     <message>
@@ -1937,7 +1937,7 @@ Recommended action: Fully sync your wallet before sending a transaction.
         <translation>거래액</translation>
     </message>
     <message>
-        <source>Enter a Raven address (e.g. %1)</source>
+        <source>Enter an X Coin address (e.g. %1)</source>
         <translation>비트코인 주소를 입력하기 (예. %1)</translation>
     </message>
     <message>
@@ -2425,7 +2425,7 @@ Recommended action: Fully sync your wallet before sending a transaction.
         <translation>디스크에서 블록 다시 색인중...</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation>비트코인 주소로 코인 전송</translation>
     </message>
     <message>
@@ -2473,11 +2473,11 @@ Recommended action: Fully sync your wallet before sending a transaction.
         <translation>지갑에 포함된 개인키 암호화하기</translation>
     </message>
     <message>
-        <source>Sign messages with your Raven addresses to prove you own them</source>
+        <source>Sign messages with your X Coin addresses to prove you own them</source>
         <translation>지갑 주소가 본인 소유인지 증명하기 위해 비트코인 주소에 서명할 수 있습니다.</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Raven addresses</source>
+        <source>Verify messages to ensure they were signed with specified X Coin addresses</source>
         <translation>비트코인 주소의 전자 서명 확인을 위해 첨부된 메시지가 있을 경우 이를 검증할 수 있습니다.</translation>
     </message>
     <message>
@@ -2931,7 +2931,7 @@ Recommended action: Fully sync your wallet before sending a transaction.
         <translation>경고: 제한 자산 재발행은 생성 주소를 필요로 합니다.</translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>경고: 유효하지 않은 레이븐코인 주소</translation>
     </message>
     <message>
@@ -3037,7 +3037,7 @@ Recommended action: Fully sync your wallet before sending a transaction.
         <translation>자산:</translation>
     </message>
     <message>
-        <source>The Raven address to send the payment to</source>
+        <source>The X Coin address to send the payment to</source>
         <translation>이 레이븐코인 주소로 송금됩니다</translation>
     </message>
     <message>
@@ -3344,7 +3344,7 @@ Recommended action: Fully sync your wallet before sending a transaction.
         <translation>오직 %1 만의 수수료를 지불하기</translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>경고: 잘못된 비트코인주소입니다</translation>
     </message>
     <message>
@@ -3383,7 +3383,7 @@ Recommended action: Fully sync your wallet before sending a transaction.
         <translation>이것은 정상적인 지불입니다.</translation>
     </message>
     <message>
-        <source>The Raven address to send the payment to</source>
+        <source>The X Coin address to send the payment to</source>
         <translation>이 레이븐코인 주소로 송금됩니다</translation>
     </message>
     <message>
@@ -3476,7 +3476,7 @@ Recommended action: Fully sync your wallet before sending a transaction.
         <translation>여러분 자신을 증명하기 위해 주소를 첨가하고 서명할 수 있습니다. 피싱 공격으로 말미암아 여러분의 서명을 통해 속아 넘어가게 할 수 있으므로, 서명하지 않은 모든 모호한 요소를 주의하십시오. 조항들이 완전 무결한지 확인 후 동의하는 경우에만 서명하십시오.</translation>
     </message>
     <message>
-        <source>The Raven address to sign the message with</source>
+        <source>The X Coin address to sign the message with</source>
         <translation>메세지를 서명한 비트코인 주소</translation>
     </message>
     <message>
@@ -3508,7 +3508,7 @@ Recommended action: Fully sync your wallet before sending a transaction.
         <translation>현재 서명을 시스템 클립보드에 복사</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Raven address</source>
+        <source>Sign the message to prove you own this X Coin address</source>
         <translation>여러분의 비트코인 주소를 증명하려면 메시지 서명하십시오</translation>
     </message>
     <message>
@@ -3532,11 +3532,11 @@ Recommended action: Fully sync your wallet before sending a transaction.
         <translation>메시지를 검증하기 위해 아래 칸에 각각 지갑 주소와 메시지, 전자서명을 입력하세요. (메시지 원본의 띄어쓰기, 들여쓰기, 행 나눔 등이 정확하게 입력되어야 하므로 원본을 복사해서 입력하세요) 이 기능은 메시지 검증이 주 목적이며, 네트워크 침입자에 의해 변조되지 않도록 전자서명 해독에 불필요한 시간을 소모하지 마세요. </translation>
     </message>
     <message>
-        <source>The Raven address the message was signed with</source>
+        <source>The X Coin address the message was signed with</source>
         <translation>메세지의 서명에 사용된 비트코인 주소</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Raven address</source>
+        <source>Verify the message to ensure it was signed with the specified X Coin address</source>
         <translation>정확한 비트코인주소가 입력됬는지 메시지를 확인하시오</translation>
     </message>
     <message>
@@ -4233,7 +4233,7 @@ Recommended action: Fully sync your wallet before sending a transaction.
         <translation>HTTP 서버를 시작할 수 없습니다. 자세한 사항은 디버그 로그를 확인 하세요.</translation>
     </message>
     <message>
-        <source>Raven Core</source>
+        <source>X Coin</source>
         <translation>비트코인 코어</translation>
     </message>
     <message>

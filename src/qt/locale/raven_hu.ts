@@ -510,7 +510,7 @@
         <translation type="vanished">Összeg</translation>
     </message>
     <message>
-        <source>Enter a Raven address (e.g. %1)</source>
+        <source>Enter an X Coin address (e.g. %1)</source>
         <translation type="vanished">Ad meg egy Raven címet (pl: %1)</translation>
     </message>
     <message>
@@ -840,7 +840,7 @@
         <translation type="vanished">Lemezen lévő blokkok újraindexelése...</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation type="vanished">Raven küldése megadott címre</translation>
     </message>
     <message>
@@ -892,11 +892,11 @@
         <translation type="vanished">A tárcádhoz tartozó privát kulcsok titkosítása</translation>
     </message>
     <message>
-        <source>Sign messages with your Raven addresses to prove you own them</source>
+        <source>Sign messages with your X Coin addresses to prove you own them</source>
         <translation type="vanished">Üzenetek aláírása a Raven-címmeiddel, amivel bizonyítod, hogy a cím a sajátod</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Raven addresses</source>
+        <source>Verify messages to ensure they were signed with specified X Coin addresses</source>
         <translation type="vanished">Üzenetek ellenőrzése, hogy valóban a megjelölt Raven-címekkel vannak-e aláírva</translation>
     </message>
     <message>
@@ -1299,7 +1299,7 @@
         <translation type="vanished">A jelenleg kiválasztott aláírás másolása a rendszer-vágólapra</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Raven address</source>
+        <source>Sign the message to prove you own this X Coin address</source>
         <translation type="vanished">Üzenet </translation>
     </message>
     <message>
@@ -1385,8 +1385,8 @@
 </translation>
     </message>
     <message>
-        <source>Raven Core</source>
-        <translation type="vanished">Raven Core</translation>
+        <source>X Coin</source>
+        <translation type="vanished">X Coin</translation>
     </message>
     <message>
         <source>Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)</source>

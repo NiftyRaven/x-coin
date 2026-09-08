@@ -244,7 +244,7 @@ obj/build.h: FORCE
 	  "$(abs_top_srcdir)"
 libraven_util_a-clientversion.$(OBJEXT): obj/build.h
 
-# server: shared between ravend and raven-qt
+# server: shared between xcoind and xcoin-qt
 libraven_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
 libraven_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libraven_server_a_SOURCES = \
@@ -314,7 +314,7 @@ libraven_zmq_a_SOURCES = \
 endif
 
 
-# wallet: shared between ravend and raven-qt, but only linked
+# wallet: shared between xcoind and xcoin-qt, but only linked
 # when wallet enabled
 libraven_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
 libraven_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
@@ -420,7 +420,7 @@ libraven_consensus_a_SOURCES = \
   LibBoolEE.h \
   $(RAVEN_CORE_H)
 
-# common: shared between ravend, and raven-qt and non-server tools
+# common: shared between xcoind, and xcoin-qt and non-server tools
 libraven_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
 libraven_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libraven_common_a_SOURCES = \
@@ -470,7 +470,7 @@ libraven_util_a_SOURCES += compat/glibc_compat.cpp
 AM_LDFLAGS += $(COMPAT_LDFLAGS)
 endif
 
-# cli: shared between raven-cli and raven-qt
+# cli: shared between xcoin-cli and xcoin-qt
 libraven_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
 libraven_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libraven_cli_a_SOURCES = \
@@ -480,7 +480,7 @@ libraven_cli_a_SOURCES = \
 nodist_libraven_util_a_SOURCES = $(srcdir)/obj/build.h
 #
 
-# xcoind binary (sources remain ravend.cpp from upstream) #
+# xcoind binary (sources remain ravend.cpp; installed name is xcoind) #
 xcoind_SOURCES = ravend.cpp
 xcoind_CPPFLAGS = $(AM_CPPFLAGS) $(RAVEN_INCLUDES)
 xcoind_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)

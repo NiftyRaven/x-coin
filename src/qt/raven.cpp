@@ -177,7 +177,7 @@ void DebugMessageHandler(QtMsgType type, const QMessageLogContext& context, cons
 }
 #endif
 
-/** Class encapsulating Raven Core startup and shutdown.
+/** Class encapsulating X Coin startup and shutdown.
  * Allows running startup and shutdown in a different thread from the UI thread.
  */
 class RavenCore: public QObject
@@ -365,7 +365,7 @@ void RavenCore::shutdown()
 }
 
 static int qt_argc = 1;
-static const char* qt_argv = "raven-qt";
+static const char* qt_argv = "xcoin-qt";
 
 RavenApplication::RavenApplication():
     QApplication(qt_argc, const_cast<char **>(&qt_argv)),
@@ -665,7 +665,7 @@ int main(int argc, char *argv[])
     if (!Intro::pickDataDirectory())
         return EXIT_SUCCESS;
 
-    /// 6. Determine availability of data directory and parse raven.conf
+    /// 6. Determine availability of data directory and parse xcoin.conf
     /// - Do not call GetDataDir(true) before this step finishes
     if (!fs::is_directory(GetDataDir(false)))
     {

@@ -62,11 +62,11 @@
         <translation>Mottaksadresser</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your X Coin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation>Dette er dine Raven-adresser for sending av betalinger. Sjekk alltid beløpet og mottakeradressen før sending av mynter.</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your X Coin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation>Dette er dine Raven-adresser for å sende betalinger med. Det er anbefalt å bruke en ny mottaksadresse for hver transaksjon.</translation>
     </message>
     <message>
@@ -609,7 +609,7 @@
         <translation>Betalingsforespørsel utgått.</translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>Advarsel: Ugyldig Ravenadresse</translation>
     </message>
     <message>
@@ -1081,7 +1081,7 @@
         <translation>IPFS/Txid hash ikke gyldig. Vennligst bruk en gyldig verdi.</translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>Advarsel: Ugyldig Ravenadresse</translation>
     </message>
     <message>
@@ -1961,7 +1961,7 @@
         <translation>Beløp</translation>
     </message>
     <message>
-        <source>Enter a Raven address (e.g. %1)</source>
+        <source>Enter an X Coin address (e.g. %1)</source>
         <translation>Oppgi en Raven-adresse (f.eks. %1)</translation>
     </message>
     <message>
@@ -2405,8 +2405,8 @@
         <translation>Lommebok</translation>
     </message>
     <message>
-        <source>Ravencoin Market Price</source>
-        <translation>Ravencoin markedspris</translation>
+        <source>X Coin Market Price</source>
+        <translation>X Coin markedspris</translation>
     </message>
     <message>
         <source>Click to disable network activity.</source>
@@ -2429,7 +2429,7 @@
         <translation>Reindekserer blokker på harddisk...</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation>Send til en Raven-adresse</translation>
     </message>
     <message>
@@ -2477,11 +2477,11 @@
         <translation>Krypter de private nøklene som tilhører lommeboken din</translation>
     </message>
     <message>
-        <source>Sign messages with your Raven addresses to prove you own them</source>
+        <source>Sign messages with your X Coin addresses to prove you own them</source>
         <translation>Signer en melding med Raven-adressene dine for å bevise at du eier dem</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Raven addresses</source>
+        <source>Verify messages to ensure they were signed with specified X Coin addresses</source>
         <translation>Bekreft meldinger for å være sikker på at de ble signert av en angitt Raven-adresse</translation>
     </message>
     <message>
@@ -2901,7 +2901,7 @@
         <translation>Aktivum</translation>
     </message>
     <message>
-        <source>The Raven address to send the payment to</source>
+        <source>The X Coin address to send the payment to</source>
         <translation>Raven-adressen det skal overføres til</translation>
     </message>
     <message>
@@ -3208,7 +3208,7 @@
         <translation>Betal kun nødvendig gebyr %1</translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>Advarsel: Ugyldig Ravenadresse</translation>
     </message>
     <message>
@@ -3247,7 +3247,7 @@
         <translation>Dette er en normal betaling.</translation>
     </message>
     <message>
-        <source>The Raven address to send the payment to</source>
+        <source>The X Coin address to send the payment to</source>
         <translation>Raven-adressen betalingen skal sendes til</translation>
     </message>
     <message>
@@ -3344,7 +3344,7 @@
         <translation>Du kan signere meldinger/avtaler med adresser for å bevise at du kan motta ravens sendt til dem. Vær forsiktig med å signere noe vagt eller tilfeldig, siden phishing-angrep kan prøve å lure deg til å signere din identitet over til dem. Bare signer fullt detaljerte utsagn som du er enig i.</translation>
     </message>
     <message>
-        <source>The Raven address to sign the message with</source>
+        <source>The X Coin address to sign the message with</source>
         <translation>Raven-adressen meldingen skal signeres med</translation>
     </message>
     <message>
@@ -3376,7 +3376,7 @@
         <translation>Kopier valgt signatur til utklippstavle</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Raven address</source>
+        <source>Sign the message to prove you own this X Coin address</source>
         <translation>Signer meldingen for å bevise at du eier denne Raven-adressen</translation>
     </message>
     <message>
@@ -3400,11 +3400,11 @@
         <translation>Skriv inn mottakerens adresse, melding (forsikre deg om at du kopier linjeskift, mellomrom, faner osv. nøyaktig) og underskrift nedenfor for å bekrefte meldingen. Vær forsiktig så du ikke leser mer ut av signaturen enn hva som er i den signerte meldingen i seg selv, for å unngå å bli lurt av et man-in-the-middle-angrep. Merk at dette bare beviser at den som signerer kan motta med adressen, dette beviser ikke hvem som har sendt transaksjoner!</translation>
     </message>
     <message>
-        <source>The Raven address the message was signed with</source>
+        <source>The X Coin address the message was signed with</source>
         <translation>Raven-adressen meldingen ble signert med</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Raven address</source>
+        <source>Verify the message to ensure it was signed with the specified X Coin address</source>
         <translation>Verifiser meldingen for å være sikker på at den ble signert av den angitte Raven-adressen</translation>
     </message>
     <message>
@@ -3821,8 +3821,8 @@
         <translation>Kunne ikke starte HTTP server. Se debug logg for detaljer.</translation>
     </message>
     <message>
-        <source>Raven Core</source>
-        <translation>Raven Core</translation>
+        <source>X Coin</source>
+        <translation>X Coin</translation>
     </message>
     <message>
         <source>The %s developers</source>

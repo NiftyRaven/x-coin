@@ -24,6 +24,7 @@
 #include <QApplication>
 #include <QCloseEvent>
 #include <QPainter>
+#include <QPen>
 #include <QRadialGradient>
 #include <QScreen>
 
@@ -68,24 +69,25 @@ SplashScreen::SplashScreen(const NetworkStyle* networkStyle)
 #endif
 
     QPainter pixPaint(&pixmap);
-    pixPaint.setPen(QColor(100,100,100));
+    pixPaint.setRenderHint(QPainter::Antialiasing, true);
+    pixPaint.setPen(QColor(255, 255, 255));
 
-    // draw a slightly radial gradient
-    QRadialGradient gradient(QPoint(0,0), splashSize.width()/devicePixelRatio);
-    gradient.setColorAt(0, Qt::white);
-    gradient.setColorAt(1, QColor(247,247,247));
-    QRect rGradient(QPoint(0,0), splashSize);
-    pixPaint.fillRect(rGradient, gradient);
+    const int w = splashSize.width() / devicePixelRatio;
+    const int h = splashSize.height() / devicePixelRatio;
+    pixPaint.fillRect(QRect(QPoint(0, 0), QSize(w, h)), QColor(0, 0, 0));
 
-    // draw the raven icon, expected size of PNG: 1024x1024
-    QRect rectIcon(QPoint(-40,0), QSize(310,310));
+    // Sharp white X mark, left side.
+    const int xPad = 48;
+    const int xSize = 180;
+    QPen xpen(QColor(255, 255, 255));
+    xpen.setWidth(22);
+    xpen.setCapStyle(Qt::FlatCap);
+    xpen.setJoinStyle(Qt::MiterJoin);
+    pixPaint.setPen(xpen);
+    pixPaint.drawLine(xPad, 70, xPad + xSize, 70 + xSize);
+    pixPaint.drawLine(xPad + xSize, 70, xPad, 70 + xSize);
 
-    const QSize requiredSize(1024,1024);
-    QPixmap icon(networkStyle->getSplashIcon().pixmap(requiredSize));
-
-    pixPaint.drawPixmap(rectIcon, icon);
-
-    // check font size and drawing with
+    pixPaint.setPen(QColor(255, 255, 255));
     pixPaint.setFont(QFont(font, 33*fontFactor));
     QFontMetrics fm = pixPaint.fontMetrics();
     #ifndef QTversionPreFiveEleven
@@ -193,7 +195,7 @@ static void InitMessage(SplashScreen *splash, const std::string &message)
         Qt::QueuedConnection,
         Q_ARG(QString, QString::fromStdString(message)),
         Q_ARG(int, Qt::AlignBottom|Qt::AlignHCenter),
-        Q_ARG(QColor, QColor(55,55,55)));
+        Q_ARG(QColor, QColor(255,255,255)));
 }
 
 static void ShowProgress(SplashScreen *splash, const std::string &title, int nProgress, bool resume_possible)

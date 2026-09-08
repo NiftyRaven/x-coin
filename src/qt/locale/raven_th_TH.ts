@@ -615,7 +615,7 @@
         <translation>กำลังทำดัชนี ที่เก็บบล็อก ใหม่ ในดิสก์...</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation>ส่ง coins ไปยัง ที่เก็บ Raven</translation>
     </message>
     <message>
@@ -663,11 +663,11 @@
         <translation>เข้ารหัส private keys/ รหัสส่วนตัว สำหรับกระเป๋าเงินของท่าน</translation>
     </message>
     <message>
-        <source>Sign messages with your Raven addresses to prove you own them</source>
+        <source>Sign messages with your X Coin addresses to prove you own them</source>
         <translation>เซ็นชื่อด้วยข้อความ ที่เก็บ Raven เพื่อแสดงว่าท่านเป็นเจ้าของ raven นี้จริง</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Raven addresses</source>
+        <source>Verify messages to ensure they were signed with specified X Coin addresses</source>
         <translation>ตรวจสอบ ข้อความ เพื่อให้แน่ใจว่า การเซ็นต์ชื่อ ด้วยที่เก็บ Raven แล้ว</translation>
     </message>
     <message>

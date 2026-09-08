@@ -9,7 +9,7 @@
 #define UNUSED
 #endif
 static const char UNUSED *raven_strings[] = {
-QT_TRANSLATE_NOOP("raven-core", "Raven Core"),
+QT_TRANSLATE_NOOP("raven-core", "X Coin"),
 QT_TRANSLATE_NOOP("raven-core", "The %s developers"),
 QT_TRANSLATE_NOOP("raven-core", ""
 "(1 = keep tx meta data e.g. account owner and payment request information, 2 "
@@ -124,7 +124,7 @@ QT_TRANSLATE_NOOP("raven-core", ""
 "the asset"),
 QT_TRANSLATE_NOOP("raven-core", ""
 "Invalid parameter: asset_name must only consist of valid characters and have "
-"a size between 3 and 30 characters. See help for more details."),
+"a size between 3 and 32 characters. See help for more details."),
 QT_TRANSLATE_NOOP("raven-core", ""
 "Invalid parameter: ipfs_hash is not valid, or txid hash is not the right "
 "length"),

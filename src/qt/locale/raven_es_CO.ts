@@ -215,7 +215,7 @@
         <translation>Abrir &amp;URL...</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation>Enviando monedas a una dirección de Raven</translation>
     </message>
     <message>
@@ -333,8 +333,8 @@
 <context>
     <name>raven-core</name>
     <message>
-        <source>Raven Core</source>
-        <translation>Raven Core</translation>
+        <source>X Coin</source>
+        <translation>X Coin</translation>
     </message>
     <message>
         <source>Insufficient funds</source>

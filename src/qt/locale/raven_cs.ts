@@ -62,11 +62,11 @@
         <translation>Přijímací adresy</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your X Coin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation>Tohle jsou tvé ravenové adresy pro posílání plateb. Před odesláním mincí si vždy zkontroluj částku a cílovou adresu.</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your X Coin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation>Tohle jsou tvé ravenové adresy pro příjem plateb. Nezapomeň si pro každou transakci vždy vygenerovat novou adresu.</translation>
     </message>
     <message>
@@ -436,7 +436,7 @@
         <translation>Uprav odesílací adresu</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Raven address.</source>
+        <source>The entered address "%1" is not a valid X Coin address.</source>
         <translation>Zadaná adresa „%1“ není platná ravenová adresa.</translation>
     </message>
     <message>
@@ -957,7 +957,7 @@
         <translation>Neplatná platební adresa %1</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Raven address or malformed URI parameters.</source>
+        <source>URI cannot be parsed! This can be caused by an invalid X Coin address or malformed URI parameters.</source>
         <translation>Nepodařilo se analyzovat URI! Důvodem může být neplatná ravenová adresa nebo poškozené parametry URI.</translation>
     </message>
     <message>
@@ -1051,7 +1051,7 @@
         <translation>Částka</translation>
     </message>
     <message>
-        <source>Enter a Raven address (e.g. %1)</source>
+        <source>Enter an X Coin address (e.g. %1)</source>
         <translation>Zadej ravenovou adresu (např. %1)</translation>
     </message>
     <message>
@@ -1507,7 +1507,7 @@
         <translation>Vytvářím nový index bloků na disku...</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation>Pošli mince na ravenovou adresu</translation>
     </message>
     <message>
@@ -1555,11 +1555,11 @@
         <translation>Zašifruj soukromé klíče ve své peněžence</translation>
     </message>
     <message>
-        <source>Sign messages with your Raven addresses to prove you own them</source>
+        <source>Sign messages with your X Coin addresses to prove you own them</source>
         <translation>Podepiš zprávy svými ravenovými adresami, čímž prokážeš, že jsi jejich vlastníkem</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Raven addresses</source>
+        <source>Verify messages to ensure they were signed with specified X Coin addresses</source>
         <translation>Ověř zprávy, aby ses ujistil, že byly podepsány danými ravenovými adresami</translation>
     </message>
     <message>
@@ -2110,7 +2110,7 @@
         <translation>Zaplatit pouze vyžadovaný poplatek %1</translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>Upozornění: Neplatná ravenová adresa</translation>
     </message>
     <message>
@@ -2149,7 +2149,7 @@
         <translation>Tohle je normální platba.</translation>
     </message>
     <message>
-        <source>The Raven address to send the payment to</source>
+        <source>The X Coin address to send the payment to</source>
         <translation>Ravenová adresa příjemce</translation>
     </message>
     <message>
@@ -2238,7 +2238,7 @@
         <translation>Podepsáním zprávy/smlouvy svými adresami můžeš prokázat, že jsi na ně schopen přijmout raveny. Buď opatrný a nepodepisuj nic vágního nebo náhodného; například při phishingových útocích můžeš být lákán, abys něco takového podepsal. Podepisuj pouze naprosto úplná a detailní prohlášení, se kterými souhlasíš.</translation>
     </message>
     <message>
-        <source>The Raven address to sign the message with</source>
+        <source>The X Coin address to sign the message with</source>
         <translation>Ravenová adresa, kterou se zpráva podepíše</translation>
     </message>
     <message>
@@ -2270,7 +2270,7 @@
         <translation>Zkopíruj tento podpis do schránky</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Raven address</source>
+        <source>Sign the message to prove you own this X Coin address</source>
         <translation>Podepiš zprávu, čímž prokážeš, že jsi vlastníkem této ravenové adresy</translation>
     </message>
     <message>
@@ -2294,11 +2294,11 @@
         <translation>K ověření podpisu zprávy zadej adresu příjemce, zprávu (ověř si, že správně kopíruješ zalomení řádků, mezery, tabulátory apod.) a podpis. Dávej pozor na to, abys nezkopíroval do podpisu víc, než co je v samotné podepsané zprávě, abys nebyl napálen man-in-the-middle útokem. Poznamenejme však, že takto lze pouze prokázat, že podepisující je schopný na dané adrese přijmout platbu, ale není možnéprokázat, že odeslal jakoukoli transakci!</translation>
     </message>
     <message>
-        <source>The Raven address the message was signed with</source>
+        <source>The X Coin address the message was signed with</source>
         <translation>Ravenová adresa, kterou je zpráva podepsána</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Raven address</source>
+        <source>Verify the message to ensure it was signed with the specified X Coin address</source>
         <translation>Ověř zprávu, aby ses ujistil, že byla podepsána danou ravenovou adresou</translation>
     </message>
     <message>
@@ -2935,8 +2935,8 @@
         <translation>Nemohu spustit HTTP server. Detaily viz v debug.log.</translation>
     </message>
     <message>
-        <source>Raven Core</source>
-        <translation>Raven Core</translation>
+        <source>X Coin</source>
+        <translation>X Coin</translation>
     </message>
     <message>
         <source>The %s developers</source>

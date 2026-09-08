@@ -10,6 +10,7 @@
 #include "guiutil.h"
 #include "peertablemodel.h"
 
+#include "amount.h"
 #include "chain.h"
 #include "chainparams.h"
 #include "checkpoints.h"
@@ -20,6 +21,7 @@
 #include "ui_interface.h"
 #include "util.h"
 #include "warnings.h"
+#include "lottery.h"
 
 #include <stdint.h>
 
@@ -156,6 +158,34 @@ void ClientModel::updateTimer()
     // the following calls will acquire the required lock
     Q_EMIT mempoolSizeChanged(getMempoolSize(), getMempoolDynamicUsage());
     Q_EMIT bytesChanged(getTotalBytesRecv(), getTotalBytesSent());
+    Q_EMIT lotteryChanged();
+}
+
+ClientModel::LotteryGuiInfo ClientModel::getLotteryGuiInfo() const
+{
+    LotteryGuiInfo info;
+    LOCK(cs_main);
+    const CChainParams& params = GetParams();
+    const Consensus::Params& consensus = params.GetConsensus();
+    CBlockIndex* tip = chainActive.Tip();
+    const int nextHeight = tip ? tip->nHeight + 1 : 1;
+    const uint256 prev = tip ? tip->GetBlockHash() : params.GenesisBlock().GetHash();
+    const int64_t now = GetTime();
+    CAmount subsidy = GetBlockSubsidy(nextHeight, consensus);
+    lottery::Draw draw = lottery::ComputeDraw(nextHeight, prev,
+                                              params.GenesisBlock().nTime,
+                                              consensus.nSubsidyHalvingInterval,
+                                              subsidy, now);
+    const lottery::XAccount localX = lottery::GetRegistry().LocalXAccount();
+    info.handle = QString::fromStdString(localX.handle);
+    info.eligible = lottery::GetRegistry().LocalEligible();
+    info.isWinner = lottery::IsWinner(lottery::GetRegistry().LocalId(), draw.winners);
+    info.producerRunning = lottery::IsProducerRunning();
+    info.activeNodes = (int)draw.active.size();
+    info.winnerCount = draw.winnerCount;
+    info.slot = draw.slot;
+    info.height = nextHeight;
+    return info;
 }
 
 void ClientModel::updateNumConnections(int numConnections)

@@ -1,9 +1,10 @@
 # X Coin private launch checklist
 
-This is the operator runbook for a **private launch**. It assumes you are
-building from this repository (Phase 1 import + this launch-ready delta).
-There is no public seed DNS and no exchange listing. Lottery eligibility
-uses a **shared verified-X allowlist** (no live X API keys required).
+Wallet how-to: [README.md](../README.md). Paper: [whitepaper/XCOIN.md](../whitepaper/XCOIN.md).
+
+This is the operator runbook for a **private launch**. There is no public
+seed DNS and no exchange listing. Lottery eligibility uses a **shared
+verified-X allowlist** (no live X API keys required).
 
 ## Frozen identity
 
@@ -19,16 +20,13 @@ uses a **shared verified-X allowlist** (no live X API keys required).
 | User agent | `XCoin` | | |
 | BIP44 type | 3844 | 1 | 1 |
 
-Do **not** reuse Ravencoin ports (8767/8766), magic (`RAVN`/`RVNT`/`CROW`), or
-base58 versions (60/`R…`, 111/`n…`).
+Do **not** reuse the imported v4.8.0 ports, magic, or base58 versions.
+Collision table: [FORK.md](FORK.md).
 
 ### Genesis (frozen 2026-09-08)
 
-All three networks use the timestamp string
-
-```
-X Coin / XFER: Ravencoin hard-fork, assets kept, lottery not mining. 2026-09-08
-```
+All three networks use the same frozen coinbase timestamp string
+(consensus-critical — quoted once in [FORK.md](FORK.md); do not edit it).
 
 | | Main | Testnet | Regtest |
 | --- | --- | --- | --- |
@@ -48,7 +46,7 @@ headers — no leading-zero PoW grind):
 | Regtest | `bfce7bfad8116b82f4a0ce4be2fa52e9c9f166248e318ce45728b8fe87451d89` | same merkle |
 
 `nMinimumChainWork` and `defaultAssumeValid` are zero. Checkpoints are empty.
-No Ravencoin UTXO, assumevalid hash, or checkpoint is inherited.
+No imported UTXO, assumevalid hash, or checkpoint is inherited.
 
 **Fair launch:** no IPO, no premine, no founder allocation. Height 0 is not a
 payday. The genesis coinbase (5000 XFER in the serialized tx) is **never
@@ -101,8 +99,13 @@ the same file. Unlinked nodes still sync/relay but do not win or produce.
 
 1. Seed operator: confirm each operator’s X handle is verified, then write
    `verified-x-accounts.txt` (see [LOTTERY.md](LOTTERY.md)).
-2. Share that file (scp, gist, HTTPS). Do **not** invent a bot or OAuth app.
-3. Each operator sets `xaccount=` to **their** handle and points at the file.
+2. Confirm each handle **offline** (open `https://x.com/<handle>`, check the
+   verified / Premium badge). Do **not** invent a bot, OAuth app, or live API key.
+3. Share that file (scp, gist, HTTPS). Each operator sets `xaccount=` to
+   **their** handle and points at the file.
+
+The owner handle for this private test is **`NFTRVN`**. Add it to the
+allowlist, then `linkxaccount NFTRVN` assigns the free root `NFTRVN`.
 
 ```bash
 # xcoin.conf
@@ -162,8 +165,8 @@ See [LOTTERY.md](LOTTERY.md). Short form:
 
 Assets: see [ASSETS.md](ASSETS.md). Main/root identity assets are **free**
 (protocol assignment on verified X-link). Users cannot `issue` a new root.
-Sub-asset burn **100 XFER**, unique **5 XFER** (same Ravencoin amounts, new
-addresses). Restricted/qualifier assets are removed.
+Sub-asset burn **100 XFER**, unique **5 XFER**. Restricted/qualifier assets
+are removed.
 
 | Action | Burn | Main address |
 | --- | --- | --- |
@@ -200,7 +203,7 @@ Coinbase is immature for 100 blocks — generate ~110 on regtest before
 - **Clock skew / catch-up:** main/test wait for wall-clock slot ≥ height slot.
   Height still maps 1:1; no skip-pay or double-pay of a slot in consensus.
 - **No DNS seeds / explorers / audit** — you are the network.
-- Upstream `make check` still hard-codes Ravencoin genesis hashes; do not treat
+- Upstream `make check` still hard-codes imported genesis hashes; do not treat
   a red `make check` as a launch blocker. Use the regtest smoke instead.
 
 ## Smoke (regtest)
@@ -211,8 +214,9 @@ contrib/xcoin/smoke-regtest.sh
 
 Exercises `getlotteryinfo`, genesis unspendable, on-demand blocks, a
 single-winner 5000 XFER coinbase at height 149, a two-winner 2500 XFER split
-at height 150, protocol main / sub / unique when `linkxaccount` is present,
-and **unlinked** `sendtoaddress` / `sendfromaddress`.
+at height 150, protocol main / sub / unique when `linkxaccount` is present
+(including owner handle **NFTRVN**), and **unlinked** `sendtoaddress` /
+`sendfromaddress`.
 
 ```bash
 contrib/xcoin/smoke-gossip.sh

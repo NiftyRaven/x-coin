@@ -143,9 +143,9 @@ const char* GetOpName(opcodetype opcode)
     case OP_NOP9                   : return "OP_NOP9";
     case OP_NOP10                  : return "OP_NOP10";
 
-    /** RVN START */
+    /** XCOIN START */
     case OP_RVN_ASSET              : return "OP_RVN_ASSET";
-    /** RVN END */
+    /** XCOIN END */
 
     case OP_INVALIDOPCODE          : return "OP_INVALIDOPCODE";
 
@@ -227,7 +227,7 @@ bool CScript::IsPayToScriptHash() const
             (*this)[22] == OP_EQUAL);
 }
 
-/** RVN START */
+/** XCOIN START */
 bool CScript::IsAssetScript() const
 {
     int nType = 0;
@@ -353,7 +353,7 @@ bool CScript::IsNullAssetVerifierTxDataScript() const
             (*this)[1] == OP_RESERVED &&
             (*this)[2] != OP_RESERVED);
 }
-/** RVN END */
+/** XCOIN END */
 
 bool CScript::IsPayToWitnessScriptHash() const
 {

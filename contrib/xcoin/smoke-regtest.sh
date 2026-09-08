@@ -17,7 +17,7 @@ rm -rf "$DATADIR"
 mkdir -p "$DATADIR"
 
 "$XCOIND" -regtest -datadir="$DATADIR" -server -daemon -listen=0 \
-  -xaccount=smoke1 -xverified=smoke1 -xverified=smoke2
+  -xaccount=smoke1 -xverified=smoke1 -xverified=smoke2 -xverified=NFTRVN
 cleanup() {
   "${CLI[@]}" stop >/dev/null 2>&1 || true
   for _ in $(seq 1 50); do
@@ -73,7 +73,7 @@ echo "addr1 $ADDR1"
 echo "addr2 $ADDR2"
 VA1="$("${CLI[@]}" validateaddress "$ADDR1")"
 echo "$VA1" | grep -q '"isvalid": true'
-# New prefixes: not Ravencoin main R… / test n… (version 60 / 111).
+# New prefixes: not X Coin main R… / test n… (version 60 / 111).
 [[ "$ADDR1" != R* && "$ADDR1" != n* && "$ADDR2" != R* && "$ADDR2" != n* ]]
 [[ "$ADDR1" == y* && "$ADDR2" == y* ]]
 
@@ -111,6 +111,63 @@ echo "$ASSETS2" | grep -q "$MAIN#ONE"
 GETMAIN="$("${CLI[@]}" getmainasset smoke1)"
 echo "$GETMAIN"
 echo "$GETMAIN" | grep -q "$MAIN"
+
+echo "== owner handle NFTRVN (allowlist + free root + eligibility) =="
+# Offline-verified owner handle. No X.com API — operator allowlist only.
+"${CLI[@]}" addxverified NFTRVN >/dev/null
+"${CLI[@]}" listxverified | grep -qi NFTRVN
+ADDR_N="$("${CLI[@]}" getnewaddress)"
+echo "nftrvn dest $ADDR_N"
+LINK_N="$("${CLI[@]}" linkxaccount NFTRVN "$ADDR_N")"
+echo "$LINK_N"
+echo "$LINK_N" | python3 -c '
+import json, sys
+j = json.load(sys.stdin)
+if j.get("xaccount") != "nftrvn":
+    sys.exit("linkxaccount must echo xaccount=nftrvn, got %r" % j.get("xaccount"))
+if j.get("asset") != "NFTRVN":
+    sys.exit("expected free root NFTRVN, got %r" % j.get("asset"))
+if j.get("owner") != "NFTRVN!":
+    sys.exit("expected owner token NFTRVN!")
+'
+"${CLI[@]}" listmyassets | grep -q NFTRVN
+"${CLI[@]}" getmainasset NFTRVN | grep -q NFTRVN
+"${CLI[@]}" registeractivenode "$ADDR_N" NFTRVN >/dev/null
+"${CLI[@]}" getactivenodes | python3 -c '
+import json, sys
+nodes = json.load(sys.stdin)
+handles = [n.get("xaccount", "") for n in nodes]
+if "nftrvn" not in handles:
+    sys.exit("NFTRVN must be lottery-eligible in the active set, got %s" % handles)
+print("NFTRVN active handles", handles)
+'
+echo "NFTRVN identity path: ok"
+
+echo "== 26-character X handle maps 1:1 to root (no truncation) =="
+# X handles are [A-Za-z0-9_], typically 1–15, protocol max 32. A 26-char
+# handle must produce the same 26-char uppercase root.
+LONG_HANDLE="abcdefghijabcdefghijabcdef"
+[[ ${#LONG_HANDLE} -eq 26 ]]
+"${CLI[@]}" addxverified "$LONG_HANDLE" >/dev/null
+ADDR_L="$("${CLI[@]}" getnewaddress)"
+LINK_L="$("${CLI[@]}" linkxaccount "$LONG_HANDLE" "$ADDR_L")"
+echo "$LINK_L"
+echo "$LINK_L" | python3 -c '
+import json, sys
+j = json.load(sys.stdin)
+want = "ABCDEFGHIJABCDEFGHIJABCDEF"
+if j.get("xaccount") != "abcdefghijabcdefghijabcdef":
+    sys.exit("expected xaccount=abcdefghijabcdefghijabcdef, got %r" % j.get("xaccount"))
+if j.get("asset") != want:
+    sys.exit("expected free root %s (26 chars), got %r" % (want, j.get("asset")))
+if len(j.get("asset", "")) != 26:
+    sys.exit("root must be 26 characters, got %d" % len(j.get("asset", "")))
+if j.get("owner") != want + "!":
+    sys.exit("expected owner token %s!" % want)
+print("26-char handle root", j.get("asset"))
+'
+"${CLI[@]}" getmainasset "$LONG_HANDLE" | grep -q ABCDEFGHIJABCDEFGHIJABCDEF
+echo "26-char handle identity path: ok"
 
 echo "== two-winner window (regtest halving interval 150) =="
 # Height 149: still 1 winner, full 5000 subsidy. Height 150: 2 winners, 2500 subsidy.

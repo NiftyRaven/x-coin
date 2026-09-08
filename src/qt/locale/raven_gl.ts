@@ -575,7 +575,7 @@
         <translation>Reindexando bloques no disco...</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation>Enviar moedas a unha dirección Raven</translation>
     </message>
     <message>
@@ -623,11 +623,11 @@
         <translation>Encriptar as claves privadas que pertencen ao teu moedeiro</translation>
     </message>
     <message>
-        <source>Sign messages with your Raven addresses to prove you own them</source>
+        <source>Sign messages with your X Coin addresses to prove you own them</source>
         <translation>Asina mensaxes coas túas direccións Raven para probar que te pertencen</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Raven addresses</source>
+        <source>Verify messages to ensure they were signed with specified X Coin addresses</source>
         <translation>Verificar mensaxes para asegurar que foron asinados con direccións Raven dadas.</translation>
     </message>
     <message>
@@ -928,7 +928,7 @@
         <translation>Copiar a sinatura actual ao portapapeis do sistema</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Raven address</source>
+        <source>Sign the message to prove you own this X Coin address</source>
         <translation>Asina a mensaxe para probar que posees esta dirección Raven</translation>
     </message>
     <message>
@@ -948,7 +948,7 @@
         <translation>&amp;Verificar Mensaxe</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Raven address</source>
+        <source>Verify the message to ensure it was signed with the specified X Coin address</source>
         <translation>Verificar a mensaxe para asegurar que foi asinada coa dirección Raven especificada</translation>
     </message>
     <message>
@@ -1029,7 +1029,7 @@
         <translation>Executar no fondo como un demo e aceptar comandos</translation>
     </message>
     <message>
-        <source>Raven Core</source>
+        <source>X Coin</source>
         <translation>Core de Raven</translation>
     </message>
     <message>

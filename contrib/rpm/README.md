@@ -19,11 +19,11 @@ reference the release tarball available from https://raven.org/bin/ and
 `Source1` should reference the BerkeleyDB source.
 
 Sources 10-99 are for source files that are maintained in the
-[Raven git repository](https://github.com/RavenProject/Ravencoin) but are not part of
+[Raven git repository](https://github.com/NiftyRaven/x-coin) but are not part of
 the release tarball. Most of these will reside in the `contrib` sub-directory.
 
 Sources 10-19 should be reserved for miscellaneous configuration files.
-Currently only `Source10` is used, for the example `raven.conf` file.
+Currently only `Source10` is used, for the example `xcoin.conf` file.
 
 Sources 20-29 should be reserved for man pages. Currently only `Source20`
 through `Source23` are used.
@@ -62,7 +62,7 @@ most likely to be the case with the Qt packages.
 
 The `build-unix.md` file recommends building against BerkeleyDB 4.8.30. Even if
 that is the version your Linux distribution ships with, it probably is a good
-idea to build Raven Core against a static version of that library compiled
+idea to build X Coin against a static version of that library compiled
 according to the instructions in the `build-unix.md` file so that any changes
 the distribution may make in the future will not result in a problem for users.
 

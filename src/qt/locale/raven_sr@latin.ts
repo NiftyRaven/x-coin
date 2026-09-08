@@ -283,7 +283,7 @@
         <translation>Otvori &amp;URI...</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation>Pošalji novčiće na Raven adresu</translation>
     </message>
     <message>
@@ -447,8 +447,8 @@
 <context>
     <name>raven-core</name>
     <message>
-        <source>Raven Core</source>
-        <translation>Raven Core</translation>
+        <source>X Coin</source>
+        <translation>X Coin</translation>
     </message>
     <message>
         <source>Information</source>

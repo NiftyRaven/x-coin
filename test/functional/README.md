@@ -60,10 +60,10 @@ over the network (`CBlock`, `CTransaction`, etc, along with the network-level
 wrappers for them, `msg_block`, `msg_tx`, etc).
 
 - P2P tests have two threads. One thread handles all network communication
-with the ravend(s) being tested (using python's asyncore package); the other
+with the xcoind(s) being tested (using python's asyncore package); the other
 implements the test logic.
 
-- `NodeConn` is the class used to connect to a ravend.  If you implement
+- `NodeConn` is the class used to connect to a xcoind.  If you implement
 a callback class that derives from `NodeConnCB` and pass that to the
 `NodeConn` object, your code will receive the appropriate callbacks when
 events of interest arrive.
@@ -87,7 +87,7 @@ Base class for functional tests.
 Generally useful functions.
 
 #### [test_framework/mininode.py](test_framework/mininode.py)
-Basic code to support P2P connectivity to a ravend.
+Basic code to support P2P connectivity to a xcoind.
 
 #### [test_framework/script.py](test_framework/script.py)
 Utilities for manipulating transaction scripts (originally from python-ravenlib)

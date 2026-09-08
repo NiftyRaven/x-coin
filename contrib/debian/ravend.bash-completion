@@ -1,2 +1,2 @@
-contrib/ravend.bash-completion	ravend
-contrib/raven-cli.bash-completion	raven-cli
+contrib/xcoind.bash-completion	xcoind
+contrib/xcoin-cli.bash-completion	xcoin-cli

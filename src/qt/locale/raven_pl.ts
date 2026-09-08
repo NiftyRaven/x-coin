@@ -62,11 +62,11 @@
         <translation>Adresy odbioru</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your X Coin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation>Tutaj znajdują się adresy Raven na które wysyłasz płatności. Zawsze sprawdzaj ilość i adres odbiorcy przed wysyłką monet.</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your X Coin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation>To są twoje adresy Raven do odbierania płatności. Zaleca się używanie nowych adresów odbiorczych dla każdej transakcji.</translation>
     </message>
     <message>
@@ -632,7 +632,7 @@
         <translation>Zapłać tylko kwotę wymaganej opłaty %1</translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>Uwaga: Nieprawidłowy adres</translation>
     </message>
     <message>
@@ -1141,7 +1141,7 @@
         <translation>IPFS/Txid hash jest nieprawidłowy. Proszę użyć prawidłowego IPFS/Txid hash</translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>Uwaga: Nieprawidłowy adres</translation>
     </message>
     <message>
@@ -1260,7 +1260,7 @@
         <translation>Zmień adres wysyłania</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Raven address.</source>
+        <source>The entered address "%1" is not a valid X Coin address.</source>
         <translation>Wprowadzony adres "%1" nie jest prawidłowym adresem Raven.</translation>
     </message>
     <message>
@@ -2134,7 +2134,7 @@ Zalecane działanie: Zsynchronizuj całkowicie portfel zanim wyślesz transakcj�
         <translation>Kwota</translation>
     </message>
     <message>
-        <source>Enter a Raven address (e.g. %1)</source>
+        <source>Enter an X Coin address (e.g. %1)</source>
         <translation>Wprowadź adres ravenowy (np. %1)</translation>
     </message>
     <message>
@@ -2594,7 +2594,7 @@ Zalecane działanie: Zsynchronizuj całkowicie portfel zanim wyślesz transakcj�
         <translation>Ponowne indeksowanie bloków na dysku...</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation>Wyślij monety na adres ravenowy</translation>
     </message>
     <message>
@@ -2642,11 +2642,11 @@ Zalecane działanie: Zsynchronizuj całkowicie portfel zanim wyślesz transakcj�
         <translation>Szyfruj klucze prywatne, które są w twoim portfelu</translation>
     </message>
     <message>
-        <source>Sign messages with your Raven addresses to prove you own them</source>
+        <source>Sign messages with your X Coin addresses to prove you own them</source>
         <translation>Podpisz wiadomości swoim adresem aby udowodnić jego posiadanie</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Raven addresses</source>
+        <source>Verify messages to ensure they were signed with specified X Coin addresses</source>
         <translation>Zweryfikuj wiadomość,  aby upewnić się, że została podpisana podanym adresem ravenowym.</translation>
     </message>
     <message>
@@ -3230,7 +3230,7 @@ Zalecane działanie: Zsynchronizuj całkowicie portfel zanim wyślesz transakcj�
         <translation>Aktywo:</translation>
     </message>
     <message>
-        <source>The Raven address to send the payment to</source>
+        <source>The X Coin address to send the payment to</source>
         <translation>Adres Raven dla przesłania płatności</translation>
     </message>
     <message>
@@ -3493,7 +3493,7 @@ Zalecane działanie: Zsynchronizuj całkowicie portfel zanim wyślesz transakcj�
         <translation>Zapłać tylko wymaganą opłatę w wysokości %1</translation>
     </message>
     <message>
-        <source>Warning: Invalid Raven address</source>
+        <source>Warning: Invalid X Coin address</source>
         <translation>Ostrzeżenie: nieprawidłowy adres Raven</translation>
     </message>
     <message>
@@ -3524,7 +3524,7 @@ Zalecane działanie: Zsynchronizuj całkowicie portfel zanim wyślesz transakcj�
         <translation>To jest standardowa płatność</translation>
     </message>
     <message>
-        <source>The Raven address to send the payment to</source>
+        <source>The X Coin address to send the payment to</source>
         <translation>Adres Raven gdzie wysłać płatność</translation>
     </message>
     <message>
@@ -3613,7 +3613,7 @@ Zalecane działanie: Zsynchronizuj całkowicie portfel zanim wyślesz transakcj�
         <translation>Możesz podpisywać wiadomości swoimi adresami aby udowodnić, że jesteś ich właścicielem. Uważaj, aby nie podpisywać niczego co wzbudza Twoje podejrzenia, ponieważ ktoś może stosować phishing próbując nakłonić Cię do ich podpisania. Akceptuj i podpisuj tylko w pełni zrozumiałe komunikaty i wiadomości.</translation>
     </message>
     <message>
-        <source>The Raven address to sign the message with</source>
+        <source>The X Coin address to sign the message with</source>
         <translation>Adres Raven, za pomocą którego podpisać wiadomość</translation>
     </message>
     <message>
@@ -3645,7 +3645,7 @@ Zalecane działanie: Zsynchronizuj całkowicie portfel zanim wyślesz transakcj�
         <translation>Kopiuje aktualny podpis do schowka systemowego</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Raven address</source>
+        <source>Sign the message to prove you own this X Coin address</source>
         <translation>Podpisz wiadomość aby dowieść, że ten adres jest twój</translation>
     </message>
     <message>
@@ -3670,11 +3670,11 @@ Zalecane działanie: Zsynchronizuj całkowicie portfel zanim wyślesz transakcj�
 Zwróć uwagę, że poprawnie zweryfikowana wiadomość potwierdza to, że nadawca posiada klucz do adresu, natomiast nie potwierdza to, że poprawne wysłanie jakiejkolwiek transakcji! </translation>
     </message>
     <message>
-        <source>The Raven address the message was signed with</source>
+        <source>The X Coin address the message was signed with</source>
         <translation>Adres Raven, którym została podpisana wiadomość</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Raven address</source>
+        <source>Verify the message to ensure it was signed with the specified X Coin address</source>
         <translation>Zweryfikuj wiadomość,  aby upewnić się, że została podpisana odpowiednim adresem Raven.</translation>
     </message>
     <message>
@@ -4171,7 +4171,7 @@ Zwróć uwagę, że poprawnie zweryfikowana wiadomość potwierdza to, że nadaw
         <translation>Uruchomienie serwera HTTP nie powiodło się. Zobacz dziennik debugowania, aby uzyskać więcej szczegółów.</translation>
     </message>
     <message>
-        <source>Raven Core</source>
+        <source>X Coin</source>
         <translation>Rdzeń Ravena</translation>
     </message>
     <message>

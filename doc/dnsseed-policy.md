@@ -1,7 +1,7 @@
 Expectations for DNS Seed operators
 ====================================
 
-Raven Core attempts to minimize the level of trust in DNS seeds,
+X Coin attempts to minimize the level of trust in DNS seeds,
 but DNS seeds still pose a small amount of risk for the network.
 As such, DNS seeds must be run by entities which have some minimum
 level of trust within the Raven community.
@@ -44,11 +44,11 @@ related to the DNS seed operation.
 If these expectations cannot be satisfied the operator should
 discontinue providing services and contact the active Raven
 Core development team by sending an email to:
-[feedback@ravencoin.org](mailto:feedback@ravencoin.org).
+[feedback@github.com/NiftyRaven/x-coin](mailto:feedback@github.com/NiftyRaven/x-coin).
 
 Behavior outside of these expectations may be reasonable in some
 situations but should be discussed in public in advance.
 
 See also
 ----------
-- [ravencoin-seeder](https://github.com/RavenProject/ravencoin-seeder) is a reference implementation of a DNS seed.
+- This private test does not ship public DNS seeds. Use `addnode` / `seednode`.

@@ -174,7 +174,7 @@ void ScriptPubKeyToUniv(const CScript& scriptPubKey,
     out.pushKV("reqSigs", nRequired);
     out.pushKV("type", GetTxnOutputType(type));
 
-    /** RVN START */
+    /** XCOIN START */
     if (type == TX_NEW_ASSET || type == TX_TRANSFER_ASSET || type == TX_REISSUE_ASSET) {
         UniValue assetInfo(UniValue::VOBJ);
 
@@ -262,7 +262,7 @@ void ScriptPubKeyToUniv(const CScript& scriptPubKey,
 
         out.pushKV("asset_data", assetInfo);
     }
-     /** RVN END */
+     /** XCOIN END */
 
     UniValue a(UniValue::VARR);
     for (const CTxDestination& addr : addresses) {

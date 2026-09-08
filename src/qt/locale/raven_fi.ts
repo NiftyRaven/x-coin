@@ -62,11 +62,11 @@
         <translation>Vastaanotto-osoitteet</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your X Coin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation>Nämä ovat Raven-osoitteesi maksujen lähettämistä varten. Tarkista aina määrä ja vastaanotto-osoite ennen kolikoiden lähettämistä.</translation>
     </message>
     <message>
-        <source>These are your Raven addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your X Coin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation>Tässä ovat Raven vastaanotto-osoitteesi. On suositeltavaa käyttää uutta vastaanotto-osoitetta jokaista lähetystä varten.</translation>
     </message>
     <message>
@@ -428,7 +428,7 @@
         <translation>Muokkaa lähettävää osoitetta</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Raven address.</source>
+        <source>The entered address "%1" is not a valid X Coin address.</source>
         <translation>Antamasi osoite "%1" ei ole kelvollinen Raven-osoite.</translation>
     </message>
     <message>
@@ -931,7 +931,7 @@
         <translation>Määrä</translation>
     </message>
     <message>
-        <source>Enter a Raven address (e.g. %1)</source>
+        <source>Enter an X Coin address (e.g. %1)</source>
         <translation>Syötä Raven-osoite (esim. %1)</translation>
     </message>
     <message>
@@ -1359,7 +1359,7 @@
         <translation>Ladataan lohkoindeksiä...</translation>
     </message>
     <message>
-        <source>Send coins to a Raven address</source>
+        <source>Send coins to an X Coin address</source>
         <translation>Lähetä kolikoita Raven-osoitteeseen</translation>
     </message>
     <message>
@@ -1407,11 +1407,11 @@
         <translation>Suojaa yksityiset avaimet, jotka kuuluvat lompakkoosi</translation>
     </message>
     <message>
-        <source>Sign messages with your Raven addresses to prove you own them</source>
+        <source>Sign messages with your X Coin addresses to prove you own them</source>
         <translation>Allekirjoita viestisi omalla Raven -osoitteellasi todistaaksesi, että omistat ne</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Raven addresses</source>
+        <source>Verify messages to ensure they were signed with specified X Coin addresses</source>
         <translation>Varmista, että viestisi on allekirjoitettu määritetyllä Raven -osoitteella</translation>
     </message>
     <message>
@@ -1889,7 +1889,7 @@
         <translation>Tämä on normaali maksu.</translation>
     </message>
     <message>
-        <source>The Raven address to send the payment to</source>
+        <source>The X Coin address to send the payment to</source>
         <translation>Raven-osoite johon maksu lähetetään</translation>
     </message>
     <message>
@@ -1970,7 +1970,7 @@
         <translation>&amp;Allekirjoita viesti</translation>
     </message>
     <message>
-        <source>The Raven address to sign the message with</source>
+        <source>The X Coin address to sign the message with</source>
         <translation>Raven-osoite jolla viesti allekirjoitetaan</translation>
     </message>
     <message>
@@ -2002,7 +2002,7 @@
         <translation>Kopioi tämänhetkinen allekirjoitus leikepöydälle</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Raven address</source>
+        <source>Sign the message to prove you own this X Coin address</source>
         <translation>Allekirjoita viesti todistaaksesi, että omistat tämän Raven-osoitteen</translation>
     </message>
     <message>
@@ -2022,11 +2022,11 @@
         <translation>&amp;Varmista viesti</translation>
     </message>
     <message>
-        <source>The Raven address the message was signed with</source>
+        <source>The X Coin address the message was signed with</source>
         <translation>Raven-osoite jolla viesti on allekirjoitettu</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Raven address</source>
+        <source>Verify the message to ensure it was signed with the specified X Coin address</source>
         <translation>Tarkista viestin allekirjoitus varmistaaksesi, että se allekirjoitettiin tietyllä Raven-osoitteella</translation>
     </message>
     <message>
@@ -2375,7 +2375,7 @@
         <translation>HTTP-palvelinta ei voitu käynnistää. Katso debug-lokista lisätietoja.</translation>
     </message>
     <message>
-        <source>Raven Core</source>
+        <source>X Coin</source>
         <translation>Raven-ydin</translation>
     </message>
     <message>

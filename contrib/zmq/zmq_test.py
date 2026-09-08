@@ -8,7 +8,7 @@
     ZMQ example using python3's asyncio
 
     Raven should be started with the command line arguments:
-        ravend -testnet -daemon \
+        xcoind -testnet -daemon \
                 -zmqpubhashblock=tcp://127.0.0.1:28766 \
                 -zmqpubrawtx=tcp://127.0.0.1:28766 \
                 -zmqpubhashtx=tcp://127.0.0.1:28766 \
@@ -25,7 +25,7 @@ import codecs
 context = zmq.Context()
 socket = context.socket(zmq.SUB)
 
-print("Getting Ravencoin msgs")
+print("Getting X Coin msgs")
 socket.connect("tcp://localhost:28766")
 
 socket.setsockopt_string(zmq.SUBSCRIBE, "hashtx")

@@ -411,7 +411,7 @@
 <context>
     <name>QObject</name>
     <message>
-        <source>Enter a Raven address (e.g. %1)</source>
+        <source>Enter an X Coin address (e.g. %1)</source>
         <translation>Введите Raven-адрес (напр. %1)</translation>
     </message>
     <message>
@@ -584,7 +584,7 @@
     </message>
     <message>
         <source>Raven</source>
-        <translation>Raven Core</translation>
+        <translation>X Coin</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -825,8 +825,8 @@
 <context>
     <name>raven-core</name>
     <message>
-        <source>Raven Core</source>
-        <translation>Raven Core</translation>
+        <source>X Coin</source>
+        <translation>X Coin</translation>
     </message>
     <message>
         <source>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</source>

@@ -122,11 +122,11 @@ AssetsDialog::AssetsDialog(const PlatformStyle *_platformStyle, QWidget *parent)
     ui->checkBoxMinimumFee->setChecked(settings.value("fPayOnlyMinFee").toBool());
     minimizeFeeSection(settings.value("fFeeSectionMinimized").toBool());
 
-    /** RVN START */
+    /** XCOIN START */
     setupAssetControlFrame(platformStyle);
     setupScrollView(platformStyle);
     setupFeeControl(platformStyle);
-    /** RVN END */
+    /** XCOIN END */
 }
 
 void AssetsDialog::setClientModel(ClientModel *_clientModel)
@@ -921,7 +921,7 @@ void AssetsDialog::assetControlChangeEdited(const QString& text)
         }
         else if (!IsValidDestination(dest)) // Invalid address
         {
-            ui->labelAssetControlChangeLabel->setText(tr("Warning: Invalid Raven address"));
+            ui->labelAssetControlChangeLabel->setText(tr("Warning: Invalid X Coin address"));
         }
         else // Valid address
         {
@@ -1000,7 +1000,7 @@ void AssetsDialog::assetControlUpdateLabels()
     }
 }
 
-/** RVN START */
+/** XCOIN START */
 void AssetsDialog::assetControlUpdateSendCoinsDialog()
 {
     for(int i = 0; i < ui->entries->count(); ++i)
@@ -1065,4 +1065,4 @@ void AssetsDialog::handleFirstSelection()
         entry->refreshAssetList();
     }
 }
-/** RVN END */
+/** XCOIN END */

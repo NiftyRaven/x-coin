@@ -25,7 +25,7 @@ public:
 class CScriptNum10
 {
 /**
- * The ScriptNum implementation from Raven Core 0.10.0, for cross-comparison.
+ * The ScriptNum implementation from X Coin 0.10.0, for cross-comparison.
  */
 public:
 

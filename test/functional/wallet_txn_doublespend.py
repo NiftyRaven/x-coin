@@ -25,7 +25,7 @@ class TxnMallTest(RavenTestFramework):
         disconnect_nodes(self.nodes[2], 1)
 
     def run_test(self):
-        # All nodes should start with 125,000 RVN:
+        # All nodes should start with 125,000 XFER:
         starting_balance = 125000
         for i in range(4):
             assert_equal(self.nodes[i].getbalance(), starting_balance)
@@ -46,7 +46,7 @@ class TxnMallTest(RavenTestFramework):
         # Coins are sent to node1_address
         node1_address = self.nodes[1].getnewaddress("from0")
 
-        # First: use raw transaction API to send 1240 RVN to node1_address,
+        # First: use raw transaction API to send 1240 XFER to node1_address,
         # but don't broadcast:
         doublespend_fee = Decimal('-.02')
         rawtx_input_0 = {"txid": fund_foo_txid, "vout": find_output(self.nodes[0], fund_foo_txid, 121900)}
@@ -58,7 +58,7 @@ class TxnMallTest(RavenTestFramework):
         doublespend = self.nodes[0].signrawtransaction(rawtx)
         assert_equal(doublespend["complete"], True)
 
-        # Create two spends using 1 50 RVN coin each
+        # Create two spends using 1 50 XFER coin each
         txid1 = self.nodes[0].sendfrom("foo", node1_address, 4000, 0)
         txid2 = self.nodes[0].sendfrom("bar", node1_address, 2000, 0)
         

@@ -48,7 +48,7 @@ class RestrictedAssetsTest(RavenTestFramework):
         assert_raises_rpc_error(None, "Verifier string can not be empty", n0.issuerestrictedasset, asset_name, qty, "", to_address)
         assert_raises_rpc_error(None, "bad-txns-null-verifier-failed-syntax-check", n0.issuerestrictedasset, asset_name, qty, "false && true", to_address)
         assert_raises_rpc_error(None, "bad-txns-null-verifier-contains-non-issued-qualifier", n0.issuerestrictedasset, asset_name, qty, "#NONEXIZTENT", to_address)
-        assert_raises_rpc_error(None, "Invalid Raven address", n0.issuerestrictedasset, asset_name, qty, verifier, "garbageaddress")
+        assert_raises_rpc_error(None, "Invalid X Coin address", n0.issuerestrictedasset, asset_name, qty, verifier, "garbageaddress")
 
         # base asset required
         assert_raises_rpc_error(-32600, f"Wallet doesn't have asset: {base_asset_name}!", n0.issuerestrictedasset, asset_name, qty, verifier, to_address)
@@ -85,7 +85,7 @@ class RestrictedAssetsTest(RavenTestFramework):
         n0.issue(base_asset_name)
 
         # valid params
-        assert_raises_rpc_error(None, "Invalid Raven address", n0.issuerestrictedasset, asset_name, qty, verifier, to_address, "garbagechangeaddress")
+        assert_raises_rpc_error(None, "Invalid X Coin address", n0.issuerestrictedasset, asset_name, qty, verifier, to_address, "garbagechangeaddress")
         assert_raises_rpc_error(None, "Units must be between 0 and 8", n0.issuerestrictedasset, asset_name, qty, verifier, to_address, change_address, 9)
         assert_raises_rpc_error(None, "Units must be between 0 and 8", n0.issuerestrictedasset, asset_name, qty, verifier, to_address, change_address, -1)
 
@@ -144,8 +144,8 @@ class RestrictedAssetsTest(RavenTestFramework):
         # valid params
         assert_raises_rpc_error(None, "Invalid asset name", n0.reissuerestrictedasset, "$!N\/AL!D", qty, to_address)
         assert_raises_rpc_error(None, "Wallet doesn't have asset", n0.reissuerestrictedasset, foreign_asset_name, qty, to_address)
-        assert_raises_rpc_error(None, "Invalid Raven address", n0.reissuerestrictedasset, asset_name, qty, "garbageaddress")
-        assert_raises_rpc_error(None, "Invalid Raven address", n0.reissuerestrictedasset, asset_name, qty, to_address, change_verifier, verifier, "garbagechangeaddress")
+        assert_raises_rpc_error(None, "Invalid X Coin address", n0.reissuerestrictedasset, asset_name, qty, "garbageaddress")
+        assert_raises_rpc_error(None, "Invalid X Coin address", n0.reissuerestrictedasset, asset_name, qty, to_address, change_verifier, verifier, "garbagechangeaddress")
         assert_raises_rpc_error(None, "Units must be between -1 and 8", n0.reissuerestrictedasset, asset_name, qty, to_address, change_verifier, verifier, change_address, 9)
         assert_raises_rpc_error(None, "Units must be between -1 and 8", n0.reissuerestrictedasset, asset_name, qty, to_address, change_verifier, verifier, change_address, -2)
 
@@ -198,8 +198,8 @@ class RestrictedAssetsTest(RavenTestFramework):
         ipfs_hash = "QmacSRmrkVmvJfbCpmU6pK72furJ8E8fbKHindrLxmYMQo"
 
         assert_raises_rpc_error(None, "Amount must be between 1 and 10", n0.issuequalifierasset, asset_name, 0)
-        assert_raises_rpc_error(None, "Invalid Raven address", n0.issuequalifierasset, asset_name, qty, "garbageaddress")
-        assert_raises_rpc_error(None, "Invalid Raven address", n0.issuequalifierasset, asset_name, qty, to_address, "gargabechangeaddress")
+        assert_raises_rpc_error(None, "Invalid X Coin address", n0.issuequalifierasset, asset_name, qty, "garbageaddress")
+        assert_raises_rpc_error(None, "Invalid X Coin address", n0.issuequalifierasset, asset_name, qty, to_address, "gargabechangeaddress")
         assert_raises_rpc_error(None, "ipfs_hash must be 46 characters", n0.issuequalifierasset, asset_name, qty, to_address, change_address, True)
 
         # issue
@@ -234,8 +234,8 @@ class RestrictedAssetsTest(RavenTestFramework):
         assert_does_not_contain_key(asset_name, n1.listmyassets())
 
         assert_raises_rpc_error(None, "Only use this rpc call to send Qualifier assets", n0.transferqualifier, nonqualifier_asset_name, 1, n1_address)
-        assert_raises_rpc_error(None, "Invalid Raven address", n0.transferqualifier, asset_name, 1, "garbageaddress")
-        assert_raises_rpc_error(None, "Invalid Raven address", n0.transferqualifier, asset_name, 1, n1_address, "garbagechangeaddress")
+        assert_raises_rpc_error(None, "Invalid X Coin address", n0.transferqualifier, asset_name, 1, "garbageaddress")
+        assert_raises_rpc_error(None, "Invalid X Coin address", n0.transferqualifier, asset_name, 1, n1_address, "garbagechangeaddress")
         assert_raises_rpc_error(None, "Invalid IPFS hash", n0.transferqualifier, asset_name, 1, n1_address, n0_change_address, "garbagemessage")
 
         # transfer
@@ -306,7 +306,7 @@ class RestrictedAssetsTest(RavenTestFramework):
         n0.generate(1)
         ##
 
-        assert_raises_rpc_error(None, "Invalid Raven address", n0.addtagtoaddress, tag, "garbageaddress")
+        assert_raises_rpc_error(None, "Invalid X Coin address", n0.addtagtoaddress, tag, "garbageaddress")
         assert_raises_rpc_error(None, "Invalid Raven change address", n0.addtagtoaddress, tag, address, "garbagechangeaddress")
 
         n0.addtagtoaddress(tag, address, change_address)
@@ -356,7 +356,7 @@ class RestrictedAssetsTest(RavenTestFramework):
         assert_equal(64, len(txid[0]))
         assert (n0.listassetbalancesbyaddress(asset_change_address)[asset_name] > 0)
 
-        assert_raises_rpc_error(None, "Invalid Raven address", n0.removetagfromaddress, tag, "garbageaddress")
+        assert_raises_rpc_error(None, "Invalid X Coin address", n0.removetagfromaddress, tag, "garbageaddress")
         assert_raises_rpc_error(None, "Invalid Raven change address", n0.removetagfromaddress, tag, address, "garbagechangeaddress")
 
         n0.removetagfromaddress(tag, address, change_address)
@@ -429,7 +429,7 @@ class RestrictedAssetsTest(RavenTestFramework):
         assert_equal(1000, n1.listmyassets()[asset_name])
         address = change_address  # assets have moved
 
-        assert_raises_rpc_error(None, "Invalid Raven address", n0.freezeaddress, asset_name, "garbageaddress")
+        assert_raises_rpc_error(None, "Invalid X Coin address", n0.freezeaddress, asset_name, "garbageaddress")
         assert_raises_rpc_error(None, "Invalid Raven change address", n0.freezeaddress, asset_name, address, "garbagechangeaddress")
 
         n0.freezeaddress(asset_name, address, rvn_change_address)
@@ -451,7 +451,7 @@ class RestrictedAssetsTest(RavenTestFramework):
 
         assert_raises_rpc_error(-8, "No asset outpoints are selected from the given address", n0.transferfromaddress, asset_name, address, 1000, n1.getnewaddress())
 
-        assert_raises_rpc_error(None, "Invalid Raven address", n0.unfreezeaddress, asset_name, "garbageaddress")
+        assert_raises_rpc_error(None, "Invalid X Coin address", n0.unfreezeaddress, asset_name, "garbageaddress")
         assert_raises_rpc_error(None, "Invalid Raven change address", n0.unfreezeaddress, asset_name, address, "garbagechangeaddress")
 
         n0.unfreezeaddress(asset_name, address, rvn_change_address)

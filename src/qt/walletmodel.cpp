@@ -245,7 +245,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
             total += subtotal;
         }
         else
-        {   // User-entered raven address / amount:
+        {   // User-entered X Coin address / amount:
             if(!validateAddress(rcp.address))
             {
                 return InvalidAddress;
@@ -685,7 +685,7 @@ void WalletModel::listCoins(std::map<QString, std::vector<COutput> >& mapCoins) 
     }
 }
 
-/** RVN START */
+/** XCOIN START */
 // AvailableCoins + LockedCoins grouped by wallet address (put change in one group with wallet address)
 void WalletModel::listAssets(std::map<QString, std::map<QString, std::vector<COutput> > >& mapCoins) const
 {
@@ -711,7 +711,7 @@ void WalletModel::listAssets(std::map<QString, std::map<QString, std::vector<COu
         }
     }
 }
-/** RVN END */
+/** XCOIN END */
 
 bool WalletModel::isLockedCoin(uint256 hash, unsigned int n) const
 {

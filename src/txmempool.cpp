@@ -447,7 +447,7 @@ void CTxMemPool::addAddressIndex(const CTxMemPoolEntry &entry, const CCoinsViewC
             mapAddress.insert(std::make_pair(key, delta));
             inserted.push_back(key);
         } else {
-            /** RVN START */
+            /** XCOIN START */
             if (AreAssetsDeployed()) {
                 uint160 hashBytes;
                 std::string assetName;
@@ -459,7 +459,7 @@ void CTxMemPool::addAddressIndex(const CTxMemPoolEntry &entry, const CCoinsViewC
                     inserted.push_back(key);
                 }
             }
-            /** RVN END */
+            /** XCOIN END */
         }
     }
 
@@ -483,7 +483,7 @@ void CTxMemPool::addAddressIndex(const CTxMemPoolEntry &entry, const CCoinsViewC
             mapAddress.insert(std::make_pair(key, CMempoolAddressDelta(entry.GetTime(), out.nValue)));
             inserted.push_back(key);
         } else {
-            /** RVN START */
+            /** XCOIN START */
             if (AreAssetsDeployed()) {
                 uint160 hashBytes;
                 std::string assetName;
@@ -495,7 +495,7 @@ void CTxMemPool::addAddressIndex(const CTxMemPoolEntry &entry, const CCoinsViewC
                     inserted.push_back(key);
                 }
             }
-            /** RVN END */
+            /** XCOIN END */
         }
     }
 
@@ -642,7 +642,7 @@ void CTxMemPool::removeUnchecked(txiter it, MemPoolRemovalReason reason)
     removeAddressIndex(hash);
     removeSpentIndex(hash);
 
-    /** RVN START */
+    /** XCOIN START */
     // If the transaction being removed from the mempool is locking other reissues. Free them
     if (mapReissuedTx.count(hash)) {
         if (mapReissuedAssets.count(mapReissuedTx.at(hash))) {
@@ -727,7 +727,7 @@ void CTxMemPool::removeUnchecked(txiter it, MemPoolRemovalReason reason)
             }
         }
     }
-    /** RVN END */
+    /** XCOIN END */
 }
 
 // Calculates descendants of entry that are not already in setDescendants, and adds to
@@ -873,7 +873,7 @@ void CTxMemPool::removeForBlock(const std::vector<CTransactionRef>& vtx, unsigne
             entries.push_back(&*i);
     }
 
-    /** RVN START */
+    /** XCOIN START */
     // Get the newly added assets, and make sure they are in the entries
     std::vector<CTransaction> trans;
     for (auto it : connectedBlockData.newAssetsToAdd) {
@@ -984,7 +984,7 @@ void CTxMemPool::removeForBlock(const std::vector<CTransactionRef>& vtx, unsigne
             }
         }
     }
-    /** RVN END */
+    /** XCOIN END */
 
     // Before the txs in the new block have been removed from the mempool, update policy estimates
     if (minerPolicyEstimator) {minerPolicyEstimator->processBlock(nBlockHeight, entries);}
@@ -1000,7 +1000,7 @@ void CTxMemPool::removeForBlock(const std::vector<CTransactionRef>& vtx, unsigne
         ClearPrioritisation(tx->GetHash());
     }
 
-    /** RVN START */
+    /** XCOIN START */
     // Remove newly added asset issue transactions from the mempool if they haven't been removed already
     for (auto tx : trans)
     {
@@ -1013,7 +1013,7 @@ void CTxMemPool::removeForBlock(const std::vector<CTransactionRef>& vtx, unsigne
         removeConflicts(tx);
         ClearPrioritisation(tx.GetHash());
     }
-    /** RVN END */
+    /** XCOIN END */
 
     lastRollingFeeUpdate = GetTime();
     blockSinceLastRollingFeeBump = true;
@@ -1066,14 +1066,14 @@ static void CheckInputsAndUpdateCoins(const CTransaction& tx, CCoinsViewCache& m
     CValidationState state;
     CAmount txfee = 0;
     bool fCheckResult = tx.IsCoinBase() || Consensus::CheckTxInputs(tx, state, mempoolDuplicate, spendheight, txfee);
-    /** RVN START */
+    /** XCOIN START */
     if (AreAssetsDeployed()) {
         std::vector<std::pair<std::string, uint256>> vReissueAssets;
         bool fCheckAssets = Consensus::CheckTxAssets(tx, state, mempoolDuplicate, passets, false, vReissueAssets);
         assert(fCheckResult && fCheckAssets);
     } else
         assert(fCheckResult);
-    /** RVN END */
+    /** XCOIN END */
     UpdateCoins(tx, mempoolDuplicate, 1000000);
 }
 

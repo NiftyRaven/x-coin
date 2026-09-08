@@ -27,7 +27,8 @@ BOOST_FIXTURE_TEST_SUITE(asset_tests, BasicTestingSetup)
         BOOST_CHECK(IsAssetNameValid("MIN", type));
         BOOST_CHECK(type == AssetType::ROOT);
         BOOST_CHECK(IsAssetNameValid("MAX_ASSET_IS_30_CHARACTERS_LNG", type));
-        BOOST_CHECK(!IsAssetNameValid("MAX_ASSET_IS_31_CHARACTERS_LONG", type));
+        BOOST_CHECK(IsAssetNameValid("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456", type)); // 32
+        BOOST_CHECK(!IsAssetNameValid("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567", type)); // 33
         BOOST_CHECK(type == AssetType::INVALID);
         BOOST_CHECK(IsAssetNameValid("A_BCDEFGHIJKLMNOPQRSTUVWXY.Z", type));
         BOOST_CHECK(IsAssetNameValid("0_12345678.9", type));
@@ -68,6 +69,8 @@ BOOST_FIXTURE_TEST_SUITE(asset_tests, BasicTestingSetup)
         BOOST_CHECK(IsAssetNameValid("ABC/A/1", type));
         BOOST_CHECK(IsAssetNameValid("ABC/A_1/1.A", type));
         BOOST_CHECK(IsAssetNameValid("ABC/AB/XYZ/STILL/MAX/30/123456", type));
+        BOOST_CHECK(IsAssetNameValid("ABC/AB/XYZ/STILL/MAX/32/12345678", type)); // 32
+        BOOST_CHECK(!IsAssetNameValid("ABC/AB/XYZ/STILL/MAX/32/OVERALL/1", type));
 
         BOOST_CHECK(!IsAssetNameValid("ABC//MIN_1", type));
         BOOST_CHECK(!IsAssetNameValid("ABC/", type));
@@ -127,7 +130,8 @@ BOOST_FIXTURE_TEST_SUITE(asset_tests, BasicTestingSetup)
         BOOST_CHECK(!IsAssetNameAnOwner("ABC"));
         BOOST_CHECK(!IsAssetNameAnOwner("ABC!COIN"));
         BOOST_CHECK(IsAssetNameAnOwner("MAX_ASSET_IS_30_CHARACTERS_LNG!"));
-        BOOST_CHECK(!IsAssetNameAnOwner("MAX_ASSET_IS_31_CHARACTERS_LONG!"));
+        BOOST_CHECK(IsAssetNameAnOwner("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456!")); // 32 + !
+        BOOST_CHECK(!IsAssetNameAnOwner("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567!"));
         BOOST_CHECK(IsAssetNameAnOwner("ABC/A!"));
         BOOST_CHECK(IsAssetNameAnOwner("ABC/A/1!"));
         BOOST_CHECK(IsAssetNameValid("ABC!", type));
@@ -182,7 +186,7 @@ BOOST_FIXTURE_TEST_SUITE(asset_tests, BasicTestingSetup)
         BOOST_CHECK(IsAssetNameValid("#ABC.TEST"));
         BOOST_CHECK(IsAssetNameValid("#ABC_IS_31_CHARACTERS_LENGTH_31", type));
         BOOST_CHECK(type == AssetType::QUALIFIER);
-        BOOST_CHECK(!IsAssetNameValid("#ABC_IS_32_CHARACTERS_LEN_GTH_32"));
+        BOOST_CHECK(!IsAssetNameValid("#ABC_IS_34_CHARACTERS_LEN_GTH_XXXX"));
         BOOST_CHECK(!IsAssetNameValid("#ABC^"));
         BOOST_CHECK(!IsAssetNameValid("#ABC_.A"));
         BOOST_CHECK(!IsAssetNameValid("#A"));

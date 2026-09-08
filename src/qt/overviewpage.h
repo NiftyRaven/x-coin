@@ -11,6 +11,7 @@
 #include <QSortFilterProxyModel>
 #include <QWidget>
 #include <QMenu>
+#include <QLabel>
 #include <memory>
 
 class ClientModel;
@@ -82,6 +83,9 @@ private:
     QAction *reissue;
     QAction *openURL;
     QAction *copyHashAction;
+    QLabel *lotteryTitle;
+    QLabel *lotteryStatus;
+    QLabel *lotteryDetail;
 
 
 private Q_SLOTS:
@@ -92,6 +96,7 @@ private Q_SLOTS:
     void updateWatchOnlyLabels(bool showWatchOnly);
     void handleOutOfSyncWarningClicks();
     void assetSearchChanged();
+    void updateLottery();
 };
 
 #endif // RAVEN_QT_OVERVIEWPAGE_H

@@ -18,6 +18,7 @@
 #include "assettablemodel.h"
 #include "walletmodel.h"
 #include "assetrecord.h"
+#include "lottery.h"
 
 #include <QAbstractItemDelegate>
 #include <QDateTime>
@@ -36,6 +37,9 @@
 #include <QGraphicsDropShadowEffect>
 #include <QScrollBar>
 #include <QUrl>
+#include <QFrame>
+#include <QVBoxLayout>
+#include <QLabel>
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 11, 0)
 #define QTversionPreFiveEleven
@@ -224,9 +228,13 @@ public:
         QPainterPath path;
         path.addRoundedRect(gradientRect, 4, 4);
 
-        // Paint the gradient
+        // Paint the card (white hairline so names read on the black X theme)
         painter->setRenderHint(QPainter::Antialiasing);
         painter->fillPath(path, gradient);
+        QPen cardPen(COLOR_WHITE);
+        cardPen.setWidth(1);
+        painter->setPen(cardPen);
+        painter->drawPath(path);
 
         /** Draw asset administrator icon */
         if (nIconSize)
@@ -324,6 +332,28 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     ui->labelTransactionsStatus->setIcon(icon);
     ui->labelWalletStatus->setIcon(icon);
     ui->labelAssetStatus->setIcon(icon);
+
+    // Lottery status card (X theme)
+    QFrame *lotteryFrame = new QFrame(this);
+    lotteryFrame->setObjectName("lotteryFrame");
+    lotteryFrame->setStyleSheet(QString(".QFrame {background-color: %1; padding: 12px;}").arg(platformStyle->WidgetBackGroundColor().name()));
+    lotteryFrame->setGraphicsEffect(GUIUtil::getShadowEffect());
+    QVBoxLayout *lotteryLay = new QVBoxLayout(lotteryFrame);
+    lotteryLay->setContentsMargins(8, 8, 8, 8);
+    lotteryLay->setSpacing(6);
+    lotteryTitle = new QLabel(tr("Lottery"), lotteryFrame);
+    lotteryTitle->setStyleSheet(STRING_LABEL_COLOR);
+    lotteryTitle->setFont(GUIUtil::getTopLabelFont());
+    lotteryStatus = new QLabel(tr("Waiting for node…"), lotteryFrame);
+    lotteryStatus->setFont(GUIUtil::getSubLabelFontBolded());
+    lotteryStatus->setWordWrap(true);
+    lotteryDetail = new QLabel(QStringLiteral("—"), lotteryFrame);
+    lotteryDetail->setFont(GUIUtil::getSubLabelFont());
+    lotteryDetail->setWordWrap(true);
+    lotteryLay->addWidget(lotteryTitle);
+    lotteryLay->addWidget(lotteryStatus);
+    lotteryLay->addWidget(lotteryDetail);
+    ui->verticalLayout_2->insertWidget(1, lotteryFrame);
 
     // Recent transactions
     ui->listTransactions->setItemDelegate(txdelegate);
@@ -603,6 +633,8 @@ void OverviewPage::setClientModel(ClientModel *model)
         // Show warning if this is a prerelease version
         connect(model, SIGNAL(alertsChanged(QString)), this, SLOT(updateAlerts(QString)));
         updateAlerts(model->getStatusBarWarnings());
+        connect(model, SIGNAL(lotteryChanged()), this, SLOT(updateLottery()));
+        updateLottery();
     }
 }
 
@@ -625,7 +657,9 @@ void OverviewPage::setWalletModel(WalletModel *model)
 
         assetFilter.reset(new AssetFilterProxy());
         assetFilter->setSourceModel(model->getAssetTableModel());
-        assetFilter->sort(AssetTableModel::AssetNameRole, Qt::DescendingOrder);
+        assetFilter->setDynamicSortFilter(true);
+        assetFilter->setSortRole(AssetTableModel::AssetNameRole);
+        assetFilter->sort(AssetTableModel::Name, Qt::AscendingOrder);
         ui->listAssets->setModel(assetFilter.get());
         ui->listAssets->setAutoFillBackground(false);
 
@@ -697,6 +731,29 @@ void OverviewPage::showAssets()
         ui->assetVerticalSpaceWidget->show();
         ui->assetVerticalSpaceWidget2->show();
     }
+}
+
+void OverviewPage::updateLottery()
+{
+    if (!clientModel) {
+        lotteryStatus->setText(tr("Node not ready"));
+        lotteryDetail->setText(QString());
+        return;
+    }
+    ClientModel::LotteryGuiInfo info = clientModel->getLotteryGuiInfo();
+    QString handle = info.handle.isEmpty() ? tr("(no handle)") : info.handle;
+    if (info.eligible) {
+        lotteryStatus->setText(tr("Eligible · %1").arg(handle));
+    } else {
+        lotteryStatus->setText(tr("Not eligible · %1").arg(handle));
+    }
+    QString win = info.isWinner ? tr("this slot: winner") : tr("this slot: watching");
+    lotteryDetail->setText(tr("Height %1 · slot %2 · %3 active · %4 winner(s) · %5")
+                               .arg(info.height)
+                               .arg(info.slot)
+                               .arg(info.activeNodes)
+                               .arg(info.winnerCount)
+                               .arg(win));
 }
 
 void OverviewPage::assetSearchChanged()

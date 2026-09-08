@@ -198,7 +198,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
         if (!MoneyRange(nValueOut))
             return state.DoS(100, false, REJECT_INVALID, "bad-txns-txouttotal-toolarge");
 
-        /** RVN START */
+        /** XCOIN START */
         // Find and handle all new OP_RVN_ASSET null data transactions
         if (txout.scriptPubKey.IsNullAsset()) {
             CNullAssetTxData data;
@@ -253,9 +253,9 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
                 fContainsNullAssetVerifierTx = true;
             }
         }
-        /** RVN END */
+        /** XCOIN END */
 
-        /** RVN START */
+        /** XCOIN START */
         bool isAsset = false;
         int nType;
         bool fIsOwner;
@@ -365,7 +365,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
         }
     }
 
-    /** RVN END */
+    /** XCOIN END */
 
     if (fCheckDuplicateInputs) {
         std::set<COutPoint> vInOutPoints;
@@ -397,7 +397,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
                 return state.DoS(10, false, REJECT_INVALID, "bad-txns-prevout-null");
     }
 
-    /** RVN START */
+    /** XCOIN START */
     if (tx.IsNewAsset()) {
         /** Verify the reissue assets data */
         std::string strError = "";
@@ -556,7 +556,7 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
     }
 
     // we allow restricted asset reissuance without having a verifier string transaction, we don't force it to be update
-    /** RVN END */
+    /** XCOIN END */
 
     return true;
 }

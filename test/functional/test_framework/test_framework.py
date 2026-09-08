@@ -72,7 +72,7 @@ class RavenTestFramework:
         parser.add_option("--noshutdown", dest="noshutdown", default=False, action="store_true", help="Don't stop ravends after the test execution")
         parser.add_option("--pdbonfailure", dest="pdbonfailure", default=False, action="store_true", help="Attach a python debugger if test fails")
         parser.add_option("--portseed", dest="port_seed", default=os.getpid(), type='int', help="The seed to use for assigning port numbers (default: current process id)")
-        parser.add_option("--srcdir", dest="srcdir", default=os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + "/../../../src"), help="Source directory containing ravend/raven-cli (default: %default)")
+        parser.add_option("--srcdir", dest="srcdir", default=os.path.normpath(os.path.dirname(os.path.realpath(__file__)) + "/../../../src"), help="Source directory containing xcoind/xcoin-cli (default: %default)")
         parser.add_option("--tmpdir", dest="tmpdir", help="Root directory for datadirs")
         parser.add_option("--tracerpc", dest="trace_rpc", default=False, action="store_true", help="Print out all RPC calls as they are made")
 
@@ -135,7 +135,7 @@ class RavenTestFramework:
         else:
             for node in self.nodes:
                 node.cleanup_on_exit = False
-            self.log.info("Note: ravend's were not stopped and may still be running")
+            self.log.info("Note: xcoind's were not stopped and may still be running")
 
         if not self.options.nocleanup and not self.options.noshutdown and success != TestStatus.FAILED:
             self.log.info("Cleaning up")
@@ -213,7 +213,7 @@ class RavenTestFramework:
                          stderr=None, mocktime=self.mocktime, coverage_dir=self.options.coveragedir))
 
     def start_node(self, i, extra_args=None, stderr=None):
-        """Start a ravend"""
+        """Start a xcoind"""
 
         node = self.nodes[i]
 
@@ -244,12 +244,12 @@ class RavenTestFramework:
                 coverage.write_all_rpc_commands(self.options.coveragedir, node.rpc)
 
     def stop_node(self, i):
-        """Stop a ravend test node"""
+        """Stop a xcoind test node"""
         self.nodes[i].stop_node()
         self.nodes[i].wait_until_stopped()
 
     def stop_nodes(self):
-        """Stop multiple ravend test nodes"""
+        """Stop multiple xcoind test nodes"""
         for node in self.nodes:
             # Issue RPC to stop nodes
             node.stop_node()
@@ -269,7 +269,7 @@ class RavenTestFramework:
                 self.start_node(i, extra_args, stderr=log_stderr)
                 self.stop_node(i)
             except Exception as e:
-                assert 'ravend exited' in str(e)  # node must have shutdown
+                assert 'xcoind exited' in str(e)  # node must have shutdown
                 self.nodes[i].running = False
                 self.nodes[i].process = None
                 if expected_msg is not None:
@@ -279,9 +279,9 @@ class RavenTestFramework:
                         raise AssertionError("Expected error \"" + expected_msg + "\" not found in:\n" + stderr)
             else:
                 if expected_msg is None:
-                    assert_msg = "ravend should have exited with an error"
+                    assert_msg = "xcoind should have exited with an error"
                 else:
-                    assert_msg = "ravend should have exited with expected error " + expected_msg
+                    assert_msg = "xcoind should have exited with expected error " + expected_msg
                 raise AssertionError(assert_msg)
 
     def wait_for_node_exit(self, i, timeout):
@@ -344,7 +344,7 @@ class RavenTestFramework:
         # User can provide log level as a number or string (eg DEBUG). loglevel was caught as a string, so try to convert it to an int
         ll = int(self.options.loglevel) if self.options.loglevel.isdigit() else self.options.loglevel.upper()
         ch.setLevel(ll)
-        # Format logs the same as ravend's debug.log with microprecision (so log files can be concatenated and sorted)
+        # Format logs the same as xcoind's debug.log with microprecision (so log files can be concatenated and sorted)
         formatter = logging.Formatter(fmt='%(asctime)s.%(msecs)03d000 %(name)s (%(levelname)s): %(message)s',
                                       datefmt='%Y-%m-%d %H:%M:%S')
         formatter.converter = time.gmtime
@@ -385,7 +385,7 @@ class RavenTestFramework:
             # Create cache directories, run ravends:
             for i in range(MAX_NODES):
                 datadir = initialize_data_dir(self.options.cachedir, i)
-                args = [os.getenv("RAVEND", "ravend"), "-server", "-keypool=1", "-datadir=" + datadir, "-discover=0"]
+                args = [os.getenv("XCOIND", "xcoind"), "-server", "-keypool=1", "-datadir=" + datadir, "-discover=0"]
                 if i > 0:
                     args.append("-connect=127.0.0.1:" + str(p2p_port(0)))
                 self.nodes.append(
@@ -430,7 +430,7 @@ class RavenTestFramework:
             from_dir = os.path.join(self.options.cachedir, "node" + str(i))
             to_dir = os.path.join(self.options.tmpdir, "node" + str(i))
             shutil.copytree(from_dir, to_dir)
-            initialize_data_dir(self.options.tmpdir, i)  # Overwrite port/rpcport in raven.conf
+            initialize_data_dir(self.options.tmpdir, i)  # Overwrite port/rpcport in xcoin.conf
 
     def _initialize_chain_clean(self):
         """Initialize empty blockchain for use by the test.
