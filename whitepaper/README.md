@@ -16,15 +16,19 @@ X Coin is a peer-to-peer coin for **transfers between users on X**.
 | Name | X Coin |
 | Ticker | **XFER** |
 | Subunit | **xferon** (1 XFER = 100,000,000 xferons) |
-| Mining | **None.** Minute lottery among verified active nodes |
+| Mining | **None.** Minute lottery among **X Verified** (blue check) active nodes |
 | Halvings | Each halving adds one more winner that minute (1 → 2 → 3 …) |
+| Pools | Optional. Tickets = verified running members. Win split evenly among every member address |
 | Launch | Fair. No premine, no founder allocation |
+| Genesis | Frozen `nTime` 1788825600 (2026-09-08 00:00:00 UTC). Height 1 when first eligible node produces |
 | Supply | About **21 billion** XFER spendable |
-| Identity | One **free root** asset per verified X handle |
+| Identity | Sign in with X. One **free root** per signed-in handle (no login → no main). GUI shows @handle only |
 | Subs / uniques | **100 XFER** / **5 XFER** under that root |
 | P2P / RPC | 38443 / 38442 (magic `XFER`) |
 
 There is no older paper here. [XCOIN.md](XCOIN.md) is the release paper:
-purpose, lottery, supply, verified-X eligibility, assets, and network
-identity. How to run the core wallet is in the repository
-[README](../README.md). Private-test audit: [docs/AUDIT.md](../docs/AUDIT.md).
+purpose, lottery, optional pools, supply, X Verified eligibility, assets,
+privacy, and network identity. How to run the core wallet is in the
+repository [README](../README.md). Current private package: 1.1.0
+([docs/RELEASE-1.1.md](../docs/RELEASE-1.1.md)). Private-test audit:
+[docs/AUDIT.md](../docs/AUDIT.md).

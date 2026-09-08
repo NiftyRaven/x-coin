@@ -33,11 +33,14 @@ Proof: `contrib/xcoin/smoke-benchmark.sh` (A sends to B; B
 **No. A lone node already has a ledger. A network of other people
 requires two or more peers.**
 
-- One `xcoind` / `xcoin-qt` writes genesis to its datadir and can
-  extend the chain. Regtest: `generatetoaddress` (on-demand). Main /
-  test: the lottery producer emits a block when this node is eligible
-  and is a winner (`fMiningRequiresPeers = false`). Height 0 is stored
-  even if nobody else is online.
+- One `xcoind` / `xcoin-qt` writes the **frozen** genesis to its datadir
+  and can extend the chain. Genesis `nTime` is already `1788825600`
+  (2026-09-08 00:00:00 UTC) in the binary — first connect does not
+  rewrite it. Height 1 is the first payday (first eligible producer).
+  Regtest: `generatetoaddress` (on-demand). Main / test: the lottery
+  producer emits a block when this node is eligible and is a winner
+  (`fMiningRequiresPeers = false`). Height 0 is stored even if nobody
+  else is online.
 - Other people seeing **the same** chain requires P2P: `addnode` /
   `seednode`, port **38443**, magic `XFER`. That is a mesh, not a
   condition for the ledger to exist.
@@ -78,11 +81,13 @@ different address prefixes (`X` / `y` vs `R` / `n`).
   `nSubsidyHalvingInterval` (2,100,000 main/test, 150 regtest).
   Spendable lifetime **20,999,994,999.727 XFER**.
 - **Lottery:** `src/lottery.{h,cpp}`. Coinbase must pay winners and
-  commit `XHB1`. Empty committed set is invalid.
+  commit `XHB1`. Optional pools: `src/pool.{h,cpp}`, P2P `xpl`, coinbase
+  `XPL1` even-split. Empty committed set is invalid.
 - **No PoW miner:** `CheckProofOfWork` always returns true. `-gen` /
   `setgenerate` removed. `generatetoaddress` is **regtest-only**.
-- **Assets:** protocol `XID1` root on verified X-link; user `issue` of
-  a new root is invalid; restricted assets stay off.
+- **Assets:** protocol `XID1` root on **signed-in** X-link (`linkxaccount`);
+  no session → no main asset. User `issue` of a new root is invalid.
+  Subs/uniques only under that account’s `NAME!`. Restricted assets stay off.
 - **Sign in with X:** send / receive / own require a session.
   Lottery requires X Verified (blue check) plus a running wallet.
   Unverified = zero chance. Invite list cannot exclude a verified wallet.
@@ -95,9 +100,10 @@ different address prefixes (`X` / `y` vs `R` / `n`).
 - Join path: `addnode=` / `seednode=` on **38443** (operator config).
   Home may optionally show *your* listen address (**Provide my node IP**,
   off by default). It never lists other people's IPs.
-- Heartbeats: signed `xhb` after `verack`. Unsigned, unverified,
-  or sticky-violating heartbeats are ignored (or banned, if the compact
-  sig is missing / forged). See [SECURITY.md](SECURITY.md).
+- Heartbeats: signed `xhb` after `verack` (handle + user id **0**).
+  Unsigned, unverified, or sticky-violating heartbeats are ignored (or
+  banned, if the compact sig is missing / forged). Pool adverts: signed
+  `xpl`; password never on the wire. See [SECURITY.md](SECURITY.md).
 
 ## Wallet / privacy
 
@@ -112,16 +118,23 @@ different address prefixes (`X` / `y` vs `R` / `n`).
 
 ## Verdict
 
-**Ready for a private full test** among operators who already share an
-allowlist and a **known** seed IP. Not ready for a public launch. Not
-hacker-proof. Threat model: [SECURITY.md](SECURITY.md).
+**Ready for a private full test** among operators who share a **known**
+seed IP. An invite / payout-pin file is optional (not a lottery gate).
+Not ready for a public launch. Not hacker-proof. Threat model:
+[SECURITY.md](SECURITY.md).
+
+Third parties can stand up a **block explorer** or **asset explorer**
+against `-txindex=1` `xcoind` (`getblock`, `getrawtransaction`,
+`listassets`, `getassetdata`). A third-party **wallet** can use the same
+send/issue RPC; it still cannot mint a main asset without Sign in with X
+on that node. No in-tree explorer URL until the owner publishes one.
 
 Hardened (was a real gap; now closed for the cheap cases):
 
 - Gossip `xhb` must be signed by the payout key; a live handle cannot be
   rebound to an attacker script.
-- Allowlist match is the handle. A listed userid alone cannot authorize
-  a different handle.
+- Invite-list match is the handle (optional pins). A listed userid alone
+  cannot authorize a different handle.
 - `sendrawtransaction` requires the same session as `sendtoaddress`.
 
 Accepted residual (not blockers for a private test):
@@ -131,6 +144,7 @@ Accepted residual (not blockers for a private test):
 - First-seen handle grab after restart unless the payout is pinned.
 - Producer commits the active set; validation checks the coinbase against
   that commitment, not an oracle of “who is really online.”
+- A cheating producer can omit `XPL1` and skip a pool split.
 - No public explorer, no public seeds, no exchange, no mobile.
 - Upstream `make check` still hard-codes imported genesis hashes.
 
@@ -144,5 +158,6 @@ contrib/xcoin/smoke-gossip.sh
 contrib/xcoin/smoke-gui.sh          # sets XDG_RUNTIME_DIR; do not pkill -f xcoin-qt
 contrib/xcoin/smoke-benchmark.sh    # lone ledger + 3-node visible send
 contrib/xcoin/smoke-isolation.sh    # two wallets: Bob cannot spend Alice
-contrib/xcoin/smoke-sabotage.sh     # unsigned sendraw / handle steal rejected
+contrib/xcoin/smoke-sabotage.sh      # unsigned sendraw / handle steal rejected
+contrib/xcoin/smoke-pool.sh          # even split; unverified has 0 tickets
 ```

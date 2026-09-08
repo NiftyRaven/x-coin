@@ -13,6 +13,10 @@
 * mempool.dat: dump of the mempool's transactions; since 0.14.0.
 * peers.dat: peer IP address database (custom format); since 0.7.0
 * wallet.dat: personal wallet (BDB) with keys and transactions
+* xsession.json / xsession.key: Sign in with X HMAC proof (mode 0600). Tokens are never stored.
+* lottery-payout.dat / lottery-payout.key: local lottery payout script
+* pools.json: public pool adverts (name + members). pools.secret.json: join passwords (mode 0600)
+* verified-x-accounts.txt: optional operator invite / payout-pin list (not X Verified)
 * .cookie: session RPC authentication cookie (written at start when cookie authentication is used, deleted on shutdown): since 0.12.0
 * onion_private_key: cached Tor hidden service private key for `-listenonion`: since 0.12.0
 * guisettings.ini.bak: backup of former GUI settings after `-resetguisettings` is used

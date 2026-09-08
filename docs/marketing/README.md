@@ -1,3 +1,4 @@
 Brand files live in [`assets/brand/`](../../assets/brand/).
 
-Credit: **Nifty Raven (@NFTRVN)** only.
+Private test **1.1**. Credit: **Nifty Raven (@NFTRVN)** only.
+X theme: black / white / sharp X. Do not publish this chain.

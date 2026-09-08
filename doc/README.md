@@ -7,7 +7,7 @@ X Coin is the node and wallet for this private network. It downloads and, by
 default, stores the entire history of X Coin transactions.
 
 This tree is built from source. See the root [README.md](../README.md) for
-the `--without-gui` path (`xcoind` / `xcoin-cli`). Legal / opcode notes:
+the GUI path (`--with-gui=qt5`, `xcoin-qt` / `xcoind` / `xcoin-cli`). Legal / opcode notes:
 [docs/FORK.md](../docs/FORK.md).
 
 Running
@@ -16,26 +16,29 @@ The following are some helpful notes on how to run X Coin on your native platfor
 
 ### Linux
 
-1) Build with `./autogen.sh && ./configure --without-gui --disable-bench --disable-tests --with-incompatible-bdb && make -j$(nproc)`.
+1) Build with `./autogen.sh && ./configure --with-gui=qt5 --disable-bench --disable-tests --with-incompatible-bdb && make -j$(nproc)`.
 
-2) Run the daemon:
-
-   `./src/xcoind -daemon`
-
-   Optional GUI (configure without `--without-gui`):
+2) Run the GUI (release 1.1) or the daemon:
 
    `./src/qt/xcoin-qt`
+
+   `./src/xcoind -daemon`
 
 #### Ubuntu
 
 ```
 sudo apt update
 sudo apt install build-essential libtool autotools-dev automake pkg-config \
-    bsdmainutils python3 libevent-dev libboost-all-dev libssl-dev libdb++-dev
+    bsdmainutils python3 libevent-dev libboost-all-dev libssl-dev libdb++-dev \
+    qtbase5-dev qttools5-dev qttools5-dev-tools libqt5svg5-dev \
+    libqrencode-dev protobuf-compiler libprotobuf-dev
 ```
 
 BDB 5.3 is accepted with `--with-incompatible-bdb`. A wallet is required to
-produce lottery blocks.
+produce lottery blocks. Man pages under `doc/man/` and files under
+`doc/release-notes/` are imported stubs (old version strings and raven.org
+URLs); use `--help` / `--version` on the binaries and
+[docs/RELEASE-1.1.md](../docs/RELEASE-1.1.md).
 
 ### OS X
 

@@ -4,8 +4,9 @@ Wallet how-to: [README.md](../README.md). Paper: [whitepaper/XCOIN.md](../whitep
 DEX listing criteria (private; do not submit a listing): [DEX.md](DEX.md).
 
 This is the operator runbook for a **private launch**. There is no public
-seed DNS and no exchange listing. Lottery eligibility uses a **shared
-verified-X allowlist** (no live X API keys required).
+seed DNS and no exchange listing. Lottery eligibility uses **Sign in with X** plus **X Verified** (blue
+check from `users/me`). An optional shared invite / payout-pin file is
+not a lottery gate.
 
 ## Ledger, visibility, and how many nodes
 
@@ -73,6 +74,11 @@ headers — no leading-zero PoW grind):
 `nMinimumChainWork` and `defaultAssumeValid` are zero. Checkpoints are empty.
 No imported UTXO, assumevalid hash, or checkpoint is inherited.
 
+**Birth of the chain:** genesis is already in the binary. First start does
+**not** rewrite `nTime`. The first *spendable* block is height 1, produced
+when an X Verified eligible node is running and wins that minute. Connecting
+the first peer does not create genesis; it only shares the same frozen ledger.
+
 **Fair launch:** no IPO, no premine, no founder allocation. Height 0 is not a
 payday. The genesis coinbase (5000 XFER in the serialized tx) is **never
 added to the UTXO set** (`ConnectBlock` special-case, same as Bitcoin).
@@ -81,12 +87,13 @@ Subsidy starts at height 1 via the lottery. Spendable lifetime supply is
 integer right-shift; ~21 billion minus unpaid genesis and `>>=` dust).
 `MAX_MONEY` is 21,000,000,000 XFER (sanity cap, not the minted total).
 
-**Sign in with X is required to send and receive.** Authentication
-proves it is you and is the key to asset ownership. Lottery eligibility
-additionally requires **X Verified** (X’s blue check from `users/me`)
-and a running wallet. Unverified accounts have zero chance. The operator
-invite list cannot exclude a verified wallet. A node
-without a session can still sync and relay.
+**Sign in with X is required to send, receive, and create assets.**
+Authentication proves it is you. **No session → no main/root asset.**
+Subs and uniques are issued under that signed-in account’s root.
+Lottery eligibility additionally requires **X Verified** (X’s blue
+check from `users/me`) and a running wallet. Unverified accounts have
+zero chance. The operator invite list cannot exclude a verified wallet.
+A node without a session can still sync and relay.
 
 ## Publish a seed node
 
@@ -120,10 +127,11 @@ There are no DNS seeds in-tree. For a private mesh:
    `addnode`/`seednode` in the config file is the launch path. Hardening
    notes: [SECURITY.md](SECURITY.md).
 
-Peers gossip **signed** lottery heartbeats (`xhb`) after `verack`. Honest
-nodes that can connect to the seed (directly or via the mesh) share one
-active-node set. Unsigned, unverified, or sticky-violating heartbeats are
-ignored for that set.
+Peers gossip **signed** lottery heartbeats (`xhb`) after `verack` (handle
+only; user id **0** on the wire). Honest nodes that can connect to the seed
+(directly or via the mesh) share one active-node set. Unsigned, unverified,
+or sticky-violating heartbeats are ignored for that set. Signed pool
+adverts (`xpl`) gossip the same way; passwords never leave the node.
 
 ## X Verified fair lottery
 
@@ -173,6 +181,17 @@ src/xcoin-cli loadxverified
 
 ## Join steps (second machine)
 
+GUI (same as 1.1):
+
+```bash
+./autogen.sh
+./configure --with-gui=qt5 --disable-bench --disable-tests --with-incompatible-bdb
+make -j$(nproc)
+src/qt/xcoin-qt -addnode=<seed-ip>:38443
+```
+
+Sign in with X, optionally create or join a pool on Home. CLI-only:
+
 ```bash
 ./autogen.sh
 ./configure --without-gui --disable-bench --disable-tests --with-incompatible-bdb
@@ -203,13 +222,17 @@ See [LOTTERY.md](LOTTERY.md). Short form:
 - `winnerCount = 1 + floor(height / nSubsidyHalvingInterval)` (main interval
   2,100,000; regtest 150).
 - Subsidy 5000 XFER, split as evenly as possible; fees to the first winner.
+  Optional pool: that winner’s share is split evenly across every member
+  address (verified or not). Tickets stay one per X Verified running member.
 - Coinbase must contain an `OP_RETURN` `XHB1` commitment of the sorted active
-  ids and must pay each winner’s script. Mismatches are invalid.
+  ids and must pay each winner’s script (or the `XPL1` even split if pooled).
+  Mismatches are invalid.
 
 Assets: see [ASSETS.md](ASSETS.md). Main/root identity assets are **free**
-(protocol assignment on verified X-link). Users cannot `issue` a new root.
-Sub-asset burn **100 XFER**, unique **5 XFER**. Restricted/qualifier assets
-are removed.
+(protocol assignment on a **signed-in** X-link). No session → no main
+asset. Users cannot `issue` a new root. Subs/uniques are issued under
+that account’s root. Sub-asset burn **100 XFER**, unique **5 XFER**.
+Restricted/qualifier assets are removed.
 
 | Action | Burn | Main address |
 | --- | --- | --- |
@@ -241,7 +264,7 @@ Coinbase is immature for 100 blocks — generate ~110 on regtest before
 - `src/xcoind` — node / lottery producer
 - `src/xcoin-cli` — RPC
 - `src/xcoin-tx` — transaction utility
-- `src/qt/xcoin-qt` — GUI (optional; configure without `--without-gui`)
+- `src/qt/xcoin-qt` — GUI (release 1.1; configure `--with-gui=qt5`)
 
 ## Known risks (accepted for a private launch)
 
@@ -285,6 +308,7 @@ contrib/xcoin/smoke-eligibility.sh
 contrib/xcoin/smoke-xsession.sh
 contrib/xcoin/smoke-gui.sh
 contrib/xcoin/smoke-sabotage.sh
+contrib/xcoin/smoke-pool.sh
 ```
 
 Unlinked node is not eligible; signed-in but not X Verified can send and

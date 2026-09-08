@@ -1,9 +1,17 @@
+Imported upstream stub. **Not** the current X Coin 1.1 notes.
+
+Current private package: [docs/RELEASE-1.1.md](../docs/RELEASE-1.1.md).
+There is no public download URL and no GitHub Release. Do not publish
+this repository.
+
+---
+
 (note: this is a temporary file, to be added-to by anybody, and moved to
 release-notes at release time)
 
 X Coin version *version* is now available from:
 
-  <https://raven.org/bin/raven-core-*version*/>
+  (private pack only — see docs/RELEASE-1.1.md)
 
 This is a new major version release, including new features, various bugfixes
 and performance improvements, as well as updated translations.

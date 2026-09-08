@@ -2,7 +2,7 @@
 
 **Nifty Raven** (@NFTRVN on X) only. No legal name.
 
-X theme: black, white, sharp X mark. Private test 1.0.
+X theme: black, white, sharp X mark. Private test 1.1.
 
 | File | Use |
 | --- | --- |

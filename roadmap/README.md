@@ -1,8 +1,23 @@
-# X Coin Roadmap
+# X Coin Roadmap (imported — not current product copy)
+
+This folder is an **imported upstream idea list**. It is **not** the
+X Coin (XFER) specification.
+
+Current product: [whitepaper/XCOIN.md](../whitepaper/XCOIN.md),
+[docs/LOTTERY.md](../docs/LOTTERY.md), [docs/ASSETS.md](../docs/ASSETS.md),
+[docs/LAUNCH.md](../docs/LAUNCH.md). X Coin has **no mining**; block
+production is a minute lottery among X Verified nodes. Restricted assets
+are removed. Do not treat the text below as ports, supply, or PoW.
+
+---
+
+# Historical imported roadmap (do not follow)
 
 ### Phase 1 - (Complete)
 
-X Coin (RVN) is a Proof of Work coin built on the Bitcoin UTXO model. As with other Bitcoin derivatives, RVN coins are distributed to persons augmenting the Raven network by mining Raven.
+The imported tree was a Proof of Work coin. **X Coin replaced mining
+with a lottery.** The numbers below (R… addresses, ports 8767/8766) are
+the imported network, not XFER.
 *  x1000 coin distribution (21 Billion Total)
 *  10x faster blocks (1 per minute)
 *  In app CPU verification, with GPU specific PoW decentralised mining

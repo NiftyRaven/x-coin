@@ -782,7 +782,7 @@ void CreateAssetDialog::onCreateAssetClicked()
         return;
     }
     if (type == IntFromAssetType(AssetType::ROOT)) {
-        showMessage(tr("Users cannot create main assets. Link a verified X account (linkxaccount) to be assigned one free identity root."));
+        showMessage(tr("Users cannot create main assets. Sign in with X, then claim your root. Subs and uniques are issued under that root."));
         return;
     }
     if (type == IntFromAssetType(AssetType::RESTRICTED) || type == IntFromAssetType(AssetType::QUALIFIER) || type == IntFromAssetType(AssetType::SUB_QUALIFIER)) {

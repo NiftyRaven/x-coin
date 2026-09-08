@@ -1,16 +1,16 @@
 # Community notes (historical)
 
-This folder is an imported idea list, not current X Coin product copy.
-Operator docs: `docs/LAUNCH.md`, `docs/LOTTERY.md`, `docs/ASSETS.md`.
-Legal / opcode notes: `docs/FORK.md`.
+This folder is an imported idea list, **not** current X Coin product copy.
+Operator docs: `docs/LAUNCH.md`, `docs/LOTTERY.md`, `docs/ASSETS.md`,
+`whitepaper/XCOIN.md`. Legal / opcode notes: `docs/FORK.md`.
 
-# Community notes (historical)
+The imported notes below mention mining, restricted assets, tags, and
+public websites. X Coin has no mining, restricted assets are removed,
+and this repository stays private.
 
-This folder is an imported idea list, not current X Coin product copy.
-Operator docs: `docs/LAUNCH.md`, `docs/LOTTERY.md`, `docs/ASSETS.md`.
-Legal / opcode notes: `docs/FORK.md`.
+---
 
-# X Coin - Community Ideas
+# Historical imported ideas (do not follow)
 
 “Every new mechanism frees the human mind for more creative adventures and accomplishments” - Life After Google by George Gilder  
 

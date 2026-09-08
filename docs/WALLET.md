@@ -27,7 +27,9 @@ the 12 words are generated or that you still need them.
    the keys.
 2. **Sign in with X** — OAuth 2.0 PKCE → `GET /2/users/me` → HMAC proof
    in this datadir (`xsession.json` + `xsession.key`). Send, receive,
-   and own require that proof. A typed handle cannot steal it.
+   claim a root, and issue require that proof. A typed handle cannot
+   steal it. No session → no main asset. Subs/uniques are issued under
+   that signed-in account’s `NAME!`.
 
 Authentication is the key to **asset ownership on this node** — it
 proves it is you. It is not a claim that the keys are “encrypted to X”.
@@ -46,3 +48,7 @@ Every signed-in user can send and receive.
 
 See [XSIGNIN.md](XSIGNIN.md) for the OAuth loopback. Home / Receive /
 Send show the linked `@handle` when the proof is present. The GUI does not show X user ids or session file paths.
+
+Optional lottery pools store the join password in `pools.secret.json`
+(mode `0600`) on this datadir only. That file is not the seed and is
+not gossiped. [LOTTERY.md](LOTTERY.md).

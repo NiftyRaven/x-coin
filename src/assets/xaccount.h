@@ -18,9 +18,9 @@ class CTransaction;
 class CAssetsCache;
 
 /**
- * Each verified X account is one main/root asset ("tokenize yourself").
+ * Each signed-in X account is one main/root asset ("tokenize yourself").
  * Users cannot issue new roots. Only AssignLinkedUserMainAsset may create
- * a root, and that issue burns 0 XFER.
+ * a root (requires Sign in with X), and that issue burns 0 XFER.
  *
  * Circulating supply: 1 whole unit of NAME (units=0) plus owner token NAME!.
  */

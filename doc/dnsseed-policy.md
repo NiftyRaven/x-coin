@@ -1,10 +1,17 @@
 Expectations for DNS Seed operators
 ====================================
 
+**X Coin currently ships with no public DNS seeds** (`vSeeds.clear()`).
+This imported policy is historical. Private mesh join path is
+`addnode=` / `seednode=` on port **38443**. Do not add public seeds
+while the repository is private. See [docs/LAUNCH.md](../docs/LAUNCH.md).
+
+---
+
 X Coin attempts to minimize the level of trust in DNS seeds,
 but DNS seeds still pose a small amount of risk for the network.
 As such, DNS seeds must be run by entities which have some minimum
-level of trust within the Raven community.
+level of trust within the operator set.
 
 Other implementations of Raven software may also use the same
 seeds and may be more exposed. In light of this exposure, this

@@ -42,8 +42,8 @@ contract + custodian/bridge decision. Do not invent one for listing.
 | `getblock` | **Met** | By hash; verbosity 0/1/2. |
 | `getrawtransaction` | **Met** | Mempool + wallet txs always. **Observer / listing nodes: `-txindex=1`.** Documented in RPC help. |
 | Whitepaper | **Met** | [whitepaper/XCOIN.md](../whitepaper/XCOIN.md) |
-| How-to | **Met** | [README.md](../README.md), [RELEASE-1.0.md](RELEASE-1.0.md) |
-| Explorer | **Missing** (listing dependency) | No in-tree explorer. `DEFAULT_THIRD_PARTY_BROWSERS` is empty. Do not invent a public URL. A DEX may require one later. |
+| How-to | **Met** | [README.md](../README.md), [RELEASE-1.1.md](RELEASE-1.1.md) |
+| Explorer | **Missing** (listing dependency) | No in-tree explorer. `DEFAULT_THIRD_PARTY_BROWSERS` is empty. Do not invent a public URL. A Bitcoin-family explorer pointed at `-txindex=1` `xcoind` can index blocks and assets (`listassets` / `getassetdata`) when the owner stands one up. |
 | P2P port + how a seed operator publishes `addnode` | **Met** (operator docs) | Port **38443**. Join: `addnode=<trusted-peer-ip>:38443` in `xcoin.conf`. Optional Home control to share *your* listen address (off by default). Never a list of other people's IPs. [LAUNCH.md](LAUNCH.md). |
 | Public DNS seeds | **Missing** (listing dependency) | `vSeeds.clear()`. Correct while private. |
 | No premine / fair launch | **Met** | No IPO, no founder allocation. Genesis coinbase never enters the UTXO set. Subsidy starts at height 1. |
@@ -87,6 +87,11 @@ Send/receive for a **deposit wallet** still require Sign in with X on
 that node (identity gate). The venue's hot wallet is its own
 `wallet.dat` + its own session. Another user's session cannot spend it.
 
+A third-party **asset wallet** uses the same RPCs (`issue`, `issueunique`,
+`transfer`, `listmyassets`). It **cannot** mint a main/root: that exists
+only via `linkxaccount` after Sign in with X. Subs/uniques are issued
+under that session’s `NAME!`.
+
 ## Wrap path (out of scope)
 
 If a venue only lists ERC-20s, that is a different product: a wrap
@@ -98,4 +103,4 @@ as the X Coin listing path.
 
 - Private-test audit: [AUDIT.md](AUDIT.md)
 - Operator runbook: [LAUNCH.md](LAUNCH.md)
-- Release 1.0: [RELEASE-1.0.md](RELEASE-1.0.md)
+- Current private package: [RELEASE-1.1.md](RELEASE-1.1.md)
