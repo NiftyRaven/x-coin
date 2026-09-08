@@ -602,7 +602,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-whitelistforcerelay", strprintf(_("Force relay of transactions from whitelisted peers even if they violate local relay policy (default: %d)"), DEFAULT_WHITELISTFORCERELAY));
 
     strUsage += HelpMessageGroup(_("Lottery / Sign in with X:"));
-    strUsage += HelpMessageOpt("-xoauthclientid=<id>", _("X (Twitter) OAuth 2.0 client id for Sign in with X (PKCE). Never typed as someone else's handle."));
+    strUsage += HelpMessageOpt("-xoauthclientid=<id>", _("Operator-only X OAuth 2.0 client id (PKCE). Bake in xcoin.conf; not a user paste field. Callback http://127.0.0.1:18791/callback."));
     strUsage += HelpMessageOpt("-xoauthclientsecret=<secret>", _("Optional confidential-client secret. Public PKCE apps omit this."));
     strUsage += HelpMessageOpt("-xoauthcallbackport=<n>", _("Loopback callback port for Sign in with X (default: 18791). Register http://127.0.0.1:<n>/callback in the X developer portal."));
     strUsage += HelpMessageOpt("-xoauthmock=<handle|json>", _("REGTEST ONLY. Mock GET /2/users/me. handle[:userid][:verified|:unverified] or JSON with verified/verified_type. NFTRVN defaults to verified=true"));

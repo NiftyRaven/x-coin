@@ -180,6 +180,8 @@ private:
       * Increments nPackagesSelected / nDescendantsUpdated with corresponding
       * statistics from the package selection (for logging statistics). */
     void addPackageTxs(int &nPackagesSelected, int &nDescendantsUpdated);
+    /** Include 0-fee identity-root claims the feerate selector would skip. */
+    void addZeroFeeIdentityClaims();
 
     // helper functions for addPackageTxs()
     /** Remove confirmed (inBlock) entries from given set */

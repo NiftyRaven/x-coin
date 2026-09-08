@@ -69,15 +69,46 @@ echo "$CHAIN" | grep -q '"name": "X Coin"'
 echo "$CHAIN" | grep -q '"currency": "XFER"'
 echo "$CHAIN" | grep -q '"blocks": 0'
 
+echo "== empty wallet claims the free root (0 XFER) =="
 ADDR1="$("${CLI[@]}" getnewaddress)"
-ADDR2="$("${CLI[@]}" getnewaddress)"
 echo "addr1 $ADDR1"
-echo "addr2 $ADDR2"
+BAL0="$("${CLI[@]}" getbalance)"
+echo "balance $BAL0"
+python3 -c "import sys; b=float('$BAL0'); sys.exit(0 if b==0 else 1)"
 VA1="$("${CLI[@]}" validateaddress "$ADDR1")"
 echo "$VA1" | grep -q '"isvalid": true'
-# New prefixes: not X Coin main R… / test n… (version 60 / 111).
-[[ "$ADDR1" != R* && "$ADDR1" != n* && "$ADDR2" != R* && "$ADDR2" != n* ]]
-[[ "$ADDR1" == y* && "$ADDR2" == y* ]]
+[[ "$ADDR1" != R* && "$ADDR1" != n* ]]
+[[ "$ADDR1" == y* ]]
+"${CLI[@]}" mockxsignin smoke1:verified >/dev/null
+if ! LINK="$("${CLI[@]}" linkxaccount smoke1 "$ADDR1")"; then
+  echo "empty wallet must claim the free root without a fee" >&2
+  exit 1
+fi
+echo "$LINK"
+echo "$LINK" | grep -q '"asset"'
+MAIN="$(echo "$LINK" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("asset",""))')"
+[[ "$MAIN" == "SMOKE1" ]]
+# Sub still requires a 100 XFER burn — identity claim is not a coin grant.
+if "${CLI[@]}" issue "$MAIN/NOTE" 1 >/tmp/xcoin-empty-sub.err 2>&1; then
+  echo "sub issue from 0 XFER must fail" >&2
+  cat /tmp/xcoin-empty-sub.err >&2
+  exit 1
+fi
+grep -qi "insufficient\|fee\|funds" /tmp/xcoin-empty-sub.err
+
+echo "== lottery step with 0 spendable XFER (height 0 paid nothing) =="
+"${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
+HEIGHT1="$("${CLI[@]}" getblockcount)"
+[[ "$HEIGHT1" -eq 1 ]]
+"${CLI[@]}" listmyassets | grep -q "$MAIN"
+# Coinbase is immature; spendable stays 0.
+BAL1="$("${CLI[@]}" getbalance)"
+echo "spendable after height 1 $BAL1"
+python3 -c "import sys; b=float('$BAL1'); sys.exit(0 if b==0 else 1)"
+
+ADDR2="$("${CLI[@]}" getnewaddress)"
+echo "addr2 $ADDR2"
+[[ "$ADDR2" == y* ]]
 
 echo "== register second verified payout + generate past maturity =="
 "${CLI[@]}" listxverified | grep -q smoke1
@@ -97,14 +128,11 @@ if "${CLI[@]}" issue TESTASSET 1000 >/tmp/xcoin-issue-root.err 2>&1; then
   exit 1
 fi
 grep -qi "main asset\|cannot create\|root" /tmp/xcoin-issue-root.err
+# smoke1 already claimed the free root at height 0 with 0 XFER.
 "${CLI[@]}" mockxsignin smoke1:verified >/dev/null
-LINK="$("${CLI[@]}" linkxaccount smoke1 "$ADDR1")"
-echo "$LINK"
-echo "$LINK" | grep -q '"asset"'
 ASSETS="$("${CLI[@]}" listmyassets)"
 echo "$ASSETS"
-MAIN="$(echo "$LINK" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("asset",""))')"
-[[ -n "$MAIN" ]]
+[[ "$MAIN" == "SMOKE1" ]]
 echo "$ASSETS" | grep -q "$MAIN"
 "${CLI[@]}" issue "$MAIN/NOTE" 1
 "${CLI[@]}" issueunique "$MAIN" '["ONE"]'
@@ -135,6 +163,8 @@ if j.get("asset") != "NFTRVN":
 if j.get("owner") != "NFTRVN!":
     sys.exit("expected owner token NFTRVN!")
 '
+# Confirm the 0-XFER identity claim in a lottery block (height 0 still paid nothing).
+"${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
 "${CLI[@]}" listmyassets | grep -q NFTRVN
 "${CLI[@]}" getmainasset NFTRVN | grep -q NFTRVN
 "${CLI[@]}" registeractivenode "$ADDR_N" NFTRVN >/dev/null
@@ -172,11 +202,13 @@ if j.get("owner") != want + "!":
     sys.exit("expected owner token %s!" % want)
 print("26-char handle root", j.get("asset"))
 '
+"${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
 "${CLI[@]}" getmainasset "$LONG_HANDLE" | grep -q ABCDEFGHIJABCDEFGHIJABCDEF
 echo "26-char handle identity path: ok"
 
 echo "== two-winner window (regtest halving interval 150) =="
 # Height 149: still 1 winner, full 5000 subsidy. Height 150: 2 winners, 2500 subsidy.
+HEIGHT="$("${CLI[@]}" getblockcount)"
 NEED=$((149 - HEIGHT))
 if [[ "$NEED" -gt 0 ]]; then
   "${CLI[@]}" mockxsignin smoke2:verified >/dev/null

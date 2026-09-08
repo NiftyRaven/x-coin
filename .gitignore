@@ -103,6 +103,8 @@ qrc_*.cpp
 # Mac specific
 .DS_Store
 build
+build-linux/
+build-win/
 
 #lcov
 *.gcno

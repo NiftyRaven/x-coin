@@ -3864,6 +3864,56 @@ std::string EncodeIPFS(std::string decoded){
 };
 
 #ifdef ENABLE_WALLET
+/** Identity root: dummy vin unique per X handle, 0 XFER, 0 fee. Not a premine. */
+static bool CreateZeroFeeIdentityRootTransaction(CWallet* pwallet, const CNewAsset& asset, const std::string& address, const std::string& xHandle, CWalletTx& wtxNew, CAmount& nFeeRequired, std::pair<int, std::string>& error)
+{
+    nFeeRequired = 0;
+    std::string handle;
+    uint64_t uid = 0;
+    std::string normErr;
+    if (!NormalizeXAccountId(xHandle, handle, uid, normErr)) {
+        error = std::make_pair(RPC_INVALID_PARAMETER, normErr);
+        return false;
+    }
+    const CTxDestination dest = DecodeDestination(address);
+    if (!IsValidDestination(dest)) {
+        error = std::make_pair(RPC_INVALID_ADDRESS_OR_KEY, "Invalid destination address");
+        return false;
+    }
+
+    CMutableTransaction txNew;
+    txNew.nVersion = CTransaction::CURRENT_VERSION;
+    txNew.nLockTime = 0;
+
+    CTxIn dummy;
+    dummy.prevout = MakeXAccountDummyPrevout(handle);
+    dummy.nSequence = CTxIn::SEQUENCE_FINAL;
+    txNew.vin.push_back(dummy);
+
+    txNew.vout.push_back(CTxOut(0, MakeXAccountAssignmentScript(handle)));
+
+    CScript ownerScript = GetScriptForDestination(dest);
+    asset.ConstructOwnerTransaction(ownerScript);
+    txNew.vout.push_back(CTxOut(0, ownerScript));
+
+    CScript assetScript = GetScriptForDestination(dest);
+    asset.ConstructTransaction(assetScript);
+    txNew.vout.push_back(CTxOut(0, assetScript));
+
+    const CTransaction built(txNew);
+    std::string dummyErr;
+    if (!CheckXAccountDummyInputs(built, dummyErr) || !IsXAccountIdentityClaim(built)) {
+        error = std::make_pair(RPC_WALLET_ERROR, dummyErr.empty() ? "failed to build identity claim" : dummyErr);
+        return false;
+    }
+
+    wtxNew.fTimeReceivedIsTxTime = true;
+    wtxNew.BindWallet(pwallet);
+    wtxNew.fFromMe = true;
+    wtxNew.SetTx(MakeTransactionRef(std::move(txNew)));
+    return true;
+}
+
 bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const CNewAsset& asset, const std::string& address, std::pair<int, std::string>& error, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRequired, std::string* verifier_string, const std::string* protocolXAccount)
 {
     std::vector<CNewAsset> assets;
@@ -3873,6 +3923,7 @@ bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const C
 
 bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const std::vector<CNewAsset> assets, const std::string& address, std::pair<int, std::string>& error, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRequired, std::string* verifier_string, const std::string* protocolXAccount)
 {
+    const bool fProtocolRoot = protocolXAccount && !protocolXAccount->empty();
     std::string change_address = EncodeDestination(coinControl.destChange);
 
     auto currentActiveAssetCache = GetCurrentAssetCache();
@@ -3885,23 +3936,25 @@ bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const s
         }
     }
 
-    if (!change_address.empty()) {
-        CTxDestination destination = DecodeDestination(change_address);
-        if (!IsValidDestination(destination)) {
-            error = std::make_pair(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid X Coin address: ") + change_address);
-            return false;
-        }
-    } else {
-        // no coin control: send change to newly generated address
-        CKeyID keyID;
-        std::string strFailReason;
-        if (!pwallet->CreateNewChangeAddress(reservekey, keyID, strFailReason)) {
-            error = std::make_pair(RPC_WALLET_KEYPOOL_RAN_OUT, strFailReason);
-            return false;
-        }
+    if (!fProtocolRoot) {
+        if (!change_address.empty()) {
+            CTxDestination destination = DecodeDestination(change_address);
+            if (!IsValidDestination(destination)) {
+                error = std::make_pair(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid X Coin address: ") + change_address);
+                return false;
+            }
+        } else {
+            // no coin control: send change to newly generated address
+            CKeyID keyID;
+            std::string strFailReason;
+            if (!pwallet->CreateNewChangeAddress(reservekey, keyID, strFailReason)) {
+                error = std::make_pair(RPC_WALLET_KEYPOOL_RAN_OUT, strFailReason);
+                return false;
+            }
 
-        change_address = EncodeDestination(keyID);
-        coinControl.destChange = DecodeDestination(change_address);
+            change_address = EncodeDestination(keyID);
+            coinControl.destChange = DecodeDestination(change_address);
+        }
     }
 
     AssetType assetType;
@@ -3924,7 +3977,6 @@ bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const s
         }
     }
 
-    const bool fProtocolRoot = protocolXAccount && !protocolXAccount->empty();
     if (assetType == AssetType::QUALIFIER || assetType == AssetType::SUB_QUALIFIER || assetType == AssetType::RESTRICTED) {
         error = std::make_pair(RPC_INVALID_PARAMETER, "Restricted assets were removed");
         return false;
@@ -3945,9 +3997,22 @@ bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const s
         }
     }
 
+    if (fProtocolRoot) {
+        if (assets.size() != 1) {
+            error = std::make_pair(RPC_INVALID_PARAMETER, "Protocol X-account assignment creates one root");
+            return false;
+        }
+        if (pwallet->GetBroadcastTransactions() && !g_connman) {
+            error = std::make_pair(RPC_CLIENT_P2P_DISABLED, "Error: Peer-to-peer functionality missing or disabled");
+            return false;
+        }
+        LOCK2(cs_main, pwallet->cs_wallet);
+        return CreateZeroFeeIdentityRootTransaction(pwallet, assets[0], address, *protocolXAccount, wtxNew, nFeeRequired, error);
+    }
+
     // Assign the correct burn amount and the correct burn address depending on the type of asset issuance that is happening
-    CAmount burnAmount = fProtocolRoot ? 0 : GetBurnAmount(assetType) * assets.size();
-    CScript scriptPubKey = fProtocolRoot ? CScript() : GetScriptForDestination(DecodeDestination(GetBurnAddress(assetType)));
+    CAmount burnAmount = GetBurnAmount(assetType) * assets.size();
+    CScript scriptPubKey = GetScriptForDestination(DecodeDestination(GetBurnAddress(assetType)));
 
     CAmount curBalance = pwallet->GetBalance();
 

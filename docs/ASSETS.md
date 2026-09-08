@@ -76,7 +76,11 @@ otherwise `_2`, `_3`, … A suffix that would push the name over 32 is
 root plus `_2` is 28 ≤ 32.
 
 The assignment transaction carries an `OP_RETURN` `XID1` + normalized
-handle so consensus can enforce one X account → one root.
+handle so consensus can enforce one X account → one root. An empty
+wallet can claim that root: the claim is a 0-XFER identity transaction
+with a dummy prevout unique per X handle (empty vin is BIP144-illegal).
+That dummy is not a spendable coin and is not a premine. Subs still burn
+100 XFER. Uniques still burn 5 XFER.
 
 ## What you can issue
 

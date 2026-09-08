@@ -17,10 +17,30 @@
   #include <wallet/wallet.h>
 #endif
 
+#include <QButtonGroup>
+#include <QPushButton>
+
+static const char *kMnemonicTheme =
+    "QDialog, QFrame { background: #000000; color: #ffffff; }"
+    "QLabel { color: #ffffff; }"
+    "QGroupBox { color: #ffffff; border: 1px solid #3f3f46; margin-top: 12px; padding: 12px; }"
+    "QGroupBox::title { color: #ffffff; subcontrol-origin: margin; left: 8px; padding: 0 4px; }"
+    "QPushButton { background: #0a0a0a; color: #ffffff; border: 2px solid #52525b; padding: 14px 16px; text-align: left; font-size: 14px; }"
+    "QPushButton:hover { border-color: #ffffff; }"
+    "QPushButton:checked { background: #ffffff; color: #000000; border: 2px solid #ffffff; font-weight: 700; }"
+    "QPushButton#acceptButton, QPushButton#generateButton, QPushButton#backButton {"
+    "  text-align: center; background: #ffffff; color: #000000; border: none; font-weight: 700; min-height: 36px; }"
+    "QPlainTextEdit, QTextEdit, QLineEdit, QComboBox { background: #0a0a0a; color: #ffffff; border: 1px solid #52525b; }"
+    "QRadioButton { color: #ffffff; spacing: 10px; }"
+    "QRadioButton::indicator { width: 18px; height: 18px; border: 2px solid #ffffff; border-radius: 10px; background: #000000; }"
+    "QRadioButton::indicator:checked { background: #ffffff; }";
+
 MnemonicDialog::MnemonicDialog(QWidget *parent) :
     QDialog(parent)
 {
-    setWindowTitle(tr("HD Wallet Setup"));
+    setWindowTitle(tr("Set up this wallet"));
+    setStyleSheet(kMnemonicTheme);
+    setMinimumSize(640, 460);
 
     stackedLayout = new QStackedLayout(this);
 
@@ -57,13 +77,52 @@ void MnemonicDialog::closeMainDialog()
 MnemonicDialog1::MnemonicDialog1(QWidget *parent) :
     QFrame(parent),
     ui(new Ui::MnemonicDialog1),
-    radioselected("none")
+    radioselected("new")
 {
+    setStyleSheet(kMnemonicTheme);
     ui->setupUi(this);
     ui->wallettypeLabel->setText(tr(
-        "Since no wallet.dat file was found in the X Coin data directory, a wallet file will be created. "
-        "These 12 BIP39 words control the keys (create or restore). "
-        "Sign in with X on Home is a separate identity proof on this node — it does not replace the seed."));
+        "No wallet file was found. Choose how to set up keys for this wallet. "
+        "You will get 12 secret words (or type ones you already have). Write them down. "
+        "Sign in with X on Home is separate — it does not replace these words."));
+    ui->walletLabel->setText(tr("Create a new wallet is selected."));
+    ui->groupBox->setTitle(tr("What do you want to do?"));
+    ui->acceptButton->setText(tr("Continue"));
+
+    ui->walletNewRadio->hide();
+    ui->walletOldRadio->hide();
+
+    QPushButton* createCard = new QPushButton(tr(
+        "Create a new wallet\nGet 12 new secret words. Write them down and keep them private."));
+    createCard->setObjectName("createWalletCard");
+    createCard->setCheckable(true);
+    createCard->setChecked(true);
+    createCard->setMinimumHeight(88);
+    createCard->setCursor(Qt::PointingHandCursor);
+
+    QPushButton* restoreCard = new QPushButton(tr(
+        "Restore a wallet I already have\nEnter the 12 secret words you wrote down before."));
+    restoreCard->setObjectName("restoreWalletCard");
+    restoreCard->setCheckable(true);
+    restoreCard->setMinimumHeight(88);
+    restoreCard->setCursor(Qt::PointingHandCursor);
+
+    QButtonGroup* group = new QButtonGroup(this);
+    group->setExclusive(true);
+    group->addButton(createCard);
+    group->addButton(restoreCard);
+
+    ui->verticalLayout_2->insertWidget(0, createCard);
+    ui->verticalLayout_2->insertWidget(1, restoreCard);
+
+    connect(createCard, &QPushButton::clicked, this, [this]() {
+        radioselected = "new";
+        ui->walletLabel->setText(tr("Create a new wallet is selected. Continue to see your 12 secret words."));
+    });
+    connect(restoreCard, &QPushButton::clicked, this, [this]() {
+        radioselected = "old";
+        ui->walletLabel->setText(tr("Restore is selected. Continue to type the 12 secret words you already have."));
+    });
 };
 
 MnemonicDialog1::~MnemonicDialog1()
@@ -73,22 +132,22 @@ MnemonicDialog1::~MnemonicDialog1()
 
 void MnemonicDialog1::on_walletNewRadio_clicked()
 {
-    ui->walletLabel->setText(tr("You are choosing to create a new wallet using new seed words."));
     radioselected = "new";
+    ui->walletLabel->setText(tr("Create a new wallet is selected. Continue to see your 12 secret words."));
 };
 
 void MnemonicDialog1::on_walletOldRadio_clicked()
 {
-    ui->walletLabel->setText(tr("You are choosing to re-create an old wallet using seed words which you know."));
     radioselected = "old";
+    ui->walletLabel->setText(tr("Restore is selected. Continue to type the 12 secret words you already have."));
 };
 
 void MnemonicDialog1::on_acceptButton_clicked()
 {
     if (radioselected == "new")
-        Q_EMIT updateMainWindowStackWidget(1);  // "emit" is not supported on older QT revs
+        Q_EMIT updateMainWindowStackWidget(1);
     else if (radioselected == "old")
-        Q_EMIT updateMainWindowStackWidget(2);  // "emit" is not supported on older QT revs
+        Q_EMIT updateMainWindowStackWidget(2);
 };
 
 // =========
@@ -97,6 +156,7 @@ MnemonicDialog2::MnemonicDialog2(QWidget *parent) :
     QFrame(parent),
     ui(new Ui::MnemonicDialog2)
 {
+    setStyleSheet(kMnemonicTheme);
     ui->setupUi(this);
     
     std::array<LanguageDetails, NUM_LANGUAGES_BIP39_SUPPORTED> languagesDetails = CMnemonic::GetLanguagesDetails();    
@@ -179,6 +239,7 @@ MnemonicDialog3::MnemonicDialog3(QWidget *parent) :
     QFrame(parent),
     ui(new Ui::MnemonicDialog3)
 {
+    setStyleSheet(kMnemonicTheme);
     ui->setupUi(this);
 
     MnemonicDialog3::ui->seedwordsEdit->installEventFilter(this);

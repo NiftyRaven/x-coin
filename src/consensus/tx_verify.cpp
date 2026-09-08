@@ -138,6 +138,8 @@ unsigned int GetP2SHSigOpCount(const CTransaction& tx, const CCoinsViewCache& in
     unsigned int nSigOps = 0;
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
+        if (IsXAccountDummyInput(tx, i))
+            continue;
         const Coin& coin = inputs.AccessCoin(tx.vin[i].prevout);
         assert(!coin.IsSpent());
         const CTxOut &prevout = coin.out;
@@ -160,6 +162,8 @@ int64_t GetTransactionSigOpCost(const CTransaction& tx, const CCoinsViewCache& i
 
     for (unsigned int i = 0; i < tx.vin.size(); i++)
     {
+        if (IsXAccountDummyInput(tx, i))
+            continue;
         const Coin& coin = inputs.AccessCoin(tx.vin[i].prevout);
         assert(!coin.IsSpent());
         const CTxOut &prevout = coin.out;
@@ -558,6 +562,10 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
     // we allow restricted asset reissuance without having a verifier string transaction, we don't force it to be update
     /** XCOIN END */
 
+    std::string dummyErr;
+    if (!CheckXAccountDummyInputs(tx, dummyErr))
+        return state.DoS(100, false, REJECT_INVALID, dummyErr);
+
     return true;
 }
 
@@ -571,6 +579,8 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
 
     CAmount nValueIn = 0;
     for (unsigned int i = 0; i < tx.vin.size(); ++i) {
+        if (IsXAccountDummyInput(tx, i))
+            continue;
         const COutPoint &prevout = tx.vin[i].prevout;
         const Coin& coin = inputs.AccessCoin(prevout);
         assert(!coin.IsSpent());
@@ -620,6 +630,8 @@ bool Consensus::CheckTxAssets(const CTransaction& tx, CValidationState& state, c
     std::map<std::string, std::string> mapAddresses;
 
     for (unsigned int i = 0; i < tx.vin.size(); ++i) {
+        if (IsXAccountDummyInput(tx, i))
+            continue;
         const COutPoint &prevout = tx.vin[i].prevout;
         const Coin& coin = inputs.AccessCoin(prevout);
         assert(!coin.IsSpent());

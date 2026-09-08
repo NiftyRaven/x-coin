@@ -42,6 +42,7 @@
 #include <tinyformat.h>
 
 #include "assets/assets.h"
+#include "assets/xaccount.h"
 
 std::vector<CWalletRef> vpwallets;
 /** Transaction fee set by the user */
@@ -3842,7 +3843,12 @@ bool CWallet::CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey, CCon
             // Notify that old coins are spent
             for (const CTxIn& txin : wtxNew.tx->vin)
             {
-                CWalletTx &coin = mapWallet[txin.prevout.hash];
+                if (IsXAccountDummyPrevout(txin.prevout))
+                    continue;
+                auto it = mapWallet.find(txin.prevout.hash);
+                if (it == mapWallet.end())
+                    continue;
+                CWalletTx &coin = it->second;
                 coin.BindWallet(this);
                 NotifyTransactionChanged(this, coin.GetHash(), CT_UPDATED);
             }

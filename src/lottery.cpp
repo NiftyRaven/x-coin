@@ -24,6 +24,9 @@
 #include "validation.h"
 #include "xsession.h"
 
+#include <exception>
+#include <map>
+
 #ifdef ENABLE_WALLET
 #include "wallet/wallet.h"
 extern std::vector<CWalletRef> vpwallets;
@@ -1194,7 +1197,13 @@ static bool ProduceOneBlock(const CChainParams& chainparams)
     }
     GetRegistry().SetLocalScript(coinbaseScript->reserveScript);
 
-    std::unique_ptr<CBlockTemplate> pblocktemplate(BlockAssembler(chainparams).CreateNewBlock(coinbaseScript->reserveScript));
+    std::unique_ptr<CBlockTemplate> pblocktemplate;
+    try {
+        pblocktemplate = BlockAssembler(chainparams).CreateNewBlock(coinbaseScript->reserveScript);
+    } catch (const std::exception& e) {
+        LogPrintf("lottery: CreateNewBlock failed: %s\n", e.what());
+        return false;
+    }
     if (!pblocktemplate) {
         LogPrintf("lottery: CreateNewBlock failed\n");
         return false;
