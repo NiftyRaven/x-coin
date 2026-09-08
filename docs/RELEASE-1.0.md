@@ -7,8 +7,10 @@ private login, X Verified = blue check). This page is the 1.0 snapshot.
 Anonymous public identity — display name and handle only.
 
 Product version **1.0.0**. This is a **private** release. Do not make
-the repository public. Packages: `dist/xcoin-1.0.0-linux-x86_64.tar.gz`
-and `dist/xcoin-1.0.0-win-x86_64.zip`.
+the repository public. Wallets are the two files on
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.0)
+(`X-Coin-1.0.0-Windows.zip` and `X-Coin-1.0.0-Linux-x86_64.tar.gz`).
+Do not use **Code → Download ZIP**.
 
 ## What shipped
 
@@ -31,11 +33,13 @@ and `dist/xcoin-1.0.0-win-x86_64.zip`.
 
 ## Install the GUI
 
-Do not compile. Unpack the package and double-click the labeled start.
-Step-by-step: [README.md](../README.md).
+Do not compile. Download from
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.0),
+unpack, and double-click the labeled start. Step-by-step:
+[README.md](../README.md).
 
-- Linux: `dist/xcoin-1.0.0-linux-x86_64.tar.gz` → **X Coin Wallet**
-- Windows: `dist/xcoin-1.0.0-win-x86_64.zip` → **X Coin Wallet.exe**
+- Linux: [X-Coin-1.0.0-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.0/X-Coin-1.0.0-Linux-x86_64.tar.gz) → **X Coin Wallet**
+- Windows: [X-Coin-1.0.0-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.0/X-Coin-1.0.0-Windows.zip) → **X Coin Wallet.exe**
 - Practice: **X Coin Practice Wallet** / **X Coin Practice Wallet.exe**
 
 Pack from a developer build: `contrib/xcoin/package-linux.sh` and

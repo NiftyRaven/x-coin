@@ -30,6 +30,7 @@ There is no older paper here. [XCOIN.md](XCOIN.md) is the release paper:
 purpose, lottery, optional pools, supply, X Verified eligibility, assets,
 privacy, network identity, Linux and Windows packages, and
 practice/regtest isolation. How to open the wallet (do not compile):
-[README](../README.md). Packages: `dist/xcoin-1.0.0-linux-x86_64.tar.gz`
-and `dist/xcoin-1.0.0-win-x86_64.zip`. Private-test audit:
+[README](../README.md) — download from
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.0),
+not **Code → Download ZIP**. Private-test audit:
 [docs/AUDIT.md](../docs/AUDIT.md).

@@ -1,15 +1,15 @@
-Releases are **private**. There is no public GitHub Release page on
-purpose.
+Releases are **private** (this repository is private). The wallets are
+the two files on the GitHub
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.0)
+page, not **Code → Download ZIP**.
 
-People run a folder, not this source tree:
-
-- Linux: `dist/xcoin-1.0.0-linux-x86_64.tar.gz` → double-click **X Coin Wallet**
-- Windows: `dist/xcoin-1.0.0-win-x86_64.zip` → double-click **X Coin Wallet.exe**
+- [Windows wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.0/X-Coin-1.0.0-Windows.zip) → double-click **X Coin Wallet.exe**
+- [Linux wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.0/X-Coin-1.0.0-Linux-x86_64.tar.gz) → double-click **X Coin Wallet**
 
 Practice starts are labeled **X Coin Practice Wallet** and always pass
 `-regtest`. Step-by-step: [README.md](../README.md).
 
-Pack from a GUI build:
+Pack from a GUI build (operators):
 
 ```bash
 contrib/xcoin/package-linux.sh
