@@ -602,7 +602,7 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-whitelistforcerelay", strprintf(_("Force relay of transactions from whitelisted peers even if they violate local relay policy (default: %d)"), DEFAULT_WHITELISTFORCERELAY));
 
     strUsage += HelpMessageGroup(_("Lottery options:"));
-    strUsage += HelpMessageOpt("-xaccount=<handle>", _("Link this node to an X handle. Required for lottery eligibility (unlinked nodes sync/relay but cannot win)"));
+    strUsage += HelpMessageOpt("-xaccount=<handle>", _("Link this node to an X handle. Required for lottery eligibility and used by linkxaccount to assign the free main/root identity asset"));
     strUsage += HelpMessageOpt("-xuserid=<id>", _("Optional numeric X user id for the linked account"));
     strUsage += HelpMessageOpt("-xallowlist=<file>", _("Load verified X accounts from a text file (handle [userid] per line). Honest operators list only X-verified / blue-check accounts"));
     strUsage += HelpMessageOpt("-xverified=<handle>", _("Add a verified X handle to the allowlist (repeatable; handle or handle:userid)"));

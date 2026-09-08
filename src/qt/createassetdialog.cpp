@@ -277,21 +277,20 @@ void CreateAssetDialog::setUpValues()
 
     // Setup the asset types
     QStringList list;
-    list.append(tr("Main Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::ROOT)) + ")");
+    list.append(tr("Main Asset (assigned free on X-link)") + " (0 XFER)");
     list.append(tr("Sub Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::SUB)) + ")");
     list.append(tr("Unique Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::UNIQUE)) + ")");
     list.append(tr("Messaging Channel Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::MSGCHANNEL)) + ")");
-    list.append(tr("Qualifier Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::QUALIFIER)) + ")");
-    list.append(tr("Sub Qualifier Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::SUB_QUALIFIER)) + ")");
-    list.append(tr("Restricted Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::RESTRICTED)) + ")");
 
     ui->assetType->addItems(list);
-    type = IntFromAssetType(AssetType::ROOT);
+    type = IntFromAssetType(AssetType::SUB);
+    ui->assetType->setCurrentIndex(IntFromAssetType(AssetType::SUB));
     ui->assetTypeLabel->setText(tr("Asset Type") + ":");
 
-    // Setup the asset list
+    // Setup the asset list (default to sub-asset under a main the wallet owns)
     ui->assetList->hide();
     updateAssetList();
+    onAssetTypeActivated(IntFromAssetType(AssetType::SUB));
 
     ui->assetFullName->setTextFormat(Qt::RichText);
     ui->assetFullName->setStyleSheet("font-weight: bold");
@@ -777,6 +776,15 @@ void CreateAssetDialog::onIPFSHashChanged(QString hash)
 
 void CreateAssetDialog::onCreateAssetClicked()
 {
+    if (type == IntFromAssetType(AssetType::ROOT)) {
+        showMessage(tr("Users cannot create main assets. Link a verified X account (linkxaccount) to be assigned one free identity root."));
+        return;
+    }
+    if (type == IntFromAssetType(AssetType::RESTRICTED) || type == IntFromAssetType(AssetType::QUALIFIER) || type == IntFromAssetType(AssetType::SUB_QUALIFIER)) {
+        showMessage(tr("Restricted assets were removed"));
+        return;
+    }
+
     WalletModel::UnlockContext ctx(model->requestUnlock());
     if(!ctx.isValid())
     {

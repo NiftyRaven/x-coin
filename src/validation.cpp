@@ -56,6 +56,7 @@
 
 #include "assets/assets.h"
 #include "assets/assetdb.h"
+#include "assets/xaccount.h"
 #include "base58.h"
 
 #include "assets/snapshotrequestdb.h"
@@ -1057,6 +1058,13 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
                     }
                 }
             }
+            std::string xid;
+            if (ParseXAccountAssignment(tx, xid)) {
+                if (pool.mapXAccountToHash.count(xid) && pool.mapXAccountToHash[xid] != hash)
+                    return state.DoS(0, false, REJECT_INVALID, "bad-txns-xaccount-already-in-mempool");
+                pool.mapXAccountToHash[xid] = hash;
+                pool.mapHashToXAccount[hash] = xid;
+            }
         }
 
         // Keep track of all restricted assets tx that can become invalid if address or assets are marked as frozen
@@ -1979,6 +1987,10 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
                         error("%s : Failed to Remove Owner from transaction. TXID : %s", __func__, tx.GetHash().GetHex());
                         return DISCONNECT_FAILED;
                     }
+
+                    std::string xid;
+                    if (ParseXAccountAssignment(tx, xid))
+                        RemoveXAccountAssignment(xid);
                 } else if (tx.IsReissueAsset()) {
                     CReissueAsset reissue;
                     std::string strAddress;
@@ -5916,8 +5928,7 @@ bool AreTransferScriptsSizeDeployed() {
 }
 
 bool AreRestrictedAssetsDeployed() {
-
-    return IsRip5Active();
+    return false;
 }
 
 bool IsDGWActive(unsigned int nBlockNumber) {

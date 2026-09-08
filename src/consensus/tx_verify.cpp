@@ -4,6 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <assets/assets.h>
+#include <assets/xaccount.h>
 #include <script/standard.h>
 #include <util.h>
 #include <validation.h>
@@ -22,6 +23,7 @@
 // TODO remove the following dependencies
 #include "chain.h"
 #include "coins.h"
+#include "txmempool.h"
 #include "utilmoneystr.h"
 
 bool IsFinalTx(const CTransaction &tx, int nBlockHeight, int64_t nBlockTime)
@@ -807,6 +809,21 @@ bool Consensus::CheckTxAssets(const CTransaction& tx, CValidationState& state, c
             if (!ContextualCheckNewAsset(assetCache, asset, strError, fCheckMempool))
                 return state.DoS(100, false, REJECT_INVALID, strError);
 
+            if (assetType == AssetType::ROOT) {
+                std::string xid;
+                if (!ParseXAccountAssignment(tx, xid))
+                    return state.DoS(100, false, REJECT_INVALID, "bad-txns-issue-root-missing-xaccount", false, "", tx.GetHash());
+                std::string existing;
+                if (CheckIfXAccountAssigned(xid, &existing) && existing != asset.strName)
+                    return state.DoS(100, false, REJECT_INVALID, "bad-txns-xaccount-already-assigned", false, "", tx.GetHash());
+                if (fCheckMempool) {
+                    LOCK(mempool.cs);
+                    auto it = mempool.mapXAccountToHash.find(xid);
+                    if (it != mempool.mapXAccountToHash.end() && it->second != tx.GetHash())
+                        return state.DoS(100, false, REJECT_INVALID, "bad-txns-xaccount-already-in-mempool", false, "", tx.GetHash());
+                }
+            }
+
         } else if (tx.IsReissueAsset()) {
             CReissueAsset reissue_asset;
             std::string address;
@@ -833,7 +850,7 @@ bool Consensus::CheckTxAssets(const CTransaction& tx, CValidationState& state, c
                                  "bad-txns-issue-msgchannel-contextual-" + strError);
         } else if (tx.IsNewQualifierAsset()) {
             if (!AreRestrictedAssetsDeployed())
-                return state.DoS(100, false, REJECT_INVALID, "bad-txns-issue-qualifier-before-it-is-active", false, "", tx.GetHash());
+                return state.DoS(100, false, REJECT_INVALID, "bad-txns-restricted-assets-removed", false, "", tx.GetHash());
 
             CNewAsset asset;
             std::string strAddress;
@@ -845,7 +862,7 @@ bool Consensus::CheckTxAssets(const CTransaction& tx, CValidationState& state, c
 
         } else if (tx.IsNewRestrictedAsset()) {
             if (!AreRestrictedAssetsDeployed())
-                return state.DoS(100, false, REJECT_INVALID, "bad-txns-issue-restricted-before-it-is-active", false, "", tx.GetHash());
+                return state.DoS(100, false, REJECT_INVALID, "bad-txns-restricted-assets-removed", false, "", tx.GetHash());
 
             // Get asset data
             CNewAsset asset;

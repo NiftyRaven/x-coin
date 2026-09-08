@@ -628,7 +628,8 @@ void RavenGUI::createToolBars()
         m_toolbar->addAction(manageAssetAction);
 //        m_toolbar->addAction(messagingAction);
 //        m_toolbar->addAction(votingAction);
-        m_toolbar->addAction(restrictedAssetAction);
+        restrictedAssetAction->setVisible(false);
+        restrictedAssetAction->setToolTip(tr("Restricted assets were removed"));
 
         QString openSansFontString = "font: normal 22pt \"Open Sans\";";
         QString normalString = "font: normal 22pt \"Arial\";";
@@ -1532,14 +1533,9 @@ void RavenGUI::checkAssets()
         manageAssetAction->setDisabled(true);
         }
 
-    if (AreRestrictedAssetsDeployed()) {
-        restrictedAssetAction->setDisabled(false);
-        restrictedAssetAction->setToolTip(tr("Manage restricted assets"));
-
-    } else {
-        restrictedAssetAction->setDisabled(true);
-        restrictedAssetAction->setToolTip(tr("Restricted Assets not yet active"));
-    }
+    restrictedAssetAction->setVisible(false);
+    restrictedAssetAction->setDisabled(true);
+    restrictedAssetAction->setToolTip(tr("Restricted assets were removed"));
 }
 #endif // ENABLE_WALLET
 

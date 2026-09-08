@@ -8,6 +8,7 @@
 #include <tinyformat.h>
 #include "assetdb.h"
 #include "assets.h"
+#include "xaccount.h"
 #include "validation.h"
 
 #include <boost/thread.hpp>
@@ -17,6 +18,7 @@ static const char ASSET_ADDRESS_QUANTITY_FLAG = 'B';
 static const char ADDRESS_ASSET_QUANTITY_FLAG = 'C';
 static const char MY_ASSET_FLAG = 'M';
 static const char BLOCK_ASSET_UNDO_DATA = 'U';
+static const char XACCOUNT_ASSIGN_FLAG = 'X';
 static const char MEMPOOL_REISSUED_TX = 'Z';
 
 static size_t MAX_DATABASE_RESULTS = 50000;
@@ -98,6 +100,39 @@ bool CAssetsDB::ReadBlockUndoAssetData(const uint256 &blockhash, std::vector<std
     return true;
 }
 
+bool CAssetsDB::WriteXAccountAssignment(const std::string& xId, const std::string& assetName)
+{
+    return Write(std::make_pair(XACCOUNT_ASSIGN_FLAG, xId), assetName);
+}
+
+bool CAssetsDB::EraseXAccountAssignment(const std::string& xId)
+{
+    return Erase(std::make_pair(XACCOUNT_ASSIGN_FLAG, xId));
+}
+
+bool CAssetsDB::LoadXAccountAssignments(std::map<std::string, std::string>& out)
+{
+    out.clear();
+    std::unique_ptr<CDBIterator> pcursor(NewIterator());
+    pcursor->Seek(std::make_pair(XACCOUNT_ASSIGN_FLAG, std::string()));
+    while (pcursor->Valid()) {
+        boost::this_thread::interruption_point();
+        std::pair<char, std::string> key;
+        if (pcursor->GetKey(key) && key.first == XACCOUNT_ASSIGN_FLAG) {
+            std::string assetName;
+            if (pcursor->GetValue(assetName)) {
+                out[key.second] = assetName;
+                pcursor->Next();
+            } else {
+                return error("%s: failed to read X-account assignment", __func__);
+            }
+        } else {
+            break;
+        }
+    }
+    return true;
+}
+
 bool CAssetsDB::WriteReissuedMempoolState()
 {
     return Write(MEMPOOL_REISSUED_TX, mapReissuedAssets);
@@ -169,6 +204,9 @@ bool CAssetsDB::LoadAssets()
             }
         }
     }
+
+    if (!::LoadXAccountAssignments())
+        return error("%s: failed to load X-account assignments", __func__);
 
     return true;
 }

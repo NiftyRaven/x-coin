@@ -23,6 +23,7 @@
 #include "assets.h"
 #include "assetdb.h"
 #include "assettypes.h"
+#include "xaccount.h"
 #include "protocol.h"
 #include "wallet/coincontrol.h"
 #include "utilmoneystr.h"
@@ -1095,7 +1096,23 @@ bool CTransaction::VerifyNewAsset(std::string& strError) const {
         }
     }
 
-    if (!fFoundIssueBurnTx) {
+    if (assetType == AssetType::ROOT) {
+        // Users cannot burn-issue a new root. Only a zero-burn protocol assignment (XID1) is valid.
+        if (fFoundIssueBurnTx) {
+            strError = "bad-txns-issue-root-must-be-protocol-assignment";
+            return false;
+        }
+        std::string xid;
+        if (!ParseXAccountAssignment(*this, xid)) {
+            strError = "bad-txns-issue-root-missing-xaccount";
+            return false;
+        }
+        std::string existing;
+        if (CheckIfXAccountAssigned(xid, &existing) && existing != asset.strName) {
+            strError = "bad-txns-xaccount-already-assigned";
+            return false;
+        }
+    } else if (!fFoundIssueBurnTx) {
         strError = "bad-txns-issue-burn-not-found";
         return false;
     }
@@ -3848,14 +3865,14 @@ std::string EncodeIPFS(std::string decoded){
 };
 
 #ifdef ENABLE_WALLET
-bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const CNewAsset& asset, const std::string& address, std::pair<int, std::string>& error, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRequired, std::string* verifier_string)
+bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const CNewAsset& asset, const std::string& address, std::pair<int, std::string>& error, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRequired, std::string* verifier_string, const std::string* protocolXAccount)
 {
     std::vector<CNewAsset> assets;
     assets.push_back(asset);
-    return CreateAssetTransaction(pwallet, coinControl, assets, address, error, wtxNew, reservekey, nFeeRequired, verifier_string);
+    return CreateAssetTransaction(pwallet, coinControl, assets, address, error, wtxNew, reservekey, nFeeRequired, verifier_string, protocolXAccount);
 }
 
-bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const std::vector<CNewAsset> assets, const std::string& address, std::pair<int, std::string>& error, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRequired, std::string* verifier_string)
+bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const std::vector<CNewAsset> assets, const std::string& address, std::pair<int, std::string>& error, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRequired, std::string* verifier_string, const std::string* protocolXAccount)
 {
     std::string change_address = EncodeDestination(coinControl.destChange);
 
@@ -3908,9 +3925,23 @@ bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const s
         }
     }
 
+    const bool fProtocolRoot = protocolXAccount && !protocolXAccount->empty();
+    if (assetType == AssetType::QUALIFIER || assetType == AssetType::SUB_QUALIFIER || assetType == AssetType::RESTRICTED) {
+        error = std::make_pair(RPC_INVALID_PARAMETER, "Restricted assets were removed");
+        return false;
+    }
+    if (assetType == AssetType::ROOT && !fProtocolRoot) {
+        error = std::make_pair(RPC_INVALID_PARAMETER, "Users cannot create main assets. Link a verified X account (linkxaccount / AssignLinkedUserMainAsset).");
+        return false;
+    }
+    if (fProtocolRoot && assetType != AssetType::ROOT) {
+        error = std::make_pair(RPC_INVALID_PARAMETER, "Protocol X-account assignment can only create a main/root asset");
+        return false;
+    }
+
     // Assign the correct burn amount and the correct burn address depending on the type of asset issuance that is happening
-    CAmount burnAmount = GetBurnAmount(assetType) * assets.size();
-    CScript scriptPubKey = GetScriptForDestination(DecodeDestination(GetBurnAddress(assetType)));
+    CAmount burnAmount = fProtocolRoot ? 0 : GetBurnAmount(assetType) * assets.size();
+    CScript scriptPubKey = fProtocolRoot ? CScript() : GetScriptForDestination(DecodeDestination(GetBurnAddress(assetType)));
 
     CAmount curBalance = pwallet->GetBalance();
 
@@ -3933,8 +3964,13 @@ bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const s
     int nChangePosRet = -1;
     bool fSubtractFeeFromAmount = false;
 
-    CRecipient recipient = {scriptPubKey, burnAmount, fSubtractFeeFromAmount};
-    vecSend.push_back(recipient);
+    if (fProtocolRoot) {
+        CRecipient assignRec = {MakeXAccountAssignmentScript(*protocolXAccount), 0, false};
+        vecSend.push_back(assignRec);
+    } else {
+        CRecipient recipient = {scriptPubKey, burnAmount, fSubtractFeeFromAmount};
+        vecSend.push_back(recipient);
+    }
 
     // If the asset is a subasset or unique asset. We need to send the ownertoken change back to ourselfs
     if (assetType == AssetType::SUB || assetType == AssetType::UNIQUE || assetType == AssetType::MSGCHANNEL) {
@@ -5259,33 +5295,9 @@ bool ContextualCheckTransferAsset(CAssetsCache* assetCache, const CAssetTransfer
         }
     }
 
-    if (assetType == AssetType::RESTRICTED) {
-        if (!AreRestrictedAssetsDeployed()) {
-            strError = "bad-txns-transfer-restricted-before-it-is-active";
-            return false;
-        }
-
-        if (assetCache) {
-            if (assetCache->CheckForGlobalRestriction(transfer.strName, true)) {
-                strError = "bad-txns-transfer-restricted-asset-that-is-globally-restricted";
-                return false;
-            }
-        }
-
-
-        std::string strError = "";
-        if (!transfer.ContextualCheckAgainstVerifyString(assetCache, address, strError)) {
-            error("%s : %s", __func__, strError);
-            return false;
-        }
-    }
-
-    // If the transfer is a qualifier channel asset.
-    if (assetType == AssetType::QUALIFIER || assetType == AssetType::SUB_QUALIFIER) {
-        if (!AreRestrictedAssetsDeployed()) {
-            strError = "bad-txns-transfer-qualifier-before-it-is-active";
-            return false;
-        }
+    if (assetType == AssetType::RESTRICTED || assetType == AssetType::QUALIFIER || assetType == AssetType::SUB_QUALIFIER) {
+        strError = "bad-txns-restricted-assets-removed";
+        return false;
     }
     return true;
 }
@@ -5297,6 +5309,11 @@ bool CheckNewAsset(const CNewAsset& asset, std::string& strError)
     AssetType assetType;
     if (!IsAssetNameValid(std::string(asset.strName), assetType)) {
         strError = _("Invalid parameter: asset_name must only consist of valid characters and have a size between 3 and 30 characters. See help for more details.");
+        return false;
+    }
+
+    if (assetType == AssetType::RESTRICTED || assetType == AssetType::QUALIFIER || assetType == AssetType::SUB_QUALIFIER) {
+        strError = _("Restricted assets were removed");
         return false;
     }
 

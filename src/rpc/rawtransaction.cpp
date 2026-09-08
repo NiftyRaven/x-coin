@@ -693,6 +693,14 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
                 auto asset_ = sendTo[name_].get_obj();
                 auto assetKey_ = asset_.getKeys()[0];
 
+                if (assetKey_ == "issue_restricted" || assetKey_ == "reissue_restricted" ||
+                    assetKey_ == "issue_qualifier" || assetKey_ == "tag_addresses" ||
+                    assetKey_ == "untag_addresses" || assetKey_ == "freeze_addresses" ||
+                    assetKey_ == "unfreeze_addresses" || assetKey_ == "freeze_asset" ||
+                    assetKey_ == "unfreeze_asset") {
+                    throw JSONRPCError(RPC_INVALID_PARAMETER, "Restricted assets were removed");
+                }
+
                 if (assetKey_ == "issue")
                 {
                     if (asset_[0].type() != UniValue::VOBJ)
@@ -742,7 +750,13 @@ UniValue createrawtransaction(const JSONRPCRequest& request)
 
 
                     if (IsAssetNameAnRestricted(asset_name.get_str()))
-                        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, asset_name can't be a restricted asset name. Please use issue_restricted with the correct parameters");
+                        throw JSONRPCError(RPC_INVALID_PARAMETER, "Restricted assets were removed");
+
+                    AssetType rawIssueType;
+                    if (IsAssetNameValid(asset_name.get_str(), rawIssueType) && rawIssueType == AssetType::ROOT)
+                        throw JSONRPCError(RPC_INVALID_PARAMETER, "Users cannot create main assets. Link a verified X account (linkxaccount).");
+                    if (rawIssueType == AssetType::QUALIFIER || rawIssueType == AssetType::SUB_QUALIFIER)
+                        throw JSONRPCError(RPC_INVALID_PARAMETER, "Restricted assets were removed");
 
                     CAmount nAmount = AmountFromValue(asset_quantity);
 

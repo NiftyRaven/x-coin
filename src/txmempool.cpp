@@ -656,6 +656,10 @@ void CTxMemPool::removeUnchecked(txiter it, MemPoolRemovalReason reason)
         mapAssetToHash.erase(mapHashToAsset.at(hash));
         mapHashToAsset.erase(hash);
     }
+    if (mapHashToXAccount.count(hash)) {
+        mapXAccountToHash.erase(mapHashToXAccount.at(hash));
+        mapHashToXAccount.erase(hash);
+    }
 
     // Erase from the restricted asset mempool maps if they match txids
     if (mapHashToAddressMarkedFrozen.count(hash)) {
@@ -1028,6 +1032,8 @@ void CTxMemPool::_clear()
     ++nTransactionsUpdated;
     mapAssetToHash.clear();
     mapHashToAsset.clear();
+    mapXAccountToHash.clear();
+    mapHashToXAccount.clear();
 
     mapAddressesMarkedFrozen.clear();
     mapHashToAddressMarkedFrozen.clear();

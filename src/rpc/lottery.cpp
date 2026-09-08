@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "assets/xaccount.h"
 #include "base58.h"
 #include "chain.h"
 #include "chainparams.h"
@@ -209,6 +210,20 @@ UniValue registeractivenode(const JSONRPCRequest& request)
     ret.push_back(Pair("xaccount", x.handle));
     ret.push_back(Pair("xuserid", (uint64_t)x.userId));
     ret.push_back(Pair("active_nodes", (int)lottery::GetRegistry().Count(now)));
+#ifdef ENABLE_WALLET
+    {
+        std::string dest;
+        CTxDestination d;
+        if (ExtractDestination(script, d))
+            dest = EncodeDestination(d);
+        std::string aerr, aname, atxid;
+        if (AssignLinkedUserMainAsset(x.handle, dest, aerr, &aname, &atxid)) {
+            ret.push_back(Pair("main_asset", aname));
+            if (!atxid.empty())
+                ret.push_back(Pair("main_asset_txid", atxid));
+        }
+    }
+#endif
     return ret;
 }
 

@@ -131,6 +131,7 @@ RAVEN_CORE_H = \
   assets/assets.h \
   assets/assetdb.h \
   assets/assettypes.h \
+  assets/xaccount.h \
   assets/messages.h \
   assets/myassetsdb.h \
   assets/restricteddb.h \
@@ -267,6 +268,7 @@ libraven_server_a_SOURCES = \
   noui.cpp \
   assets/assets.cpp \
   assets/assetdb.cpp \
+  assets/xaccount.cpp \
   assets/assettypes.cpp \
   assets/messages.cpp \
   assets/myassetsdb.cpp \

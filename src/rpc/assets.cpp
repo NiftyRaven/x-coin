@@ -6,6 +6,8 @@
 //#include <base58.h>
 #include "assets/assets.h"
 #include "assets/assetdb.h"
+#include "assets/xaccount.h"
+#include "lottery.h"
 #include <map>
 #include "tinyformat.h"
 //#include <rpc/server.h>
@@ -421,7 +423,9 @@ UniValue issue(const JSONRPCRequest& request)
         throw std::runtime_error(
             "issue \"asset_name\" qty \"( to_address )\" \"( change_address )\" ( units ) ( reissuable ) ( has_ipfs ) \"( ipfs_hash )\"\n"
             + AssetActivationWarning() +
-            "\nIssue an asset, subasset or unique asset.\n"
+            "\nIssue a sub-asset or unique asset under a main asset this wallet owns.\n"
+            "Users cannot create main/root assets. Link a verified X account (linkxaccount)\n"
+            "to be assigned one free identity root, then issue NAME/CHILD (100 XFER) or NAME#tag (5 XFER).\n"
             "Asset name must not conflict with any existing asset.\n"
             "Unit as the number of decimals precision for the asset (0 for whole units (\"1\"), 8 for max precision (\"1.00000000\")\n"
             "Reissuable is true/false for whether additional units can be issued by the original issuer.\n"
@@ -441,13 +445,9 @@ UniValue issue(const JSONRPCRequest& request)
             "\"txid\"                     (string) The transaction id\n"
 
             "\nExamples:\n"
-            + HelpExampleCli("issue", "\"ASSET_NAME\" 1000")
-            + HelpExampleCli("issue", "\"ASSET_NAME\" 1000 \"myaddress\"")
-            + HelpExampleCli("issue", "\"ASSET_NAME\" 1000 \"myaddress\" \"changeaddress\" 4")
-            + HelpExampleCli("issue", "\"ASSET_NAME\" 1000 \"myaddress\" \"changeaddress\" 2 true")
-            + HelpExampleCli("issue", "\"ASSET_NAME\" 1000 \"myaddress\" \"changeaddress\" 8 false true QmTqu3Lk3gmTsQVtjU7rYYM37EAW4xNmbuEAp2Mjr4AV7E")
-            + HelpExampleCli("issue", "\"ASSET_NAME/SUB_ASSET\" 1000 \"myaddress\" \"changeaddress\" 2 true")
-            + HelpExampleCli("issue", "\"ASSET_NAME#uniquetag\"")
+            + HelpExampleCli("issue", "\"ALICE/NOTE\" 1")
+            + HelpExampleCli("issue", "\"ALICE/NOTE\" 1 \"myaddress\"")
+            + HelpExampleCli("issue", "\"ALICE#one\"")
         );
 
     CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
@@ -468,14 +468,12 @@ UniValue issue(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_PARAMETER, std::string("Invalid asset name: ") + assetName + std::string("\nError: ") + assetError);
     }
 
-    // Push the user to use the issue restrictd rpc call if they are trying to issue a restricted asset
-    if (assetType == AssetType::RESTRICTED) {
-        throw (JSONRPCError(RPC_INVALID_PARAMETER, std::string("Use the rpc call issuerestricted to issue a restricted asset")));
+    if (assetType == AssetType::ROOT) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Users cannot create main assets. Link a verified X account (linkxaccount) to be assigned one free identity root.");
     }
 
-    // Push the user to use the issue restrictd rpc call if they are trying to issue a restricted asset
-    if (assetType == AssetType::QUALIFIER || assetType == AssetType::SUB_QUALIFIER  ) {
-        throw (JSONRPCError(RPC_INVALID_PARAMETER, std::string("Use the rpc call issuequalifierasset to issue a qualifier asset")));
+    if (assetType == AssetType::RESTRICTED || assetType == AssetType::QUALIFIER || assetType == AssetType::SUB_QUALIFIER) {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Restricted assets were removed");
     }
 
     // Check for unsupported asset types
@@ -3032,14 +3030,138 @@ UniValue purgesnapshot(const JSONRPCRequest& request)
     return NullUniValue;
 }
 
+#ifdef ENABLE_WALLET
+UniValue linkxaccount(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 2)
+        throw std::runtime_error(
+            "linkxaccount ( xaccount to_address )\n"
+            "\nAssign this verified X account its free main/root identity asset.\n"
+            "Users cannot issue a new root; only this protocol assignment may create one (0 XFER burn).\n"
+            "Idempotent: if the handle already has a main asset, returns that name.\n"
+            "Default xaccount is -xaccount=. The handle must be on the verified allowlist.\n"
+            "\nArguments:\n"
+            "1. xaccount    (string, optional) X handle. Default: -xaccount\n"
+            "2. to_address  (string, optional) destination for NAME and NAME!. Default: new wallet address\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"xaccount\": \"alice\",\n"
+            "  \"asset\": \"ALICE\",\n"
+            "  \"owner\": \"ALICE!\",\n"
+            "  \"txid\": \"hex\",              (string, optional) set when a new assignment is broadcast\n"
+            "  \"already_assigned\": true|false\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("linkxaccount", "alice")
+            + HelpExampleCli("linkxaccount", "alice yDestination")
+            + HelpExampleRpc("linkxaccount", "\"alice\"")
+        );
+
+    CWallet * const pwallet = GetWalletForJSONRPCRequest(request);
+    if (!EnsureWalletIsAvailable(pwallet, request.fHelp)) {
+        return NullUniValue;
+    }
+
+    ObserveSafeMode();
+
+    std::string spec = gArgs.GetArg("-xaccount", "");
+    if (!request.params[0].isNull())
+        spec = request.params[0].get_str();
+    if (spec.empty())
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "no X account; pass xaccount or set -xaccount=");
+
+    std::string dest;
+    if (request.params.size() > 1 && !request.params[1].isNull())
+        dest = request.params[1].get_str();
+
+    std::string handle;
+    uint64_t userId = 0;
+    std::string nerr;
+    if (!NormalizeXAccountId(spec, handle, userId, nerr))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, nerr);
+    if (!lottery::GetAllowlist().Contains(handle, userId))
+        throw JSONRPCError(RPC_INVALID_PARAMETER,
+                           "X account is not on the verified allowlist (addxverified / -xverified / allowlist file)");
+
+    lottery::XAccount local = lottery::GetRegistry().LocalXAccount();
+    if (local.handle.empty()) {
+        lottery::XAccount acc;
+        acc.handle = handle;
+        acc.userId = userId;
+        lottery::GetRegistry().SetLocalXAccount(acc);
+    }
+
+    EnsureWalletIsUnlocked(pwallet);
+
+    std::string err;
+    std::string assetName;
+    std::string txid;
+    if (!AssignLinkedUserMainAsset(spec, dest, err, &assetName, &txid))
+        throw JSONRPCError(RPC_WALLET_ERROR, err);
+
+    UniValue ret(UniValue::VOBJ);
+    ret.push_back(Pair("xaccount", handle));
+    ret.push_back(Pair("asset", assetName));
+    ret.push_back(Pair("owner", assetName + "!"));
+    if (!txid.empty())
+        ret.push_back(Pair("txid", txid));
+    ret.push_back(Pair("already_assigned", txid.empty()));
+    return ret;
+}
+#endif
+
+UniValue getmainasset(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 1)
+        throw std::runtime_error(
+            "getmainasset ( xaccount )\n"
+            "\nReturn the protocol-assigned main/root asset for an X handle, if any.\n"
+            "Default xaccount is -xaccount=.\n"
+            "\nArguments:\n"
+            "1. xaccount  (string, optional) X handle. Default: -xaccount\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"xaccount\": \"alice\",\n"
+            "  \"assigned\": true|false,\n"
+            "  \"asset\": \"ALICE\"\n"
+            "}\n"
+            "\nExamples:\n"
+            + HelpExampleCli("getmainasset", "alice")
+            + HelpExampleRpc("getmainasset", "\"alice\"")
+        );
+
+    std::string spec = gArgs.GetArg("-xaccount", "");
+    if (!request.params[0].isNull())
+        spec = request.params[0].get_str();
+    if (spec.empty())
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "no X account; pass xaccount or set -xaccount=");
+
+    std::string handle;
+    uint64_t userId = 0;
+    std::string nerr;
+    if (!NormalizeXAccountId(spec, handle, userId, nerr))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, nerr);
+
+    std::string assetName;
+    const bool assigned = CheckIfXAccountAssigned(handle, &assetName);
+    UniValue ret(UniValue::VOBJ);
+    ret.push_back(Pair("xaccount", handle));
+    ret.push_back(Pair("assigned", assigned));
+    if (assigned)
+        ret.push_back(Pair("asset", assetName));
+    return ret;
+}
+
 static const CRPCCommand commands[] =
 { //  category    name                          actor (function)             argNames
   //  ----------- ------------------------      -----------------------      ----------
 #ifdef ENABLE_WALLET
     { "assets",   "issue",                      &issue,                      {"asset_name","qty","to_address","change_address","units","reissuable","has_ipfs","ipfs_hash"} },
     { "assets",   "issueunique",                &issueunique,                {"root_name", "asset_tags", "ipfs_hashes", "to_address", "change_address"}},
+    { "assets",   "linkxaccount",               &linkxaccount,               {"xaccount", "to_address"}},
     { "assets",   "listmyassets",               &listmyassets,               {"asset", "verbose", "count", "start", "confs"}},
 #endif
+    { "assets",   "getmainasset",               &getmainasset,               {"xaccount"}},
     { "assets",   "listassetbalancesbyaddress", &listassetbalancesbyaddress, {"address", "onlytotal", "count", "start"} },
     { "assets",   "getassetdata",               &getassetdata,               {"asset_name"}},
     { "assets",   "listaddressesbyasset",       &listaddressesbyasset,       {"asset_name", "onlytotal", "count", "start"}},
@@ -3051,28 +3173,6 @@ static const CRPCCommand commands[] =
 #endif
     { "assets",   "listassets",                 &listassets,                 {"asset", "verbose", "count", "start"}},
     { "assets",   "getcacheinfo",               &getcacheinfo,               {}},
-
-#ifdef ENABLE_WALLET
-    { "restricted assets",   "transferqualifier",          &transferqualifier,          {"qualifier_name", "qty", "to_address", "change_address", "message", "expire_time"}},
-    { "restricted assets",   "issuerestrictedasset",       &issuerestrictedasset,       {"asset_name","qty","verifier","to_address","change_address","units","reissuable","has_ipfs","ipfs_hash"} },
-    { "restricted assets",   "issuequalifierasset",        &issuequalifierasset,        {"asset_name","qty","to_address","change_address","has_ipfs","ipfs_hash"} },
-    { "restricted assets",   "reissuerestrictedasset",     &reissuerestrictedasset,     {"asset_name", "qty", "change_verifier", "new_verifier", "to_address", "change_address", "new_units", "reissuable", "new_ipfs"}},
-    { "restricted assets",   "addtagtoaddress",            &addtagtoaddress,            {"tag_name", "to_address", "change_address", "asset_data"}},
-    { "restricted assets",   "removetagfromaddress",       &removetagfromaddress,       {"tag_name", "to_address", "change_address", "asset_data"}},
-    { "restricted assets",   "freezeaddress",              &freezeaddress,              {"asset_name", "address", "change_address", "asset_data"}},
-    { "restricted assets",   "unfreezeaddress",            &unfreezeaddress,            {"asset_name", "address", "change_address", "asset_data"}},
-    { "restricted assets",   "freezerestrictedasset",      &freezerestrictedasset,      {"asset_name", "change_address", "asset_data"}},
-    { "restricted assets",   "unfreezerestrictedasset",    &unfreezerestrictedasset,    {"asset_name", "change_address", "asset_data"}},
-#endif
-    { "restricted assets",   "listaddressesfortag",        &listaddressesfortag,        {"tag_name"}},
-    { "restricted assets",   "listtagsforaddress",         &listtagsforaddress,         {"address"}},
-    { "restricted assets",   "listaddressrestrictions",    &listaddressrestrictions,    {"address"}},
-    { "restricted assets",   "listglobalrestrictions",     &listglobalrestrictions,     {}},
-    { "restricted assets",   "getverifierstring",          &getverifierstring,          {"restricted_name"}},
-    { "restricted assets",   "checkaddresstag",            &checkaddresstag,            {"address", "tag_name"}},
-    { "restricted assets",   "checkaddressrestriction",    &checkaddressrestriction,    {"address", "restricted_name"}},
-    { "restricted assets",   "checkglobalrestriction",     &checkglobalrestriction,     {"restricted_name"}},
-    { "restricted assets",   "isvalidverifierstring",      &isvalidverifierstring,      {"verifier_string"}},
 
     { "assets",   "getsnapshot",                &getsnapshot,                {"asset_name", "block_height"}},
     { "assets",   "purgesnapshot",              &purgesnapshot,              {"asset_name", "block_height"}},

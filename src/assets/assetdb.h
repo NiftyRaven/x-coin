@@ -71,6 +71,8 @@ public:
     bool WriteAddressAssetQuantity( const std::string& address, const std::string& assetName, const CAmount& quantity);
     bool WriteBlockUndoAssetData(const uint256& blockhash, const std::vector<std::pair<std::string, CBlockAssetUndo> >& assetUndoData);
     bool WriteReissuedMempoolState();
+    bool WriteXAccountAssignment(const std::string& xId, const std::string& assetName);
+    bool EraseXAccountAssignment(const std::string& xId);
 
     // Read from database functions
     bool ReadAssetData(const std::string& strName, CNewAsset& asset, int& nHeight, uint256& blockHash);
@@ -87,6 +89,7 @@ public:
 
     // Helper functions
     bool LoadAssets();
+    bool LoadXAccountAssignments(std::map<std::string, std::string>& out);
     bool AssetDir(std::vector<CDatabasedAssetData>& assets, const std::string filter, const size_t count, const long start);
     bool AssetDir(std::vector<CDatabasedAssetData>& assets);
 

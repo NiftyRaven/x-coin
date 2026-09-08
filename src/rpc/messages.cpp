@@ -494,8 +494,6 @@ static const CRPCCommand commands[] =
             { "messages",       "unsubscribefromchannel",     &unsubscribefromchannel,     {"channel_name"}},
 #ifdef ENABLE_WALLET
             { "messages",       "sendmessage",                &sendmessage,                {"channel", "ipfs_hash", "expire_time"}},
-            {"restricted",        "viewmytaggedaddresses",      &viewmytaggedaddresses,       {}},
-            {"restricted",        "viewmyrestrictedaddresses",  &viewmyrestrictedaddresses,   {}},
 #endif
             { "messages",       "clearmessages",              &clearmessages,              {}},
     };

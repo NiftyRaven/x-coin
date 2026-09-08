@@ -470,6 +470,8 @@ public:
 
     std::map<std::string, uint256> mapAssetToHash;
     std::map<uint256, std::string> mapHashToAsset;
+    std::map<std::string, uint256> mapXAccountToHash;
+    std::map<uint256, std::string> mapHashToXAccount;
 
     /** Restricted assets maps */
     // Helper maps for when addresses are marked as frozen

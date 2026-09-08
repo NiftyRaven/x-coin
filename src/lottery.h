@@ -98,6 +98,7 @@ public:
 
     void SetLocalXAccount(const XAccount& account);
     XAccount LocalXAccount() const;
+    // On a successful verified X-link, call AssignLinkedUserMainAsset (src/assets/xaccount.h).
 
     /**
      * Record a payable script as active if the X identity is linked and

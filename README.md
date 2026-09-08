@@ -63,12 +63,13 @@ src/xcoin-cli -regtest getblockchaininfo
 src/xcoin-cli -regtest getlotteryinfo   # local_eligible should be true
 src/xcoin-cli -regtest getnewaddress   # y… on regtest/testnet; X… on main
 src/xcoin-cli -regtest generatetoaddress 1 <address>
-src/xcoin-cli -regtest issue TEST_ASSET 1000
+src/xcoin-cli -regtest linkxaccount alice   # free main/root identity asset
+src/xcoin-cli -regtest issue ALICE/NOTE 1   # sub, 100 XFER
 ```
 
-`generatetoaddress` **assembles** a block; it does not hash. Coinbase is immature for 100 blocks — generate ~110 before `issue`. On main/test the producer thread emits at most one block per minute when this node wins.
+`generatetoaddress` **assembles** a block; it does not hash. Coinbase is immature for 100 blocks — generate ~110 before `linkxaccount` / `issue` of a sub. On main/test the producer thread emits at most one block per minute when this node wins.
 
-Verified on regtest in this pass: distinct genesis, `getlotteryinfo` (1 winner, 5000 XFER), on-demand block, `issue TESTASSET` + owner token `TESTASSET!`.
+Verified on regtest in this pass: distinct genesis, `getlotteryinfo` (1 winner, 5000 XFER), on-demand block, protocol main via `linkxaccount` + sub/unique. Users cannot `issue` a new root.
 
 ## RPC (lottery)
 
@@ -81,13 +82,13 @@ Verified on regtest in this pass: distinct genesis, `getlotteryinfo` (1 winner, 
 
 ## Assets
 
-The Ravencoin asset layer is intact: `issue`, `transfer`, `listassets`, unique/qualifier/restricted assets, burn fees. Reserved names now include **XFER** / **XCOIN** as well as RVN/RAVEN. Script-level `OP_RVN_ASSET` markers are unchanged so the protocol still matches the upstream implementation.
+See [docs/ASSETS.md](docs/ASSETS.md). Each verified X account is assigned one free main/root asset (`linkxaccount` / `AssignLinkedUserMainAsset`). Users cannot `issue` a new root. Sub **100 XFER**, unique **5 XFER**. Restricted/qualifier assets are removed. Reserved names include **XFER** / **XCOIN** as well as RVN/RAVEN. Script-level `OP_RVN_ASSET` markers are unchanged.
 
 ## Launch
 
 Private-launch checklist (ports, magic, genesis, seed publish, join, rewards, risks): [docs/LAUNCH.md](docs/LAUNCH.md). Lottery: [docs/LOTTERY.md](docs/LOTTERY.md).
 
-`contrib/xcoin/smoke-regtest.sh` exercises lottery + a single-winner coinbase at height 149 + a two-winner split at height 150 + `issue TESTASSET`. `contrib/xcoin/smoke-gossip.sh` checks that two nodes share one active-node set over P2P `xhb`. `contrib/xcoin/smoke-eligibility.sh` checks that an unlinked node cannot enter the lottery.
+`contrib/xcoin/smoke-regtest.sh` exercises lottery + a single-winner coinbase at height 149 + a two-winner split at height 150 + `linkxaccount` / sub / unique (`issue TESTASSET` is illegal). `contrib/xcoin/smoke-gossip.sh` checks that two nodes share one active-node set over P2P `xhb`. `contrib/xcoin/smoke-eligibility.sh` checks that an unlinked node cannot enter the lottery.
 
 Live X.com API keys / OAuth are out of scope. Eligibility is an operator-shared allowlist of X-verified handles (see [docs/LOTTERY.md](docs/LOTTERY.md)). Also out of scope: explorers, DNS seeds, making upstream `make check` green against the new genesis.
 

@@ -15,6 +15,7 @@
 
 #include <assert.h>
 #include <assets/assets.h>
+#include <assets/xaccount.h>
 #include <wallet/wallet.h>
 
 bool CCoinsView::GetCoin(const COutPoint &outpoint, Coin &coin) const { return false; }
@@ -119,6 +120,12 @@ void AddCoins(CCoinsViewCache& cache, const CTransaction &tx, int nHeight, uint2
                 if (!assetsCache->AddOwnerAsset(ownerName, ownerAddress))
                     error("%s : Failed at adding a new asset to our cache. asset: %s", __func__,
                           asset.strName);
+
+                std::string xid;
+                if (ParseXAccountAssignment(tx, xid)) {
+                    if (!AddXAccountAssignment(xid, asset.strName))
+                        error("%s : Failed to record X-account assignment %s -> %s", __func__, xid, asset.strName);
+                }
 
             } else if (tx.IsReissueAsset()) {
                 CReissueAsset reissue;

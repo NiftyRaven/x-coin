@@ -87,39 +87,30 @@ echo "height $HEIGHT"
 [[ "$HEIGHT" -ge 110 ]]
 "${CLI[@]}" getblockchaininfo >/dev/null
 
-echo "== assets (protocol main / no user roots when sibling landed) =="
-# `help <name>` echoes the name even when the command is missing.
-if "${CLI[@]}" help 2>/dev/null | grep -qw linkxaccount; then
-  if "${CLI[@]}" issue TESTASSET 1000 >/tmp/xcoin-issue-root.err 2>&1; then
-    echo "issue TESTASSET must fail (users cannot create main assets)" >&2
-    cat /tmp/xcoin-issue-root.err >&2
-    exit 1
-  fi
-  grep -qi "main asset\|cannot create\|root" /tmp/xcoin-issue-root.err
-  LINK="$("${CLI[@]}" linkxaccount smoke1 "$ADDR1")"
-  echo "$LINK"
-  echo "$LINK" | grep -q '"asset"'
-  ASSETS="$("${CLI[@]}" listmyassets)"
-  echo "$ASSETS"
-  MAIN="$(echo "$LINK" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("asset",""))')"
-  if [[ -n "$MAIN" ]]; then
-    echo "$ASSETS" | grep -q "$MAIN"
-    "${CLI[@]}" issue "$MAIN/NOTE" 1
-    "${CLI[@]}" issueunique "$MAIN" '["ONE"]'
-    ASSETS2="$("${CLI[@]}" listmyassets)"
-    echo "$ASSETS2"
-    echo "$ASSETS2" | grep -q "$MAIN/NOTE"
-    echo "$ASSETS2" | grep -q "$MAIN#ONE"
-  fi
-else
-  echo "linkxaccount not in this binary yet; leave protocol-assign hook"
-  if "${CLI[@]}" issue TESTASSET 1000 >/tmp/xcoin-issue-root.err 2>&1; then
-    echo "$("${CLI[@]}" listmyassets)" | grep -q TESTASSET
-  else
-    echo "root issue already blocked (ok); waiting for linkxaccount"
-    cat /tmp/xcoin-issue-root.err || true
-  fi
+echo "== assets (protocol main / no user roots) =="
+if "${CLI[@]}" issue TESTASSET 1000 >/tmp/xcoin-issue-root.err 2>&1; then
+  echo "issue TESTASSET must fail (users cannot create main assets)" >&2
+  cat /tmp/xcoin-issue-root.err >&2
+  exit 1
 fi
+grep -qi "main asset\|cannot create\|root" /tmp/xcoin-issue-root.err
+LINK="$("${CLI[@]}" linkxaccount smoke1 "$ADDR1")"
+echo "$LINK"
+echo "$LINK" | grep -q '"asset"'
+ASSETS="$("${CLI[@]}" listmyassets)"
+echo "$ASSETS"
+MAIN="$(echo "$LINK" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("asset",""))')"
+[[ -n "$MAIN" ]]
+echo "$ASSETS" | grep -q "$MAIN"
+"${CLI[@]}" issue "$MAIN/NOTE" 1
+"${CLI[@]}" issueunique "$MAIN" '["ONE"]'
+ASSETS2="$("${CLI[@]}" listmyassets)"
+echo "$ASSETS2"
+echo "$ASSETS2" | grep -q "$MAIN/NOTE"
+echo "$ASSETS2" | grep -q "$MAIN#ONE"
+GETMAIN="$("${CLI[@]}" getmainasset smoke1)"
+echo "$GETMAIN"
+echo "$GETMAIN" | grep -q "$MAIN"
 
 echo "== two-winner window (regtest halving interval 150) =="
 # Height 149: still 1 winner, full 5000 subsidy. Height 150: 2 winners, 2500 subsidy.
