@@ -37,6 +37,8 @@ Q_SIGNALS:
 
 private Q_SLOTS:
     void onIncoming();
+    void onCallbackReadyRead();
+    void onCallbackTimeout();
     void onTokenFinished();
     void onMeFinished();
 
@@ -46,6 +48,7 @@ private:
     void exchangeCode(const QString& code);
     void fetchMe(const QString& accessToken);
     bool finishFromUsersMe(const QByteArray& body, QString& err);
+    void processCallbackSocket(QTcpSocket *sock);
 
     QTcpServer *server;
     QNetworkAccessManager *nam;
@@ -53,6 +56,7 @@ private:
     QString state;
     QString pendingCode;
     QString accessToken;
+    bool callbackConsumed;
 };
 
 #endif

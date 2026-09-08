@@ -65,6 +65,8 @@ public:
 
     /** Run a wallet/node RPC from a button (no terminal). */
     QString callRpc(const QString& method, const QStringList& args = QStringList()) const;
+    /** Turn callRpc JSON into a short user-facing string. *ok is false on RPC error. */
+    static QString humanRpc(const QString& raw, bool* ok = 0);
 
 private:
     ClientModel *clientModel;

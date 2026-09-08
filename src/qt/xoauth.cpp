@@ -16,8 +16,10 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QAbstractSocket>
 #include <QTcpServer>
 #include <QTcpSocket>
+#include <QTimer>
 #include <QUrl>
 #include <QUrlQuery>
 
@@ -45,7 +47,8 @@ static QString RandomB64Url(int nbytes)
 XOAuth::XOAuth(QObject *parent) :
     QObject(parent),
     server(new QTcpServer(this)),
-    nam(new QNetworkAccessManager(this))
+    nam(new QNetworkAccessManager(this)),
+    callbackConsumed(false)
 {
     connect(server, SIGNAL(newConnection()), this, SLOT(onIncoming()));
 }
@@ -146,6 +149,7 @@ void XOAuth::startLogin()
     CSHA256().Write((const unsigned char*)ver.data(), ver.size()).Finalize(hash);
     const QString challenge = QString::fromStdString(Base64Url(hash, sizeof(hash)));
 
+    callbackConsumed = false;
     if (server->isListening())
         server->close();
     if (!server->listen(QHostAddress::LocalHost, (quint16)CallbackPort())) {
@@ -173,9 +177,49 @@ void XOAuth::onIncoming()
     QTcpSocket *sock = server->nextPendingConnection();
     if (!sock)
         return;
-    sock->waitForReadyRead(5000);
-    const QByteArray req = sock->readAll();
-    const QString first = QString::fromUtf8(req).split("\r\n").value(0);
+    sock->setParent(this);
+    connect(sock, SIGNAL(readyRead()), this, SLOT(onCallbackReadyRead()));
+    QTimer *timeout = new QTimer(sock);
+    timeout->setSingleShot(true);
+    connect(timeout, SIGNAL(timeout()), this, SLOT(onCallbackTimeout()));
+    timeout->start(15000);
+    if (sock->bytesAvailable() > 0)
+        processCallbackSocket(sock);
+}
+
+void XOAuth::onCallbackReadyRead()
+{
+    processCallbackSocket(qobject_cast<QTcpSocket*>(sender()));
+}
+
+void XOAuth::onCallbackTimeout()
+{
+    QTimer *timeout = qobject_cast<QTimer*>(sender());
+    QTcpSocket *sock = timeout ? qobject_cast<QTcpSocket*>(timeout->parent()) : 0;
+    if (!sock || sock->property("xoauthDone").toBool())
+        return;
+    sock->setProperty("xoauthDone", true);
+    sock->disconnectFromHost();
+    sock->deleteLater();
+    fail(tr("Sign in with X timed out waiting for the browser callback."));
+}
+
+void XOAuth::processCallbackSocket(QTcpSocket *sock)
+{
+    if (!sock || sock->property("xoauthDone").toBool())
+        return;
+    QByteArray acc = sock->property("xoauthBuf").toByteArray();
+    acc += sock->readAll();
+    sock->setProperty("xoauthBuf", acc);
+    if (!acc.contains("\r\n\r\n") && acc.size() < 16384)
+        return;
+
+    sock->setProperty("xoauthDone", true);
+    const QList<QTimer*> timers = sock->findChildren<QTimer*>();
+    for (int i = 0; i < timers.size(); ++i)
+        timers.at(i)->stop();
+
+    const QString first = QString::fromUtf8(acc).split("\r\n").value(0);
     QString path = first.section(' ', 1, 1);
     const QString htmlOk =
         "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n"
@@ -184,6 +228,30 @@ void XOAuth::onIncoming()
     const QString htmlErr =
         "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\n"
         "X Coin OAuth callback error\n";
+    const QString htmlSkip =
+        "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\n"
+        "not found\n";
+
+    auto closeSock = [sock]() {
+        sock->flush();
+        QObject::connect(sock, SIGNAL(disconnected()), sock, SLOT(deleteLater()));
+        sock->disconnectFromHost();
+        if (sock->state() == QAbstractSocket::UnconnectedState)
+            sock->deleteLater();
+    };
+
+    if (acc.size() >= 16384 && !acc.contains("\r\n\r\n")) {
+        sock->write(htmlErr.toUtf8());
+        closeSock();
+        return;
+    }
+
+    if (!path.startsWith("/callback")) {
+        sock->write(htmlSkip.toUtf8());
+        closeSock();
+        return;
+    }
+
     QUrl u("http://127.0.0.1" + path);
     QUrlQuery q(u);
     const QString st = q.queryItemValue("state");
@@ -191,15 +259,20 @@ void XOAuth::onIncoming()
     const QString oauthErr = q.queryItemValue("error");
     if (!oauthErr.isEmpty() || code.isEmpty() || st != state) {
         sock->write(htmlErr.toUtf8());
-        sock->disconnectFromHost();
-        fail(oauthErr.isEmpty() ? tr("OAuth callback missing code or state") : oauthErr);
+        closeSock();
+        fail(oauthErr.isEmpty() ? tr("Sign in with X did not complete. Try again from Home.") : oauthErr);
         return;
     }
+    if (callbackConsumed) {
+        sock->write(htmlOk.toUtf8());
+        closeSock();
+        return;
+    }
+    callbackConsumed = true;
     sock->write(htmlOk.toUtf8());
-    sock->disconnectFromHost();
+    closeSock();
     server->close();
     exchangeCode(code);
-    // Do not keep the authorization code after the exchange is queued.
     pendingCode.clear();
 }
 

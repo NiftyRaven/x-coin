@@ -33,7 +33,7 @@ XSend::XSend(WalletView* walletViewIn, QWidget* parent)
     title->setObjectName("xsection");
     root->addWidget(title);
 
-    tagLabel = new QLabel("Sign in with X first. Send requires the session proof that links this wallet to your X account.");
+    tagLabel = new QLabel("Sign in with X on Home first. Send spends only keys in this wallet.");
     tagLabel->setObjectName("xhint");
     tagLabel->setWordWrap(true);
     root->addWidget(tagLabel);
@@ -104,15 +104,11 @@ void XSend::refresh()
 {
     if (!xsession::HasValidSession()) {
         tagLabel->setText("This wallet is not linked yet. Sign in with X on Home. A typed handle cannot send.");
-        balanceLabel->setText("Sign in with X required to send.\n"
-                              "This wallet + this X session = you. Another user cannot send from inside your wallet.\n"
-                              "The session proof is the identity gate. Spend only keys in this wallet.dat.");
+        balanceLabel->setText("Sign in with X required to send.");
         return;
     }
     const QString handle = QString::fromStdString(xsession::SignedInHandle());
-    tagLabel->setText(QString("Sending from the wallet linked to @%1. "
-                              "This wallet + this X session = you. Spend only keys in this wallet.dat. "
-                              "Signing in as someone else does not import their coins. A typed handle cannot send as you.")
+    tagLabel->setText(QString("Sending from the wallet linked to @%1. Spend only keys in this wallet.dat.")
         .arg(handle));
     if (!walletModel) {
         balanceLabel->setText("Balance\n(open a wallet)");
@@ -146,7 +142,16 @@ void XSend::onSend()
         QMessageBox::information(this, "X-Coin", "Paste an address and an amount.");
         return;
     }
-    const QString out = rpc("sendtoaddress", QStringList() << dest << amt);
-    statusLabel->setText(out);
-    refresh();
+    bool ok = false;
+    const QString out = WalletView::humanRpc(rpc("sendtoaddress", QStringList() << dest << amt), &ok);
+    if (ok) {
+        statusLabel->setText(QString("Sent.\n%1").arg(out));
+        addrEdit->clear();
+        amountEdit->clear();
+        refresh();
+        return;
+    }
+    const QString msg = out.isEmpty() ? QStringLiteral("Send failed.") : out;
+    statusLabel->setText(msg);
+    QMessageBox::warning(this, "X-Coin", msg);
 }

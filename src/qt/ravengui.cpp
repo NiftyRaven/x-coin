@@ -1458,7 +1458,7 @@ void RavenGUI::incomingTransaction(const QString& date, int unit, const CAmount&
 {
     // On new transaction, make an info balloon
     QString msg = tr("Date: %1\n").arg(date);
-    if (assetName == "XFER" || assetName == "RVN")
+    if (assetName.isEmpty() || assetName == "XFER" || assetName == "RVN")
         msg += tr("Amount: %1\n").arg(RavenUnits::formatWithUnit(unit, amount, true));
     else
         msg += tr("Amount: %1\n").arg(RavenUnits::formatWithCustomName(assetName, amount, MAX_ASSET_UNITS, true));
@@ -1469,8 +1469,14 @@ void RavenGUI::incomingTransaction(const QString& date, int unit, const CAmount&
         msg += tr("Label: %1\n").arg(label);
     else if (!address.isEmpty())
         msg += tr("Address: %1\n").arg(address);
-    message((amount)<0 ? tr("Sent transaction") : tr("Incoming transaction"),
-             msg, CClientUIInterface::MSG_INFORMATION);
+    QString title;
+    if (type.contains(QLatin1String("Lottery"), Qt::CaseInsensitive))
+        title = tr("Lottery win");
+    else if (amount < 0)
+        title = tr("Sent");
+    else
+        title = tr("Received");
+    message(title, msg, CClientUIInterface::MSG_INFORMATION);
 }
 
 void RavenGUI::checkAssets()
@@ -1725,13 +1731,17 @@ void RavenGUI::updateLotteryHeader()
         return;
     ClientModel::LotteryGuiInfo info = clientModel->getLotteryGuiInfo();
     labelCurrentMarket->setText(tr("Lottery"));
-    QString handle = info.handle.isEmpty() ? tr("unlinked") : info.handle;
+    QString handle = info.handle.trimmed();
+    if (handle.isEmpty())
+        handle = tr("unlinked");
+    else if (!handle.startsWith(QLatin1Char('@')))
+        handle = QLatin1Char('@') + handle;
     QString elig = info.eligible ? tr("eligible") : tr("not eligible");
-    labelCurrentPrice->setText(tr("%1 · %2 · %3 active · %4 winner(s)")
+    labelCurrentPrice->setText(tr("%1 · %2 · next #%3 · %4 active")
                                    .arg(handle)
                                    .arg(elig)
-                                   .arg(info.activeNodes)
-                                   .arg(info.winnerCount));
+                                   .arg(info.height)
+                                   .arg(info.activeNodes));
 }
 
 /** Get restart command-line parameters and request restart */

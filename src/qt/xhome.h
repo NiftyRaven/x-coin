@@ -57,6 +57,7 @@ private Q_SLOTS:
 private:
     void applyTheme();
     QString rpc(const QString& method, const QStringList& args = QStringList()) const;
+    void showRpcOutcome(const QString& raw, const QString& okPrefix);
     QString localListenEndpoint() const;
     void fillNodeShareWidgets();
     void applyNodeShareVisibility(bool on);
