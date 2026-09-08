@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=X Coin
+Comment=Connect to the X Coin (XFER) P2P network
+Exec=xcoin-qt %u
+Terminal=false
+Type=Application
+Icon=xcoin
+MimeType=x-scheme-handler/xcoin;
+Categories=Office;Finance;

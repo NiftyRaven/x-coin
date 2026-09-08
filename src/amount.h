@@ -1,0 +1,28 @@
+// Copyright (c) 2009-2010 Satoshi Nakamoto
+// Copyright (c) 2009-2016 The Bitcoin Core developers
+// Copyright (c) 2017-2019 The Raven Core developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+#ifndef RAVEN_AMOUNT_H
+#define RAVEN_AMOUNT_H
+
+#include <stdint.h>
+
+/** Amount in xferons (Can be negative). 1 XFER = 100,000,000 xferons. */
+typedef int64_t CAmount;
+
+static const CAmount COIN = 100000000;
+static const CAmount CENT = 1000000;
+
+/** No amount larger than this (in xferons) is valid.
+ *
+ * Note that this constant is *not* the total money supply. Spendable lifetime
+ * subsidy (height ≥ 1, integer `>>=` halvings, height 0 unpaid) is
+ * 20,999,994,999.727 XFER. This cap is a sanity check used by consensus-critical
+ * validation code; the exact value of MAX_MONEY is consensus critical.
+ * */
+static const CAmount MAX_MONEY = 21000000000 * COIN;
+inline bool MoneyRange(const CAmount& nValue) { return (nValue >= 0 && nValue <= MAX_MONEY); }
+
+#endif //  RAVEN_AMOUNT_H
