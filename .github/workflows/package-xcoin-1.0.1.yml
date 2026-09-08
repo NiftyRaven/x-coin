@@ -1,0 +1,134 @@
+name: Package X Coin 1.0.1
+
+# Builds the two launch packages from the launch-blockers branch.
+# Windows configure is always out-of-tree + --without-qtdbus so a prior
+# Linux in-tree config.status cannot leave USE_DBUS=1.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'git ref to package'
+        required: true
+        default: 'projects/launch-wallet-blockers-a940'
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 240
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+          fetch-depth: 1
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential autotools-dev automake autoconf libtool pkg-config \
+            libssl-dev libevent-dev bsdmainutils python3 \
+            libboost-system-dev libboost-filesystem-dev libboost-chrono-dev \
+            libboost-test-dev libboost-thread-dev libboost-program-options-dev \
+            libdb++-dev libminiupnpc-dev libzmq3-dev libqrencode-dev \
+            qtbase5-dev qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler \
+            xvfb
+
+      - name: Build
+        run: |
+          ./autogen.sh
+          ./configure --with-gui=qt5 --disable-bench --with-incompatible-bdb
+          make -j$(nproc)
+
+      - name: Smoke (throwaway -regtest only)
+        run: |
+          export XCOIND="$PWD/src/xcoind" XCLI="$PWD/src/xcoin-cli"
+          contrib/xcoin/smoke-xsession.sh
+          contrib/xcoin/smoke-regtest.sh
+          contrib/xcoin/smoke-isolation.sh
+
+      - name: Package Linux
+        run: contrib/xcoin/package-linux.sh
+
+      - name: Name release archive
+        run: |
+          cp dist/xcoin-1.0.1-linux-x86_64.tar.gz dist/X-Coin-1.0.1-Linux-x86_64.tar.gz
+          tar -tzf dist/X-Coin-1.0.1-Linux-x86_64.tar.gz | head
+          test -n "$(tar -tzf dist/X-Coin-1.0.1-Linux-x86_64.tar.gz | grep '^xcoin-1.0.1-linux-x86_64/X Coin Practice Wallet$')"
+          test -n "$(tar -tzf dist/X-Coin-1.0.1-Linux-x86_64.tar.gz | grep '^xcoin-1.0.1-linux-x86_64/X Coin Wallet$')"
+
+      - name: Upload Linux package
+        uses: actions/upload-artifact@v4
+        with:
+          name: X-Coin-1.0.1-Linux-x86_64
+          path: dist/X-Coin-1.0.1-Linux-x86_64.tar.gz
+          if-no-files-found: error
+
+  windows:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+          fetch-depth: 1
+
+      - name: Install mingw
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential autotools-dev automake autoconf libtool pkg-config \
+            g++-mingw-w64-x86-64 mingw-w64-x86-64-dev zip
+          sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+          sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+
+      - name: Cache depends
+        uses: actions/cache@v4
+        with:
+          path: |
+            depends/built
+            depends/sources
+            depends/work
+          key: xcoin-mingw-depends-${{ hashFiles('depends/packages/*', 'depends/hosts/*', 'depends/Makefile', 'depends/funcs.mk') }}
+
+      - name: Build depends
+        run: make -C depends HOST=x86_64-w64-mingw32 -j$(nproc)
+
+      - name: Configure Windows out-of-tree without Qt DBus
+        run: |
+          # Never reuse an in-tree Linux config.status.
+          test ! -f build-win/config.status
+          rm -rf build-win
+          mkdir -p build-win
+          cd build-win
+          CONFIG_SITE="$GITHUB_WORKSPACE/depends/x86_64-w64-mingw32/share/config.site" \
+            ../configure --prefix=/ --with-gui=qt5 --disable-bench --disable-tests \
+            --enable-reduce-exports --without-qtdbus
+          grep -E 'USE_DBUS|qtdbus' config.log | tail -20 || true
+          if grep -q '^#define USE_DBUS 1' src/config/raven-config.h 2>/dev/null \
+             || grep -q '^#define USE_DBUS 1' src/config/xcoin-config.h 2>/dev/null; then
+            echo "USE_DBUS must stay off for Windows" >&2
+            exit 1
+          fi
+
+      - name: Build Windows
+        run: make -C build-win -j$(nproc)
+
+      - name: Package Windows
+        run: contrib/xcoin/package-windows.sh
+
+      - name: Name release archive
+        run: |
+          cp dist/xcoin-1.0.1-win-x86_64.zip dist/X-Coin-1.0.1-Windows.zip
+          unzip -Z -1 dist/X-Coin-1.0.1-Windows.zip | head
+          unzip -Z -1 dist/X-Coin-1.0.1-Windows.zip | grep -q '^xcoin-1.0.1-win-x86_64/X Coin Practice Wallet.exe$'
+          unzip -Z -1 dist/X-Coin-1.0.1-Windows.zip | grep -q '^xcoin-1.0.1-win-x86_64/X Coin Wallet.exe$'
+
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: X-Coin-1.0.1-Windows
+          path: dist/X-Coin-1.0.1-Windows.zip
+          if-no-files-found: error
