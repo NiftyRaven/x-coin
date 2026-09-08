@@ -1,0 +1,8 @@
+# X Coin verified X allowlist (operator-shared)
+# Only list X-verified (blue-check / X Premium verified) handles.
+# All honest nodes must load the same set so they agree on the active set.
+# format: handle [userid]
+#
+# SeedHandle 123456789
+# alice
+# bob

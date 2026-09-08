@@ -601,6 +601,12 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-whitelistrelay", strprintf(_("Accept relayed transactions received from whitelisted peers even when not relaying transactions (default: %d)"), DEFAULT_WHITELISTRELAY));
     strUsage += HelpMessageOpt("-whitelistforcerelay", strprintf(_("Force relay of transactions from whitelisted peers even if they violate local relay policy (default: %d)"), DEFAULT_WHITELISTFORCERELAY));
 
+    strUsage += HelpMessageGroup(_("Lottery options:"));
+    strUsage += HelpMessageOpt("-xaccount=<handle>", _("Link this node to an X handle. Required for lottery eligibility (unlinked nodes sync/relay but cannot win)"));
+    strUsage += HelpMessageOpt("-xuserid=<id>", _("Optional numeric X user id for the linked account"));
+    strUsage += HelpMessageOpt("-xallowlist=<file>", _("Load verified X accounts from a text file (handle [userid] per line). Honest operators list only X-verified / blue-check accounts"));
+    strUsage += HelpMessageOpt("-xverified=<handle>", _("Add a verified X handle to the allowlist (repeatable; handle or handle:userid)"));
+
     strUsage += HelpMessageGroup(_("Block creation options:"));
     strUsage += HelpMessageOpt("-blockmaxweight=<n>", strprintf(_("Set maximum BIP141 block weight (default: %d)"), MAX_BLOCK_WEIGHT - 4000));
     strUsage += HelpMessageOpt("-blockmaxsize=<n>", _("Set maximum BIP141 block weight to this * 4. Deprecated, use blockmaxweight"));
@@ -1891,7 +1897,7 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
     }
     LogPrintf("nBestHeight = %d\n", chain_active_height);
 
-    // Lottery producer (not PoW). A running node is an active node.
+    // Lottery producer (not PoW). Only verified-X linked nodes are eligible.
     lottery::StartProducer(chainparams);
 
     if (gArgs.GetBoolArg("-listenonion", DEFAULT_LISTEN_ONION))

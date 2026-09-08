@@ -11,6 +11,7 @@
 #include "sync.h"
 #include "uint256.h"
 
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
@@ -23,8 +24,11 @@ class CValidationState;
  * X Coin lottery consensus.
  *
  * Design (see docs/LOTTERY.md):
- *  - Every running node is an active node after a heartbeat that advertises
- *    a payable script. Node id = Hash160(script).
+ *  - A node is lottery-eligible only if it links an X account (-xaccount)
+ *    that appears on the operator-shared verified allowlist.
+ *  - Eligible nodes heartbeat a payable script plus that X identity.
+ *    Node id = Hash160(script). Heartbeats missing a verified link are
+ *    ignored for the active set (one X account → one active node).
  *  - Honest peers gossip `xhb` messages so they share one active-node set.
  *  - One lottery slot per minute; height maps 1:1 with slots after genesis.
  *  - Winner count starts at 1 and increases by 1 at each subsidy halving.
@@ -40,12 +44,49 @@ static const int64_t SLOT_SECONDS = 60;
 static const int64_t HEARTBEAT_TTL_SECONDS = 180;
 static const size_t MAX_ACTIVE_NODES = 4096;
 static const size_t MAX_HEARTBEAT_SCRIPT = 520;
+static const size_t MAX_X_HANDLE = 32;
 static const char COMMIT_MAGIC[4] = {'X', 'H', 'B', '1'};
+
+struct XAccount {
+    std::string handle; // normalized lowercase, no leading '@'
+    uint64_t userId;
+    XAccount() : userId(0) {}
+};
 
 struct ActiveNode {
     uint160 id;
     CScript script;
     int64_t lastSeen;
+    XAccount x;
+};
+
+struct VerifiedXAccount {
+    std::string handle;
+    uint64_t userId;
+};
+
+class Allowlist
+{
+public:
+    void SetPersistPath(const std::string& path);
+    std::string PersistPath() const;
+
+    /** Add handle (and optional numeric X user id). Persists when a path is set. */
+    bool Add(const std::string& handle, uint64_t userId, std::string& err, bool persist = true);
+    bool Remove(const std::string& handle, std::string& err, bool persist = true);
+    bool Contains(const std::string& handle, uint64_t userId = 0) const;
+    std::vector<VerifiedXAccount> List() const;
+    size_t Size() const;
+
+    /** Merge accounts from a text file (handle [userid] per line, '#' comments). */
+    bool LoadFile(const std::string& path, std::string& err);
+    bool Persist(std::string& err) const;
+
+private:
+    mutable CCriticalSection cs;
+    std::map<std::string, uint64_t> handles;
+    std::map<uint64_t, std::string> byUserId;
+    std::string persistPath;
 };
 
 class Registry
@@ -55,9 +96,19 @@ public:
     CScript LocalScript() const;
     uint160 LocalId() const;
 
-    /** Record a payable script as active. id = Hash160(script). */
-    void Heartbeat(const CScript& script, int64_t now);
-    void HeartbeatLocal(int64_t now);
+    void SetLocalXAccount(const XAccount& account);
+    XAccount LocalXAccount() const;
+
+    /**
+     * Record a payable script as active if the X identity is linked and
+     * allowlisted. id = Hash160(script). One verified X handle → one node.
+     * Returns false (and does not insert) when the link is missing or unverified.
+     */
+    bool Heartbeat(const CScript& script, int64_t now,
+                   const std::string& xHandle, uint64_t xUserId);
+    bool HeartbeatLocal(int64_t now);
+
+    bool LocalEligible() const;
 
     std::vector<uint160> ActiveIds(int64_t now) const;
     std::vector<ActiveNode> ActiveNodes(int64_t now) const;
@@ -67,13 +118,25 @@ public:
 private:
     mutable CCriticalSection cs;
     std::map<uint160, ActiveNode> nodes;
+    std::map<std::string, uint160> byHandle;
     CScript localScript;
     uint160 localId;
+    XAccount localX;
 };
 
 Registry& GetRegistry();
+Allowlist& GetAllowlist();
 
 uint160 IdFromScript(const CScript& script);
+
+/** Strip '@', lowercase, validate [a-z0-9_]{1,32}. */
+bool NormalizeXHandle(const std::string& in, std::string& out, std::string& err);
+
+/** Parse "handle" or "handle:userid" / "handle,userid". */
+bool ParseXAccountSpec(const std::string& in, XAccount& out, std::string& err);
+
+/** Load -xaccount / -xuserid / -xallowlist / -xverified and the datadir file. */
+void InitEligibility();
 
 /** Persist or create a stable local payout script in the data directory. */
 CScript LoadOrCreateLocalScript();

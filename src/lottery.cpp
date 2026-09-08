@@ -28,18 +28,321 @@ extern std::vector<CWalletRef> vpwallets;
 #include <boost/thread.hpp>
 
 #include <algorithm>
+#include <cctype>
 #include <cstring>
 #include <ctime>
+#include <fstream>
+#include <sstream>
 
 namespace lottery {
 
 static Registry g_registry;
+static Allowlist g_allowlist;
 static boost::thread_group* g_producerThreads = nullptr;
 static CCriticalSection cs_producer;
 
 Registry& GetRegistry()
 {
     return g_registry;
+}
+
+Allowlist& GetAllowlist()
+{
+    return g_allowlist;
+}
+
+static std::string TrimCopy(const std::string& in)
+{
+    size_t a = 0;
+    while (a < in.size() && std::isspace(static_cast<unsigned char>(in[a])))
+        a++;
+    size_t b = in.size();
+    while (b > a && std::isspace(static_cast<unsigned char>(in[b - 1])))
+        b--;
+    return in.substr(a, b - a);
+}
+
+bool NormalizeXHandle(const std::string& in, std::string& out, std::string& err)
+{
+    out.clear();
+    std::string s = TrimCopy(in);
+    if (!s.empty() && s[0] == '@')
+        s = s.substr(1);
+    s = TrimCopy(s);
+    if (s.empty()) {
+        err = "X handle is empty";
+        return false;
+    }
+    if (s.size() > MAX_X_HANDLE) {
+        err = strprintf("X handle longer than %u characters", (unsigned)MAX_X_HANDLE);
+        return false;
+    }
+    out.reserve(s.size());
+    for (unsigned char c : s) {
+        if (c >= 'A' && c <= 'Z')
+            c = static_cast<unsigned char>(c - 'A' + 'a');
+        if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_')) {
+            err = "X handle must be letters, digits, or underscore";
+            out.clear();
+            return false;
+        }
+        out.push_back(static_cast<char>(c));
+    }
+    return true;
+}
+
+bool ParseXAccountSpec(const std::string& in, XAccount& out, std::string& err)
+{
+    out = XAccount();
+    std::string s = TrimCopy(in);
+    if (s.empty()) {
+        err = "X account spec is empty";
+        return false;
+    }
+    std::string handlePart = s;
+    std::string idPart;
+    size_t sep = s.find_first_of(":,");
+    if (sep != std::string::npos) {
+        handlePart = s.substr(0, sep);
+        idPart = TrimCopy(s.substr(sep + 1));
+    }
+    if (!NormalizeXHandle(handlePart, out.handle, err))
+        return false;
+    if (!idPart.empty()) {
+        if (idPart.find_first_not_of("0123456789") != std::string::npos) {
+            err = "X user id must be a positive integer";
+            return false;
+        }
+        try {
+            out.userId = std::stoull(idPart);
+        } catch (const std::exception&) {
+            err = "X user id is not a valid integer";
+            return false;
+        }
+    }
+    return true;
+}
+
+void Allowlist::SetPersistPath(const std::string& path)
+{
+    LOCK(cs);
+    persistPath = path;
+}
+
+std::string Allowlist::PersistPath() const
+{
+    LOCK(cs);
+    return persistPath;
+}
+
+bool Allowlist::Add(const std::string& handle, uint64_t userId, std::string& err, bool persist)
+{
+    std::string norm;
+    if (!NormalizeXHandle(handle, norm, err))
+        return false;
+    {
+        LOCK(cs);
+        handles[norm] = userId;
+        if (userId != 0)
+            byUserId[userId] = norm;
+    }
+    if (persist && !persistPath.empty() && !Persist(err))
+        return false;
+    err.clear();
+    return true;
+}
+
+bool Allowlist::Remove(const std::string& handle, std::string& err, bool persist)
+{
+    std::string norm;
+    if (!NormalizeXHandle(handle, norm, err))
+        return false;
+    {
+        LOCK(cs);
+        auto it = handles.find(norm);
+        if (it == handles.end()) {
+            err = "X handle is not on the verified allowlist";
+            return false;
+        }
+        if (it->second != 0)
+            byUserId.erase(it->second);
+        handles.erase(it);
+    }
+    if (persist && !persistPath.empty() && !Persist(err))
+        return false;
+    err.clear();
+    return true;
+}
+
+bool Allowlist::Contains(const std::string& handle, uint64_t userId) const
+{
+    std::string norm;
+    std::string err;
+    const bool haveHandle = NormalizeXHandle(handle, norm, err);
+    LOCK(cs);
+    if (haveHandle) {
+        auto it = handles.find(norm);
+        if (it != handles.end())
+            return true;
+    }
+    if (userId != 0) {
+        auto it = byUserId.find(userId);
+        if (it != byUserId.end())
+            return true;
+    }
+    return false;
+}
+
+std::vector<VerifiedXAccount> Allowlist::List() const
+{
+    LOCK(cs);
+    std::vector<VerifiedXAccount> out;
+    out.reserve(handles.size());
+    for (const auto& kv : handles) {
+        VerifiedXAccount a;
+        a.handle = kv.first;
+        a.userId = kv.second;
+        out.push_back(a);
+    }
+    return out;
+}
+
+size_t Allowlist::Size() const
+{
+    LOCK(cs);
+    return handles.size();
+}
+
+bool Allowlist::LoadFile(const std::string& path, std::string& err)
+{
+    if (path.empty()) {
+        err = "allowlist path is empty";
+        return false;
+    }
+    std::ifstream in(path.c_str());
+    if (!in) {
+        err = strprintf("cannot open verified X allowlist %s", path);
+        return false;
+    }
+    std::string line;
+    int n = 0;
+    while (std::getline(in, line)) {
+        std::string t = TrimCopy(line);
+        if (t.empty() || t[0] == '#')
+            continue;
+        XAccount acc;
+        std::string perr;
+        // File lines: "handle" or "handle userid" (space) or handle:userid
+        std::string spec = t;
+        size_t sp = t.find_first_of(" \t");
+        if (sp != std::string::npos && t.find_first_of(":,") == std::string::npos) {
+            spec = t.substr(0, sp) + ":" + TrimCopy(t.substr(sp + 1));
+        }
+        if (!ParseXAccountSpec(spec, acc, perr)) {
+            err = strprintf("%s (line %s)", perr, t);
+            return false;
+        }
+        std::string aerr;
+        if (!Add(acc.handle, acc.userId, aerr, false)) {
+            err = aerr;
+            return false;
+        }
+        n++;
+    }
+    err.clear();
+    LogPrintf("lottery: loaded %d verified X account(s) from %s\n", n, path);
+    return true;
+}
+
+bool Allowlist::Persist(std::string& err) const
+{
+    std::string path;
+    std::vector<VerifiedXAccount> cur;
+    {
+        LOCK(cs);
+        path = persistPath;
+        if (path.empty())
+            return true;
+        cur.reserve(handles.size());
+        for (const auto& kv : handles) {
+            VerifiedXAccount a;
+            a.handle = kv.first;
+            a.userId = kv.second;
+            cur.push_back(a);
+        }
+    }
+    FILE* f = fsbridge::fopen(path, "wb");
+    if (!f) {
+        err = strprintf("cannot write verified X allowlist %s", path);
+        return false;
+    }
+    fprintf(f, "# X Coin verified X accounts (operator-shared allowlist)\n");
+    fprintf(f, "# Only list X-verified (blue-check / X Premium verified) handles.\n");
+    fprintf(f, "# format: handle [userid]\n");
+    for (const auto& a : cur) {
+        if (a.userId != 0)
+            fprintf(f, "%s %llu\n", a.handle.c_str(), (unsigned long long)a.userId);
+        else
+            fprintf(f, "%s\n", a.handle.c_str());
+    }
+    fclose(f);
+    err.clear();
+    return true;
+}
+
+void InitEligibility()
+{
+    Allowlist& allow = GetAllowlist();
+    const std::string persist = (GetDataDir() / "verified-x-accounts.txt").string();
+    allow.SetPersistPath(persist);
+    if (fs::exists(persist)) {
+        std::string err;
+        if (!allow.LoadFile(persist, err))
+            LogPrintf("lottery: %s\n", err);
+    }
+    if (gArgs.IsArgSet("-xallowlist")) {
+        const std::string extra = gArgs.GetArg("-xallowlist", "");
+        if (!extra.empty() && extra != persist) {
+            std::string err;
+            if (!allow.LoadFile(extra, err))
+                LogPrintf("lottery: %s\n", err);
+            else {
+                std::string perr;
+                allow.Persist(perr);
+            }
+        }
+    }
+    for (const std::string& spec : gArgs.GetArgs("-xverified")) {
+        XAccount acc;
+        std::string err;
+        if (!ParseXAccountSpec(spec, acc, err)) {
+            LogPrintf("lottery: -xverified=%s: %s\n", spec, err);
+            continue;
+        }
+        if (!allow.Add(acc.handle, acc.userId, err))
+            LogPrintf("lottery: -xverified=%s: %s\n", spec, err);
+    }
+
+    XAccount local;
+    std::string err;
+    if (gArgs.IsArgSet("-xaccount")) {
+        if (!NormalizeXHandle(gArgs.GetArg("-xaccount", ""), local.handle, err))
+            LogPrintf("lottery: -xaccount: %s\n", err);
+    }
+    const int64_t uidArg = gArgs.GetArg("-xuserid", 0);
+    if (uidArg > 0)
+        local.userId = (uint64_t)uidArg;
+    GetRegistry().SetLocalXAccount(local);
+
+    if (local.handle.empty()) {
+        LogPrintf("lottery: no -xaccount; this node will sync/relay but is not lottery-eligible\n");
+    } else if (!allow.Contains(local.handle, local.userId)) {
+        LogPrintf("lottery: -xaccount=%s is not on the verified allowlist; sync/relay only\n",
+                  local.handle);
+    } else {
+        LogPrintf("lottery: linked verified X account %s (userid=%llu); lottery-eligible\n",
+                  local.handle, (unsigned long long)local.userId);
+    }
 }
 
 uint160 IdFromScript(const CScript& script)
@@ -71,31 +374,86 @@ uint160 Registry::LocalId() const
     return localId;
 }
 
-void Registry::Heartbeat(const CScript& script, int64_t now)
+void Registry::SetLocalXAccount(const XAccount& account)
+{
+    LOCK(cs);
+    localX = account;
+}
+
+XAccount Registry::LocalXAccount() const
+{
+    LOCK(cs);
+    return localX;
+}
+
+bool Registry::LocalEligible() const
+{
+    XAccount x;
+    {
+        LOCK(cs);
+        if (localScript.empty() || localX.handle.empty())
+            return false;
+        x = localX;
+    }
+    return GetAllowlist().Contains(x.handle, x.userId);
+}
+
+bool Registry::Heartbeat(const CScript& script, int64_t now,
+                         const std::string& xHandle, uint64_t xUserId)
 {
     if (script.empty() || script.size() > MAX_HEARTBEAT_SCRIPT)
-        return;
+        return false;
     const uint160 id = IdFromScript(script);
     if (id.IsNull())
-        return;
+        return false;
+    std::string norm;
+    std::string err;
+    if (!NormalizeXHandle(xHandle, norm, err))
+        return false;
+    if (!GetAllowlist().Contains(norm, xUserId))
+        return false;
+
     LOCK(cs);
-    nodes[id] = ActiveNode{id, script, now};
+    auto hit = byHandle.find(norm);
+    if (hit != byHandle.end() && hit->second != id) {
+        nodes.erase(hit->second);
+        byHandle.erase(hit);
+    }
+    auto nit = nodes.find(id);
+    if (nit != nodes.end() && nit->second.x.handle != norm) {
+        byHandle.erase(nit->second.x.handle);
+    }
+    XAccount x;
+    x.handle = norm;
+    x.userId = xUserId;
+    nodes[id] = ActiveNode{id, script, now, x};
+    byHandle[norm] = id;
     if (nodes.size() > MAX_ACTIVE_NODES) {
         auto oldest = nodes.begin();
         for (auto it = nodes.begin(); it != nodes.end(); ++it) {
             if (it->second.lastSeen < oldest->second.lastSeen)
                 oldest = it;
         }
-        if (oldest->first != localId)
+        if (oldest->first != localId) {
+            byHandle.erase(oldest->second.x.handle);
             nodes.erase(oldest);
+        }
     }
+    return true;
 }
 
-void Registry::HeartbeatLocal(int64_t now)
+bool Registry::HeartbeatLocal(int64_t now)
 {
-    CScript s = LocalScript();
-    if (!s.empty())
-        Heartbeat(s, now);
+    CScript s;
+    XAccount x;
+    {
+        LOCK(cs);
+        s = localScript;
+        x = localX;
+    }
+    if (s.empty() || x.handle.empty())
+        return false;
+    return Heartbeat(s, now, x.handle, x.userId);
 }
 
 std::vector<uint160> Registry::ActiveIds(int64_t now) const
@@ -351,21 +709,12 @@ void ApplyCoinbasePayouts(CBlock& block,
         return;
 
     const int64_t now = GetTime();
-    if (!producerScript.empty()) {
+    if (!producerScript.empty())
         GetRegistry().SetLocalScript(producerScript);
-        GetRegistry().Heartbeat(producerScript, now);
-    } else {
-        GetRegistry().HeartbeatLocal(now);
-    }
+    GetRegistry().HeartbeatLocal(now);
 
     Draw draw = ComputeDraw(nHeight, prevBlockHash, genesisTime,
                             nSubsidyHalvingInterval, subsidy, now);
-    if (draw.winners.empty()) {
-        // Should not happen after heartbeating the producer script.
-        GetRegistry().Heartbeat(producerScript, now);
-        draw = ComputeDraw(nHeight, prevBlockHash, genesisTime,
-                           nSubsidyHalvingInterval, subsidy, now);
-    }
     if (draw.winners.empty())
         return;
 
@@ -469,6 +818,10 @@ static CWallet* FirstWalletOrNull()
 
 static bool ProduceOneBlock(const CChainParams& chainparams)
 {
+    if (!GetRegistry().LocalEligible()) {
+        LogPrintf("lottery: refusing to produce; local node is not linked+verified\n");
+        return false;
+    }
 #ifdef ENABLE_WALLET
     CWallet* pWallet = FirstWalletOrNull();
     if (!pWallet) {
@@ -524,6 +877,7 @@ static void ProducerThread(const CChainParams& chainparams)
 
     GetRegistry().SetLocalScript(LoadOrCreateLocalScript());
     int64_t lastProducedSlot = -1;
+    bool fLoggedIneligible = false;
 
     try {
         while (true) {
@@ -550,6 +904,16 @@ static void ProducerThread(const CChainParams& chainparams)
             }
 #endif
             GetRegistry().HeartbeatLocal(now);
+
+            if (!GetRegistry().LocalEligible()) {
+                if (!fLoggedIneligible) {
+                    LogPrintf("lottery: not linked to a verified X account; sync/relay only, not producing\n");
+                    fLoggedIneligible = true;
+                }
+                MilliSleep(1000);
+                continue;
+            }
+            fLoggedIneligible = false;
 
             if (chainparams.MineBlocksOnDemand()) {
                 MilliSleep(1000);
@@ -608,6 +972,7 @@ void StartProducer(const CChainParams& chainparams)
     LOCK(cs_producer);
     if (g_producerThreads)
         return;
+    InitEligibility();
     GetRegistry().SetLocalScript(LoadOrCreateLocalScript());
     GetRegistry().HeartbeatLocal(GetTime());
     g_producerThreads = new boost::thread_group();

@@ -1787,8 +1787,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         pfrom->fSuccessfullyConnected = true;
 
         CScript localScript = lottery::GetRegistry().LocalScript();
-        if (!localScript.empty()) {
-            connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::XHB, GetTime(), localScript));
+        lottery::XAccount localX = lottery::GetRegistry().LocalXAccount();
+        if (!localScript.empty() && lottery::GetRegistry().LocalEligible()) {
+            connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::XHB, GetTime(), localScript,
+                                                      localX.handle, localX.userId));
         }
     }
 
@@ -2938,8 +2940,12 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     {
         int64_t nHbTime = 0;
         CScript script;
+        std::string xHandle;
+        uint64_t xUserId = 0;
         try {
             vRecv >> nHbTime >> script;
+            if (!vRecv.empty())
+                vRecv >> xHandle >> xUserId;
         } catch (const std::exception&) {
             LOCK(cs_main);
             Misbehaving(pfrom->GetId(), 1);
@@ -2951,10 +2957,18 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             Misbehaving(pfrom->GetId(), 1);
             return false;
         }
+        if (xHandle.size() > lottery::MAX_X_HANDLE) {
+            return true;
+        }
         if (nHbTime > now + 600 || nHbTime < now - 600) {
             return true;
         }
         const uint160 id = lottery::IdFromScript(script);
+        if (!lottery::GetRegistry().Heartbeat(script, now, xHandle, xUserId)) {
+            LogPrint(BCLog::NET, "lottery xhb ignored (unlinked or unverified) handle=%s peer=%d\n",
+                     xHandle, pfrom->GetId());
+            return true;
+        }
         static CCriticalSection cs_hbRelay;
         static std::map<uint160, int64_t> lastRelay;
         bool shouldRelay = false;
@@ -2966,14 +2980,14 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 shouldRelay = true;
             }
         }
-        lottery::GetRegistry().Heartbeat(script, now);
-        LogPrint(BCLog::NET, "lottery xhb id=%s peer=%d relay=%d\n", id.GetHex(), pfrom->GetId(), shouldRelay);
+        LogPrint(BCLog::NET, "lottery xhb id=%s x=%s peer=%d relay=%d\n",
+                 id.GetHex(), xHandle, pfrom->GetId(), shouldRelay);
         if (shouldRelay) {
             connman->ForEachNode([&](CNode* pto) {
                 if (pto == pfrom || !pto->fSuccessfullyConnected || pto->fDisconnect)
                     return;
                 CNetMsgMaker relayMaker(pto->GetSendVersion());
-                connman->PushMessage(pto, relayMaker.Make(NetMsgType::XHB, nHbTime, script));
+                connman->PushMessage(pto, relayMaker.Make(NetMsgType::XHB, nHbTime, script, xHandle, xUserId));
             });
         }
     }
@@ -3310,8 +3324,10 @@ bool PeerLogicValidation::SendMessages(CNode* pto, std::atomic<bool>& interruptM
         if (pto->nNextLotteryHb < GetTimeMicros()) {
             pto->nNextLotteryHb = GetTimeMicros() + 30 * 1000000;
             CScript localScript = lottery::GetRegistry().LocalScript();
-            if (!localScript.empty())
-                connman->PushMessage(pto, msgMaker.Make(NetMsgType::XHB, GetTime(), localScript));
+            lottery::XAccount localX = lottery::GetRegistry().LocalXAccount();
+            if (!localScript.empty() && lottery::GetRegistry().LocalEligible())
+                connman->PushMessage(pto, msgMaker.Make(NetMsgType::XHB, GetTime(), localScript,
+                                                        localX.handle, localX.userId));
         }
 
         if (pingSend) {

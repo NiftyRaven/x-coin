@@ -46,7 +46,7 @@ Ravencoin defaults (8767/8766, 18770/18766, 18444/18443, magic `RAVN` / `RVNT` /
 
 1. **Rebrand** of operator-facing strings, ports, magic, datadir, client name, binaries (`xcoind`, `xcoin-cli`, `xcoin-tx`, `xcoin-qt`).
 2. **PoW gutted:** `RavenMiner` hash loop deleted; `CheckProofOfWork` always succeeds; `-gen` / `setgenerate` removed as a miner; KawPoW submit RPCs unregistered.
-3. **Lottery module** in `src/lottery.{h,cpp}` + `src/rpc/lottery.cpp`, started from `init.cpp`. P2P `xhb` gossip + coinbase `XHB1` commitment / multi-winner validation.
+3. **Lottery module** in `src/lottery.{h,cpp}` + `src/rpc/lottery.cpp`, started from `init.cpp`. P2P `xhb` gossip + coinbase `XHB1` commitment / multi-winner validation. Active set requires a linked X account on the operator-shared verified allowlist.
 4. **Assets retained** and turned on from height 0 (`nAssetActivationHeight = 0`, messaging/restricted activation 0). Reserved root names now include `XFER` / `XCOIN` as well as `RVN` / `RAVEN` / `RAVENCOIN`. Asset script opcodes (`OP_RVN_ASSET`, `rvnq` / `rvnt` markers) are **unchanged** so the Ravencoin asset protocol still works.
 5. KawPoW activation time pushed to the far future; header hashing stays on the pre-KawPoW path. Lottery does not use that hash as a work function.
 
@@ -69,7 +69,7 @@ See also `assets/asset_metadata_spec.md` from upstream.
   genesis; height-0 force-on covers assets, messaging, transfer-script size,
   enforce-value, coinbase-asset checks, and transfer-overflow.
 - Make `make check` green against the new genesis (many upstream tests hard-code Ravencoin hashes).
-- DNS seeds, explorers, X.com API / OAuth, mobile — out of scope. See [LAUNCH.md](LAUNCH.md).
+- DNS seeds, explorers, X OAuth / live API keys, mobile — out of scope. Verified-X eligibility is a shared allowlist, not an X API client. See [LAUNCH.md](LAUNCH.md).
 
 ## Build
 

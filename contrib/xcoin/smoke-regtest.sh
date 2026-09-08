@@ -16,7 +16,8 @@ fi
 rm -rf "$DATADIR"
 mkdir -p "$DATADIR"
 
-"$XCOIND" -regtest -datadir="$DATADIR" -server -daemon -listen=0
+"$XCOIND" -regtest -datadir="$DATADIR" -server -daemon -listen=0 \
+  -xaccount=smoke1 -xverified=smoke1 -xverified=smoke2
 cleanup() {
   "${CLI[@]}" stop >/dev/null 2>&1 || true
 }
@@ -44,6 +45,8 @@ INFO="$("${CLI[@]}" getlotteryinfo)"
 echo "$INFO"
 echo "$INFO" | grep -q '"currency": "XFER"'
 echo "$INFO" | grep -q '"winner_count": 1'
+echo "$INFO" | grep -q '"local_xaccount": "smoke1"'
+echo "$INFO" | grep -q '"local_eligible": true'
 CHAIN="$("${CLI[@]}" getblockchaininfo)"
 echo "$CHAIN" | grep -q '"chain": "regtest"'
 echo "$CHAIN" | grep -q '"blocks": 0'
@@ -58,8 +61,10 @@ echo "$VA1" | grep -q '"isvalid": true'
 [[ "$ADDR1" != R* && "$ADDR1" != n* && "$ADDR2" != R* && "$ADDR2" != n* ]]
 [[ "$ADDR1" == y* && "$ADDR2" == y* ]]
 
-echo "== register second payout + generate past maturity =="
-"${CLI[@]}" registeractivenode "$ADDR2" >/dev/null
+echo "== register second verified payout + generate past maturity =="
+"${CLI[@]}" listxverified | grep -q smoke1
+"${CLI[@]}" listxverified | grep -q smoke2
+"${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
 "${CLI[@]}" generatetoaddress 110 "$ADDR1" >/dev/null
 HEIGHT="$("${CLI[@]}" getblockcount)"
 echo "height $HEIGHT"
@@ -77,7 +82,7 @@ echo "== two-winner window (regtest halving interval 150) =="
 # Height 149: still 1 winner, full 5000 subsidy. Height 150: 2 winners, 2500 subsidy.
 NEED=$((149 - HEIGHT))
 if [[ "$NEED" -gt 0 ]]; then
-  "${CLI[@]}" registeractivenode "$ADDR2" >/dev/null
+  "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
   "${CLI[@]}" generatetoaddress "$NEED" "$ADDR1" >/dev/null
 fi
 H149="$("${CLI[@]}" getblockhash 149)"
@@ -92,7 +97,7 @@ if len(pays) != 1:
 if abs(sum(o["value"] for o in pays) - 5000) > 1e-6:
     sys.exit("height 149 subsidy must be 5000")
 '
-"${CLI[@]}" registeractivenode "$ADDR2" >/dev/null
+"${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
 "${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
 H150="$("${CLI[@]}" getblockhash 150)"
 TX0="$("${CLI[@]}" getblock "$H150" true | python3 -c 'import json,sys; print(json.load(sys.stdin)["tx"][0])')"

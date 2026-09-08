@@ -1,8 +1,9 @@
 # X Coin lottery consensus
 
-X Coin does **not** use Proof-of-Work. Once `xcoind` (or `xcoin-qt`) is
-running, that process is an **active node**. Every **minute** a lottery picks
-who may produce the next block and who shares that minute’s subsidy.
+X Coin does **not** use Proof-of-Work. Every **minute** a lottery picks who
+may produce the next block and who shares that minute’s subsidy. Only nodes
+linked to a **verified X account** are lottery-eligible. An unlinked node
+still syncs and relays; it cannot enter the active set, win, or produce.
 
 This document is the source of truth for the algorithm.
 
@@ -19,20 +20,82 @@ This document is the source of truth for the algorithm.
 
 Genesis (height 0) is not a lottery block.
 
+## Verified X eligibility (anti-bot)
+
+Consensus does **not** call X.com on every block. Honest operators share one
+explicit allowlist of **X-verified** (blue-check / X Premium verified)
+accounts. That is how bots and anonymous process spam are excluded for the
+private launch. There is no X OAuth product and no live API key is required.
+
+A node is lottery-eligible only when **both** are true:
+
+1. It has a linked X account (`-xaccount=handle` in `xcoin.conf` / flags;
+   optional `-xuserid=`).
+2. That account is on the operator-shared verified allowlist.
+
+Unlinked or unverified heartbeats are **ignored** for the active set. The
+local producer refuses to produce if this node is not linked+verified.
+
+### Link an X account (every operator)
+
+```bash
+# xcoin.conf  (or flags)
+xaccount=YourHandle
+# optional numeric X user id
+xuserid=123456789
+```
+
+### Publish the verified allowlist (seed / operator)
+
+List only handles you have confirmed are X-verified. Share the same file
+with every honest node so they agree on the active set.
+
+```text
+# verified-x-accounts.txt  (datadir or -xallowlist=)
+# handle [userid]
+YourHandle 123456789
+alice
+bob
+```
+
+Ways to load the same list:
+
+| Method | Example |
+| --- | --- |
+| Datadir file | `~/.xcoin/verified-x-accounts.txt` (loaded on start) |
+| Flag | `-xallowlist=/shared/verified-x-accounts.txt` |
+| Repeatable flag | `-xverified=alice -xverified=bob:99` |
+| RPC | `addxverified alice` / `listxverified` / `removexverified alice` |
+
+Optional refresh later (no secrets): publish the text file at any HTTPS URL,
+then each operator runs:
+
+```bash
+curl -fsSL https://example.com/verified-x-accounts.txt -o ~/.xcoin/verified-x-accounts.txt
+src/xcoin-cli loadxverified
+```
+
+`contrib/xcoin/refresh-x-allowlist.sh` is a one-liner wrapper for that hook.
+
 ## Active node
 
-A node is **active** if it has heartbeated within the last **180 seconds**.
+A node is **active** if it has heartbeated a **verified X identity** within
+the last **180 seconds**.
 
 - Node **id** = `Hash160(payout script)`. The script is what coinbase will pay.
+- One verified X handle maps to one active node (a later heartbeat for the
+  same handle replaces the payout script).
 - On start, the node loads or creates a payout script in `lottery-payout.dat`
   under the data directory (`~/.xcoin` on Unix). When a wallet is present the
   producer adopts the wallet mining script as the local payout.
-- The producer thread heartbeats that script every second.
+- The producer thread heartbeats that script every second **only if** the
+  local node is linked+verified.
 - `registeractivenode` records a heartbeat for the local script or a supplied
-  **address / script hex**.
-- Peers gossip `xhb` messages (`int64 timestamp` + `CScript`) after `verack`
-  and about every 30 seconds. Honest nodes that can talk to each other
-  therefore share one sorted active set for a given slot.
+  **address / script hex**, using the local `-xaccount` unless another
+  allowlisted handle is passed. Unlinked/unverified registrations are rejected.
+- Peers gossip `xhb` messages (`int64 timestamp` + `CScript` + X handle +
+  user id) after `verack` and about every 30 seconds. Heartbeats missing a
+  verified link are not added to the active set and are not relayed.
 
 ## Deterministic seed
 
@@ -106,17 +169,19 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 
 | Command | Purpose |
 | --- | --- |
-| `getlotteryinfo` | Next-height draw: slot, seed, winners, split, local id |
-| `getactivenodes` | Current registry (id, script hex, lastseen) |
-| `registeractivenode (payout)` | Heartbeat this node or an address / script hex |
+| `getlotteryinfo` | Next-height draw: slot, seed, winners, split, local id / X handle / eligibility |
+| `getactivenodes` | Current registry (id, script, lastseen, xaccount, xuserid) |
+| `registeractivenode (payout xaccount xuserid)` | Heartbeat this node or an address / script hex; rejects unlinked/unverified |
+| `addxverified` / `listxverified` / `removexverified` | Mutate / read the verified X allowlist |
+| `loadxverified (path)` | Merge a published allowlist file (no API keys) |
 | `generatetoaddress` | Regtest / on-demand assembly (not mining) |
 
 ## Security notes
 
-- **Sybil:** one operator can run many processes, or a producer can commit an
-  active set of scripts they control. Validation only proves the coinbase
-  matches the *committed* set. Acceptable for a private trusted mesh; not a
-  bonded public lottery.
+- **Sybil:** the verified-X allowlist stops anonymous/bot process spam for a
+  private launch. It is not a bonded public lottery: a producer can still
+  commit an active set of allowlisted scripts, and validation only proves the
+  coinbase matches the *committed* set. Honest operators share one list.
 - Clock skew can delay a slot; height still maps deterministically once a
   block exists.
 

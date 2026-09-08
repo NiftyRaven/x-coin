@@ -2,7 +2,8 @@
 
 This is the operator runbook for a **private launch**. It assumes you are
 building from this repository (Phase 1 import + this launch-ready delta).
-There is no X.com API, no public seed DNS, and no exchange listing.
+There is no public seed DNS and no exchange listing. Lottery eligibility
+uses a **shared verified-X allowlist** (no live X API keys required).
 
 ## Frozen identity
 
@@ -58,7 +59,7 @@ There are no DNS seeds in-tree. For a private mesh:
    ```bash
    src/xcoind -listen=1 -port=38443 -server \
      -rpcuser=xcoin -rpcpassword=change-me \
-     -addnode=0.0.0.0
+     -xaccount=SeedHandle -xallowlist=/shared/verified-x-accounts.txt
    ```
 
 3. Tell every other operator to join with **either**:
@@ -76,6 +77,39 @@ There are no DNS seeds in-tree. For a private mesh:
 
 Peers gossip lottery heartbeats (`xhb`) after `verack`. Honest nodes that can
 connect to the seed (directly or via the mesh) share one active-node set.
+Heartbeats without a verified X link are ignored for that set.
+
+## Verified X allowlist (required for lottery)
+
+Only **X-verified** (blue-check / X Premium verified) accounts may run a
+lottery-eligible node. The seed publishes the list; every honest node loads
+the same file. Unlinked nodes still sync/relay but do not win or produce.
+
+1. Seed operator: confirm each operator’s X handle is verified, then write
+   `verified-x-accounts.txt` (see [LOTTERY.md](LOTTERY.md)).
+2. Share that file (scp, gist, HTTPS). Do **not** invent a bot or OAuth app.
+3. Each operator sets `xaccount=` to **their** handle and points at the file.
+
+```bash
+# xcoin.conf
+xaccount=YourHandle
+xallowlist=/shared/verified-x-accounts.txt
+# or copy into the datadir:
+#   ~/.xcoin/verified-x-accounts.txt
+```
+
+```bash
+src/xcoin-cli addxverified YourHandle      # seed can also add live
+src/xcoin-cli listxverified
+src/xcoin-cli getlotteryinfo               # local_eligible must be true
+```
+
+Optional later refresh (secret-free):
+
+```bash
+contrib/xcoin/refresh-x-allowlist.sh https://example.com/verified-x-accounts.txt
+src/xcoin-cli loadxverified
+```
 
 ## Join steps (second machine)
 
@@ -83,15 +117,18 @@ connect to the seed (directly or via the mesh) share one active-node set.
 ./autogen.sh
 ./configure --without-gui --disable-bench --disable-tests --with-incompatible-bdb
 make -j$(nproc)
-src/xcoind -server -addnode=<seed-ip>:38443
+src/xcoind -server -addnode=<seed-ip>:38443 \
+  -xaccount=YourHandle -xallowlist=/shared/verified-x-accounts.txt
 src/xcoin-cli getblockchaininfo
 src/xcoin-cli getlotteryinfo
 src/xcoin-cli getactivenodes
 ```
 
-Wait until `getactivenodes` shows the seed and yourself. On main/test the
-producer thread emits at most one block per minute when this node is a winner.
-A wallet is required to produce (coinbase script).
+Wait until `getactivenodes` shows the seed and yourself, each with an
+`xaccount`. `getlotteryinfo.local_eligible` must be true or this node will
+not produce. On main/test the producer thread emits at most one block per
+minute when this node is a winner. A wallet is required to produce
+(coinbase script).
 
 Regtest does **not** wait on the clock: use `generatetoaddress`.
 
@@ -100,7 +137,8 @@ Regtest does **not** wait on the clock: use `generatetoaddress`.
 See [LOTTERY.md](LOTTERY.md). Short form:
 
 - Slot = 60s. Height `h` uses slot `floor(genesisTime/60) + h`.
-- Active = heartbeat within 180s. Id = `Hash160(payout script)`.
+- Active = verified-X heartbeat within 180s. Id = `Hash160(payout script)`.
+  No linked X account ⇒ not eligible.
 - `winnerCount = 1 + floor(height / nSubsidyHalvingInterval)` (main interval
   2,100,000; regtest 150).
 - Subsidy 5000 XFER, split as evenly as possible; fees to the first winner.
@@ -133,9 +171,10 @@ Coinbase is immature for 100 blocks — generate ~110 on regtest before `issue`.
 
 ## Known risks (not blockers for a private launch)
 
-- **Sybil:** anyone can run many processes or commit an active set of scripts
-  they control. The coinbase check proves the producer paid *that* draw, not
-  that the set is “real.” Fine for a trusted operator set; not a public-PoS.
+- **Sybil:** anonymous/bot processes are kept out of the active set by the
+  verified-X allowlist. A producer can still commit an allowlisted set they
+  control; the coinbase check proves they paid *that* draw. Fine for a
+  trusted operator set; not a public-PoS.
 - **Clock skew:** main/test wait for wall-clock slot ≥ height slot.
 - **No DNS seeds / explorers / audit** — you are the network.
 - Upstream `make check` still hard-codes Ravencoin genesis hashes; do not treat
@@ -156,3 +195,11 @@ contrib/xcoin/smoke-gossip.sh
 ```
 
 Two regtest nodes: after `addnode`, both `getactivenodes` lists match (P2P `xhb`).
+
+```bash
+contrib/xcoin/smoke-eligibility.sh
+```
+
+Unlinked node is not eligible; `registeractivenode` is rejected until the
+handle is linked **and** allowlisted. Linked+allowlisted identities appear
+in the active set.

@@ -2,7 +2,10 @@
 
 X Coin is a **private hard-fork of [Ravencoin v4.8.0](https://github.com/RavenProject/Ravencoin/releases/tag/v4.8.0)** for simple peer-to-peer value transfer (aimed at use between users on X) plus Ravencoin-style **user-created assets/tokens**.
 
-There is **no mining**. A running `xcoind` / wallet is an **active node**. Every **minute**, a lottery picks who produces the block and who shares the reward. On each **halving**, one more winner is added that minute (1 → 2 → 3 …).
+There is **no mining**. Every **minute**, a lottery picks who produces the
+block and who shares the reward among **verified-X** active nodes. On each
+**halving**, one more winner is added that minute (1 → 2 → 3 …). A node
+with no linked X account is not lottery-eligible (it may still sync/relay).
 
 This repository is the product home. Do not treat RavenProject remotes as something to push to.
 
@@ -55,9 +58,9 @@ Upstream `doc/build-*.md` still says `ravend` in places; use the `xcoin*` names.
 ### Run (regtest — fastest way to exercise the chain)
 
 ```bash
-src/xcoind -regtest -daemon -server
+src/xcoind -regtest -daemon -server -xaccount=alice -xverified=alice
 src/xcoin-cli -regtest getblockchaininfo
-src/xcoin-cli -regtest getlotteryinfo
+src/xcoin-cli -regtest getlotteryinfo   # local_eligible should be true
 src/xcoin-cli -regtest getnewaddress   # y… on regtest/testnet; X… on main
 src/xcoin-cli -regtest generatetoaddress 1 <address>
 src/xcoin-cli -regtest issue TEST_ASSET 1000
@@ -69,9 +72,10 @@ Verified on regtest in this pass: distinct genesis, `getlotteryinfo` (1 winner, 
 
 ## RPC (lottery)
 
-- `getlotteryinfo` — next slot, seed, winners, reward split
-- `getactivenodes` — in-memory registry
-- `registeractivenode` — heartbeat
+- `getlotteryinfo` — next slot, seed, winners, split, local X handle / eligibility
+- `getactivenodes` — in-memory registry (includes `xaccount`)
+- `registeractivenode` — heartbeat (rejects unlinked/unverified)
+- `addxverified` / `listxverified` / `loadxverified` — verified X allowlist
 
 `setgenerate` / `getgenerate` are removed (they only existed to drive PoW).
 
@@ -83,9 +87,9 @@ The Ravencoin asset layer is intact: `issue`, `transfer`, `listassets`, unique/q
 
 Private-launch checklist (ports, magic, genesis, seed publish, join, rewards, risks): [docs/LAUNCH.md](docs/LAUNCH.md). Lottery: [docs/LOTTERY.md](docs/LOTTERY.md).
 
-`contrib/xcoin/smoke-regtest.sh` exercises lottery + a single-winner coinbase at height 149 + a two-winner split at height 150 + `issue TESTASSET`. `contrib/xcoin/smoke-gossip.sh` checks that two nodes share one active-node set over P2P `xhb`.
+`contrib/xcoin/smoke-regtest.sh` exercises lottery + a single-winner coinbase at height 149 + a two-winner split at height 150 + `issue TESTASSET`. `contrib/xcoin/smoke-gossip.sh` checks that two nodes share one active-node set over P2P `xhb`. `contrib/xcoin/smoke-eligibility.sh` checks that an unlinked node cannot enter the lottery.
 
-Not in scope: X.com API, explorers, DNS seeds, making upstream `make check` green against the new genesis.
+Live X.com API keys / OAuth are out of scope. Eligibility is an operator-shared allowlist of X-verified handles (see [docs/LOTTERY.md](docs/LOTTERY.md)). Also out of scope: explorers, DNS seeds, making upstream `make check` green against the new genesis.
 
 ## License
 

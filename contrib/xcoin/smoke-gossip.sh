@@ -18,9 +18,17 @@ fi
 
 rm -rf "$BASE"
 mkdir -p "$A_DIR" "$B_DIR"
+ALLOW="$BASE/verified-x-accounts.txt"
+cat > "$ALLOW" <<'EOF'
+# operator-shared verified X allowlist
+alice
+bob
+EOF
 
-"$XCOIND" -regtest -datadir="$A_DIR" -server -daemon -listen=1 -port=28443 -rpcport=28442 -connect=0 -dnsseed=0
-"$XCOIND" -regtest -datadir="$B_DIR" -server -daemon -listen=0 -port=28453 -rpcport=28452 -addnode=127.0.0.1:28443 -dnsseed=0
+"$XCOIND" -regtest -datadir="$A_DIR" -server -daemon -listen=1 -port=28443 -rpcport=28442 -connect=0 -dnsseed=0 \
+  -xaccount=alice -xallowlist="$ALLOW"
+"$XCOIND" -regtest -datadir="$B_DIR" -server -daemon -listen=0 -port=28453 -rpcport=28452 -addnode=127.0.0.1:28443 -dnsseed=0 \
+  -xaccount=bob -xallowlist="$ALLOW"
 cleanup() {
   "${A_CLI[@]}" stop >/dev/null 2>&1 || true
   "${B_CLI[@]}" stop >/dev/null 2>&1 || true
@@ -68,7 +76,10 @@ ids_a = sorted(n["id"] for n in a)
 ids_b = sorted(n["id"] for n in b)
 if ids_a != ids_b or len(ids_a) < 2:
     raise SystemExit("active-node sets differ: %s vs %s" % (ids_a, ids_b))
-print("gossip ids", ids_a)
+handles = sorted(n.get("xaccount", "") for n in a)
+if handles != ["alice", "bob"]:
+    raise SystemExit("expected xaccount alice+bob, got %s" % handles)
+print("gossip ids", ids_a, "x", handles)
 PY
 
 echo "smoke-gossip: ok"
