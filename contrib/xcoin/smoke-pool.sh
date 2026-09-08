@@ -125,7 +125,7 @@ assert len(j.get("addresses") or [])==3
 '
 
 echo "== generate a lottery block; coinbase must even-split among 3 members =="
-ADDR="$("${A_CLI[@]}" getnewaddress)"
+ADDR="$("${A_CLI[@]}" getmypool | python3 -c 'import json,sys; print((json.load(sys.stdin).get("addresses") or [""])[0])')"
 "${A_CLI[@]}" generatetoaddress 1 "$ADDR" >/dev/null
 HASH="$("${A_CLI[@]}" getblockhash 1)"
 BLK="$("${A_CLI[@]}" getblock "$HASH" 2)"
@@ -140,6 +140,60 @@ vals=sorted(v["value"] for v in pays)
 assert abs(sum(vals)-5000)<1e-6, vals
 assert vals[0]>=1666.0 and vals[-1]<=1667.0, vals
 print("pool coinbase split", vals)
+'
+
+echo "== Ghost leaves (unverified leech gone); then last members dissolve =="
+"${G_CLI[@]}" leavepool crew1
+got=0
+for _ in $(seq 1 80); do
+  n="$("${A_CLI[@]}" listpools | python3 -c 'import json,sys; a=json.load(sys.stdin); print(len(a[0].get("addresses") or []) if a else 0)')"
+  if [[ "$n" -eq 2 ]]; then
+    got=1
+    break
+  fi
+  sleep 0.25
+done
+if [[ "$got" -ne 1 ]]; then
+  echo "Alice did not drop Ghost from the pool" >&2
+  "${A_CLI[@]}" getmypool >&2 || true
+  "${A_CLI[@]}" listpools >&2 || true
+  exit 1
+fi
+echo "$("${A_CLI[@]}" listpools)" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)[0]
+assert len(j.get("addresses") or [])==2, j
+assert j.get("eligible_tickets")==2, j
+assert "id" not in j
+assert "password" not in j
+'
+"${B_CLI[@]}" leavepool crew1
+got=0
+for _ in $(seq 1 80); do
+  n="$("${A_CLI[@]}" listpools | python3 -c 'import json,sys; a=json.load(sys.stdin); print(len(a[0].get("addresses") or []) if a else 0)')"
+  if [[ "$n" -eq 1 ]]; then
+    got=1
+    break
+  fi
+  sleep 0.25
+done
+if [[ "$got" -ne 1 ]]; then
+  echo "Alice did not drop Bob from the pool" >&2
+  "${A_CLI[@]}" getmypool >&2 || true
+  "${A_CLI[@]}" listpools >&2 || true
+  exit 1
+fi
+"${A_CLI[@]}" leavepool crew1
+echo "$("${A_CLI[@]}" getmypool)" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+assert j.get("in_pool") in (False, 0) or not j.get("in_pool")
+assert "id" not in j
+'
+echo "$("${A_CLI[@]}" listpools)" | python3 -c '
+import json,sys
+arr=json.load(sys.stdin)
+assert arr==[]
 '
 
 echo "smoke-pool: ok"

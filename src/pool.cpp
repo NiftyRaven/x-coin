@@ -319,15 +319,18 @@ std::string Registry::LocalPoolId() const
 {
     LOCK(cs);
     const CScript local = lottery::GetRegistry().LocalScript();
-    if (local.empty())
-        return std::string();
-    const uint160 id = lottery::IdFromScript(local);
-    for (std::map<std::string, Advert>::const_iterator it = adverts.begin(); it != adverts.end(); ++it) {
-        for (size_t i = 0; i < it->second.members.size(); i++) {
-            if (lottery::IdFromScript(it->second.members[i]) == id)
-                return it->first;
+    if (!local.empty()) {
+        const uint160 id = lottery::IdFromScript(local);
+        for (std::map<std::string, Advert>::const_iterator it = adverts.begin(); it != adverts.end(); ++it) {
+            for (size_t i = 0; i < it->second.members.size(); i++) {
+                if (lottery::IdFromScript(it->second.members[i]) == id)
+                    return it->first;
+            }
         }
     }
+    // Wallet still knows the password even if the lottery payout script moved.
+    if (secrets.size() == 1)
+        return secrets.begin()->first;
     return std::string();
 }
 
@@ -425,11 +428,23 @@ bool Registry::AcceptGossip(const Advert& in, std::string& err)
         }
         if (secrets.count(in.id)) {
             Advert u = it->second;
-            std::map<uint160, CScript> byId;
+            std::map<uint160, CScript> ours;
+            std::map<uint160, CScript> incoming;
             for (size_t i = 0; i < u.members.size(); i++)
-                byId[lottery::IdFromScript(u.members[i])] = u.members[i];
+                ours[lottery::IdFromScript(u.members[i])] = u.members[i];
             for (size_t i = 0; i < in.members.size(); i++)
-                byId[lottery::IdFromScript(in.members[i])] = in.members[i];
+                incoming[lottery::IdFromScript(in.members[i])] = in.members[i];
+            bool dropped = false;
+            for (std::map<uint160, CScript>::const_iterator m = ours.begin(); m != ours.end(); ++m) {
+                if (!incoming.count(m->first))
+                    dropped = true;
+            }
+            std::map<uint160, CScript> byId = ours;
+            for (std::map<uint160, CScript>::const_iterator m = incoming.begin(); m != incoming.end(); ++m)
+                byId[m->first] = m->second;
+            // Higher seq that drops a member is a leave — do not union the leaver back in.
+            if (dropped && in.seq > u.seq)
+                byId = incoming;
             std::vector<CScript> merged;
             for (std::map<uint160, CScript>::const_iterator m = byId.begin(); m != byId.end(); ++m)
                 merged.push_back(m->second);
@@ -438,7 +453,8 @@ bool Registry::AcceptGossip(const Advert& in, std::string& err)
                 return false;
             }
             const bool grew = merged.size() > u.members.size();
-            if (grew || in.seq > u.seq) {
+            const bool shrunk = merged.size() < u.members.size();
+            if (grew || shrunk || in.seq > u.seq) {
                 CKey key;
                 if (!DeriveKey(in.id, secrets[in.id], key))
                     return false;
@@ -454,7 +470,7 @@ bool Registry::AcceptGossip(const Advert& in, std::string& err)
                     return false;
                 it->second = u;
                 PersistAdverts();
-                if (grew) {
+                if (grew || shrunk) {
                     mergedPush = u;
                     pushMerged = true;
                 }
@@ -495,7 +511,7 @@ bool Registry::ApplyMembership(Advert& a, const CScript& localScript, bool add, 
         err = "you are not in this pool";
         return false;
     }
-    if (next.empty()) {
+    if (add && next.empty()) {
         err = "pool would have no members";
         return false;
     }
@@ -652,12 +668,18 @@ bool Registry::Leave(const std::string& poolId, const std::string& password,
         }
         if (!ApplyMembership(a, localScript, false, err))
             return false;
+        secrets.erase(id);
+        if (a.members.empty()) {
+            adverts.erase(id);
+            PersistSecrets();
+            PersistAdverts();
+            return true;
+        }
         if (!SignAdvert(a, key)) {
             err = "could not sign leave";
             return false;
         }
         adverts[id] = a;
-        secrets.erase(id);
         PersistSecrets();
         PersistAdverts();
         left = a;

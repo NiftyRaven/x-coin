@@ -947,7 +947,11 @@ void ApplyCoinbasePayouts(CBlock& block,
         return;
 
     const int64_t now = GetTime();
-    if (!producerScript.empty())
+    const CScript keepLocal = GetRegistry().LocalScript();
+    xpool::Advert localPool;
+    const bool localInPool = !keepLocal.empty()
+        && xpool::Get().GetByMember(IdFromScript(keepLocal), localPool);
+    if (!producerScript.empty() && !localInPool)
         GetRegistry().SetLocalScript(producerScript);
     GetRegistry().HeartbeatLocal(now);
 
