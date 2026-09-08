@@ -88,7 +88,8 @@ echo "height $HEIGHT"
 "${CLI[@]}" getblockchaininfo >/dev/null
 
 echo "== assets (protocol main / no user roots when sibling landed) =="
-if "${CLI[@]}" help linkxaccount 2>/dev/null | grep -q linkxaccount; then
+# `help <name>` echoes the name even when the command is missing.
+if "${CLI[@]}" help 2>/dev/null | grep -qw linkxaccount; then
   if "${CLI[@]}" issue TESTASSET 1000 >/tmp/xcoin-issue-root.err 2>&1; then
     echo "issue TESTASSET must fail (users cannot create main assets)" >&2
     cat /tmp/xcoin-issue-root.err >&2
@@ -180,16 +181,32 @@ TXPAY="$("${CLI[@]}" sendtoaddress "$ADDR_UNLINKED" 25)"
 echo "paid unlinked $TXPAY"
 "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
 "${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
-RECV="$("${CLI[@]}" getreceivedbyaddress "$ADDR_UNLINKED")"
-echo "unlinked received $RECV"
-python3 -c "import sys; r=float(sys.argv[1]); sys.exit(0 if abs(r-25)<1e-6 else 1)" "$RECV"
+UTXO1="$("${CLI[@]}" listunspent 1 9999999 "[\"$ADDR_UNLINKED\"]")"
+echo "unlinked utxos after pay $UTXO1"
+echo "$UTXO1" | python3 -c '
+import json, sys
+u = json.load(sys.stdin)
+s = sum(x.get("amount", 0) for x in u)
+print("unlinked balance", s)
+if abs(s - 25) > 1e-6:
+    sys.exit("unlinked address must hold the 25 XFER it was paid")
+'
 TXSPEND="$("${CLI[@]}" sendfromaddress "$ADDR_UNLINKED" "$ADDR1" 10)"
 echo "unlinked spent $TXSPEND"
 "${CLI[@]}" registeractivenode "$ADDR2" smoke2 >/dev/null
 "${CLI[@]}" generatetoaddress 1 "$ADDR1" >/dev/null
-RECV2="$("${CLI[@]}" getreceivedbyaddress "$ADDR_UNLINKED")"
-echo "unlinked remaining $RECV2"
-python3 -c "import sys; r=float(sys.argv[1]); sys.exit(0 if r < 25 else 1)" "$RECV2"
+UTXO2="$("${CLI[@]}" listunspent 1 9999999 "[\"$ADDR_UNLINKED\"]")"
+echo "unlinked utxos after spend $UTXO2"
+echo "$UTXO2" | python3 -c '
+import json, sys
+u = json.load(sys.stdin)
+s = sum(x.get("amount", 0) for x in u)
+print("unlinked balance after spend", s)
+if s >= 25 - 1e-6:
+    sys.exit("unlinked address must have spent (balance still >= 25)")
+if s < 10:
+    sys.exit("expected change to remain on the unlinked address")
+'
 echo "unlinked send/receive: ok"
 
 echo "smoke-regtest: ok"
