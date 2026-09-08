@@ -95,11 +95,14 @@ def resolved_libs(path):
     for line in out.splitlines():
         line = line.strip()
         if " => " in line:
-            right = line.split(" => ", 1)[1].split()[0]
+            needed, rest = line.split(" => ", 1)
+            needed = needed.strip()
+            right = rest.split()[0]
             if right.startswith("/"):
-                libs.append(right)
+                libs.append((needed, right))
         elif line.startswith("/") and ".so" in line:
-            libs.append(line.split()[0])
+            p = line.split()[0]
+            libs.append((Path(p).name, p))
     return libs
 
 seeds = []
@@ -113,19 +116,27 @@ copied = set()
 queue = list(seeds)
 while queue:
     cur = queue.pop()
-    for lib in resolved_libs(cur):
-        if skip.search(lib):
+    for needed, lib in resolved_libs(cur):
+        if skip.search(needed) or skip.search(lib):
             continue
         src = Path(lib).resolve()
         if not src.is_file():
             continue
-        if src in copied:
+        # Copy as the SONAME ldd looks up (libzmq.so.5), not the
+        # resolved real name (libzmq.so.5.2.5). Otherwise rpath misses it.
+        dest_name = Path(needed).name if needed else src.name
+        dest = libdir / dest_name
+        key = (dest_name, src)
+        if key in copied:
             continue
-        dest = libdir / src.name
         dest.write_bytes(src.read_bytes())
         dest.chmod(0o0755)
-        copied.add(src)
+        copied.add(key)
         queue.append(dest)
+        if src.name != dest_name:
+            alt = libdir / src.name
+            if not alt.exists() and not alt.is_symlink():
+                alt.symlink_to(dest_name)
 
 print("bundled %d shared libraries" % len(copied))
 PY

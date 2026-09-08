@@ -156,43 +156,70 @@ if [[ -f "$LINUX_TAR" ]]; then
       # C launcher may not have the string if compiled as argv; check with a dry run
       record PASS linux-practice-flag "compiled with -DPRACTICE (string may be optimized)"
     fi
-    PD="$PKG_DIR/practice-datadir"
+    # Kill leftover package GUI/daemon from a previous hung seed dialog.
+    pkill -9 -f "$PKG_DIR/" 2>/dev/null || true
+    pkill -9 -f "audit-pkg/xcoin" 2>/dev/null || true
+    sleep 0.5
+    PD="$PKG_DIR/practice-datadir-$$"
     rm -rf "$PD"
     mkdir -p "$PD"
-    if timeout 45 "$LROOT/X Coin Practice Wallet" -datadir="$PD" -server -listen=0 \
-        -rpcuser=xcoin -rpcpassword=xcoin -rpcport=28972 \
-        -splash=0 -xoauthmock=NFTRVN >/tmp/xcoin-pkg-practice.log 2>&1; then
-      :
-    fi
-    # If GUI needs DISPLAY, retry under xvfb
-    if ! "$LROOT/bin/xcoin-cli" -regtest -datadir="$PD" -rpcport=28972 getblockchaininfo >/dev/null 2>&1; then
-      if command -v xvfb-run >/dev/null 2>&1; then
-        xvfb-run -a -s "-screen 0 1280x720x24" timeout 50 "$LROOT/X Coin Practice Wallet" \
-          -datadir="$PD" -server -listen=0 -rpcuser=xcoin -rpcpassword=xcoin -rpcport=28972 \
-          -splash=0 -xoauthmock=NFTRVN >/tmp/xcoin-pkg-practice.log 2>&1 &
-        PPID=$!
-        up=0
-        for _ in $(seq 1 80); do
-          if "$LROOT/bin/xcoin-cli" -regtest -datadir="$PD" -rpcport=28972 getblockchaininfo >/dev/null 2>&1; then
-            up=1; break
-          fi
-          sleep 0.25
-        done
-        if [[ "$up" -eq 1 ]]; then
-          CHAIN="$("$LROOT/bin/xcoin-cli" -regtest -datadir="$PD" -rpcport=28972 getblockchaininfo | python3 -c 'import json,sys; print(json.load(sys.stdin)["chain"])')"
-          if [[ "$CHAIN" == "regtest" && -d "$PD/regtest" && ! -f "$PD/wallet.dat" ]]; then
-            record PASS linux-package-practice-start "chain=regtest datadir/regtest isolated"
-          else
-            record FAIL linux-package-practice-start "chain=$CHAIN"
-          fi
-          "$LROOT/bin/xcoin-cli" -regtest -datadir="$PD" -rpcport=28972 stop >/dev/null 2>&1 || true
-        else
-          record FAIL linux-package-practice-start "GUI/RPC did not come up; see /tmp/xcoin-pkg-practice.log"
-          tail -40 /tmp/xcoin-pkg-practice.log || true
-        fi
-      else
-        record SKIP linux-package-practice-start "no xvfb"
+    PKG_RPC=29272
+    # Pre-create wallet.dat so Practice does not block on the first-run seed dialog.
+    # Throwaway datadir only — never ~/.xcoin.
+    "$LROOT/bin/xcoind" -regtest -datadir="$PD" -daemon -server -listen=0 \
+      -rpcuser=xcoin -rpcpassword=xcoin -rpcport="$PKG_RPC" -rpcbind=127.0.0.1 \
+      -printtoconsole=0 -xoauthmock=NFTRVN >/tmp/xcoin-pkg-precreate.log 2>&1 || true
+    up=0
+    for _ in $(seq 1 80); do
+      if "$LROOT/bin/xcoin-cli" -regtest -datadir="$PD" -rpcuser=xcoin -rpcpassword=xcoin -rpcport="$PKG_RPC" getwalletinfo >/dev/null 2>&1; then
+        up=1; break
       fi
+      sleep 0.2
+    done
+    "$LROOT/bin/xcoin-cli" -regtest -datadir="$PD" -rpcuser=xcoin -rpcpassword=xcoin -rpcport="$PKG_RPC" stop >/dev/null 2>&1 || true
+    for _ in $(seq 1 50); do
+      if [[ -f "$PD/regtest/wallet.dat" && ! -e "$PD/regtest/.lock" && ! -e "$PD/.lock" ]]; then
+        break
+      fi
+      sleep 0.2
+    done
+    if [[ "$up" -eq 1 && -d "$PD/regtest" && ! -f "$PD/wallet.dat" && -f "$PD/regtest/wallet.dat" ]]; then
+      record PASS linux-package-practice-datadir "xcoind -regtest wrote only datadir/regtest/wallet.dat"
+    else
+      record FAIL linux-package-practice-datadir "precreate did not isolate wallet.dat (see /tmp/xcoin-pkg-precreate.log and $PD/regtest/debug.log)"
+      cat /tmp/xcoin-pkg-precreate.log 2>/dev/null || true
+      tail -30 "$PD/regtest/debug.log" 2>/dev/null || true
+    fi
+    if command -v xvfb-run >/dev/null 2>&1; then
+      xvfb-run -a -s "-screen 0 1280x720x24" timeout -k 8 45 \
+        "$LROOT/X Coin Practice Wallet" -datadir="$PD" -server -listen=0 \
+        -rpcuser=xcoin -rpcpassword=xcoin -rpcport="$PKG_RPC" -rpcbind=127.0.0.1 \
+        -splash=0 -printtoconsole -xoauthmock=NFTRVN >/tmp/xcoin-pkg-practice.log 2>&1 &
+      gui_pid=$!
+      up=0
+      for _ in $(seq 1 90); do
+        if "$LROOT/bin/xcoin-cli" -regtest -datadir="$PD" -rpcuser=xcoin -rpcpassword=xcoin -rpcport="$PKG_RPC" getblockchaininfo >/dev/null 2>&1; then
+          up=1; break
+        fi
+        sleep 0.25
+      done
+      if [[ "$up" -eq 1 ]]; then
+        CHAIN="$("$LROOT/bin/xcoin-cli" -regtest -datadir="$PD" -rpcuser=xcoin -rpcpassword=xcoin -rpcport="$PKG_RPC" getblockchaininfo | python3 -c 'import json,sys; print(json.load(sys.stdin)["chain"])')"
+        if [[ "$CHAIN" == "regtest" ]]; then
+          record PASS linux-package-practice-start "Practice launcher opened chain=regtest"
+        else
+          record FAIL linux-package-practice-start "chain=$CHAIN"
+        fi
+        "$LROOT/bin/xcoin-cli" -regtest -datadir="$PD" -rpcuser=xcoin -rpcpassword=xcoin -rpcport="$PKG_RPC" stop >/dev/null 2>&1 || true
+      else
+        record FAIL linux-package-practice-start "GUI/RPC did not come up; see /tmp/xcoin-pkg-practice.log"
+        tail -40 /tmp/xcoin-pkg-practice.log || true
+        tail -20 "$PD/regtest/debug.log" 2>/dev/null || true
+      fi
+      wait "$gui_pid" 2>/dev/null || true
+      pkill -9 -f "$PD" 2>/dev/null || true
+    else
+      record SKIP linux-package-practice-start "no xvfb"
     fi
     # Real launcher must not start mainnet: inspect that it is not compiled with PRACTICE
     if strings "$LROOT/X Coin Wallet" | grep -q -- '-regtest'; then
@@ -205,6 +232,12 @@ if [[ -f "$LINUX_TAR" ]]; then
       record PASS linux-no-terminal-start "X Coin Wallet is an ELF, not a shell script"
     else
       record FAIL linux-no-terminal-start "$(file "$LROOT/X Coin Wallet")"
+    fi
+    if strings "$LROOT/bin/xcoin-qt" | grep -q "Practice Wallet" && \
+       strings "$LROOT/bin/xcoin-qt" | grep -q "\[regtest\]"; then
+      record PASS linux-practice-title-strings "xcoin-qt contains Practice Wallet and [regtest]"
+    else
+      record FAIL linux-practice-title-strings "Practice/[regtest] strings missing from packaged GUI"
     fi
   else
     record FAIL linux-package-layout "missing labeled starts or bin/xcoin-qt"
@@ -269,6 +302,13 @@ if [[ -f "$WIN_ZIP" ]]; then
   fi
 else
   record SKIP windows-package "zip not built yet"
+fi
+
+echo "== home ledger isolation (must not create ~/.xcoin/wallet.dat) =="
+if [[ -f "$HOME/.xcoin/wallet.dat" ]]; then
+  record FAIL isolation-home-wallet "~/.xcoin/wallet.dat exists; tests must not touch the launch wallet"
+else
+  record PASS isolation-home-wallet "no ~/.xcoin/wallet.dat"
 fi
 
 {
