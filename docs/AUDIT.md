@@ -34,11 +34,12 @@ Proof: `contrib/xcoin/smoke-benchmark.sh` (A sends to B; B
 requires two or more peers.**
 
 - One `xcoind` / `xcoin-qt` writes the **frozen** genesis to its datadir
-  and can extend the chain. Genesis `nTime` is already `1788825600`
-  (2026-09-08 00:00:00 UTC) in the binary — first connect does not
-  rewrite it. Height 1 is the first payday (first eligible producer).
-  Regtest: `generatetoaddress` (on-demand). Main / test: the lottery
-  producer emits a block when this node is eligible and is a winner
+  and can extend the chain. Main genesis `nTime` is the lottery clock;
+  freeze it at go-live (`contrib/xcoin/freeze-genesis.sh`) so explorers
+  show first-connect time. Height 1 is the first payday. Mainnet will
+  not backfill more than two hours of missed minutes. Regtest:
+  `generatetoaddress` (on-demand). Main / test: the lottery producer
+  emits a block when this node is eligible and is a winner
   (`fMiningRequiresPeers = false`). Height 0 is stored even if nobody
   else is online.
 - Other people seeing **the same** chain requires P2P: `addnode` /
@@ -145,7 +146,9 @@ Accepted residual (not blockers for a private test):
 - Producer commits the active set; validation checks the coinbase against
   that commitment, not an oracle of “who is really online.”
 - A cheating producer can omit `XPL1` and skip a pool split.
-- No public explorer, no public seeds, no exchange, no mobile.
+- No public explorer URL until go-live. RPC is enough for third-party
+  explorers/wallets: [THIRD-PARTY.md](THIRD-PARTY.md). Go-live:
+  [GO-LIVE.md](GO-LIVE.md).
 - Upstream `make check` still hard-codes imported genesis hashes.
 
 ## Smokes

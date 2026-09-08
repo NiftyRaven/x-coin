@@ -63,10 +63,11 @@ contract + custodian/bridge decision. Do not invent one for listing.
    optionally show *your* listen address if you check **Provide my node
    IP** (off by default). Optional later: DNS `vSeeds` (do not add
    public seeds while private).
-3. **Stand up an explorer** — any Bitcoin-family explorer pointed at an
-   `-txindex=1` `xcoind`. Put that URL in the listing form and, only then,
-   in `DEFAULT_THIRD_PARTY_BROWSERS` if you want a GUI "view on explorer"
-   link. Until then keep it empty.
+3. **Stand up an explorer** — [THIRD-PARTY.md](THIRD-PARTY.md). Any
+   Bitcoin-family explorer pointed at `-txindex=1 -assetindex=1
+   -addressindex=1` `xcoind`. Put that URL in the listing form and, only
+   then, in `DEFAULT_THIRD_PARTY_BROWSERS` if you want a GUI "view on
+   explorer" link. Until then keep it empty.
 4. **Liquidity** — market-maker inventory and a BTC (or other) pair.
 5. **Fill the venue's form** — name X Coin, ticker XFER, decimals 8,
    supply figures above, P2P 38443, RPC 38442, magic `XFER`, this

@@ -96,7 +96,20 @@ if "${CLI[@]}" transfer ALICE 1 ySmokeNoSession111111111111111111 >/tmp/xcoin-xs
 fi
 grep -qi "sign in with x\|session" /tmp/xcoin-xsession-xfer.err
 
-echo "== typed linkxaccount nftrvn is rejected without session =="
+echo "== unsigned cannot create a main asset =="
+if "${CLI[@]}" issue TESTASSET 1 >/tmp/xcoin-xsession-issue.err 2>&1; then
+  echo "issue TESTASSET must fail without a session" >&2
+  cat /tmp/xcoin-xsession-issue.err >&2
+  exit 1
+fi
+grep -qi "sign in with x\|session\|cannot create main" /tmp/xcoin-xsession-issue.err
+if "${CLI[@]}" linkxaccount >/tmp/xcoin-xsession-linkempty.err 2>&1; then
+  echo "linkxaccount with no session must fail" >&2
+  cat /tmp/xcoin-xsession-linkempty.err >&2
+  exit 1
+fi
+grep -qi "sign in with x\|session" /tmp/xcoin-xsession-linkempty.err
+
 if "${CLI[@]}" linkxaccount nftrvn >/tmp/xcoin-xsession-link.err 2>&1; then
   echo "linkxaccount nftrvn must fail without a session" >&2
   cat /tmp/xcoin-xsession-link.err >&2

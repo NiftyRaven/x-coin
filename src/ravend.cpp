@@ -74,6 +74,22 @@ bool AppInit(int argc, char* argv[])
     // If Qt is used, parameters/xcoin.conf are parsed in qt/raven.cpp's main()
     gArgs.ParseParameters(argc, argv);
 
+    // Go-live helper: construct genesis and print nTime/hash (no datadir).
+    if (gArgs.IsArgSet("-printgenesis")) {
+        try {
+            SelectParams(ChainNameFromCommandLine());
+        } catch (const std::exception& e) {
+            fprintf(stderr, "Error: %s\n", e.what());
+            return false;
+        }
+        const CBlock& genesis = GetParams().GenesisBlock();
+        fprintf(stdout, "XCOIN_GENESIS %s nTime=%u hash=%s merkle=%s\n",
+                GetParams().NetworkIDString().c_str(), genesis.nTime,
+                GetParams().GetConsensus().hashGenesisBlock.GetHex().c_str(),
+                genesis.hashMerkleRoot.GetHex().c_str());
+        return true;
+    }
+
     // Process help and version before taking care about datadir
     if (gArgs.IsArgSet("-?") || gArgs.IsArgSet("-h") ||  gArgs.IsArgSet("-help") || gArgs.IsArgSet("-version"))
     {

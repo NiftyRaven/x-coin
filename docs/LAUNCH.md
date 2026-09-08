@@ -49,10 +49,13 @@ Answered from consensus / wallet / P2P code (see [AUDIT.md](AUDIT.md)):
 Do **not** reuse the imported v4.8.0 ports, magic, or base58 versions.
 Collision table: [FORK.md](FORK.md).
 
-### Genesis (frozen 2026-09-08)
+### Genesis (development freeze — re-run at go-live)
 
 All three networks use the same frozen coinbase timestamp string
 (consensus-critical — quoted once in [FORK.md](FORK.md); do not edit it).
+**Main `nTime` is re-frozen at go-live** so explorer timestamps match
+first connect ([GO-LIVE.md](GO-LIVE.md)). The numbers below are the
+current development freeze.
 
 | | Main | Testnet | Regtest |
 | --- | --- | --- | --- |
@@ -74,10 +77,14 @@ headers — no leading-zero PoW grind):
 `nMinimumChainWork` and `defaultAssumeValid` are zero. Checkpoints are empty.
 No imported UTXO, assumevalid hash, or checkpoint is inherited.
 
-**Birth of the chain:** genesis is already in the binary. First start does
-**not** rewrite `nTime`. The first *spendable* block is height 1, produced
-when an X Verified eligible node is running and wins that minute. Connecting
-the first peer does not create genesis; it only shares the same frozen ledger.
+**Birth of the chain:** freeze main genesis **at go-live**
+(`[contrib/xcoin/freeze-genesis.sh](../contrib/xcoin/freeze-genesis.sh)`),
+then start the first X Verified node immediately. Height 0 is that
+header; height 1 is the next lottery minute and the first payday.
+Connecting a peer later does not rewrite genesis. Mainnet will not
+backfill more than two hours of missed minutes. Full order:
+[GO-LIVE.md](GO-LIVE.md). Third-party explorers/wallets:
+[THIRD-PARTY.md](THIRD-PARTY.md).
 
 **Fair launch:** no IPO, no premine, no founder allocation. Height 0 is not a
 payday. The genesis coinbase (5000 XFER in the serialized tx) is **never

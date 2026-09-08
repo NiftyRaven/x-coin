@@ -78,13 +78,15 @@ Subsidy at height 1 is **5000 XFER**, halved every 2,100,000 blocks
 (every 150 blocks on regtest). Height 0 pays nothing; the genesis
 coinbase is never added to the UTXO set.
 
-Genesis is **frozen in the binary**. Mainnet header `nTime` is
-`1788825600` (2026-09-08 00:00:00 UTC). Starting a node, signing in,
-or connecting a peer does **not** rewrite height 0. That header is
-the ledger’s birth. Height 1 is the first payday: it is produced
-when an **X Verified** eligible node is running and wins that minute.
-Later blocks use wall-clock time at production. A lone node already
-stores genesis; other people seeing the same tip still need `addnode`.
+Genesis **nTime is the lottery clock**, frozen in the binary at go-live
+(`contrib/xcoin/freeze-genesis.sh`). Connecting a node does **not**
+rewrite height 0 by itself. Height 1 is the first payday: it is
+produced when an **X Verified** eligible node is running in the minute
+after that freeze. Explorers show those header timestamps as the birth
+of the chain. A lone node already stores genesis; other people seeing
+the same tip still need `addnode`. Do not start mainnet hours after
+the freeze — the producer will not backfill more than two hours of
+missed minutes. Go-live: [docs/GO-LIVE.md](../docs/GO-LIVE.md).
 
 Winner count that minute is `1 + floor(height / halvingInterval)`.
 The subsidy is split as evenly as possible across those winners; fees
@@ -281,7 +283,8 @@ can speak the same Bitcoin-family RPC (`getblock`, `getrawtransaction`
 with `-txindex=1`, `listassets`, `getassetdata`, `issue`, `transfer`).
 There is no in-tree explorer URL. A third-party wallet still cannot
 mint a main asset without Sign in with X on that node; subs are issued
-under that session’s root. [docs/DEX.md](../docs/DEX.md).
+under that session’s root. How to wire one:
+[docs/THIRD-PARTY.md](../docs/THIRD-PARTY.md).
 
 ## 7. The wallet (honest status)
 
@@ -333,8 +336,10 @@ P2P, mempool, the asset script format. How to use it:
 - A cheating producer can omit `XPL1` and skip a pool split. Honest
   nodes always split when they know the pool. Keep id + password private.
 - Clock skew can delay a slot; height still maps 1:1.
-- No public explorer URL, no DNS seeds, no exchange listing. RPC is
-  enough for a third party to stand up an explorer or wallet later.
+- No public explorer URL, no DNS seeds, no exchange listing until go-live.
+  RPC is enough for a third party to stand up an explorer or wallet:
+  [docs/THIRD-PARTY.md](../docs/THIRD-PARTY.md).
+  Go-live birth clock: [docs/GO-LIVE.md](../docs/GO-LIVE.md).
   Private-test audit: [docs/AUDIT.md](../docs/AUDIT.md).
   Threat model: [docs/SECURITY.md](../docs/SECURITY.md).
 

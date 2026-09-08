@@ -8,6 +8,7 @@
 #include "base58.h"
 #include "chain.h"
 #include "chainparams.h"
+#include "chainparamsbase.h"
 #include "consensus/validation.h"
 #include "fs.h"
 #include "hash.h"
@@ -1295,6 +1296,32 @@ static void ProducerThread(const CChainParams& chainparams)
             const int nextHeight = tip->nHeight + 1;
             const int64_t slot = SlotFromHeight(nextHeight, chainparams.GenesisBlock().nTime);
             const int64_t currentSlot = SlotFromTime(now);
+
+            // Mainnet: do not backfill hours/days of lottery minutes. Height maps
+            // 1:1 to minutes from genesis nTime, so a stale development genesis
+            // would mint a fake history. Freeze genesis at go-live, then start
+            // the first eligible node within two hours.
+            if (chainparams.NetworkIDString() == CBaseChainParams::MAIN &&
+                currentSlot > slot + 120) {
+                static bool fLoggedStaleGenesis = false;
+                if (!fLoggedStaleGenesis) {
+                    LogPrintf("lottery: main genesis is %d minutes behind wall clock; not producing. "
+                              "At go-live run contrib/xcoin/freeze-genesis.sh and start this node immediately "
+                              "so block timestamps are the birth of the chain.\n",
+                              (int)(currentSlot - slot));
+                    fLoggedStaleGenesis = true;
+                }
+                MilliSleep(1000);
+                continue;
+            }
+            if (currentSlot > slot + 1) {
+                static int lastCatchupLogHeight = -1;
+                if (nextHeight != lastCatchupLogHeight) {
+                    LogPrintf("lottery: catching up height %d (%d minutes behind wall clock)\n",
+                              nextHeight, (int)(currentSlot - slot));
+                    lastCatchupLogHeight = nextHeight;
+                }
+            }
 
             if (currentSlot < slot) {
                 MilliSleep(1000);
