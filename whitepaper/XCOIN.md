@@ -153,7 +153,8 @@ response: X user id, username, expiry, `verified`, `verified_type`, and
 an HMAC proof (`xsession.json` + datadir secret
 `xsession.key`). **Send and receive** require that proof — authentication
 is what proves the wallet is yours. Home shows **this wallet is linked
-to @handle** plus the X user id, and whether X Verified is true.
+to @handle** and whether X Verified is true. It does not show your
+X user id or session files.
 `linkxaccount otherperson` is
 rejected when the session is not `otherperson`. This proof does not
 replace the 12-word BIP39 seed.

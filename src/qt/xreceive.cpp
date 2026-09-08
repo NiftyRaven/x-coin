@@ -91,15 +91,14 @@ void XReceive::refresh()
         tagLabel->setText("This wallet is not linked yet. Sign in with X on Home. "
                           "A typed handle cannot create a receive address.");
         addressLabel->setText("(sign in with X to receive)");
-        hintLabel->setText("Receive requires the session proof in this datadir (xsession.json + xsession.key). "
+        hintLabel->setText("Receive requires a private Sign in with X session on this computer. "
                            "This wallet + this X session = you. Another user cannot create a receive address in your wallet. "
                            "The 12-word seed still controls the keys; Sign in with X is the identity gate.");
         return;
     }
     const QString handle = QString::fromStdString(xsession::SignedInHandle());
-    const QString uid = QString::fromStdString(xsession::SignedInUserId());
-    tagLabel->setText(QString("Receiving into the wallet linked to @%1 (X user id %2).")
-        .arg(handle).arg(uid));
+    tagLabel->setText(QString("Receiving into the wallet linked to @%1.")
+        .arg(handle));
     if (!walletModel || !walletModel->getAddressTableModel()) {
         addressLabel->setText("(open a wallet)");
         return;
@@ -116,7 +115,7 @@ void XReceive::refresh()
         currentAddress = m->addRow(AddressTableModel::Receive, "Receive", "");
     addressLabel->setText(currentAddress.isEmpty() ? QString("(could not create address)") : currentAddress);
     hintLabel->setText(QString("This address is yours because this wallet.dat holds the keys and this node holds a "
-                              "Sign in with X proof for @%1 (xsession.json + xsession.key). "
+                              "private Sign in with X session for @%1. "
                               "Another user cannot receive into your wallet by typing your handle. Copy and send this to the payer.")
         .arg(QString::fromStdString(xsession::SignedInHandle())));
 }

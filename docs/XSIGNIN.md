@@ -17,10 +17,10 @@ per [X’s verification policy](https://help.x.com/en/rules-and-policies/verific
 It is **not** “whoever the operator typed into `addxverified`.” That
 command maintains an optional private-mesh **invite list**.
 
-**This wallet is yours** when Home shows **Linked to @yourhandle** plus
-your X user id. That state means this datadir holds a valid session
-proof (`xsession.json` + `xsession.key`). A typed handle cannot steal
-it.
+**This wallet is yours** when Home shows **Linked to @yourhandle**.
+That state means this datadir holds a valid session proof. A typed handle
+cannot steal it. Home does **not** show your X user id, tokens, or
+session file paths.
 
 The **12-word BIP39 seed is unchanged** and still required to create
 or restore keys. Sign in with X does not replace the seed. Details:
@@ -32,14 +32,27 @@ After a successful sign-in:
 
 | File | Contents |
 | --- | --- |
-| `xsession.key` | 32-byte HMAC secret (created once per datadir) |
-| `xsession.json` | `id`, `username`, `exp`, `verified`, `verified_type`, HMAC-SHA256 proof |
+| `xsession.key` | 32-byte HMAC secret (created once per datadir, mode `0600`) |
+| `xsession.json` | `id`, `username`, `exp`, `verified`, `verified_type`, HMAC-SHA256 proof (mode `0600`) |
+
+**Not stored:** X access tokens, refresh tokens, passwords, PKCE verifiers.
 
 Proof message: `xcoin-xsession|{id}|{username}|{exp}|{0|1}|{verified_type}`.
 
 OAuth calls `GET /2/users/me?user.fields=verified,verified_type`.
 `verified==true` (or `verified_type` of `blue` / `business` / `government`)
 is X Verified.
+
+## Privacy (login is not public)
+
+- Tokens live in RAM for one `users/me` round-trip, then are wiped.
+- Session files are this datadir only (`0600`). They are not gossiped.
+- P2P lottery heartbeats carry the public @handle (lottery identity),
+  never the numeric X user id, never a token, never the HMAC proof.
+- The GUI shows @handle and verified yes/no. It does not show user ids
+  or secret paths. Peer IPs stay hidden unless you check **Provide my
+  node IP** (off by default).
+- `getxsession` is localhost RPC. Do not publish that JSON.
 
 Steal this datadir (`xsession.key` + `xsession.json`) and you steal
 **this node's session**, not someone else's `wallet.dat`. The HMAC is
@@ -77,7 +90,9 @@ The node never pretends login succeeded without a real access token
 
    Another port: `-xoauthcallbackport=N` and register
    `http://127.0.0.1:N/callback`.
-4. Scopes: `users.read` `tweet.read` `offline.access`.
+4. Scopes: `users.read` `tweet.read` only. Do **not** request `offline.access`
+   (no refresh token). The access token is held in RAM for the `users/me`
+   call and then discarded — it is never written to disk.
 5. Copy the **Client ID**. In `xcoin-qt` paste it on Home and press
    **Save Client ID**, or put this in `xcoin.conf`:
 

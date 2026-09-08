@@ -172,7 +172,7 @@ bool SignHeartbeat(const CKey& key, int64_t timestamp, const CScript& script,
 bool VerifyHeartbeatSig(const CScript& script, int64_t timestamp,
                         const std::string& handle, uint64_t userId,
                         const std::vector<unsigned char>& sig, bool xVerified = true);
-/** Sign this node's current local payout + session handle (wallet or payout key). */
+/** Sign this node's payout + session handle for P2P. Numeric X user id is not signed onto the wire. */
 bool SignLocalHeartbeat(int64_t timestamp, std::vector<unsigned char>& sigOut);
 
 /** Parse "handle" or "handle:userid" / "handle,userid". */

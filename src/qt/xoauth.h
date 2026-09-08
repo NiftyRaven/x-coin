@@ -42,6 +42,7 @@ private Q_SLOTS:
 
 private:
     void fail(const QString& e);
+    void wipeSecrets();
     void exchangeCode(const QString& code);
     void fetchMe(const QString& accessToken);
     bool finishFromUsersMe(const QByteArray& body, QString& err);

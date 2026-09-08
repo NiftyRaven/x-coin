@@ -16,6 +16,7 @@ Attacker goals we actually designed against:
 | Goal | What we guarantee | What we do not |
 | --- | --- | --- |
 | Impersonate a typed `@handle` on *this* node | `RequireHandle` / `RequireSession` on send, receive, own, `linkxaccount`, `registeractivenode`. Typed `-xaccount=` is ignored. | Steal `xsession.key` + `xsession.json` from this datadir → that attacker *is* the session on this node. |
+| Publish login / OAuth secrets | Access tokens never written. Session files `0600`. GUI does not show user ids or secret paths. P2P `xhb` sends @handle only (no X user id, no token). | A screenshot of RPC `getxsession`, or a copied datadir. |
 | Spend someone else’s wallet | Spend only keys in **this** `wallet.dat`. Session does not import another wallet. | Copy `wallet.dat` (or the 12 words) → they have the keys. |
 | Steal lottery rewards with a spoofed `xhb` | Gossip `xhb` must be compact-signed by the payout key. A **live** handle cannot be rebound to another script. Allowlist match is **handle**, not “any handle + a listed userid.” Optional payout pin. | First-seen race after restart if the handle is not pinned. A producer can still commit a set; consensus checks the coinbase matches that commitment, not “the true mesh.” |
 | Replay Ravencoin blocks / addresses | Different genesis, magic `XFER` / `XFTN` / `XFRT`, ports, address versions (`X…` / `y…`). | A malicious binary that changes those constants is a different coin. |

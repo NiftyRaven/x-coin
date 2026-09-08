@@ -1794,7 +1794,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             const int64_t hbNow = GetTime();
             if (!localScript.empty() && lottery::SignLocalHeartbeat(hbNow, hbSig)) {
                 connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::XHB, hbNow, localScript,
-                                                          localX.handle, localX.userId,
+                                                          localX.handle, (uint64_t)0,
                                                           xsession::SessionIsXVerified(), hbSig));
             }
         }
@@ -3357,7 +3357,7 @@ bool PeerLogicValidation::SendMessages(CNode* pto, std::atomic<bool>& interruptM
                 const int64_t hbNow = GetTime();
                 if (!localScript.empty() && lottery::SignLocalHeartbeat(hbNow, hbSig))
                     connman->PushMessage(pto, msgMaker.Make(NetMsgType::XHB, hbNow, localScript,
-                                                            localX.handle, localX.userId,
+                                                            localX.handle, (uint64_t)0,
                                                             xsession::SessionIsXVerified(), hbSig));
             }
         }
