@@ -130,8 +130,7 @@ the first node and the seed:
 Peers gossip **signed** lottery heartbeats (`xhb`) after `verack` (handle
 only; user id **0** on the wire). Honest nodes that can connect to the seed
 (directly or via the mesh) share one active-node set. Unsigned, unverified,
-or sticky-violating heartbeats are ignored for that set. Signed pool
-adverts (`xpl`) gossip the same way; passwords never leave the node.
+or sticky-violating heartbeats are ignored for that set.
 
 ## X Verified fair lottery
 
@@ -185,8 +184,8 @@ Download the Windows or Linux wallet from Releases (not **Code →
 Download ZIP**). Double-click **X Coin Wallet**. If the package
 `xcoin.conf` has `addnode=<host>:38443`, you connect with no terminal.
 
-Sign in with X, optionally create or join a pool on Home. Developers
-who are compiling (not the launch-night path): [INSTALL.md](../INSTALL.md).
+Sign in with X. Developers who are compiling (not the launch-night
+path): [INSTALL.md](../INSTALL.md).
 
 Wait until Home shows a connected peer (or `getactivenodes` shows the
 seed and yourself, each with an `xaccount`). Lottery needs **X Verified**
@@ -206,11 +205,8 @@ See [LOTTERY.md](LOTTERY.md). Short form:
 - `winnerCount = 1 + floor(height / nSubsidyHalvingInterval)` (main interval
   2,100,000; regtest 150).
 - Subsidy 5000 XFER, split as evenly as possible; fees to the first winner.
-  Optional pool: that winner’s share is split evenly across every member
-  address (verified or not). Tickets stay one per X Verified running member.
 - Coinbase must contain an `OP_RETURN` `XHB1` commitment of the sorted active
-  ids and must pay each winner’s script (or the `XPL1` even split if pooled).
-  Mismatches are invalid.
+  ids and must pay each winner’s script. Mismatches are invalid.
 
 Assets: see [ASSETS.md](ASSETS.md). Main/root identity assets are **free**
 (protocol assignment on a **signed-in** X-link). No session → no main
@@ -293,7 +289,6 @@ contrib/xcoin/smoke-eligibility.sh
 contrib/xcoin/smoke-xsession.sh
 contrib/xcoin/smoke-gui.sh
 contrib/xcoin/smoke-sabotage.sh
-contrib/xcoin/smoke-pool.sh
 ```
 
 Unlinked node is not eligible; signed-in but not X Verified can send and

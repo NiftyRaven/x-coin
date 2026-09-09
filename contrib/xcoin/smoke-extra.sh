@@ -119,11 +119,4 @@ assert j.get("local_xaccount")=="ghost"
 assert j.get("local_eligible") is False
 '
 
-echo "== pool create / leave =="
-"${A_CLI[@]}" mockxsignin alice:verified >/dev/null
-"${A_CLI[@]}" createpool "Audit Pool" audit1 p4ss
-"${A_CLI[@]}" getmypool | python3 -c 'import json,sys; j=json.load(sys.stdin); assert j.get("id")=="audit1" and j.get("in_pool") in (True,1)'
-"${A_CLI[@]}" leavepool audit1
-"${A_CLI[@]}" getmypool | python3 -c 'import json,sys; j=json.load(sys.stdin); assert not j.get("in_pool")'
-
 echo "extra smokes: ok"
