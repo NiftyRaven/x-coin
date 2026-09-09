@@ -44,3 +44,13 @@ addnode=<PUBLIC_IP>:38443
 `vSeeds` / `vFixedSeeds` in `CMainParams` are cleared today. Leftover Ravencoin entries in `chainparamsseeds.h` (port **8767**) must stay unused or be deleted. Do not point X Coin at Ravencoin seeds.
 
 Paste the listen IP before the 12 September package. Without it, nodes do not auto-connect.
+
+
+## In the binary (NFTRVN)
+
+- Draw uses `ActiveIdsForSlot`: `joined < slot_start`, still alive at open.
+- Producer waits `SETTLE_SECONDS` (5) into the minute.
+- Only `winners[0]` emits.
+- If this height already has a block with data, do not emit.
+- `GetBlockProof` is 1. Longest chain wins. Same length: smaller block hash.
+- No pools.
