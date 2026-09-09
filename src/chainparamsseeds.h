@@ -1,22 +1,13 @@
 #ifndef RAVEN_CHAINPARAMSSEEDS_H
 #define RAVEN_CHAINPARAMSSEEDS_H
 /**
- * Fixed-seed arrays are unused. X Coin is a private mesh: join with
- * addnode / seednode (P2P 38443). Do not restore imported upstream IPs
- * and do not publish public DNS seeds from this tree.
- *
- * chainparams.cpp calls vSeeds.clear() / vFixedSeeds.clear() on every
- * network. The sentinels exist only so this header still compiles.
+ * Launch seed: Azure xcoin-seed 172.191.195.221:38443
+ * IPv4 stored as IPv4-mapped IPv6. Loaded by CMainParams.
  */
-#ifdef __GNUC__
-#define XCOIN_UNUSED_SEED __attribute__((unused))
-#else
-#define XCOIN_UNUSED_SEED
-#endif
-static XCOIN_UNUSED_SEED SeedSpec6 pnSeed6_main[] = {
-    {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 0}
+static SeedSpec6 pnSeed6_main[] = {
+    {{0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0xac,0xbf,0xc3,0xdd}, 38443}
 };
-static XCOIN_UNUSED_SEED SeedSpec6 pnSeed6_test[] = {
-    {{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}, 0}
+
+static SeedSpec6 pnSeed6_test[] = {
 };
 #endif // RAVEN_CHAINPARAMSSEEDS_H
