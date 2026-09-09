@@ -7,6 +7,10 @@
 #include <key.h>
 #include <script/standard.h>
 #include <consensus/validation.h>
+#include <chain.h>
+#include <chainparams.h>
+#include <miner.h>
+#include <validation.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -178,6 +182,73 @@ BOOST_AUTO_TEST_CASE(historical_slot_is_a_function_of_height_not_peer_data)
     BOOST_CHECK_EQUAL(lottery::SlotStartTime(2, genesis), lottery::SlotStartTime(1, genesis) + lottery::SLOT_SECONDS);
     // Peer messages cannot change SLOT_SECONDS; it is a compile-time constant.
     BOOST_CHECK_EQUAL(lottery::SLOT_SECONDS, 60);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+struct LotteryForkTestingSetup : public TestingSetup {
+    LotteryForkTestingSetup() : TestingSetup(CBaseChainParams::REGTEST) {}
+};
+
+BOOST_FIXTURE_TEST_SUITE(lottery_fork_tests, LotteryForkTestingSetup)
+
+// Prove AcceptBlock (fForceProcessing=false) reorgs to the smaller-hash
+// sibling. Compact-block uses the same PreferLotteryFork predicate.
+BOOST_AUTO_TEST_CASE(acceptblock_equal_work_smaller_hash_wins)
+{
+    const CChainParams& chainparams = GetParams();
+    CKey key;
+    key.MakeNewKey(true);
+    const CScript script = P2PKHFromKey(key);
+    lottery::GetRegistry().Reset();
+    BOOST_REQUIRE(lottery::GetRegistry().Heartbeat(script, GetTime(), "alice", 0, true));
+
+    std::unique_ptr<CBlockTemplate> tmpl;
+    {
+        LOCK(cs_main);
+        tmpl = BlockAssembler(chainparams).CreateNewBlock(script);
+    }
+    BOOST_REQUIRE(tmpl);
+    CBlock assembled = tmpl->block;
+    unsigned int extraNonce = 0;
+    {
+        LOCK(cs_main);
+        IncrementExtraNonce(&assembled, chainActive.Tip(), extraNonce);
+    }
+
+    CBlock larger = assembled;
+    CBlock smaller = assembled;
+    smaller.nNonce = larger.nNonce + 1;
+    if (smaller.GetHash() > larger.GetHash()) {
+        std::swap(smaller, larger);
+    }
+    BOOST_REQUIRE(smaller.GetHash() < larger.GetHash());
+    BOOST_REQUIRE(smaller.hashPrevBlock == larger.hashPrevBlock);
+    BOOST_REQUIRE(smaller.hashPrevBlock == chainActive.Tip()->GetBlockHash());
+
+    const uint256 hashLarger = larger.GetHash();
+    const uint256 hashSmaller = smaller.GetHash();
+
+    bool fNew = false;
+    BOOST_REQUIRE(ProcessNewBlock(chainparams, std::make_shared<const CBlock>(larger), true, &fNew));
+    {
+        LOCK(cs_main);
+        BOOST_REQUIRE(chainActive.Tip()->GetBlockHash() == hashLarger);
+        BOOST_CHECK(GetBlockProof(*chainActive.Tip()) == arith_uint256(1));
+    }
+
+    // Unrequested path: AcceptBlock used to drop equal-work siblings
+    // (nChainWork > tip was false). Smaller hash must still become tip.
+    fNew = false;
+    BOOST_REQUIRE(ProcessNewBlock(chainparams, std::make_shared<const CBlock>(smaller), false, &fNew));
+    BOOST_CHECK(fNew);
+    {
+        LOCK(cs_main);
+        BOOST_CHECK(chainActive.Tip()->GetBlockHash() == hashSmaller);
+        BOOST_CHECK(PreferLotteryFork(chainActive.Tip(), mapBlockIndex[hashLarger]));
+        BOOST_CHECK(chainActive.Tip()->nChainWork == mapBlockIndex[hashLarger]->nChainWork);
+        BOOST_CHECK(GetBlockProof(*chainActive.Tip()) == arith_uint256(1));
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

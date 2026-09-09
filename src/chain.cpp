@@ -126,6 +126,16 @@ arith_uint256 GetBlockProof(const CBlockIndex& block)
     return arith_uint256(1);
 }
 
+bool PreferLotteryFork(const CBlockIndex* candidate, const CBlockIndex* incumbent)
+{
+    if (!candidate) return false;
+    if (!incumbent) return true;
+    if (candidate->nChainWork != incumbent->nChainWork)
+        return candidate->nChainWork > incumbent->nChainWork;
+    // Same parent + two valid lottery blocks: smaller block hash wins.
+    return candidate->GetBlockHash() < incumbent->GetBlockHash();
+}
+
 int64_t GetBlockProofEquivalentTime(const CBlockIndex& to, const CBlockIndex& from, const CBlockIndex& tip, const Consensus::Params& params)
 {
     arith_uint256 r;
