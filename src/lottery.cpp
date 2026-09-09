@@ -676,6 +676,7 @@ std::vector<uint160> Registry::ActiveIds(int64_t now) const
 std::vector<uint160> Registry::ActiveIdsForSlot(int64_t slot) const
 {
     const int64_t slotStart = slot * SLOT_SECONDS;
+    const int64_t now = GetTime();
     std::vector<uint160> ids;
     LOCK(cs);
     ids.reserve(nodes.size());
@@ -688,6 +689,14 @@ std::vector<uint160> Registry::ActiveIdsForSlot(int64_t slot) const
                 continue; // dead before the minute opened
         }
         ids.push_back(kv.first);
+    }
+    // First payday / first node in a slot: nobody was frozen yet.
+    // Use live heartbeats so height 1 and regtest generate can commit XHB1.
+    if (ids.empty()) {
+        for (const auto& kv : nodes) {
+            if (now - kv.second.lastSeen <= HEARTBEAT_TTL_SECONDS)
+                ids.push_back(kv.first);
+        }
     }
     return ids;
 }
