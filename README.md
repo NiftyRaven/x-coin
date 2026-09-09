@@ -1,10 +1,10 @@
 # X Coin (XFER)
 
-**[Download Windows wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.1/X-Coin-1.0.1-Windows.zip)**  
-**[Download Linux wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.1/X-Coin-1.0.1-Linux-x86_64.tar.gz)**
+**[Download Windows wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.2/X-Coin-1.0.2-Windows.zip)**  
+**[Download Linux wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.2/X-Coin-1.0.2-Linux-x86_64.tar.gz)**
 
 Those two links are the wallets. They live on the
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.1)
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.2)
 page. Do **not** use **Code → Download ZIP** — that is the source tree,
 not a wallet.
 
@@ -20,7 +20,7 @@ on **Linux** and **Windows**.
 
 ### Windows, double-click
 
-1. Download [X-Coin-1.0.1-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.1/X-Coin-1.0.1-Windows.zip).
+1. Download [X-Coin-1.0.2-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.2/X-Coin-1.0.2-Windows.zip).
 2. Right-click → Extract All.
 3. Open the folder that appears. **X Coin Wallet.exe** is in that first folder.
 4. Double-click **X Coin Wallet.exe**. The wallet window opens.
@@ -34,8 +34,8 @@ Wallet.exe** only. Do not open the real wallet until launch night.
 
 ### Linux, double-click
 
-1. Download [X-Coin-1.0.1-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.1/X-Coin-1.0.1-Linux-x86_64.tar.gz).
-2. Right-click → Extract, or run `tar -xzf X-Coin-1.0.1-Linux-x86_64.tar.gz`.
+1. Download [X-Coin-1.0.2-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.2/X-Coin-1.0.2-Linux-x86_64.tar.gz).
+2. Right-click → Extract, or run `tar -xzf X-Coin-1.0.2-Linux-x86_64.tar.gz`.
 3. Open the folder that appears. **X Coin Wallet** is in that first folder.
 4. Double-click **X Coin Wallet**. The wallet window opens. You do not
    need a terminal.
@@ -81,10 +81,9 @@ not compile. You do not use **Code → Download ZIP**.
    seed. It listens on P2P **38443**. There are no public DNS seeds.
    Other wallets do not find you through GitHub.
 3. Sign in with X and claim the free root. Users never paste a Client
-   ID. If Sign in says the operator has not baked one, that is the
-   real state — put `xoauthclientid=` in this folder's `xcoin.conf`
-   when you have a Client ID (callback
-   `http://127.0.0.1:18791/callback`). Do not invent a Client ID.
+   ID. The operator Client ID is already baked in this folder's
+   `xcoin.conf` (`xoauthclientid=`). Callback is
+   `http://127.0.0.1:18791/callback`. Do not invent a host.
 4. Home should say you are the first node and listen is on. **Provide
    my node IP** is off by default. Turn it on only to see the address
    others must use (`host:38443`). It does not publish your IP by

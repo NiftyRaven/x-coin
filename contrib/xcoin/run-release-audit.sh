@@ -7,8 +7,8 @@ LOGDIR="${LOGDIR:-$ROOT/audit-logs}"
 XCOIND="${XCOIND:-$ROOT/src/xcoind}"
 XCLI="${XCLI:-$ROOT/src/xcoin-cli}"
 XQT="${XQT:-$ROOT/src/qt/xcoin-qt}"
-LINUX_TAR="$ROOT/dist/xcoin-1.0.1-linux-x86_64.tar.gz"
-WIN_ZIP="$ROOT/dist/xcoin-1.0.1-win-x86_64.zip"
+LINUX_TAR="$ROOT/dist/xcoin-1.0.2-linux-x86_64.tar.gz"
+WIN_ZIP="$ROOT/dist/xcoin-1.0.2-win-x86_64.zip"
 mkdir -p "$LOGDIR"
 : > "$LOGDIR/summary.tsv"
 RUN_UTC="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
@@ -209,10 +209,10 @@ body = text.lstrip()
 if not body.startswith("# X Coin"):
     print("README must start with # X Coin")
     sys.exit(1)
-links = re.findall(r"\[[^\]]*\]\((https://github.com/NiftyRaven/x-coin/releases/download/v1\.0\.1/[^)]+)\)", text)
+links = re.findall(r"\[[^\]]*\]\((https://github.com/NiftyRaven/x-coin/releases/download/v1\.0\.2/[^)]+)\)", text)
 need = [
-    "https://github.com/NiftyRaven/x-coin/releases/download/v1.0.1/X-Coin-1.0.1-Windows.zip",
-    "https://github.com/NiftyRaven/x-coin/releases/download/v1.0.1/X-Coin-1.0.1-Linux-x86_64.tar.gz",
+    "https://github.com/NiftyRaven/x-coin/releases/download/v1.0.2/X-Coin-1.0.2-Windows.zip",
+    "https://github.com/NiftyRaven/x-coin/releases/download/v1.0.2/X-Coin-1.0.2-Linux-x86_64.tar.gz",
 ]
 if links[:2] != need:
     print("first release download links were %r" % (links[:4],))
@@ -275,10 +275,12 @@ else
   record FAIL signin-no-clientid-paste "Sign in with X button, empty-ID error, or package xcoin.conf missing"
 fi
 
-echo "== Package xcoin.conf has no invented seed or Client ID =="
+echo "== Package xcoin.conf has baked operator Client ID and no invented seed =="
 if python3 - "$ROOT/contrib/xcoin/xcoin.conf" <<'PY'
 import re, sys
+ALLOWED_CLIENT_ID = "N2hIbnNsTlR0TmR1WDZ6eWp2Qk06MTpjaQ"
 text = open(sys.argv[1], encoding="utf-8").read()
+saw_client = False
 for i, line in enumerate(text.splitlines(), 1):
     s = line.strip()
     if not s or s.startswith("#"):
@@ -286,12 +288,20 @@ for i, line in enumerate(text.splitlines(), 1):
     if re.match(r"addnode\s*=", s, re.I):
         print("uncommented addnode on line %d: %s" % (i, s))
         sys.exit(1)
-    if re.match(r"xoauthclientid\s*=\s*\S", s, re.I):
-        print("uncommented Client ID on line %d: %s" % (i, s))
-        sys.exit(1)
+    m = re.match(r"xoauthclientid\s*=\s*(.*)$", s, re.I)
+    if m:
+        val = m.group(1).strip()
+        if val != ALLOWED_CLIENT_ID:
+            print("unexpected Client ID on line %d: %s" % (i, s))
+            sys.exit(1)
+        saw_client = True
+        continue
     if re.match(r"dnsseed\s*=\s*1", s, re.I):
         print("dnsseed enabled on line %d" % i)
         sys.exit(1)
+if not saw_client:
+    print("package xcoin.conf must bake the operator Client ID")
+    sys.exit(1)
 if "listen=1" not in text.replace(" ", ""):
     print("package xcoin.conf must set listen=1")
     sys.exit(1)
@@ -301,9 +311,9 @@ if "addnode=<host>:38443" not in text:
 print("PACKAGE_CONF_OK")
 PY
 then
-  record PASS package-conf-no-invented-values "listen on; addnode and Client ID commented"
+  record PASS package-conf-no-invented-values "listen on; operator Client ID baked; addnode commented"
 else
-  record FAIL package-conf-no-invented-values "shipped xcoin.conf invents a seed, Client ID, or DNS seed"
+  record FAIL package-conf-no-invented-values "shipped xcoin.conf invents a seed or DNS seed, or Client ID is not the operator bake"
 fi
 
 echo "== Practice launcher source forces -regtest and -lotterymine =="
@@ -424,7 +434,7 @@ if [[ -f "$LINUX_TAR" ]]; then
     top_ok=1
     while IFS= read -r p; do
       [[ -z "$p" ]] && continue
-      # expect xcoin-1.0.1-linux-x86_64/X Coin Wallet
+      # expect xcoin-1.0.2-linux-x86_64/X Coin Wallet
       slashes="${p//[^\/]/}"
       if [[ ${#slashes} -ne 1 ]]; then
         echo "nested linux start: $p"
@@ -682,10 +692,10 @@ body = text.lstrip()
 if not body.startswith("# X Coin"):
     print("homepage README must start with # X Coin")
     sys.exit(1)
-links = re.findall(r"\[[^\]]*\]\((https://github.com/NiftyRaven/x-coin/releases/download/v1\.0\.1/[^)]+)\)", text)
+links = re.findall(r"\[[^\]]*\]\((https://github.com/NiftyRaven/x-coin/releases/download/v1\.0\.2/[^)]+)\)", text)
 need = [
-    "https://github.com/NiftyRaven/x-coin/releases/download/v1.0.1/X-Coin-1.0.1-Windows.zip",
-    "https://github.com/NiftyRaven/x-coin/releases/download/v1.0.1/X-Coin-1.0.1-Linux-x86_64.tar.gz",
+    "https://github.com/NiftyRaven/x-coin/releases/download/v1.0.2/X-Coin-1.0.2-Windows.zip",
+    "https://github.com/NiftyRaven/x-coin/releases/download/v1.0.2/X-Coin-1.0.2-Linux-x86_64.tar.gz",
 ]
 if links[:2] != need:
     print("homepage first release download links were %r" % (links[:4],))
@@ -715,39 +725,39 @@ else
   record SKIP github-homepage-readme "gh not installed"
 fi
 
-echo "== GitHub Release v1.0.1 (non-draft, both wallet assets) =="
+echo "== GitHub Release v1.0.2 (non-draft, both wallet assets) =="
 if command -v gh >/dev/null 2>&1; then
   if python3 - <<'PY'
 import json, subprocess, sys
 raw = subprocess.check_output(
-    ["gh", "api", "repos/NiftyRaven/x-coin/releases/tags/v1.0.1"],
+    ["gh", "api", "repos/NiftyRaven/x-coin/releases/tags/v1.0.2"],
     text=True,
 )
 j = json.loads(raw)
 if j.get("draft") is True:
-    print("v1.0.1 is still a draft")
+    print("v1.0.2 is still a draft")
     sys.exit(1)
 if j.get("prerelease") is True:
-    print("v1.0.1 is marked prerelease")
+    print("v1.0.2 is marked prerelease")
     sys.exit(1)
 names = {a.get("name") for a in j.get("assets") or []}
-need = {"X-Coin-1.0.1-Windows.zip", "X-Coin-1.0.1-Linux-x86_64.tar.gz"}
+need = {"X-Coin-1.0.2-Windows.zip", "X-Coin-1.0.2-Linux-x86_64.tar.gz"}
 if not need.issubset(names):
     print("missing assets, have %r" % sorted(names))
     sys.exit(1)
 sizes = {a["name"]: a.get("size") for a in j.get("assets") or []}
-if sizes.get("X-Coin-1.0.1-Windows.zip", 0) < 1_000_000:
-    print("Windows zip too small: %s" % sizes.get("X-Coin-1.0.1-Windows.zip"))
+if sizes.get("X-Coin-1.0.2-Windows.zip", 0) < 1_000_000:
+    print("Windows zip too small: %s" % sizes.get("X-Coin-1.0.2-Windows.zip"))
     sys.exit(1)
-if sizes.get("X-Coin-1.0.1-Linux-x86_64.tar.gz", 0) < 1_000_000:
-    print("Linux tar.gz too small: %s" % sizes.get("X-Coin-1.0.1-Linux-x86_64.tar.gz"))
+if sizes.get("X-Coin-1.0.2-Linux-x86_64.tar.gz", 0) < 1_000_000:
+    print("Linux tar.gz too small: %s" % sizes.get("X-Coin-1.0.2-Linux-x86_64.tar.gz"))
     sys.exit(1)
 print("RELEASE_OK draft=%s assets=%s" % (j.get("draft"), sorted(need)))
 PY
   then
     record PASS github-release-v1 "published, not draft; Windows zip + Linux tar.gz attached"
   else
-    record FAIL github-release-v1 "v1.0.1 missing, draft, or missing wallet assets"
+    record FAIL github-release-v1 "v1.0.2 missing, draft, or missing wallet assets"
   fi
 else
   record SKIP github-release-v1 "gh not installed"
@@ -824,17 +834,17 @@ cov_row() {
   cov_row "Operator invite list cannot exclude a verified wallet" "smoke-abuse smoke-eligibility"
   cov_row "Session file / mock mismatch cannot send" "smoke-abuse smoke-xsession"
   cov_row "GitHub default-branch README is download-first" "github-homepage-readme"
-  cov_row "GitHub Release v1.0.1 is published with both wallet assets" "github-release-v1"
+  cov_row "GitHub Release v1.0.2 is published with both wallet assets" "github-release-v1"
   echo
   echo "## Packages"
   echo
   echo "| Archive | Open this |"
   echo "| --- | --- |"
-  echo "| \`dist/xcoin-1.0.1-linux-x86_64.tar.gz\` | **X Coin Wallet** (ELF) in the first unpacked folder |"
-  echo "| \`dist/xcoin-1.0.1-win-x86_64.zip\` | **X Coin Wallet.exe** in the first unpacked folder |"
+  echo "| \`dist/xcoin-1.0.2-linux-x86_64.tar.gz\` | **X Coin Wallet** (ELF) in the first unpacked folder |"
+  echo "| \`dist/xcoin-1.0.2-win-x86_64.zip\` | **X Coin Wallet.exe** in the first unpacked folder |"
   echo
-  echo "GitHub Release assets (the download): \`X-Coin-1.0.1-Windows.zip\` and"
-  echo "\`X-Coin-1.0.1-Linux-x86_64.tar.gz\` on tag \`v1.0.1\`."
+  echo "GitHub Release assets (the download): \`X-Coin-1.0.2-Windows.zip\` and"
+  echo "\`X-Coin-1.0.2-Linux-x86_64.tar.gz\` on tag \`v1.0.2\`."
   echo
   echo "## Could not run"
   echo
@@ -872,7 +882,7 @@ if [[ "$hp" == "PASS" && "$rel" == "PASS" ]]; then
 elif [[ "$hp" == "FAIL" ]]; then
   visit="NO — launch blocker: the default-branch README is not download-first. Fix NFTRVN homepage README (or switch the default branch) before calling this visit-Git-download-double-click ready."
 elif [[ "$rel" == "FAIL" ]]; then
-  visit="NO — launch blocker: GitHub Release v1.0.1 is missing, draft, or missing wallet assets."
+  visit="NO — launch blocker: GitHub Release v1.0.2 is missing, draft, or missing wallet assets."
 else
   visit="UNCLEAR — homepage or release check did not pass in this run (see table)."
 fi
@@ -893,7 +903,7 @@ fi
   echo "## What a person does"
   echo
   echo "1. Open the repository (default branch, no branch picker)."
-  echo "2. Click **Download Windows wallet** or **Download Linux wallet** (GitHub Release v1.0.1)."
+  echo "2. Click **Download Windows wallet** or **Download Linux wallet** (GitHub Release v1.0.2)."
   echo "3. Extract. The labeled start is in that first folder."
   echo "4. Double-click **X Coin Wallet** / **X Coin Wallet.exe**. Practice is the other labeled start and always \`-regtest\`."
   echo "5. Do **not** use **Code → Download ZIP** and do **not** compile."

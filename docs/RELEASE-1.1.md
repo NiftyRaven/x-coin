@@ -6,7 +6,7 @@ Anonymous public identity — display name and handle only.
 Private package **1.1.0** (`contrib/xcoin/package-linux.sh` →
 `dist/xcoin-1.1.0-linux-x86_64.tar.gz`). **1.0 Windows and Linux wallets**
 are on the private
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.1)
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.2)
 page. Do not make the repository public until go-live ([GO-LIVE.md](GO-LIVE.md)).
 Explorers / third-party wallets: [THIRD-PARTY.md](THIRD-PARTY.md). 1.0 notes:
 [RELEASE-1.0.md](RELEASE-1.0.md).

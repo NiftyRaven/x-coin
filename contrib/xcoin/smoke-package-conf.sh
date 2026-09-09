@@ -25,13 +25,14 @@ rm -rf "$BASE"
 mkdir -p "$A_DIR" "$B_DIR" "$C_DIR" "$PKG" "$EMPTY_PKG"
 
 # Shipped template has addnode commented — no invented host.
+# Operator Client ID is baked so Sign in with X works; still not a seed.
 cp "$ROOT/contrib/xcoin/xcoin.conf" "$EMPTY_PKG/xcoin.conf"
 if grep -E '^[[:space:]]*addnode=' "$EMPTY_PKG/xcoin.conf"; then
   echo "shipped xcoin.conf must not contain an uncommented addnode" >&2
   exit 1
 fi
-if grep -E '^[[:space:]]*xoauthclientid=[[:alnum:]]' "$EMPTY_PKG/xcoin.conf"; then
-  echo "shipped xcoin.conf must not contain a baked Client ID" >&2
+if ! grep -E '^[[:space:]]*xoauthclientid=N2hIbnNsTlR0TmR1WDZ6eWp2Qk06MTpjaQ[[:space:]]*$' "$EMPTY_PKG/xcoin.conf"; then
+  echo "shipped xcoin.conf must bake the operator Client ID" >&2
   exit 1
 fi
 
