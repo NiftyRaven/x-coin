@@ -1172,6 +1172,7 @@ static void ProducerThread(const CChainParams& chainparams)
 
     GetRegistry().SetLocalScript(LoadOrCreateLocalScript());
     int64_t lastProducedSlot = -1;
+    int64_t lastProducedWallMinute = -1;
     bool fLoggedIneligible = false;
 
     try {
@@ -1230,23 +1231,6 @@ static void ProducerThread(const CChainParams& chainparams)
             const int64_t slot = SlotFromHeight(nextHeight, chainparams.GenesisBlock().nTime);
             const int64_t currentSlot = SlotFromTime(now);
 
-            // Mainnet: do not backfill hours/days of lottery minutes. Height maps
-            // 1:1 to minutes from genesis nTime, so a stale development genesis
-            // would mint a fake history. Freeze genesis at go-live, then start
-            // the first eligible node within two hours.
-            if (chainparams.NetworkIDString() == CBaseChainParams::MAIN &&
-                currentSlot > slot + 120) {
-                static bool fLoggedStaleGenesis = false;
-                if (!fLoggedStaleGenesis) {
-                    LogPrintf("lottery: main genesis is %d minutes behind wall clock; not producing. "
-                              "At go-live run contrib/xcoin/freeze-genesis.sh and start this node immediately "
-                              "so block timestamps are the birth of the chain.\n",
-                              (int)(currentSlot - slot));
-                    fLoggedStaleGenesis = true;
-                }
-                MilliSleep(1000);
-                continue;
-            }
             if (currentSlot > slot + 1) {
                 static int lastCatchupLogHeight = -1;
                 if (nextHeight != lastCatchupLogHeight) {
@@ -1256,14 +1240,22 @@ static void ProducerThread(const CChainParams& chainparams)
                 }
             }
 
-            if (currentSlot < slot) {
-                MilliSleep(1000);
-                continue;
-            }
-            // Let heartbeats settle so honest nodes freeze the same set.
-            if (now < slot * SLOT_SECONDS + SETTLE_SECONDS) {
-                MilliSleep(200);
-                continue;
+            if (chainparams.NetworkIDString() == CBaseChainParams::MAIN) {
+                // Catch-up may target old lottery slots; still ≤1 emit per wall minute.
+                if (GetTime() / 60 == lastProducedWallMinute) {
+                    MilliSleep(1000);
+                    continue;
+                }
+            } else {
+                if (currentSlot < slot) {
+                    MilliSleep(1000);
+                    continue;
+                }
+                // Let heartbeats settle so honest nodes freeze the same set.
+                if (now < slot * SLOT_SECONDS + SETTLE_SECONDS) {
+                    MilliSleep(200);
+                    continue;
+                }
             }
             if (slot == lastProducedSlot) {
                 MilliSleep(1000);
@@ -1307,8 +1299,10 @@ static void ProducerThread(const CChainParams& chainparams)
 
             // Only winners[0] produces. Other drawn ids are payees on that coinbase.
             if (!draw.winners.empty() && GetRegistry().LocalId() == draw.winners[0]) {
-                if (ProduceOneBlock(chainparams))
+                if (ProduceOneBlock(chainparams)) {
                     lastProducedSlot = slot;
+                    lastProducedWallMinute = GetTime() / 60;
+                }
             }
             MilliSleep(1000);
         }
