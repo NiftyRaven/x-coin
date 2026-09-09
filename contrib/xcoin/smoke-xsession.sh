@@ -213,7 +213,11 @@ if j.get("xaccount") != "alice":
 if j.get("asset") != "ALICE":
     sys.exit("expected root ALICE, got %r" % j.get("asset"))
 '
-"${CLI[@]}" listmyassets | grep -q ALICE
+# Claim is a mempool tx until the next lottery block.
+"${CLI[@]}" generatetoaddress 1 "$ADDR" >/dev/null
+MY="$("${CLI[@]}" listmyassets)"
+echo "$MY"
+echo "$MY" | grep -q ALICE
 "${CLI[@]}" getmainasset alice | grep -q ALICE
 
 echo "== subs only under this signed-in main asset =="
