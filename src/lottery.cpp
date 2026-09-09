@@ -611,15 +611,18 @@ bool Registry::Heartbeat(const CScript& script, int64_t now,
         byHandle.erase(hit);
     }
     auto nit = nodes.find(id);
+    int64_t joined = now;
     if (nit != nodes.end() && nit->second.x.handle != norm) {
         if (now - nit->second.lastSeen <= HEARTBEAT_TTL_SECONDS)
             return false;
         byHandle.erase(nit->second.x.handle);
+    } else if (nit != nodes.end()) {
+        joined = nit->second.joined;
     }
     XAccount x;
     x.handle = norm;
     x.userId = xUserId;
-    nodes[id] = ActiveNode{id, script, now, x};
+    nodes[id] = ActiveNode{id, script, now, joined, x};
     byHandle[norm] = id;
     if (nodes.size() > MAX_ACTIVE_NODES) {
         auto oldest = nodes.begin();
@@ -666,6 +669,25 @@ std::vector<uint160> Registry::ActiveIds(int64_t now) const
     for (const auto& kv : nodes) {
         if (now - kv.second.lastSeen <= HEARTBEAT_TTL_SECONDS)
             ids.push_back(kv.first);
+    }
+    return ids;
+}
+
+std::vector<uint160> Registry::ActiveIdsForSlot(int64_t slot) const
+{
+    const int64_t slotStart = slot * SLOT_SECONDS;
+    std::vector<uint160> ids;
+    LOCK(cs);
+    ids.reserve(nodes.size());
+    for (const auto& kv : nodes) {
+        const ActiveNode& n = kv.second;
+        if (n.joined >= slotStart)
+            continue; // arrived after the minute opened
+        if (n.lastSeen < slotStart) {
+            if (slotStart - n.lastSeen > HEARTBEAT_TTL_SECONDS)
+                continue; // dead before the minute opened
+        }
+        ids.push_back(kv.first);
     }
     return ids;
 }
@@ -881,7 +903,8 @@ Draw ComputeDraw(int nNextHeight,
     d.slot = SlotFromHeight(nNextHeight, genesisTime);
     d.winnerCount = WinnerCount(nNextHeight, nSubsidyHalvingInterval);
     d.seed = Seed(prevBlockHash, d.slot);
-    d.active = GetRegistry().ActiveIds(now);
+    d.active = GetRegistry().ActiveIdsForSlot(d.slot);
+    (void)now;
     d.winners = SelectWinners(d.active, d.seed, d.winnerCount);
     d.rewards = SplitReward(subsidy, (int)d.winners.size());
     return d;
@@ -1336,9 +1359,38 @@ static void ProducerThread(const CChainParams& chainparams)
                 MilliSleep(1000);
                 continue;
             }
+            // Let heartbeats settle so honest nodes freeze the same set.
+            if (now < slot * SLOT_SECONDS + SETTLE_SECONDS) {
+                MilliSleep(200);
+                continue;
+            }
             if (slot == lastProducedSlot) {
                 MilliSleep(1000);
                 continue;
+            }
+
+            {
+                LOCK(cs_main);
+                if (chainActive.Height() >= nextHeight) {
+                    lastProducedSlot = slot;
+                    MilliSleep(1000);
+                    continue;
+                }
+                bool haveSibling = false;
+                for (const auto& kv : mapBlockIndex) {
+                    const CBlockIndex* p = kv.second;
+                    if (p && p->pprev == tip && p->nHeight == nextHeight &&
+                        (p->nStatus & BLOCK_HAVE_DATA)) {
+                        haveSibling = true;
+                        break;
+                    }
+                }
+                if (haveSibling) {
+                    LogPrintf("lottery: height %d already has a block; not emitting\n", nextHeight);
+                    lastProducedSlot = slot;
+                    MilliSleep(1000);
+                    continue;
+                }
             }
 
             CAmount subsidy = GetBlockSubsidy(nextHeight, consensus);
@@ -1352,7 +1404,8 @@ static void ProducerThread(const CChainParams& chainparams)
                 continue;
             }
 
-            if (IsWinner(GetRegistry().LocalId(), draw.winners)) {
+            // Only winners[0] produces. Other drawn ids are payees on that coinbase.
+            if (!draw.winners.empty() && GetRegistry().LocalId() == draw.winners[0]) {
                 if (ProduceOneBlock(chainparams))
                     lastProducedSlot = slot;
             }

@@ -137,20 +137,18 @@ namespace {
     struct CBlockIndexWorkComparator
     {
         bool operator()(const CBlockIndex *pa, const CBlockIndex *pb) const {
-            // First sort by most total work, ...
+            // First sort by most total work (lottery: +1 per block = longest chain).
             if (pa->nChainWork > pb->nChainWork) return false;
             if (pa->nChainWork < pb->nChainWork) return true;
 
-            // ... then by earliest time received, ...
-            if (pa->nSequenceId < pb->nSequenceId) return false;
-            if (pa->nSequenceId > pb->nSequenceId) return true;
+            // Same length: smaller block hash wins. Not first-seen, not pointer luck.
+            const uint256 ha = pa->GetBlockHash();
+            const uint256 hb = pb->GetBlockHash();
+            if (ha < hb) return false;
+            if (hb < ha) return true;
 
-            // Use pointer address as tie breaker (should only happen with blocks
-            // loaded from disk, as those all have id 0).
             if (pa < pb) return false;
             if (pa > pb) return true;
-
-            // Identical blocks.
             return false;
         }
     };

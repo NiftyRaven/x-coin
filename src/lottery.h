@@ -51,6 +51,7 @@ static const int64_t SLOT_SECONDS = 60;
 /** How many future slots a header may sit in vs the local clock (clock skew). */
 static const int64_t MAX_FUTURE_SLOTS = 1;
 static const int64_t HEARTBEAT_TTL_SECONDS = 180;
+static const int64_t SETTLE_SECONDS = 5; // wait this long into the slot before producing
 static const size_t MAX_ACTIVE_NODES = 4096;
 static const size_t MAX_HEARTBEAT_SCRIPT = 520;
 static const size_t MAX_HEARTBEAT_SIG = 65;
@@ -68,6 +69,7 @@ struct ActiveNode {
     uint160 id;
     CScript script;
     int64_t lastSeen;
+    int64_t joined; // first seen; freeze uses joined < slot_start
     XAccount x;
 };
 
@@ -141,6 +143,8 @@ public:
     void Reset();
 
     std::vector<uint160> ActiveIds(int64_t now) const;
+    /** Nodes already in the set when slot S opened. Late joiners do not enter that draw. */
+    std::vector<uint160> ActiveIdsForSlot(int64_t slot) const;
     std::vector<ActiveNode> ActiveNodes(int64_t now) const;
     CScript ScriptFor(const uint160& id) const;
     size_t Count(int64_t now) const;
