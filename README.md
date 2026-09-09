@@ -12,8 +12,8 @@ not a wallet.
 Anonymous public identity — display name and handle only.
 
 Peer-to-peer coin for users on X. No mining. Minute lottery among **X
-Verified** (blue check) active nodes; halvings add winners. Optional
-pools. Fair launch, no premine. Ticker **XFER**. Subunit **xferon**.
+Verified** (blue check) active nodes; halvings add winners. Fair launch,
+no premine. Ticker **XFER**. Subunit **xferon**.
 One free root identity asset per signed-in X account. Handles up to 32
 characters so a 26-character handle maps 1:1. Buttons-first desktop GUI
 on **Linux** and **Windows**.
@@ -128,10 +128,9 @@ announcement.
 
 First start creates `wallet.dat` in the data folder above. Sign in with
 X is required to send, receive, and claim your **one free root**.
-Lottery additionally needs **X Verified** (blue check). Optional
-**POOL** is on Home (create / join / leave).
+Lottery additionally needs **X Verified** (blue check).
 
-Home is buttons first: Sign in with X, lottery, pool, Receive, Send,
+Home is buttons first: Sign in with X, lottery, Receive, Send,
 Activity, Transfer assets. A typed handle is not Verified X and cannot
 claim someone else's root.
 
