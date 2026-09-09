@@ -14,12 +14,12 @@
 
 #include <boost/test/unit_test.hpp>
 
-BOOST_FIXTURE_TEST_SUITE(lottery_security_tests, TestingSetup)
-
 static CScript P2PKHFromKey(const CKey& key)
 {
     return GetScriptForDestination(CKeyID(key.GetPubKey().GetID()));
 }
+
+BOOST_FIXTURE_TEST_SUITE(lottery_security_tests, TestingSetup)
 
 BOOST_AUTO_TEST_CASE(allowlist_requires_handle_not_userid_alone)
 {
@@ -187,7 +187,17 @@ BOOST_AUTO_TEST_CASE(historical_slot_is_a_function_of_height_not_peer_data)
 BOOST_AUTO_TEST_SUITE_END()
 
 struct LotteryForkTestingSetup : public TestingSetup {
-    LotteryForkTestingSetup() : TestingSetup(CBaseChainParams::REGTEST) {}
+    LotteryForkTestingSetup() : TestingSetup(CBaseChainParams::REGTEST)
+    {
+        // DisconnectBlock always reads asset undo via passetsdb. Unit
+        // TestingSetup never allocated it; a same-height reorg needs it.
+        passetsdb = new CAssetsDB(1 << 20, true);
+    }
+    ~LotteryForkTestingSetup()
+    {
+        delete passetsdb;
+        passetsdb = nullptr;
+    }
 };
 
 BOOST_FIXTURE_TEST_SUITE(lottery_fork_tests, LotteryForkTestingSetup)
@@ -219,7 +229,7 @@ BOOST_AUTO_TEST_CASE(acceptblock_equal_work_smaller_hash_wins)
     CBlock larger = assembled;
     CBlock smaller = assembled;
     smaller.nNonce = larger.nNonce + 1;
-    if (smaller.GetHash() > larger.GetHash()) {
+    if (!(smaller.GetHash() < larger.GetHash())) {
         std::swap(smaller, larger);
     }
     BOOST_REQUIRE(smaller.GetHash() < larger.GetHash());
