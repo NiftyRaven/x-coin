@@ -14,6 +14,7 @@
 #include "hash.h"
 #include "init.h"
 #include "validation.h"
+#include "chain.h"
 #include "merkleblock.h"
 #include "net.h"
 #include "netmessagemaker.h"
@@ -2446,7 +2447,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         if (pindex->nStatus & BLOCK_HAVE_DATA) // Nothing to do here
             return true;
 
-        if (pindex->nChainWork <= chainActive.Tip()->nChainWork || // We know something better
+        if (!PreferLotteryFork(pindex, chainActive.Tip()) || // We know something better (equal-work larger hash loses)
                 pindex->nTx != 0) { // We had this block at some point, but pruned it
             if (fAlreadyInFlight) {
                 // We requested this block for some reason, but our mempool will probably be useless
@@ -2574,8 +2575,9 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             // we're close to caught up (via the CanDirectFetch() requirement
             // above, combined with the behavior of not requesting blocks until
             // we have a chain with at least nMinimumChainWork), and we ignore
-            // compact blocks with less work than our tip, it is safe to treat
-            // reconstructed compact blocks as having been requested.
+            // compact blocks that lose lottery fork choice against our tip
+            // (PreferLotteryFork), it is safe to treat reconstructed compact
+            // blocks as having been requested.
             ProcessNewBlock(chainparams, pblock, /*fForceProcessing=*/true, &fNewBlock);
             if (fNewBlock) {
                 pfrom->nLastBlockTime = GetTime();

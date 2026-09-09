@@ -7,15 +7,19 @@
 #include <key.h>
 #include <script/standard.h>
 #include <consensus/validation.h>
+#include <chain.h>
+#include <chainparams.h>
+#include <miner.h>
+#include <validation.h>
 
 #include <boost/test/unit_test.hpp>
-
-BOOST_FIXTURE_TEST_SUITE(lottery_security_tests, TestingSetup)
 
 static CScript P2PKHFromKey(const CKey& key)
 {
     return GetScriptForDestination(CKeyID(key.GetPubKey().GetID()));
 }
+
+BOOST_FIXTURE_TEST_SUITE(lottery_security_tests, TestingSetup)
 
 BOOST_AUTO_TEST_CASE(allowlist_requires_handle_not_userid_alone)
 {
@@ -178,6 +182,82 @@ BOOST_AUTO_TEST_CASE(historical_slot_is_a_function_of_height_not_peer_data)
     BOOST_CHECK_EQUAL(lottery::SlotStartTime(2, genesis), lottery::SlotStartTime(1, genesis) + lottery::SLOT_SECONDS);
     // Peer messages cannot change SLOT_SECONDS; it is a compile-time constant.
     BOOST_CHECK_EQUAL(lottery::SLOT_SECONDS, 60);
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+struct LotteryForkTestingSetup : public TestingSetup {
+    LotteryForkTestingSetup() : TestingSetup(CBaseChainParams::REGTEST)
+    {
+        // DisconnectBlock always reads asset undo via passetsdb. Unit
+        // TestingSetup never allocated it; a same-height reorg needs it.
+        passetsdb = new CAssetsDB(1 << 20, true);
+    }
+    ~LotteryForkTestingSetup()
+    {
+        delete passetsdb;
+        passetsdb = nullptr;
+    }
+};
+
+BOOST_FIXTURE_TEST_SUITE(lottery_fork_tests, LotteryForkTestingSetup)
+
+// A then B, same parent, equal work, hash(B) < hash(A) → tip becomes B.
+// B is unrequested (AcceptBlock fHasMoreWork). CMPCTBLOCK uses PreferLotteryFork.
+BOOST_AUTO_TEST_CASE(acceptblock_equal_work_smaller_hash_wins)
+{
+    const CChainParams& chainparams = GetParams();
+    CKey key;
+    key.MakeNewKey(true);
+    const CScript script = P2PKHFromKey(key);
+    lottery::GetRegistry().Reset();
+    BOOST_REQUIRE(lottery::GetRegistry().Heartbeat(script, GetTime(), "alice", 0, true));
+
+    std::unique_ptr<CBlockTemplate> tmpl;
+    {
+        LOCK(cs_main);
+        tmpl = BlockAssembler(chainparams).CreateNewBlock(script);
+    }
+    BOOST_REQUIRE(tmpl);
+    CBlock assembled = tmpl->block;
+    unsigned int extraNonce = 0;
+    {
+        LOCK(cs_main);
+        IncrementExtraNonce(&assembled, chainActive.Tip(), extraNonce);
+    }
+
+    CBlock blockA = assembled;
+    CBlock blockB = assembled;
+    blockB.nNonce = blockA.nNonce + 1;
+    if (!(blockB.GetHash() < blockA.GetHash())) {
+        std::swap(blockA, blockB);
+    }
+    BOOST_REQUIRE(blockB.GetHash() < blockA.GetHash());
+    BOOST_REQUIRE(blockA.hashPrevBlock == blockB.hashPrevBlock);
+    BOOST_REQUIRE(blockA.hashPrevBlock == chainActive.Tip()->GetBlockHash());
+
+    const uint256 hashA = blockA.GetHash();
+    const uint256 hashB = blockB.GetHash();
+
+    bool fNew = false;
+    BOOST_REQUIRE(ProcessNewBlock(chainparams, std::make_shared<const CBlock>(blockA), true, &fNew));
+    {
+        LOCK(cs_main);
+        BOOST_REQUIRE(chainActive.Tip()->GetBlockHash() == hashA);
+        BOOST_CHECK(GetBlockProof(*chainActive.Tip()) == arith_uint256(1));
+    }
+
+    // Unrequested: AcceptBlock used to drop equal-work (nChainWork > tip).
+    fNew = false;
+    BOOST_REQUIRE(ProcessNewBlock(chainparams, std::make_shared<const CBlock>(blockB), false, &fNew));
+    BOOST_CHECK(fNew);
+    {
+        LOCK(cs_main);
+        BOOST_CHECK(chainActive.Tip()->GetBlockHash() == hashB);
+        BOOST_CHECK(PreferLotteryFork(chainActive.Tip(), mapBlockIndex[hashA]));
+        BOOST_CHECK(chainActive.Tip()->nChainWork == mapBlockIndex[hashA]->nChainWork);
+        BOOST_CHECK(GetBlockProof(*chainActive.Tip()) == arith_uint256(1));
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

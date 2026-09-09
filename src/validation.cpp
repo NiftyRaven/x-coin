@@ -137,16 +137,10 @@ namespace {
     struct CBlockIndexWorkComparator
     {
         bool operator()(const CBlockIndex *pa, const CBlockIndex *pb) const {
-            // First sort by most total work (lottery: +1 per block = longest chain).
-            if (pa->nChainWork > pb->nChainWork) return false;
-            if (pa->nChainWork < pb->nChainWork) return true;
-
-            // Same length: smaller block hash wins. Not first-seen, not pointer luck.
-            const uint256 ha = pa->GetBlockHash();
-            const uint256 hb = pb->GetBlockHash();
-            if (ha < hb) return false;
-            if (hb < ha) return true;
-
+            // Same law as AcceptBlock / CMPCTBLOCK: PreferLotteryFork.
+            if (PreferLotteryFork(pb, pa)) return true;
+            if (PreferLotteryFork(pa, pb)) return false;
+            // Equal work and equal hash: pointer for set uniqueness only.
             if (pa < pb) return false;
             if (pa > pb) return true;
             return false;
@@ -3845,7 +3839,7 @@ static CBlockIndex* AddToBlockIndex(const CBlockHeader& block)
     pindexNew->nTimeMax = (pindexNew->pprev ? std::max(pindexNew->pprev->nTimeMax, pindexNew->nTime) : pindexNew->nTime);
     pindexNew->nChainWork = (pindexNew->pprev ? pindexNew->pprev->nChainWork : 0) + GetBlockProof(*pindexNew);
     pindexNew->RaiseValidity(BLOCK_VALID_TREE);
-    if (pindexBestHeader == nullptr || pindexBestHeader->nChainWork < pindexNew->nChainWork)
+    if (pindexBestHeader == nullptr || PreferLotteryFork(pindexNew, pindexBestHeader))
         pindexBestHeader = pindexNew;
 
     setDirtyBlockIndex.insert(pindexNew);
@@ -4442,7 +4436,9 @@ static bool AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CValidation
     // process an unrequested block if it's new and has enough work to
     // advance our tip, and isn't too many blocks ahead.
     bool fAlreadyHave = pindex->nStatus & BLOCK_HAVE_DATA;
-    bool fHasMoreWork = (chainActive.Tip() ? pindex->nChainWork > chainActive.Tip()->nChainWork : true);
+    // Unrequested: process if this block wins lottery fork choice (more work,
+    // or equal work and a strictly smaller block hash). First-seen must not win.
+    bool fHasMoreWork = PreferLotteryFork(pindex, chainActive.Tip());
     // Blocks that are too out-of-order needlessly limit the effectiveness of
     // pruning, because pruning will not delete block files that contain any
     // blocks which are too close in height to the tip.  Apply this test

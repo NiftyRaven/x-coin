@@ -379,6 +379,9 @@ public:
 };
 
 arith_uint256 GetBlockProof(const CBlockIndex& block);
+/** Lottery fork choice: more nChainWork wins; equal work → strictly smaller block hash.
+ *  Used on the AcceptBlock unrequested path and the CMPCTBLOCK skip. */
+bool PreferLotteryFork(const CBlockIndex* candidate, const CBlockIndex* incumbent);
 /** Return the time it would take to redo the work difference between from and to, assuming the current hashrate corresponds to the difficulty at tip, in seconds. */
 int64_t GetBlockProofEquivalentTime(const CBlockIndex& to, const CBlockIndex& from, const CBlockIndex& tip, const Consensus::Params&);
 /** Find the forking point between two chain tips. */
