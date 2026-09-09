@@ -52,10 +52,6 @@ private Q_SLOTS:
     void onOAuthStatus(const QString& message);
     void onShareNodeToggled(bool on);
     void onCopyNodeAddress();
-    void onCreatePool();
-    void onJoinPool();
-    void onLeavePool();
-    void onCopyPoolId();
 
 private:
     void applyTheme();
@@ -81,19 +77,11 @@ private:
     QLineEdit* subNameEdit;
     QLineEdit* uniqueNameEdit;
     QLineEdit* nodeIpEdit;
-    QLineEdit* poolNameEdit;
-    QLineEdit* poolIdEdit;
-    QLineEdit* poolPassEdit;
-    QLineEdit* joinIdEdit;
-    QLineEdit* joinPassEdit;
     QPushButton* signInBtn;
     QPushButton* mockBtn;
     QPushButton* claimBtn;
     QPushButton* allowlistBtn;
     QPushButton* copyNodeBtn;
-    QPushButton* copyPoolIdBtn;
-    QLabel* poolMineLabel;
-    QLabel* poolPublicLabel;
     QCheckBox* shareNodeChk;
     QWidget* nodeSharePanel;
     QLabel* nodeEndpointLabel;

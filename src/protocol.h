@@ -267,11 +267,6 @@ extern const char *ASSETDATA;
  * id = Hash160(script). Honest peers relay so they share one active set.
  */
 extern const char *XHB;
-/**
- * X Coin lottery pool advert (public name + member payout scripts + signature).
- * Password is never on the wire.
- */
-extern const char *XPL;
 };
 
 /* Get a vector of all valid message types (see above) */

@@ -14,7 +14,6 @@
 #include "hash.h"
 #include "key.h"
 #include "miner.h"
-#include "pool.h"
 #include "primitives/block.h"
 #include "pubkey.h"
 #include "random.h"
@@ -430,7 +429,6 @@ void InitEligibility()
 
     xsession::ApplyStartupArgs();
     xsession::BindLotteryFromSession();
-    xpool::Get().Init();
 }
 
 uint160 IdFromScript(const CScript& script)
@@ -983,11 +981,7 @@ void ApplyCoinbasePayouts(CBlock& block,
         return;
 
     const int64_t now = GetTime();
-    const CScript keepLocal = GetRegistry().LocalScript();
-    xpool::Advert localPool;
-    const bool localInPool = !keepLocal.empty()
-        && xpool::Get().GetByMember(IdFromScript(keepLocal), localPool);
-    if (!producerScript.empty() && !localInPool)
+    if (!producerScript.empty())
         GetRegistry().SetLocalScript(producerScript);
     GetRegistry().HeartbeatLocal(now);
 
@@ -1000,43 +994,7 @@ void ApplyCoinbasePayouts(CBlock& block,
     CMutableTransaction tx(*block.vtx[0]);
     tx.vout.clear();
 
-    std::vector<bool> claimed(draw.winners.size(), false);
-    std::vector<std::vector<uint160> > groups;
-    std::vector<std::string> seenPools;
-
     for (size_t i = 0; i < draw.winners.size(); i++) {
-        xpool::Advert a;
-        if (!xpool::Get().GetByMember(draw.winners[i], a))
-            continue;
-        if (std::find(seenPools.begin(), seenPools.end(), a.id) != seenPools.end())
-            continue;
-        seenPools.push_back(a.id);
-
-        std::vector<uint160> mids;
-        for (size_t m = 0; m < a.members.size(); m++)
-            mids.push_back(IdFromScript(a.members[m]));
-        std::sort(mids.begin(), mids.end());
-
-        CAmount bucket = 0;
-        for (size_t w = 0; w < draw.winners.size(); w++) {
-            if (std::find(mids.begin(), mids.end(), draw.winners[w]) == mids.end())
-                continue;
-            claimed[w] = true;
-            bucket += parts.empty() ? 0 : parts[w];
-            if (w == 0)
-                bucket += nFees;
-        }
-        if (bucket <= 0 || a.members.empty())
-            continue;
-        std::vector<CAmount> share = SplitReward(bucket, (int)a.members.size());
-        for (size_t m = 0; m < a.members.size(); m++)
-            tx.vout.push_back(CTxOut(share[m], a.members[m]));
-        groups.push_back(mids);
-    }
-
-    for (size_t i = 0; i < draw.winners.size(); i++) {
-        if (claimed[i])
-            continue;
         CScript dest = GetRegistry().ScriptFor(draw.winners[i]);
         if (dest.empty())
             dest = producerScript;
@@ -1047,11 +1005,6 @@ void ApplyCoinbasePayouts(CBlock& block,
     }
 
     tx.vout.push_back(CTxOut(0, MakeActiveSetCommitment(draw.active)));
-    if (!groups.empty()) {
-        const CScript poolCommit = xpool::MakePoolCommitment(groups);
-        if (!poolCommit.empty())
-            tx.vout.push_back(CTxOut(0, poolCommit));
-    }
     block.vtx[0] = MakeTransactionRef(std::move(tx));
 }
 
@@ -1071,17 +1024,10 @@ bool CheckLotteryCoinbase(const CBlock& block,
     const CTransaction& cb = *block.vtx[0];
     std::vector<uint160> committed;
     bool found = false;
-    std::vector<std::vector<uint160> > poolGroups;
-    bool hasPool = false;
     for (const auto& out : cb.vout) {
         if (!found && ParseActiveSetCommitment(out.scriptPubKey, committed)) {
             found = true;
             continue;
-        }
-        std::vector<std::vector<uint160> > g;
-        if (xpool::ParsePoolCommitment(out.scriptPubKey, g)) {
-            poolGroups = g;
-            hasPool = true;
         }
     }
     if (!found)
@@ -1123,73 +1069,19 @@ bool CheckLotteryCoinbase(const CBlock& block,
     const CAmount nFees = paid - subsidy;
     std::vector<CAmount> parts = SplitReward(subsidy, (int)winners.size());
 
-    if (!hasPool) {
-        if (pays.size() != winners.size())
-            return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-count", false,
-                             strprintf("expected %u winner outputs, got %u",
-                                       (unsigned)winners.size(), (unsigned)pays.size()));
-        for (size_t i = 0; i < winners.size(); i++) {
-            if (IdFromScript(pays[i].scriptPubKey) != winners[i])
-                return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-winner", false,
-                                 strprintf("payout %u script does not match winner", (unsigned)i));
-            CAmount expect = parts[i];
-            if (i == 0)
-                expect += nFees;
-            if (pays[i].nValue != expect)
-                return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-split", false,
-                                 strprintf("payout %u amount mismatch", (unsigned)i));
-        }
-        return true;
-    }
-
-    std::vector<bool> claimed(winners.size(), false);
-    std::vector<uint160> expectIds;
-    std::vector<CAmount> expectAmt;
-    for (size_t g = 0; g < poolGroups.size(); g++) {
-        const std::vector<uint160>& mids = poolGroups[g];
-        CAmount bucket = 0;
-        bool any = false;
-        for (size_t w = 0; w < winners.size(); w++) {
-            if (std::find(mids.begin(), mids.end(), winners[w]) == mids.end())
-                continue;
-            if (claimed[w])
-                return state.DoS(100, false, REJECT_INVALID, "bad-cb-pool-dup", false,
-                                 "winner listed in two pools");
-            claimed[w] = true;
-            any = true;
-            bucket += parts[w];
-            if (w == 0)
-                bucket += nFees;
-        }
-        if (!any)
-            return state.DoS(100, false, REJECT_INVALID, "bad-cb-pool-empty", false,
-                             "pool commitment covers no winner");
-        std::vector<CAmount> share = SplitReward(bucket, (int)mids.size());
-        for (size_t m = 0; m < mids.size(); m++) {
-            expectIds.push_back(mids[m]);
-            expectAmt.push_back(share[m]);
-        }
-    }
+    if (pays.size() != winners.size())
+        return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-count", false,
+                         strprintf("expected %u winner outputs, got %u",
+                                   (unsigned)winners.size(), (unsigned)pays.size()));
     for (size_t i = 0; i < winners.size(); i++) {
-        if (claimed[i])
-            continue;
-        CAmount value = parts[i];
+        if (IdFromScript(pays[i].scriptPubKey) != winners[i])
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-winner", false,
+                             strprintf("payout %u script does not match winner", (unsigned)i));
+        CAmount expect = parts[i];
         if (i == 0)
-            value += nFees;
-        expectIds.push_back(winners[i]);
-        expectAmt.push_back(value);
-    }
-
-    if (pays.size() != expectIds.size())
-        return state.DoS(100, false, REJECT_INVALID, "bad-cb-pool-count", false,
-                         strprintf("expected %u pool/solo outputs, got %u",
-                                   (unsigned)expectIds.size(), (unsigned)pays.size()));
-    for (size_t i = 0; i < expectIds.size(); i++) {
-        if (IdFromScript(pays[i].scriptPubKey) != expectIds[i])
-            return state.DoS(100, false, REJECT_INVALID, "bad-cb-pool-winner", false,
-                             strprintf("payout %u script does not match pool split", (unsigned)i));
-        if (pays[i].nValue != expectAmt[i])
-            return state.DoS(100, false, REJECT_INVALID, "bad-cb-pool-split", false,
+            expect += nFees;
+        if (pays[i].nValue != expect)
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-split", false,
                              strprintf("payout %u amount mismatch", (unsigned)i));
     }
     return true;
