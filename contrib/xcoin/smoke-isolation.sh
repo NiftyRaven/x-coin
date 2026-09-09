@@ -96,6 +96,9 @@ if j.get("xaccount") != "alice":
 if j.get("asset") != "ALICE":
     sys.exit("expected root ALICE")
 '
+# Claim is a mempool tx until the next lottery block (same as smoke-xsession).
+"${A_CLI[@]}" generatetoaddress 1 "$ADDR_A" >/dev/null
+wait_height A_CLI 111
 "${A_CLI[@]}" listmyassets | grep -q ALICE
 BAL_A="$("${A_CLI[@]}" getbalance)"
 echo "alice balance $BAL_A"
@@ -108,7 +111,7 @@ echo "== start Bob (empty wallet.dat) and sync the same tip =="
   -rpcport=28652 -addnode=127.0.0.1:28643 -dnsseed=0 -txindex=1 \
   -xoauthmock=bob:unverified
 wait_rpc B_CLI
-wait_height B_CLI 110
+wait_height B_CLI 111
 ADDR_B="$("${B_CLI[@]}" getnewaddress)"
 [[ "$ADDR_B" == y* ]]
 echo "bob recv $ADDR_B"
