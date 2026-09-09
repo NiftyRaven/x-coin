@@ -1,0 +1,226 @@
+name: Package X Coin 1.0.3
+
+# Builds the two launch packages from the launch-blockers branch.
+# Windows configure is always out-of-tree + --without-qtdbus so a prior
+# Linux in-tree config.status cannot leave USE_DBUS=1.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'git ref to package'
+        required: true
+        default: 'x-coin'
+
+jobs:
+  linux:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 240
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+          fetch-depth: 1
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential autotools-dev automake autoconf libtool pkg-config \
+            libssl-dev libevent-dev bsdmainutils python3 \
+            libboost-system-dev libboost-filesystem-dev libboost-chrono-dev \
+            libboost-test-dev libboost-thread-dev libboost-program-options-dev \
+            libdb++-dev libminiupnpc-dev libzmq3-dev libqrencode-dev \
+            qtbase5-dev qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler \
+            xvfb
+
+      - name: Build
+        run: |
+          ./autogen.sh
+          ./configure --with-gui=qt5 --disable-bench --with-incompatible-bdb
+          make -j$(nproc)
+
+      - name: Smoke (throwaway -regtest only)
+        run: |
+          export XCOIND="$PWD/src/xcoind" XCLI="$PWD/src/xcoin-cli"
+          contrib/xcoin/smoke-xsession.sh
+          contrib/xcoin/smoke-regtest.sh
+          contrib/xcoin/smoke-isolation.sh
+
+      - name: Package Linux
+        run: VER=1.0.3 contrib/xcoin/package-linux.sh
+
+      - name: Name release archive
+        run: |
+          cp dist/xcoin-1.0.3-linux-x86_64.tar.gz dist/X-Coin-1.0.3-Linux-x86_64.tar.gz
+          tar -tzf dist/X-Coin-1.0.3-Linux-x86_64.tar.gz | head
+          test -n "$(tar -tzf dist/X-Coin-1.0.3-Linux-x86_64.tar.gz | grep '^xcoin-1.0.3-linux-x86_64/X Coin Practice Wallet$')"
+          test -n "$(tar -tzf dist/X-Coin-1.0.3-Linux-x86_64.tar.gz | grep '^xcoin-1.0.3-linux-x86_64/X Coin Wallet$')"
+          test -n "$(tar -tzf dist/X-Coin-1.0.3-Linux-x86_64.tar.gz | grep '^xcoin-1.0.3-linux-x86_64/xcoin.conf$')"
+          test -n "$(tar -tzf dist/X-Coin-1.0.3-Linux-x86_64.tar.gz | grep 'bin/xcoind$')"
+          tar -xOf dist/X-Coin-1.0.3-Linux-x86_64.tar.gz xcoin-1.0.3-linux-x86_64/xcoin.conf | grep -F 'addnode=172.191.195.221:38443'
+          tar -xOf dist/X-Coin-1.0.3-Linux-x86_64.tar.gz xcoin-1.0.3-linux-x86_64/xcoin.conf | grep -F 'xoauthclientid=N2hIbnNsTlR0TmR1WDZ6eWp2Qk06MTpjaQ'
+
+      - name: Upload Linux package
+        uses: actions/upload-artifact@v4
+        with:
+          name: X-Coin-1.0.3-Linux-x86_64
+          path: dist/X-Coin-1.0.3-Linux-x86_64.tar.gz
+          if-no-files-found: error
+
+  windows:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+          fetch-depth: 1
+
+      - name: Install mingw
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential autotools-dev automake autoconf libtool pkg-config \
+            g++-mingw-w64-x86-64 mingw-w64-x86-64-dev zip ccache
+          sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+          sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+
+      - name: Restore depends cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            depends/built
+            depends/sources
+            depends/work
+            depends/x86_64-w64-mingw32
+          key: xcoin-mingw-depends-${{ hashFiles('depends/packages/*', 'depends/hosts/*', 'depends/Makefile', 'depends/funcs.mk') }}-${{ github.run_id }}
+          restore-keys: |
+            xcoin-mingw-depends-${{ hashFiles('depends/packages/*', 'depends/hosts/*', 'depends/Makefile', 'depends/funcs.mk') }}-
+            xcoin-mingw-depends-
+
+      - name: Seed OpenSSL tarball
+        run: |
+          # www.openssl.org/source resets from GHA. Official old archive + mirrors.
+          mkdir -p depends/sources
+          SRC=depends/sources/openssl-1.1.1k.tar.gz
+          HASH=892a0875b9872acd04a9fde79b1f943075d5ea162415de3047c327df33fbaee5
+          if echo "$HASH  $SRC" | sha256sum -c --status 2>/dev/null; then
+            echo "openssl source already present"
+          else
+            rm -f "$SRC"
+            ok=0
+            for u in \
+              https://www.openssl.org/source/old/1.1.1/openssl-1.1.1k.tar.gz \
+              https://ftp.openssl.org/source/old/1.1.1/openssl-1.1.1k.tar.gz \
+              https://github.com/openssl/openssl/releases/download/OpenSSL_1_1_1k/openssl-1.1.1k.tar.gz
+            do
+              echo "try $u"
+              if curl -fL --retry 5 --retry-all-errors --retry-delay 2 -o "$SRC" "$u" \
+                 && echo "$HASH  $SRC" | sha256sum -c; then
+                ok=1
+                break
+              fi
+              rm -f "$SRC"
+            done
+            test "$ok" = 1
+          fi
+
+      - name: Build depends
+        run: |
+          make -C depends HOST=x86_64-w64-mingw32 \
+            FALLBACK_DOWNLOAD_PATH=https://bitcoincore.org/depends-sources \
+            -j$(nproc)
+          # config.site always points CCACHE at this path. A cache of
+          # depends/built without the installed prefix leaves stamps and
+          # no binary. Do not let that fail the wallet compile.
+          PREFIX="$GITHUB_WORKSPACE/depends/x86_64-w64-mingw32"
+          mkdir -p "$PREFIX/native/bin"
+          if [ ! -x "$PREFIX/native/bin/ccache" ]; then
+            if command -v ccache >/dev/null 2>&1; then
+              ln -sf "$(command -v ccache)" "$PREFIX/native/bin/ccache"
+            else
+              printf '%s\n' '#!/bin/sh' 'exec "$@"' > "$PREFIX/native/bin/ccache"
+              chmod +x "$PREFIX/native/bin/ccache"
+            fi
+          fi
+          test -x "$PREFIX/native/bin/ccache"
+          test -f "$PREFIX/share/config.site"
+
+      - name: Save depends cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            depends/built
+            depends/sources
+            depends/work
+            depends/x86_64-w64-mingw32
+          key: xcoin-mingw-depends-${{ hashFiles('depends/packages/*', 'depends/hosts/*', 'depends/Makefile', 'depends/funcs.mk') }}-${{ github.run_id }}
+
+      - name: Configure Windows out-of-tree without Qt DBus
+        run: |
+          # Never reuse an in-tree Linux config.status.
+          ./autogen.sh
+          test ! -f build-win/config.status
+          rm -rf build-win
+          mkdir -p build-win
+          cd build-win
+          CONFIG_SITE="$GITHUB_WORKSPACE/depends/x86_64-w64-mingw32/share/config.site" \
+            ../configure --prefix=/ --with-gui=qt5 --disable-bench --disable-tests \
+            --enable-reduce-exports --without-qtdbus --with-libs=no
+          grep -E 'USE_DBUS|qtdbus' config.log | tail -20 || true
+          if grep -q '^#define USE_DBUS 1' src/config/raven-config.h 2>/dev/null \
+             || grep -q '^#define USE_DBUS 1' src/config/xcoin-config.h 2>/dev/null; then
+            echo "USE_DBUS must stay off for Windows" >&2
+            exit 1
+          fi
+
+      - name: Build Windows
+        run: |
+          PREFIX="$GITHUB_WORKSPACE/depends/x86_64-w64-mingw32"
+          mkdir -p "$PREFIX/native/bin"
+          if [ ! -x "$PREFIX/native/bin/ccache" ]; then
+            if command -v ccache >/dev/null 2>&1; then
+              ln -sf "$(command -v ccache)" "$PREFIX/native/bin/ccache"
+            else
+              printf '%s\n' '#!/bin/sh' 'exec "$@"' > "$PREFIX/native/bin/ccache"
+              chmod +x "$PREFIX/native/bin/ccache"
+            fi
+          fi
+          ls -l "$PREFIX/native/bin/ccache"
+          # Out-of-tree RCC reads src/qt/raven_locale.qrc, which wants
+          # .qm files next to the .ts sources.
+          LRELEASE=""
+          for c in "$PREFIX/native/bin/lrelease" "$(command -v lrelease || true)"; do
+            if [ -x "$c" ]; then LRELEASE="$c"; break; fi
+          done
+          test -n "$LRELEASE"
+          for ts in "$GITHUB_WORKSPACE"/src/qt/locale/*.ts; do
+            "$LRELEASE" -silent "$ts" -qm "${ts%.ts}.qm"
+          done
+          test -f "$GITHUB_WORKSPACE/src/qt/locale/raven_af.qm"
+          make -C build-win CCACHE="$PREFIX/native/bin/ccache" -j$(nproc)
+
+      - name: Package Windows
+        run: VER=1.0.3 contrib/xcoin/package-windows.sh
+
+      - name: Name release archive
+        run: |
+          cp dist/xcoin-1.0.3-win-x86_64.zip dist/X-Coin-1.0.3-Windows.zip
+          unzip -Z -1 dist/X-Coin-1.0.3-Windows.zip | head
+          unzip -Z -1 dist/X-Coin-1.0.3-Windows.zip | grep -q '^xcoin-1.0.3-win-x86_64/X Coin Practice Wallet.exe$'
+          unzip -Z -1 dist/X-Coin-1.0.3-Windows.zip | grep -q '^xcoin-1.0.3-win-x86_64/X Coin Wallet.exe$'
+          unzip -Z -1 dist/X-Coin-1.0.3-Windows.zip | grep -q '^xcoin-1.0.3-win-x86_64/xcoin.conf$'
+          unzip -Z -1 dist/X-Coin-1.0.3-Windows.zip | grep -q 'xcoind.exe$'
+          unzip -p dist/X-Coin-1.0.3-Windows.zip xcoin-1.0.3-win-x86_64/xcoin.conf | grep -F 'addnode=172.191.195.221:38443'
+          unzip -p dist/X-Coin-1.0.3-Windows.zip xcoin-1.0.3-win-x86_64/xcoin.conf | grep -F 'xoauthclientid=N2hIbnNsTlR0TmR1WDZ6eWp2Qk06MTpjaQ'
+
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: X-Coin-1.0.3-Windows
+          path: dist/X-Coin-1.0.3-Windows.zip
+          if-no-files-found: error
