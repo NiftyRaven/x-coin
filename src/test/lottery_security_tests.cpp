@@ -202,8 +202,8 @@ struct LotteryForkTestingSetup : public TestingSetup {
 
 BOOST_FIXTURE_TEST_SUITE(lottery_fork_tests, LotteryForkTestingSetup)
 
-// Prove AcceptBlock (fForceProcessing=false) reorgs to the smaller-hash
-// sibling. Compact-block uses the same PreferLotteryFork predicate.
+// A then B, same parent, equal work, hash(B) < hash(A) → tip becomes B.
+// B is unrequested (AcceptBlock fHasMoreWork). CMPCTBLOCK uses PreferLotteryFork.
 BOOST_AUTO_TEST_CASE(acceptblock_equal_work_smaller_hash_wins)
 {
     const CChainParams& chainparams = GetParams();
@@ -226,37 +226,36 @@ BOOST_AUTO_TEST_CASE(acceptblock_equal_work_smaller_hash_wins)
         IncrementExtraNonce(&assembled, chainActive.Tip(), extraNonce);
     }
 
-    CBlock larger = assembled;
-    CBlock smaller = assembled;
-    smaller.nNonce = larger.nNonce + 1;
-    if (!(smaller.GetHash() < larger.GetHash())) {
-        std::swap(smaller, larger);
+    CBlock blockA = assembled;
+    CBlock blockB = assembled;
+    blockB.nNonce = blockA.nNonce + 1;
+    if (!(blockB.GetHash() < blockA.GetHash())) {
+        std::swap(blockA, blockB);
     }
-    BOOST_REQUIRE(smaller.GetHash() < larger.GetHash());
-    BOOST_REQUIRE(smaller.hashPrevBlock == larger.hashPrevBlock);
-    BOOST_REQUIRE(smaller.hashPrevBlock == chainActive.Tip()->GetBlockHash());
+    BOOST_REQUIRE(blockB.GetHash() < blockA.GetHash());
+    BOOST_REQUIRE(blockA.hashPrevBlock == blockB.hashPrevBlock);
+    BOOST_REQUIRE(blockA.hashPrevBlock == chainActive.Tip()->GetBlockHash());
 
-    const uint256 hashLarger = larger.GetHash();
-    const uint256 hashSmaller = smaller.GetHash();
+    const uint256 hashA = blockA.GetHash();
+    const uint256 hashB = blockB.GetHash();
 
     bool fNew = false;
-    BOOST_REQUIRE(ProcessNewBlock(chainparams, std::make_shared<const CBlock>(larger), true, &fNew));
+    BOOST_REQUIRE(ProcessNewBlock(chainparams, std::make_shared<const CBlock>(blockA), true, &fNew));
     {
         LOCK(cs_main);
-        BOOST_REQUIRE(chainActive.Tip()->GetBlockHash() == hashLarger);
+        BOOST_REQUIRE(chainActive.Tip()->GetBlockHash() == hashA);
         BOOST_CHECK(GetBlockProof(*chainActive.Tip()) == arith_uint256(1));
     }
 
-    // Unrequested path: AcceptBlock used to drop equal-work siblings
-    // (nChainWork > tip was false). Smaller hash must still become tip.
+    // Unrequested: AcceptBlock used to drop equal-work (nChainWork > tip).
     fNew = false;
-    BOOST_REQUIRE(ProcessNewBlock(chainparams, std::make_shared<const CBlock>(smaller), false, &fNew));
+    BOOST_REQUIRE(ProcessNewBlock(chainparams, std::make_shared<const CBlock>(blockB), false, &fNew));
     BOOST_CHECK(fNew);
     {
         LOCK(cs_main);
-        BOOST_CHECK(chainActive.Tip()->GetBlockHash() == hashSmaller);
-        BOOST_CHECK(PreferLotteryFork(chainActive.Tip(), mapBlockIndex[hashLarger]));
-        BOOST_CHECK(chainActive.Tip()->nChainWork == mapBlockIndex[hashLarger]->nChainWork);
+        BOOST_CHECK(chainActive.Tip()->GetBlockHash() == hashB);
+        BOOST_CHECK(PreferLotteryFork(chainActive.Tip(), mapBlockIndex[hashA]));
+        BOOST_CHECK(chainActive.Tip()->nChainWork == mapBlockIndex[hashA]->nChainWork);
         BOOST_CHECK(GetBlockProof(*chainActive.Tip()) == arith_uint256(1));
     }
 }
