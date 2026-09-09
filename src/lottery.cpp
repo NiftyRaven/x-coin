@@ -1172,6 +1172,7 @@ static void ProducerThread(const CChainParams& chainparams)
 
     GetRegistry().SetLocalScript(LoadOrCreateLocalScript());
     int64_t lastProducedSlot = -1;
+    int64_t lastProducedWallMinute = -1;
     bool fLoggedIneligible = false;
 
     try {
@@ -1239,8 +1240,13 @@ static void ProducerThread(const CChainParams& chainparams)
                 }
             }
 
-            // Wall-clock slot wait / SETTLE: testnet only. Main must not stall on genesis age.
-            if (chainparams.NetworkIDString() != CBaseChainParams::MAIN) {
+            if (chainparams.NetworkIDString() == CBaseChainParams::MAIN) {
+                // Catch-up may target old lottery slots; still ≤1 emit per wall minute.
+                if (GetTime() / 60 == lastProducedWallMinute) {
+                    MilliSleep(1000);
+                    continue;
+                }
+            } else {
                 if (currentSlot < slot) {
                     MilliSleep(1000);
                     continue;
@@ -1293,8 +1299,10 @@ static void ProducerThread(const CChainParams& chainparams)
 
             // Only winners[0] produces. Other drawn ids are payees on that coinbase.
             if (!draw.winners.empty() && GetRegistry().LocalId() == draw.winners[0]) {
-                if (ProduceOneBlock(chainparams))
+                if (ProduceOneBlock(chainparams)) {
                     lastProducedSlot = slot;
+                    lastProducedWallMinute = GetTime() / 60;
+                }
             }
             MilliSleep(1000);
         }
