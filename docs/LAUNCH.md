@@ -49,13 +49,12 @@ Answered from consensus / wallet / P2P code (see [AUDIT.md](AUDIT.md)):
 Do **not** reuse the imported v4.8.0 ports, magic, or base58 versions.
 Collision table: [FORK.md](FORK.md).
 
-### Genesis (development freeze — re-run at go-live)
+### Genesis (frozen)
 
 All three networks use the same frozen coinbase timestamp string
 (consensus-critical — quoted once in [FORK.md](FORK.md); do not edit it).
-**Main `nTime` is re-frozen at go-live** so explorer timestamps match
-first connect ([GO-LIVE.md](GO-LIVE.md)). The numbers below are the
-current development freeze.
+**Main `nTime` stays `1788825600`.** Do not re-run
+`freeze-genesis.sh` at go-live. [GO-LIVE.md](GO-LIVE.md).
 
 | | Main | Testnet | Regtest |
 | --- | --- | --- | --- |
@@ -77,14 +76,13 @@ headers — no leading-zero PoW grind):
 `nMinimumChainWork` and `defaultAssumeValid` are zero. Checkpoints are empty.
 No imported UTXO, assumevalid hash, or checkpoint is inherited.
 
-**Birth of the chain:** freeze main genesis **at go-live**
-(`[contrib/xcoin/freeze-genesis.sh](../contrib/xcoin/freeze-genesis.sh)`),
-then start the first X Verified node immediately. Height 0 is that
-header; height 1 is the next lottery minute and the first payday.
-Connecting a peer later does not rewrite genesis. Mainnet will not
-backfill more than two hours of missed minutes. Full order:
-[GO-LIVE.md](GO-LIVE.md). Third-party explorers/wallets:
-[THIRD-PARTY.md](THIRD-PARTY.md).
+**Birth of the chain:** keep main genesis `nTime` **1788825600**.
+Start the first X Verified node on launch night. Height 0 is that
+header; height 1 is the first payday. Connecting a peer later does
+not rewrite genesis. MAIN emits at most one block per wall-clock
+minute (wall-minute latch). There is no slot+120 abort and no
+two-hour backfill refuse. Full order: [GO-LIVE.md](GO-LIVE.md).
+Third-party explorers/wallets: [THIRD-PARTY.md](THIRD-PARTY.md).
 
 **Fair launch:** no IPO, no premine, no founder allocation. Height 0 is not a
 payday. The genesis coinbase (5000 XFER in the serialized tx) is **never
@@ -112,15 +110,10 @@ the first node and the seed:
 2. Home says you are the first node. Listen is on. **Provide my node
    IP** is off by default; turn it on to see `host:38443`. That is the
    address others must use. It does not publish the IP by itself.
-3. Put one line in the public Windows and Linux package `xcoin.conf`
-   (same folder as the labeled start):
-
-   ```
-   addnode=<host>:38443
-   ```
-
-   New wallets read that file automatically. No terminal. Users do not
-   edit a conf file. Do not invent a host. Do not add public DNS seeds.
+3. Packaged `xcoin.conf` already has `addnode=172.191.195.221:38443`
+   and `seednode=172.191.195.221:38443`. New wallets read that file
+   automatically. No terminal. Users do not edit a conf file. Do not
+   invent a host. Do not add public DNS seeds.
 
    Home never lists other people's IPs. Datadir `xcoin.conf`
    `addnode=` still works if someone already has one.
@@ -160,8 +153,10 @@ the free root `NFTRVN`. Adding NFTRVN to the invite list is optional
 pins, not eligibility.
 
 ```bash
-# xcoin.conf
-xoauthclientid=YOUR_CLIENT_ID
+# packaged xcoin.conf already bakes the operator Client ID and seed
+# xoauthclientid=…   (do not invent one; users never paste it)
+# addnode=172.191.195.221:38443
+# seednode=172.191.195.221:38443
 xallowlist=/shared/verified-x-accounts.txt
 ```
 
@@ -244,7 +239,7 @@ Coinbase is immature for 100 blocks — generate ~110 on regtest before
 - `src/xcoind` — node / lottery producer
 - `src/xcoin-cli` — RPC
 - `src/xcoin-tx` — transaction utility
-- `src/qt/xcoin-qt` — GUI (release 1.1; configure `--with-gui=qt5`)
+- `src/qt/xcoin-qt` — GUI (1.0.x; configure `--with-gui=qt5`)
 
 ## Known risks (accepted for a private launch)
 
@@ -258,8 +253,10 @@ Nothing is hacker-proof. Details: [SECURITY.md](SECURITY.md).
 - **xhb:** gossip is compact-signed by the payout key. A live handle cannot
   be rebound. Residual: first-seen after restart unless you pin a payout;
   eclipse of a lone node.
-- **Clock skew / catch-up:** main/test wait for wall-clock slot ≥ height slot.
-  Height still maps 1:1; no skip-pay or double-pay of a slot in consensus.
+- **Clock skew / catch-up:** MAIN wall-minute latch (≤1 block/min).
+  Testnet waits for wall-clock slot ≥ height slot. Height still maps
+  1:1; no skip-pay or double-pay of a slot in consensus. No slot+120
+  abort.
 - **No DNS seeds / public explorers** — you are the network. Private-test
   audit: [AUDIT.md](AUDIT.md).
 - Upstream `make check` still hard-codes imported genesis hashes; do not treat

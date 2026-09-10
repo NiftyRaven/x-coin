@@ -1,10 +1,10 @@
 Releases are **private** (this repository is private). The wallets are
 the two files on the GitHub
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.2)
-page, not **Code → Download ZIP**.
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.5)
+page, not **Code → Download ZIP**. Do not use 1.0.2, 1.0.3, or 1.0.4.
 
-- [Windows wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.2/X-Coin-1.0.2-Windows.zip) → double-click **X Coin Wallet.exe**
-- [Linux wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.2/X-Coin-1.0.2-Linux-x86_64.tar.gz) → double-click **X Coin Wallet**
+- [Windows wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.5/X-Coin-1.0.5-Windows.zip) → double-click **X Coin Wallet.exe**
+- [Linux wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.5/X-Coin-1.0.5-Linux-x86_64.tar.gz) → double-click **X Coin Wallet**
 
 Practice starts are labeled **X Coin Practice Wallet** and always pass
 `-regtest`. Step-by-step: [README.md](../README.md).

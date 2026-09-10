@@ -42,7 +42,7 @@ contract + custodian/bridge decision. Do not invent one for listing.
 | `getblock` | **Met** | By hash; verbosity 0/1/2. |
 | `getrawtransaction` | **Met** | Mempool + wallet txs always. **Observer / listing nodes: `-txindex=1`.** Documented in RPC help. |
 | Whitepaper | **Met** | [whitepaper/XCOIN.md](../whitepaper/XCOIN.md) |
-| How-to | **Met** | [README.md](../README.md), [RELEASE-1.1.md](RELEASE-1.1.md) |
+| How-to | **Met** | [README.md](../README.md), [RELEASE-1.0.md](RELEASE-1.0.md) |
 | Explorer | **Missing** (listing dependency) | No in-tree explorer. `DEFAULT_THIRD_PARTY_BROWSERS` is empty. Do not invent a public URL. A Bitcoin-family explorer pointed at `-txindex=1` `xcoind` can index blocks and assets (`listassets` / `getassetdata`) when the owner stands one up. |
 | P2P port + how a seed operator publishes `addnode` | **Met** (operator docs) | Port **38443**. Join: `addnode=<trusted-peer-ip>:38443` in `xcoin.conf`. Optional Home control to share *your* listen address (off by default). Never a list of other people's IPs. [LAUNCH.md](LAUNCH.md). |
 | Public DNS seeds | **Missing** (listing dependency) | `vSeeds.clear()`. Correct while private. |
@@ -104,4 +104,4 @@ as the X Coin listing path.
 
 - Private-test audit: [AUDIT.md](AUDIT.md)
 - Operator runbook: [LAUNCH.md](LAUNCH.md)
-- Current private package: [RELEASE-1.1.md](RELEASE-1.1.md)
+- Current private package: [RELEASE-1.0.md](RELEASE-1.0.md)

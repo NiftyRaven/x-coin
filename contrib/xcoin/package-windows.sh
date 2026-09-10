@@ -8,7 +8,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${OUT:-$ROOT/dist}"
-VER="${VER:-1.0.4}"
+VER="${VER:-1.0.5}"
 NAME="xcoin-${VER}-win-x86_64"
 STAGE="$OUT/$NAME"
 HOST="${MINGW_HOST:-x86_64-w64-mingw32}"
@@ -218,9 +218,11 @@ The chain stays private until the September 12, 2026 window.
 There are no public DNS seeds and no explorer yet.
 
 This folder's xcoin.conf is read automatically when you
-double-click. If it has addnode=<host>:38443, you connect
-to that node with no terminal. The operator puts that line
-in before opening the GitHub repo. Do not invent a host.
+double-click. It already has addnode=172.191.195.221:38443
+and seednode=172.191.195.221:38443. You connect with no
+terminal. Do not invent a host. Sign in with X uses the
+operator Client ID in that same file. There is no Client
+ID paste box.
 EOF
 
 cat > "$STAGE/README.txt" <<EOF

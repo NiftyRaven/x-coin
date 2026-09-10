@@ -1,12 +1,12 @@
 # X Coin (XFER)
 
-**[Download Windows wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.3/X-Coin-1.0.3-Windows.zip)**  
-**[Download Linux wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.3/X-Coin-1.0.3-Linux-x86_64.tar.gz)**
+**[Download Windows wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.5/X-Coin-1.0.5-Windows.zip)**  
+**[Download Linux wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.5/X-Coin-1.0.5-Linux-x86_64.tar.gz)**
 
 Those two links are the wallets. They live on the
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.3)
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.5)
 page. Do **not** use **Code → Download ZIP** — that is the source tree,
-not a wallet.
+not a wallet. Do not use 1.0.2, 1.0.3, or 1.0.4.
 
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
@@ -20,7 +20,7 @@ on **Linux** and **Windows**.
 
 ### Windows, double-click
 
-1. Download [X-Coin-1.0.3-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.3/X-Coin-1.0.3-Windows.zip).
+1. Download [X-Coin-1.0.5-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.5/X-Coin-1.0.5-Windows.zip).
 2. Right-click → Extract All.
 3. Open the folder that appears. **X Coin Wallet.exe** is in that first folder.
 4. Double-click **X Coin Wallet.exe**. The wallet window opens.
@@ -34,8 +34,8 @@ Wallet.exe** only. Do not open the real wallet until launch night.
 
 ### Linux, double-click
 
-1. Download [X-Coin-1.0.3-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.3/X-Coin-1.0.3-Linux-x86_64.tar.gz).
-2. Right-click → Extract, or run `tar -xzf X-Coin-1.0.3-Linux-x86_64.tar.gz`.
+1. Download [X-Coin-1.0.5-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.5/X-Coin-1.0.5-Linux-x86_64.tar.gz).
+2. Right-click → Extract, or run `tar -xzf X-Coin-1.0.5-Linux-x86_64.tar.gz`.
 3. Open the folder that appears. **X Coin Wallet** is in that first folder.
 4. Double-click **X Coin Wallet**. The wallet window opens. You do not
    need a terminal.
@@ -88,10 +88,10 @@ not compile. You do not use **Code → Download ZIP**.
    my node IP** is off by default. Turn it on only to see the address
    others must use (`host:38443`). It does not publish your IP by
    itself.
-5. Copy the shown `addnode=host:38443` line. Put that one line in the
-   `xcoin.conf` inside the public Windows zip and Linux tarball (the
-   same folder as the labeled start). Do not invent a host. Users do
-   not edit a conf file and do not use a terminal.
+5. Packaged `xcoin.conf` already has `addnode=172.191.195.221:38443`
+   and `seednode=172.191.195.221:38443`. Do not invent a host. Users
+   do not edit a conf file and do not use a terminal. **Provide my
+   node IP** is only to confirm this box is that seed.
 6. Keep this first wallet running. Then make the GitHub repo public
    so people download those packages.
 7. Those people double-click and connect to this already-running
@@ -104,9 +104,9 @@ not compile. You do not use **Code → Download ZIP**.
 
 Download the Windows zip or Linux tarball from Releases (not **Code →
 Download ZIP**). Double-click the real wallet. This folder's
-`xcoin.conf` is read automatically. If it has `addnode=<host>:38443`,
-you connect to the first node with no terminal. If that line is still
-commented, the wallet sits alone.
+`xcoin.conf` is read automatically and already has
+`addnode=172.191.195.221:38443`. If that line is missing, the wallet
+sits alone.
 
 P2P **38443**. RPC **38442**. Mainnet addresses start with **X**.
 

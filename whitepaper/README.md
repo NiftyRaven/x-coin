@@ -22,7 +22,7 @@ stand alone. Deep mechanics stay in the technical annexes
 [go-live](../docs/GO-LIVE.md)).
 
 Packaged Linux and Windows wallets are on
-[GitHub Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.2).
+[GitHub Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.5).
 Download those assets. Do not use **Code → Download ZIP** — that is
 the source tree, not a wallet. How to open the wallet:
 [README](../README.md).

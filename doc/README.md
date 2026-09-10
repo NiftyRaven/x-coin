@@ -18,7 +18,7 @@ The following are some helpful notes on how to run X Coin on your native platfor
 
 1) Build with `./autogen.sh && ./configure --with-gui=qt5 --disable-bench --disable-tests --with-incompatible-bdb && make -j$(nproc)`.
 
-2) Run the GUI (release 1.1) or the daemon:
+2) Run the GUI (1.0.x) or the daemon:
 
    `./src/qt/xcoin-qt`
 
@@ -38,7 +38,7 @@ BDB 5.3 is accepted with `--with-incompatible-bdb`. A wallet is required to
 produce lottery blocks. Man pages under `doc/man/` and files under
 `doc/release-notes/` are imported stubs (old version strings and raven.org
 URLs); use `--help` / `--version` on the binaries and
-[docs/RELEASE-1.1.md](../docs/RELEASE-1.1.md).
+[docs/RELEASE-1.0.md](../docs/RELEASE-1.0.md).
 
 ### OS X
 

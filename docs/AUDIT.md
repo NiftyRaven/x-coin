@@ -34,10 +34,10 @@ Proof: `contrib/xcoin/smoke-benchmark.sh` (A sends to B; B
 requires two or more peers.**
 
 - One `xcoind` / `xcoin-qt` writes the **frozen** genesis to its datadir
-  and can extend the chain. Main genesis `nTime` is the lottery clock;
-  freeze it at go-live (`contrib/xcoin/freeze-genesis.sh`) so explorers
-  show first-connect time. Height 1 is the first payday. Mainnet will
-  not backfill more than two hours of missed minutes. Regtest:
+  and can extend the chain. Main genesis `nTime` is **1788825600** and
+  stays that value. Do not re-run `freeze-genesis.sh` at go-live.
+  Height 1 is the first payday. MAIN emits at most one block per
+  wall-clock minute. Regtest:
   `generatetoaddress` (on-demand). Main / test: the lottery producer
   emits a block when this node is eligible and is a winner
   (`fMiningRequiresPeers = false`). Height 0 is stored even if nobody
@@ -82,8 +82,8 @@ different address prefixes (`X` / `y` vs `R` / `n`).
   `nSubsidyHalvingInterval` (2,100,000 main/test, 150 regtest).
   Spendable lifetime **20,999,994,999.727 XFER**.
 - **Lottery:** `src/lottery.{h,cpp}`. Coinbase must pay winners and
-  commit `XHB1`. Optional pools: `src/pool.{h,cpp}`, P2P `xpl`, coinbase
-  `XPL1` even-split. Empty committed set is invalid.
+  commit `XHB1`. Lottery pools (`src/pool`, `XPL1`, `xpl`) were
+  removed. Empty committed set is invalid.
 - **No PoW miner:** `CheckProofOfWork` always returns true. `-gen` /
   `setgenerate` removed. `generatetoaddress` is **regtest-only**.
 - **Assets:** protocol `XID1` root on **signed-in** X-link (`linkxaccount`);
@@ -103,8 +103,7 @@ different address prefixes (`X` / `y` vs `R` / `n`).
   off by default). It never lists other people's IPs.
 - Heartbeats: signed `xhb` after `verack` (handle + user id **0**).
   Unsigned, unverified, or sticky-violating heartbeats are ignored (or
-  banned, if the compact sig is missing / forged). Pool adverts: signed
-  `xpl`; password never on the wire. See [SECURITY.md](SECURITY.md).
+  banned, if the compact sig is missing / forged). See [SECURITY.md](SECURITY.md).
 
 ## Wallet / privacy
 
@@ -145,7 +144,6 @@ Accepted residual (not blockers for a private test):
 - First-seen handle grab after restart unless the payout is pinned.
 - Producer commits the active set; validation checks the coinbase against
   that commitment, not an oracle of “who is really online.”
-- A cheating producer can omit `XPL1` and skip a pool split.
 - No public explorer URL until go-live. RPC is enough for third-party
   explorers/wallets: [THIRD-PARTY.md](THIRD-PARTY.md). Go-live:
   [GO-LIVE.md](GO-LIVE.md).
@@ -162,5 +160,4 @@ contrib/xcoin/smoke-gui.sh          # sets XDG_RUNTIME_DIR; do not pkill -f xcoi
 contrib/xcoin/smoke-benchmark.sh    # lone ledger + 3-node visible send
 contrib/xcoin/smoke-isolation.sh    # two wallets: Bob cannot spend Alice
 contrib/xcoin/smoke-sabotage.sh      # unsigned sendraw / handle steal rejected
-contrib/xcoin/smoke-pool.sh          # even split; unverified has 0 tickets
 ```

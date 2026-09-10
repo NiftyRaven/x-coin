@@ -21,15 +21,14 @@ Attacker goals we actually designed against:
 | Steal lottery rewards with a spoofed `xhb` | Gossip `xhb` must be compact-signed by the payout key. A **live** handle cannot be rebound to another script. Allowlist match is **handle**, not “any handle + a listed userid.” Optional payout pin. | First-seen race after restart if the handle is not pinned. A producer can still commit a set; consensus checks the coinbase matches that commitment, not “the true mesh.” |
 | Replay Ravencoin blocks / addresses | Different genesis, magic `XFER` / `XFTN` / `XFRT`, ports, address versions (`X…` / `y…`). | A malicious binary that changes those constants is a different coin. |
 | Unauthenticated RPC spend | HTTP RPC requires cookie or `rpcuser`/`rpcpassword`. No auth header → 401. | Bind RPC on a public interface and leak the cookie / password. |
-| Steal a pool split | Honest `xcoin-qt`/`xcoind` emit `XPL1` and even-split when the winner is in a known pool. Password never gossiped. Public list is name + addresses. | A cheating producer can omit `XPL1` and pay themselves. Anyone you give id + password to can join (including unverified leeches). |
 | Feed a lone node a fake chain | Consensus still rejects invalid lottery coinbases and wrong subsidy. | `fMiningRequiresPeers` is **false** (a lone eligible node must be able to produce). Checkpoints are empty. An eclipsed node will follow the heaviest *valid* chain its peers feed it. |
 
 ## What is tamper-resistant
 
-- **Ledger rules:** height ≥ 1 coinbase must commit `XHB1`, pay the draw
-  (solo or `XPL1` pool split), and not underpay the subsidy. Height 0
-  genesis coinbase is unspendable. Invalid blocks are rejected. There is
-  no PoW grind; `CheckProofOfWork` is a no-op by design (lottery, not hash).
+- **Ledger rules:** height ≥ 1 coinbase must commit `XHB1`, pay the draw,
+  and not underpay the subsidy. Height 0 genesis coinbase is unspendable.
+  Invalid blocks are rejected. There is no PoW grind; `CheckProofOfWork`
+  is a no-op by design (lottery, not hash). Lottery pools were removed.
 - **Identity on this node:** send / receive / own / claim require a
   session HMAC (`xsession.json` + `xsession.key`). A typed handle cannot
   pass `RequireHandle`.
@@ -112,9 +111,8 @@ Stay private. Do **not** add public DNS seeds.
    `-maxconnections` on the seed so a connection flood cannot occupy every
    slot.
 
-7. **Datadir permissions.** `~/.xcoin` is the wallet, session, payout
-   key (`lottery-payout.key`), and pool secrets (`pools.secret.json`,
-   mode `0600`). Treat it like a hot wallet.
+7. **Datadir permissions.** `~/.xcoin` is the wallet, session, and
+   payout key (`lottery-payout.key`). Treat it like a hot wallet.
 
 ## Related
 

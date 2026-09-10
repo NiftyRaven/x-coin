@@ -93,20 +93,12 @@ The node never pretends login succeeded without a real access token
 4. Scopes: `users.read` `tweet.read` only. Do **not** request `offline.access`
    (no refresh token). The access token is held in RAM for the `users/me`
    call and then discarded — it is never written to disk.
-5. Copy the **Client ID**. This is an **operator bake**, not a user paste field.
-   Put it in the `xcoin.conf` shipped in the Windows and Linux wallet
-   folders (or `-xoauthclientid=`) before people run Sign in with X:
-
-   ```
-   xoauthclientid=
-   ```
-
-   Uncomment that line in `contrib/xcoin/xcoin.conf` (copied into each
-   package) and put the real id after the equals sign. Callback, exactly:
-   `http://127.0.0.1:18791/callback`.
-   Never hardcode a fake client. Empty Client ID → Sign in with X tells
-   you the operator has not baked one; it does not fake success. A typed
-   handle cannot claim verified status. There is no GUI paste box.
+5. **Operator bake only.** Users never paste a Client ID. Packaged
+   1.0.5 `xcoin.conf` already has `xoauthclientid=` set. Do not invent
+   a different id for launch night. Empty Client ID → Sign in with X
+   tells you the operator has not baked one; it does not fake success.
+   A typed handle cannot claim verified status. There is no GUI paste
+   box. Callback, exactly: `http://127.0.0.1:18791/callback`.
 
 6. Click **Sign in with X**. The browser opens
    `https://twitter.com/i/oauth2/authorize`. After you approve, X

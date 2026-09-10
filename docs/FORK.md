@@ -54,8 +54,8 @@ versions 60 (`R…`) / 111 (`n…`).
 **Unit:** ticker **XFER**, subunit **xferon** (1 XFER = 1e8 xferons).
 
 **Genesis:** coinbase timestamp string frozen 2026-09-08 (see [LAUNCH.md](LAUNCH.md)).
-Main **header `nTime` is re-frozen at go-live** so explorer timestamps
-match first connect ([GO-LIVE.md](GO-LIVE.md)). The coinbase string is
+Main header `nTime` is **1788825600** and stays that value. Do not
+re-freeze it at go-live ([GO-LIVE.md](GO-LIVE.md)). The coinbase string is
 consensus-critical and still reads:
 
 ```
@@ -85,8 +85,8 @@ for those versions.
    `-gen` / `setgenerate` removed as a miner; KawPoW submit RPCs unregistered.
 3. **Lottery module** in `src/lottery.{h,cpp}` + `src/rpc/lottery.cpp`, started
    from `init.cpp`. P2P `xhb` gossip (handle, user id 0) + coinbase `XHB1`
-   commitment / multi-winner validation. Optional pools: `src/pool.{h,cpp}`,
-   P2P `xpl`, coinbase `XPL1`. Active set requires a linked X session that is
+   commitment / multi-winner validation. Lottery pools (`src/pool`,
+   `XPL1`, `xpl`) were removed. Active set requires a linked X session that is
    **X Verified** (users/me blue check) and a running wallet. Unverified =
    zero chance. The operator invite list cannot exclude a verified wallet.
 4. **Assets** on from height 0. Main roots are protocol-assigned on a
@@ -127,7 +127,7 @@ These still match a naive `rg -i 'ravencoin|\braven\b|\brvn\b'` and are
 4. **Copyright-holder guard** in `src/util.cpp` (`CopyrightHolders`) — refuses
    to drop the Raven Core line from `--version`.
 5. **Qt class names** — `RavenGUI`, `RavenUnits`, `RavenAmountField`, locale
-   files `raven_*.ts`. User-facing 1.1 copy is X Coin / XFER; the X theme is
+   files `raven_*.ts`. User-facing 1.0.x copy is X Coin / XFER; the X theme is
    black/white, not Ravencoin orange/green.
 6. **Vendored third-party** — `src/leveldb`, `src/secp256k1`, `src/univalue`,
    `src/crypto/ctaes` (including sipa’s unrelated `raven.sipa.be` URL).
@@ -165,7 +165,7 @@ See also `assets/asset_metadata_spec.md` for the wire format.
 
 See the root README. Autotools path:
 
-Release 1.1 ships the Qt wallet. GUI:
+Release 1.0.x ships the Qt wallet. GUI:
 
 ```bash
 ./autogen.sh && ./configure --with-gui=qt5 --disable-bench --disable-tests --with-incompatible-bdb && make

@@ -1,8 +1,7 @@
-Imported upstream stub. **Not** the current X Coin 1.1 notes.
+Imported upstream stub. **Not** the current X Coin 1.0.5 notes.
 
-Current private package: [docs/RELEASE-1.1.md](../docs/RELEASE-1.1.md).
-There is no public download URL and no GitHub Release. Do not publish
-this repository.
+Current private package: [docs/RELEASE-1.0.md](../docs/RELEASE-1.0.md).
+Do not publish this repository.
 
 ---
 
@@ -11,7 +10,7 @@ release-notes at release time)
 
 X Coin version *version* is now available from:
 
-  (private pack only — see docs/RELEASE-1.1.md)
+  (private pack only — see docs/RELEASE-1.0.md)
 
 This is a new major version release, including new features, various bugfixes
 and performance improvements, as well as updated translations.
