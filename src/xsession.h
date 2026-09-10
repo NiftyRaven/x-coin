@@ -84,7 +84,8 @@ void BindLotteryFromSession();
 
 /**
  * True if this node has a valid Sign in with X session.
- * Required to send, receive, and prove asset ownership.
+ * Required to claim the free root and prove asset ownership.
+ * Send and receive do not require a session (normal wallet).
  * Lottery eligibility is session plus X Verified (users/me.verified)
  * plus a running wallet. Unverified = zero chance. The operator invite
  * list cannot exclude a verified wallet.

@@ -7,7 +7,8 @@ Private only. Do not publish this chain.
 Signing in is what stops impersonation and **proves asset ownership**.
 A typed handle is not an identity. The wallet uses OAuth 2.0 PKCE, then
 `GET /2/users/me`, and binds **that** user id + username to this node's
-datadir. Send and receive require that session. Only **X Verified**
+datadir. Send and receive do **not** require that session (normal wallet).
+Claiming the free root does. Only **X Verified**
 signed-in handles enter the lottery.
 
 **X Verified** is X’s blue check / X Premium (and org checks per that
@@ -58,10 +59,11 @@ Steal this datadir (`xsession.key` + `xsession.json`) and you steal
 **this node's session**, not someone else's `wallet.dat`. The HMAC is
 per-datadir; it cannot spend keys that are not in this wallet.
 
-`getnewaddress`, `getaccountaddress`, `sendtoaddress`, `sendrawtransaction`,
-`issue` / `transfer` / `reissue`, `linkxaccount`, `registeractivenode`, and
+`issue` / `reissue` / `linkxaccount`, `registeractivenode`, and
 lottery identity require a valid proof. **Authentication is the key
-to asset ownership — it proves it is you.** Lottery also requires
+to asset ownership — it proves it is you.** Send and receive
+(`getnewaddress`, `sendtoaddress`, `sendrawtransaction`, `transfer`)
+do not. Lottery also requires
 **X Verified** from that `users/me` response. A signed-in handle that is
 not X Verified can still send and receive, but has **zero lottery chance**.
 An X Verified session plus a running wallet **cannot be excluded** from
@@ -78,7 +80,7 @@ The node never pretends login succeeded without a real access token
 ## Operator only (developer portal)
 
 Users do **not** open developer.x.com and do **not** paste a Client
-ID. Packaged 1.0.7 `xcoin.conf` already has `xoauthclientid=` set.
+ID. Packaged 1.0.8 `xcoin.conf` already has `xoauthclientid=` set.
 Empty Client ID → Sign in with X says the operator has not baked one;
 it does not fake success. There is no GUI paste box.
 

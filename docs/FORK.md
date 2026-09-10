@@ -77,7 +77,7 @@ imported Ravencoin snapshot. A lone node already stores that ledger;
 other people seeing the same tip need ≥2 peers. Fair launch:
 no IPO, no premine, no founder allocation. Height 0 is unspendable / not a
 payday. Spendable lifetime subsidy is **20,999,994,999.727 XFER**.
-`generatetoaddress` is regtest-only. Send and receive require a Sign in with X session.
+`generatetoaddress` is regtest-only. Send and receive do not require a Sign in with X session. Root claim does.
 
 **Address prefixes:** main P2PKH version **76** (`X…`), P2SH **139** (`x…`);
 test/regtest P2PKH **140** (`y…`). Asset burn addresses were regenerated

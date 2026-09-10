@@ -1,6 +1,6 @@
 # X Coin 1.0 (private)
 
-**Current wallets: 1.0.7.** Lottery pools (`XPL1`, create / join / leave)
+**Current wallets: 1.0.8.** Lottery pools (`XPL1`, create / join / leave)
 were removed. This page is the 1.0 product snapshot. No pool sell.
 
 **Nifty Raven** (@NFTRVN on X)  
@@ -10,10 +10,10 @@ Product version **1.0**. This is a **private** release. Do not make
 the repository public. The **1.0.0** Windows/Linux zips were
 launch-blocking (invisible create/restore choice, empty-wallet fee
 wall on the free root, Sign in with X asked users to paste a Client
-ID). Use **1.0.7** on
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.7)
-(`X-Coin-1.0.7-Windows.zip` and `X-Coin-1.0.7-Linux-x86_64.tar.gz`).
-Do not use **Code → Download ZIP**. Do not use 1.0.2, 1.0.3, 1.0.4, 1.0.5, or 1.0.6.
+ID). Use **1.0.8** on
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.8)
+(`X-Coin-1.0.8-Windows.zip` and `X-Coin-1.0.8-Linux-x86_64.tar.gz`).
+Do not use **Code → Download ZIP**. Do not use 1.0.2, 1.0.3, 1.0.4, 1.0.5, 1.0.6, or 1.0.7.
 
 ## What shipped
 
@@ -37,12 +37,12 @@ Do not use **Code → Download ZIP**. Do not use 1.0.2, 1.0.3, 1.0.4, 1.0.5, or 
 ## Install the GUI
 
 Do not compile. Download from
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.7),
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.8),
 unpack, and double-click the labeled start. Step-by-step:
 [README.md](../README.md).
 
-- Linux: [X-Coin-1.0.7-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.7/X-Coin-1.0.7-Linux-x86_64.tar.gz) → **X Coin Wallet**
-- Windows: [X-Coin-1.0.7-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.7/X-Coin-1.0.7-Windows.zip) → **X Coin Wallet.exe**
+- Linux: [X-Coin-1.0.8-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.8/X-Coin-1.0.8-Linux-x86_64.tar.gz) → **X Coin Wallet**
+- Windows: [X-Coin-1.0.8-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.8/X-Coin-1.0.8-Windows.zip) → **X Coin Wallet.exe**
 - Practice: **X Coin Practice Wallet** / **X Coin Practice Wallet.exe**
 
 Pack from a developer build: `contrib/xcoin/package-linux.sh` and
@@ -56,8 +56,9 @@ user id) plus optional Provide my node IP.
 
 ## Known limits
 
-- Sign in with X is required to send, receive, and own assets. Lottery
-  is **X Verified** (blue check from `users/me`) plus a running wallet.
+- Send and receive work without Sign in with X (normal wallet). Claiming
+  the free root needs a session. Lottery is **X Verified** (blue check
+  from `users/me`) plus a running wallet.
   Unverified accounts have zero chance. The operator invite list cannot
   exclude a verified wallet. See [XSIGNIN.md](XSIGNIN.md).
 - Live X OAuth uses the operator Client ID already baked in package

@@ -8,7 +8,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${OUT:-$ROOT/dist}"
-VER="${VER:-1.0.7}"
+VER="${VER:-1.0.8}"
 NAME="xcoin-${VER}-win-x86_64"
 STAGE="$OUT/$NAME"
 HOST="${MINGW_HOST:-x86_64-w64-mingw32}"
@@ -247,8 +247,9 @@ main XFER. The practice window title includes [regtest].
 REAL WALLET
 -----------
 X Coin Wallet.exe starts with no -regtest. First run creates
-wallet.dat under %APPDATA%\\XCoin. Sign in with X is required
-to send, receive, and claim your free root. Lottery needs
+wallet.dat under %APPDATA%\\XCoin. Send and receive work
+without Sign in with X. Sign in with X is required
+to claim your free root. Lottery needs
 X Verified.
 
 UNTIL SEPTEMBER 12, 2026

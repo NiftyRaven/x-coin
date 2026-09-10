@@ -15,7 +15,7 @@ Attacker goals we actually designed against:
 
 | Goal | What we guarantee | What we do not |
 | --- | --- | --- |
-| Impersonate a typed `@handle` on *this* node | `RequireHandle` / `RequireSession` on send, receive, own, `linkxaccount`, `registeractivenode`. Typed `-xaccount=` is ignored. | Steal `xsession.key` + `xsession.json` from this datadir → that attacker *is* the session on this node. |
+| Impersonate a typed `@handle` on *this* node | `RequireHandle` / `RequireSession` on root claim, `linkxaccount`, `registeractivenode`. Typed `-xaccount=` is ignored. Send/receive are a normal wallet (keys in this `wallet.dat`). | Steal `xsession.key` + `xsession.json` from this datadir → that attacker *is* the session on this node. |
 | Publish login / OAuth secrets | Access tokens never written. Session files `0600`. GUI does not show user ids or secret paths. P2P `xhb` sends @handle only (no X user id, no token). | A screenshot of RPC `getxsession`, or a copied datadir. |
 | Spend someone else’s wallet | Spend only keys in **this** `wallet.dat`. Session does not import another wallet. | Copy `wallet.dat` (or the 12 words) → they have the keys. |
 | Steal lottery rewards with a spoofed `xhb` | Gossip `xhb` must be compact-signed by the payout key. A **live** handle cannot be rebound to another script. Allowlist match is **handle**, not “any handle + a listed userid.” Optional payout pin. | First-seen race after restart if the handle is not pinned. A producer can still commit a set; consensus checks the coinbase matches that commitment, not “the true mesh.” |
@@ -29,15 +29,15 @@ Attacker goals we actually designed against:
   and not underpay the subsidy. Height 0 genesis coinbase is unspendable.
   Invalid blocks are rejected. There is no PoW grind; `CheckProofOfWork`
   is a no-op by design (lottery, not hash). Lottery pools were removed.
-- **Identity on this node:** send / receive / own / claim require a
-  session HMAC (`xsession.json` + `xsession.key`). A typed handle cannot
-  pass `RequireHandle`.
+- **Identity on this node:** root claim / own require a
+  session HMAC (`xsession.json` + `xsession.key`). Send and receive do not.
+  A typed handle cannot pass `RequireHandle`.
 - **Lottery membership:** unverified or unsigned gossip is not added to the
   active set and is not relayed (zero chance). An X Verified running
   wallet cannot be excluded. Replacing an online handle’s payout
   script is rejected.
 - **Network isolation from Ravencoin:** magic, genesis, ports, versions.
-- **RPC:** cookie or password; `sendrawtransaction` also requires a session.
+- **RPC:** cookie or password. `sendrawtransaction` is a normal wallet send (no session).
 
 ## What an attacker can still do on a small private mesh
 

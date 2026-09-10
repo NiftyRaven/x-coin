@@ -252,7 +252,7 @@ if len(ops) < 1:
 CHAIN2="$("${CLI[@]}" getblockchaininfo)"
 echo "$CHAIN2" | grep -q '"blocks": 150'
 
-echo "== signed-in send / receive (session required) =="
+echo "== signed-in send / receive =="
 "${CLI[@]}" mockxsignin smoke1:verified >/dev/null
 ADDR_PAY="$("${CLI[@]}" getnewaddress)"
 echo "signed-in dest $ADDR_PAY"

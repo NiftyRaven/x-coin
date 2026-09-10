@@ -248,9 +248,9 @@ Honest write-up: [SECURITY.md](SECURITY.md). This is not hacker-proof.
   be rebound to another script. A listed userid alone cannot authorize a
   different handle. Residual: first-seen after restart unless you pin a
   payout; eclipse of a node that only talks to attacker peers.
-- **Unsigned-in wallets:** Sign in with X is required to send, receive,
-  and prove asset ownership (`sendrawtransaction` included). Lottery
-  additionally requires the session to be **X Verified** (blue check).
+- **Unsigned-in wallets:** Send and receive work without Sign in with X
+  (`sendrawtransaction` included). Claiming the free root needs a session.
+  Lottery additionally requires the session to be **X Verified** (blue check).
   Unverified = zero chance. The invite list is not a lottery gate.
 - Clock skew can delay a slot; height still maps 1:1 (`slot = genesisSlot + h`).
   You cannot skip or double-pay a height on one chain. MAIN catch-up is

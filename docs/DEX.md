@@ -35,9 +35,9 @@ contract + custodian/bridge decision. Do not invent one for listing.
 | Decimals | **Met** | 8 (1 XFER = 100,000,000 xferons) |
 | Max / circulating supply math | **Met** | Spendable lifetime **20,999,994,999.727 XFER**. `MAX_MONEY` = 21,000,000,000 (sanity cap). Height 0 unpaid; subsidy `5000 >> floor(h / 2,100,000)` for `h ≥ 1`. Circulating = sum of paid subsidies minus burns (subs 100, uniques 5). At height 0 circulating is **0**. |
 | Own genesis / magic / ports / address version | **Met** | Not Ravencoin replay. Main genesis `7c790cdb…712beb`, magic `XFER`, P2P **38443**, P2PKH version **76** (`X…`). [FORK.md](FORK.md), [LAUNCH.md](LAUNCH.md). |
-| Working send / receive wallet (GUI + RPC) | **Met** | `xcoin-qt` Home / Receive / Send / Activity after Sign in with X. RPC `getnewaddress` / `sendtoaddress` / `sendrawtransaction` gated by session. [XSIGNIN.md](XSIGNIN.md). |
+| Working send / receive wallet (GUI + RPC) | **Met** | `xcoin-qt` Home / Receive / Send / Activity without Sign in with X. RPC `getnewaddress` / `sendtoaddress` / `sendrawtransaction` are a normal wallet (no session). Root claim is session-gated. [XSIGNIN.md](XSIGNIN.md). |
 | Release-sabotage notes | **Documented** | Not hacker-proof. [SECURITY.md](SECURITY.md). |
-| Ownership isolation | **Met** | Spend only keys in **this** `wallet.dat`. Session does not import another user's keys. `RequireSession` + `RequireHandle`. Smoke: [contrib/xcoin/smoke-isolation.sh](../contrib/xcoin/smoke-isolation.sh). |
+| Ownership isolation | **Met** | Spend only keys in **this** `wallet.dat`. Session does not import another user's keys. `RequireSession` + `RequireHandle` on root claim / lottery. Smoke: [contrib/xcoin/smoke-isolation.sh](../contrib/xcoin/smoke-isolation.sh). |
 | `getblockchaininfo` | **Met** | Returns `name`, `currency` (XFER), chain, height, best hash. |
 | `getblock` | **Met** | By hash; verbosity 0/1/2. |
 | `getrawtransaction` | **Met** | Mempool + wallet txs always. **Observer / listing nodes: `-txindex=1`.** Documented in RPC help. |
@@ -84,9 +84,9 @@ src/xcoin-cli getnetworkinfo
 src/xcoin-cli getlotteryinfo       # currency=XFER; not a pair ticker for assets
 ```
 
-Send/receive for a **deposit wallet** still require Sign in with X on
-that node (identity gate). The venue's hot wallet is its own
-`wallet.dat` + its own session. Another user's session cannot spend it.
+Send/receive for a **deposit wallet** do not require Sign in with X on
+that node. The venue's hot wallet is its own
+`wallet.dat`. Another user's session cannot spend it.
 
 A third-party **asset wallet** uses the same RPCs (`issue`, `issueunique`,
 `transfer`, `listmyassets`). It **cannot** mint a main/root: that exists

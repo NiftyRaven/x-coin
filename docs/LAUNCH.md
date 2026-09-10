@@ -93,8 +93,8 @@ Subsidy starts at height 1 via the lottery. Spendable lifetime supply is
 integer right-shift; ~21 billion minus unpaid genesis and `>>=` dust).
 `MAX_MONEY` is 21,000,000,000 XFER (sanity cap, not the minted total).
 
-**Sign in with X is required to send, receive, and create assets.**
-Authentication proves it is you. **No session → no main/root asset.**
+**Send and receive work without Sign in with X (normal wallet).**
+Sign in with X is required to claim the free root. **No session → no main/root asset.**
 Subs and uniques are issued under that signed-in account’s root.
 Lottery eligibility additionally requires **X Verified** (X’s blue
 check from `users/me`) and a running wallet. Unverified accounts have
@@ -292,8 +292,8 @@ contrib/xcoin/smoke-sabotage.sh
 Unlinked node is not eligible; signed-in but not X Verified can send and
 receive, not lottery (zero chance). `registeractivenode` is rejected until
 the session is X Verified (blue check). A verified running wallet cannot
-be excluded by the invite list. `smoke-xsession.sh` proves typed handles cannot send /
-receive / claim. `smoke-gui.sh` needs `XDG_RUNTIME_DIR` (the script sets
+be excluded by the invite list. `smoke-xsession.sh` proves typed handles cannot
+claim a root. `smoke-gui.sh` needs `XDG_RUNTIME_DIR` (the script sets
 it); do not `pkill -f xcoin-qt`.
 
 ```bash

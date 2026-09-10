@@ -25,7 +25,8 @@ Launch is a **fair launch**: no premine, no founder allocation, no IPO.
 Height 0 is genesis, not a payday. Spendable lifetime supply is about
 **21 billion XFER**.
 
-Sign in with X is required to send, receive, and claim the **one free
+Send and receive work without Sign in with X (normal wallet).
+Sign in with X is required to claim the **one free
 root identity asset** assigned to each signed-in X account. The
 12-word BIP39 seed that creates wallet keys is unchanged and is not
 replaced by that sign-in.

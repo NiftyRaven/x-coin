@@ -98,11 +98,12 @@ assets. Restricted-only RPCs and the Qt Restricted tab are gone.
 `issue` of a new root is rejected with a clear error. Consensus rejects a
 500-XFER root burn and accepts only a zero-burn root that includes `XID1`.
 
-Wallets without a Sign in with X session cannot **send, receive, claim a
-root, or issue**. Authentication proves it is you and is the key to
-asset ownership. A node can still sync. Lottery needs a signed-in
-**X Verified** session (`users/me.verified`). Issue of a sub/unique
-also requires that session **and** ownership of the parent `NAME!`.
+Wallets without a Sign in with X session can **send and receive**.
+They cannot **claim a root or issue**. Authentication proves it is you
+and is the key to the free identity root. A node can still sync. Lottery
+needs a signed-in **X Verified** session (`users/me.verified`). Issue of
+a sub/unique also requires that session **and** ownership of the parent
+`NAME!`.
 
 ## Smoke
 

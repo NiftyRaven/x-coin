@@ -89,7 +89,8 @@ different address prefixes (`X` / `y` vs `R` / `n`).
 - **Assets:** protocol `XID1` root on **signed-in** X-link (`linkxaccount`);
   no session → no main asset. User `issue` of a new root is invalid.
   Subs/uniques only under that account’s `NAME!`. Restricted assets stay off.
-- **Sign in with X:** send / receive / own require a session.
+- **Sign in with X:** send / receive do not require a session.
+  Root claim / own require a session.
   Lottery requires X Verified (blue check) plus a running wallet.
   Unverified = zero chance. Invite list cannot exclude a verified wallet.
   Session ≠ BIP39 seed.
@@ -135,7 +136,7 @@ Hardened (was a real gap; now closed for the cheap cases):
   rebound to an attacker script.
 - Invite-list match is the handle (optional pins). A listed userid alone
   cannot authorize a different handle.
-- `sendrawtransaction` requires the same session as `sendtoaddress`.
+- `sendrawtransaction` matches `sendtoaddress`: no session required.
 
 Accepted residual (not blockers for a private release):
 

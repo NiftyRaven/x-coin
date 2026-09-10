@@ -2084,12 +2084,6 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
             + HelpExampleRpc("sendrawtransaction", "\"signedhex\"")
         );
 
-    {
-        std::string err;
-        if (!xsession::RequireSession(err))
-            throw JSONRPCError(RPC_WALLET_ERROR, err);
-    }
-
     ObserveSafeMode();
     LOCK(cs_main);
     RPCTypeCheck(request.params, {UniValue::VSTR, UniValue::VBOOL});

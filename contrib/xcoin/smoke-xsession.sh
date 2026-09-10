@@ -70,31 +70,33 @@ if "xsession.key" not in str(j.get("secret_file","")):
     sys.exit("getxsession must name xsession.key")
 '
 
-echo "== send/receive require a session =="
-if "${CLI[@]}" getnewaddress >/tmp/xcoin-xsession-recv.err 2>&1; then
-  echo "getnewaddress must fail without a session" >&2
-  cat /tmp/xcoin-xsession-recv.err >&2
-  exit 1
-fi
-grep -qi "sign in with x\|session" /tmp/xcoin-xsession-recv.err
-if "${CLI[@]}" sendtoaddress ySmokeNoSession111111111111111111 1 >/tmp/xcoin-xsession-send.err 2>&1; then
-  echo "sendtoaddress must fail without a session" >&2
+echo "== send/receive work without a session =="
+RECV="$("${CLI[@]}" getnewaddress)"
+echo "unsigned receive $RECV"
+[[ "$RECV" == y* ]]
+ACCT="$("${CLI[@]}" getaccountaddress "")"
+echo "unsigned account $ACCT"
+[[ "$ACCT" == y* ]]
+if "${CLI[@]}" sendtoaddress "$RECV" 1 >/tmp/xcoin-xsession-send.err 2>&1; then
+  echo "sendtoaddress 1 XFER must fail (no coins) without a session" >&2
   cat /tmp/xcoin-xsession-send.err >&2
   exit 1
 fi
-grep -qi "sign in with x\|session" /tmp/xcoin-xsession-send.err
-if "${CLI[@]}" getaccountaddress "" >/tmp/xcoin-xsession-acct.err 2>&1; then
-  echo "getaccountaddress must fail without a session" >&2
-  cat /tmp/xcoin-xsession-acct.err >&2
+if grep -qiE "sign in with x required|required to send" /tmp/xcoin-xsession-send.err; then
+  echo "sendtoaddress must not require Sign in with X" >&2
+  cat /tmp/xcoin-xsession-send.err >&2
   exit 1
 fi
-grep -qi "sign in with x\|session" /tmp/xcoin-xsession-acct.err
-if "${CLI[@]}" transfer ALICE 1 ySmokeNoSession111111111111111111 >/tmp/xcoin-xsession-xfer.err 2>&1; then
-  echo "transfer must fail without a session" >&2
+if "${CLI[@]}" transfer ALICE 1 "$RECV" >/tmp/xcoin-xsession-xfer.err 2>&1; then
+  echo "transfer ALICE must fail (no such asset) without a session" >&2
   cat /tmp/xcoin-xsession-xfer.err >&2
   exit 1
 fi
-grep -qi "sign in with x\|session" /tmp/xcoin-xsession-xfer.err
+if grep -qiE "sign in with x required|required to send" /tmp/xcoin-xsession-xfer.err; then
+  echo "transfer must not require Sign in with X" >&2
+  cat /tmp/xcoin-xsession-xfer.err >&2
+  exit 1
+fi
 
 echo "== unsigned cannot create a main asset =="
 if "${CLI[@]}" issue TESTASSET 1 >/tmp/xcoin-xsession-issue.err 2>&1; then

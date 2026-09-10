@@ -33,7 +33,7 @@ XSend::XSend(WalletView* walletViewIn, QWidget* parent)
     title->setObjectName("xsection");
     root->addWidget(title);
 
-    tagLabel = new QLabel("Sign in with X on Home first. Send spends only keys in this wallet.");
+    tagLabel = new QLabel("Send spends only keys in this wallet. Sign in with X is only for the free root and lottery.");
     tagLabel->setObjectName("xhint");
     tagLabel->setWordWrap(true);
     root->addWidget(tagLabel);
@@ -102,21 +102,25 @@ void XSend::setAddress(const QString& addr)
 
 void XSend::refresh()
 {
-    if (!xsession::HasValidSession()) {
-        tagLabel->setText("This wallet is not linked yet. Sign in with X on Home. A typed handle cannot send.");
-        balanceLabel->setText("Sign in with X required to send.");
-        return;
+    if (xsession::HasValidSession()) {
+        const QString handle = QString::fromStdString(xsession::SignedInHandle());
+        tagLabel->setText(QString("Sending from the wallet linked to @%1. Spend only keys in this wallet.dat.")
+            .arg(handle));
+    } else {
+        tagLabel->setText("Send spends only keys in this wallet. Sign in with X is only for the free root and lottery.");
     }
-    const QString handle = QString::fromStdString(xsession::SignedInHandle());
-    tagLabel->setText(QString("Sending from the wallet linked to @%1. Spend only keys in this wallet.dat.")
-        .arg(handle));
     if (!walletModel) {
         balanceLabel->setText("Balance\n(open a wallet)");
         return;
     }
     const int unit = walletModel->getOptionsModel() ? walletModel->getOptionsModel()->getDisplayUnit() : 0;
-    balanceLabel->setText(QString("Available — wallet linked to @%1\n")
-        .arg(handle) + RavenUnits::formatWithUnit(unit, walletModel->getBalance()));
+    if (xsession::HasValidSession()) {
+        const QString handle = QString::fromStdString(xsession::SignedInHandle());
+        balanceLabel->setText(QString("Available — wallet linked to @%1\n")
+            .arg(handle) + RavenUnits::formatWithUnit(unit, walletModel->getBalance()));
+    } else {
+        balanceLabel->setText(QString("Available\n") + RavenUnits::formatWithUnit(unit, walletModel->getBalance()));
+    }
 }
 
 QString XSend::rpc(const QString& method, const QStringList& args) const
@@ -132,10 +136,6 @@ void XSend::onPaste()
 
 void XSend::onSend()
 {
-    if (!xsession::HasValidSession()) {
-        QMessageBox::warning(this, "X-Coin", "Sign in with X required to send. Authentication proves it is you.");
-        return;
-    }
     const QString dest = addrEdit->text().trimmed();
     const QString amt = amountEdit->text().trimmed();
     if (dest.isEmpty() || amt.isEmpty()) {
