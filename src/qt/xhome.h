@@ -42,6 +42,7 @@ public Q_SLOTS:
 
 private Q_SLOTS:
     void onSignIn();
+    void onReLink();
     void onMockSignIn();
     void onAllowlistMe();
     void onClaim();
@@ -60,6 +61,7 @@ private:
     QString localListenEndpoint() const;
     void fillNodeShareWidgets();
     void applyNodeShareVisibility(bool on);
+    void applyAuthButtons(bool signedIn);
 
     WalletView* walletView;
     ClientModel* clientModel;
@@ -78,6 +80,7 @@ private:
     QLineEdit* uniqueNameEdit;
     QLineEdit* nodeIpEdit;
     QPushButton* signInBtn;
+    QPushButton* reLinkBtn;
     QPushButton* mockBtn;
     QPushButton* claimBtn;
     QPushButton* allowlistBtn;

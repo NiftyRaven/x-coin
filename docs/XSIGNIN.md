@@ -2,7 +2,7 @@
 
 **Nifty Raven** (@NFTRVN on X)
 
-Private test only. Do not publish this chain.
+Private only. Do not publish this chain.
 
 Signing in is what stops impersonation and **proves asset ownership**.
 A typed handle is not an identity. The wallet uses OAuth 2.0 PKCE, then
@@ -78,7 +78,7 @@ The node never pretends login succeeded without a real access token
 ## Operator only (developer portal)
 
 Users do **not** open developer.x.com and do **not** paste a Client
-ID. Packaged 1.0.6 `xcoin.conf` already has `xoauthclientid=` set.
+ID. Packaged 1.0.7 `xcoin.conf` already has `xoauthclientid=` set.
 Empty Client ID → Sign in with X says the operator has not baked one;
 it does not fake success. There is no GUI paste box.
 
@@ -91,7 +91,7 @@ invent a different id on launch night.
 ## Happy path (GUI, no terminal)
 
 1. Create / open wallet (first-run **12 secret words** — still required).
-2. **Sign in with X** (browser redirect; binds this node to your X account; does not replace the seed).
+2. **Sign in with X** (browser redirect; binds this node to your X account; does not replace the seed). Home does **not** call `users/me` again while Linked. **Re-link** asks first and shares a local ~1 hour cooldown with failed or cancelled attempts.
 3. Home shows **this wallet linked to @handle**. There is no Client ID paste field.
 4. **Allowlist my handle** (optional operator invite list — not a blue check)
    then **Claim my root asset**. An empty wallet can claim that one free root
@@ -117,7 +117,7 @@ xcoind -regtest -xoauthmock=alice:verified
 xcoin-cli -regtest mockxsignin '{"data":{"id":"99","username":"alice","verified":true,"verified_type":"blue"}}'
 # unsigned-in (send/receive only, no lottery):
 xcoin-cli -regtest mockxsignin ghost:unverified
-# private test without live OAuth: NFTRVN defaults to verified=true
+# regtest without live OAuth: NFTRVN defaults to verified=true
 xcoind -regtest -xoauthmock=NFTRVN
 ```
 

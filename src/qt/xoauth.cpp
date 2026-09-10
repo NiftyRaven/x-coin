@@ -11,12 +11,14 @@
 #include "utiltime.h"
 #include "xsession.h"
 
+#include <QDateTime>
 #include <QDesktopServices>
 #include <QHostAddress>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QAbstractSocket>
+#include <QSettings>
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QTimer>
@@ -42,6 +44,27 @@ static QString RandomB64Url(int nbytes)
     std::vector<unsigned char> buf((size_t)nbytes);
     GetRandBytes(buf.data(), nbytes);
     return QString::fromStdString(Base64Url(buf.data(), buf.size()));
+}
+
+static const char *kOAuthLastAttemptMs = "xoauthLastAttemptMs";
+static const char *kOAuthCachedLinked = "xoauthCachedLinked";
+static const char *kOAuthCachedHandle = "xoauthCachedHandle";
+static const char *kOAuthCachedVerified = "xoauthCachedVerified";
+static const qint64 kOAuthCooldownMs = 60 * 60 * 1000;
+
+static void MarkOAuthAttempt()
+{
+    QSettings settings;
+    settings.setValue(kOAuthLastAttemptMs, QDateTime::currentMSecsSinceEpoch());
+}
+
+static void CacheLinkedFromUsersMe(const QString& handle, bool verified)
+{
+    QSettings settings;
+    settings.setValue(kOAuthCachedLinked, !handle.isEmpty());
+    settings.setValue(kOAuthCachedHandle, handle);
+    // Store only what users/me (or a regtest mock of it) reported. Never invent true.
+    settings.setValue(kOAuthCachedVerified, verified);
 }
 
 XOAuth::XOAuth(QObject *parent) :
@@ -76,6 +99,43 @@ int XOAuth::CallbackPort()
 QString XOAuth::CallbackUri()
 {
     return QString("http://127.0.0.1:%1/callback").arg(CallbackPort());
+}
+
+qint64 XOAuth::CooldownMs()
+{
+    return kOAuthCooldownMs;
+}
+
+qint64 XOAuth::cooldownRemainingMs()
+{
+    QSettings settings;
+    const qint64 last = settings.value(kOAuthLastAttemptMs, 0).toLongLong();
+    if (last <= 0)
+        return 0;
+    const qint64 elapsed = QDateTime::currentMSecsSinceEpoch() - last;
+    if (elapsed >= kOAuthCooldownMs)
+        return 0;
+    return kOAuthCooldownMs - elapsed;
+}
+
+bool XOAuth::cachedLinked()
+{
+    QSettings settings;
+    return settings.value(kOAuthCachedLinked, false).toBool()
+        && !settings.value(kOAuthCachedHandle).toString().trimmed().isEmpty();
+}
+
+QString XOAuth::cachedHandle()
+{
+    QSettings settings;
+    return settings.value(kOAuthCachedHandle).toString().trimmed();
+}
+
+bool XOAuth::cachedVerified()
+{
+    QSettings settings;
+    // Default false. Only a stored users/me result can make this true.
+    return settings.value(kOAuthCachedVerified, false).toBool();
 }
 
 bool XOAuth::SaveClientId(const QString& clientId, QString& err)
@@ -137,6 +197,14 @@ void XOAuth::wipeSecrets()
 
 void XOAuth::startLogin()
 {
+    const qint64 left = cooldownRemainingMs();
+    if (left > 0) {
+        const qint64 mins = (left + 59999) / 60000;
+        fail(tr("Sign in with X is cooling down (~1 hour). Try again in about %1 min. "
+                "This wallet does not keep calling X.")
+                 .arg(mins < 1 ? 1 : mins));
+        return;
+    }
     const QString client = ClientId();
     if (client.isEmpty()) {
         fail(tr("The operator has not baked an X app Client ID. Sign in cannot continue. "
@@ -171,6 +239,8 @@ void XOAuth::startLogin()
     q.addQueryItem("code_challenge_method", "S256");
     url.setQuery(q);
     Q_EMIT status(tr("Opening Sign in with X in your browser…"));
+    // Browser is about to hit X. Start the local cooldown now (success, cancel, or fail).
+    MarkOAuthAttempt();
     if (!QDesktopServices::openUrl(url))
         fail(tr("Could not open a browser. Open this URL:\n%1").arg(url.toString()));
 }
@@ -204,6 +274,7 @@ void XOAuth::onCallbackTimeout()
     sock->setProperty("xoauthDone", true);
     sock->disconnectFromHost();
     sock->deleteLater();
+    MarkOAuthAttempt();
     fail(tr("Sign in with X timed out waiting for the browser callback."));
 }
 
@@ -263,6 +334,7 @@ void XOAuth::processCallbackSocket(QTcpSocket *sock)
     if (!oauthErr.isEmpty() || code.isEmpty() || st != state) {
         sock->write(htmlErr.toUtf8());
         closeSock();
+        MarkOAuthAttempt();
         fail(oauthErr.isEmpty() ? tr("Sign in with X did not complete. Try again from Home.") : oauthErr);
         return;
     }
@@ -304,6 +376,7 @@ void XOAuth::onTokenFinished()
         return;
     reply->deleteLater();
     if (reply->error() != QNetworkReply::NoError) {
+        MarkOAuthAttempt();
         fail(tr("Token request failed: %1").arg(reply->errorString()));
         return;
     }
@@ -312,6 +385,7 @@ void XOAuth::onTokenFinished()
     const QString s = QString::fromUtf8(raw);
     const int i = s.indexOf("\"access_token\"");
     if (i < 0) {
+        MarkOAuthAttempt();
         fail(tr("Token response had no access_token. Sign-in did not succeed."));
         return;
     }
@@ -354,6 +428,7 @@ void XOAuth::onMeFinished()
         return;
     reply->deleteLater();
     if (reply->error() != QNetworkReply::NoError) {
+        MarkOAuthAttempt();
         fail(tr("users/me failed: %1").arg(reply->errorString()));
         return;
     }
@@ -376,6 +451,7 @@ bool XOAuth::finishFromUsersMe(const QByteArray& body, QString& err)
         return false;
     }
     xsession::BindLotteryFromSession();
+    CacheLinkedFromUsersMe(QString::fromStdString(me.username), me.verified);
     wipeSecrets();
     Q_EMIT signedIn(QString::fromStdString(me.username), QString());
     return true;
@@ -388,6 +464,8 @@ bool XOAuth::mockSignIn(const QString& payload, QString& err)
         err = QString::fromStdString(e);
         return false;
     }
+    CacheLinkedFromUsersMe(QString::fromStdString(xsession::SignedInHandle()),
+                           xsession::SignedInVerified());
     Q_EMIT signedIn(QString::fromStdString(xsession::SignedInHandle()),
                     QString());
     return true;

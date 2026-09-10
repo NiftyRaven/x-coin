@@ -137,7 +137,7 @@ Hardened (was a real gap; now closed for the cheap cases):
   cannot authorize a different handle.
 - `sendrawtransaction` requires the same session as `sendtoaddress`.
 
-Accepted residual (not blockers for a private test):
+Accepted residual (not blockers for a private release):
 
 - Eclipse / lone-node: `fMiningRequiresPeers` is false; checkpoints empty.
   Connect to a seed you know (`addnode`).

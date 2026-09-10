@@ -68,6 +68,8 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     , walletModel(0)
     , oauth(new XOAuth(this))
     , nodeIpEdit(0)
+    , signInBtn(0)
+    , reLinkBtn(0)
     , copyNodeBtn(0)
     , shareNodeChk(0)
     , nodeSharePanel(0)
@@ -97,7 +99,7 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     word->setAlignment(Qt::AlignHCenter);
     root->addWidget(word);
 
-    QLabel* tag = new QLabel("Private test · Sign in with X · fair lottery");
+    QLabel* tag = new QLabel("Private · Sign in with X · fair lottery");
     tag->setObjectName("xtag");
     tag->setAlignment(Qt::AlignHCenter);
     tag->setWordWrap(true);
@@ -140,6 +142,13 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     signInBtn->setMinimumHeight(48);
     signInBtn->setCursor(Qt::PointingHandCursor);
     authRow->addWidget(signInBtn);
+
+    reLinkBtn = new QPushButton("Re-link");
+    reLinkBtn->setObjectName("xghost");
+    reLinkBtn->setMinimumHeight(48);
+    reLinkBtn->setCursor(Qt::PointingHandCursor);
+    reLinkBtn->setVisible(false);
+    authRow->addWidget(reLinkBtn);
 
     mockBtn = new QPushButton("Simulate sign-in (regtest)");
     mockBtn->setObjectName("xghost");
@@ -300,6 +309,7 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     wrap->addWidget(scroll);
 
     connect(signInBtn, SIGNAL(clicked()), this, SLOT(onSignIn()));
+    connect(reLinkBtn, SIGNAL(clicked()), this, SLOT(onReLink()));
     connect(mockBtn, SIGNAL(clicked()), this, SLOT(onMockSignIn()));
     connect(allowlistBtn, SIGNAL(clicked()), this, SLOT(onAllowlistMe()));
     connect(claimBtn, SIGNAL(clicked()), this, SLOT(onClaim()));
@@ -374,13 +384,42 @@ void XHome::showRpcOutcome(const QString& raw, const QString& okPrefix)
     QMessageBox::warning(this, "X-Coin", msg);
 }
 
+void XHome::applyAuthButtons(bool signedIn)
+{
+    if (!signInBtn || !reLinkBtn)
+        return;
+    const qint64 left = XOAuth::cooldownRemainingMs();
+    const bool cooling = left > 0;
+    qint64 mins = cooling ? (left + 59999) / 60000 : 0;
+    if (cooling && mins < 1)
+        mins = 1;
+
+    if (signedIn) {
+        signInBtn->setVisible(false);
+        signInBtn->setEnabled(false);
+        reLinkBtn->setVisible(true);
+        reLinkBtn->setEnabled(!cooling);
+        reLinkBtn->setText(cooling ? QString("Re-link in ~%1 min").arg(mins) : QString("Re-link"));
+    } else {
+        reLinkBtn->setVisible(false);
+        reLinkBtn->setEnabled(false);
+        reLinkBtn->setText("Re-link");
+        signInBtn->setVisible(true);
+        signInBtn->setEnabled(!cooling);
+        signInBtn->setText(cooling ? QString("Sign in with X (~%1 min)").arg(mins) : QString("Sign in with X"));
+    }
+}
+
 void XHome::refresh()
 {
+    // Local session proof only. Do not call GET /2/users/me on Home paint.
+    // Linked / Verified refresh from X only after a successful OAuth or Re-link.
     UniValue s;
     s.read(rpc("getxsession").toStdString());
     const bool signedIn = s.isObject() && (s["signed_in"].isTrue() || s["linked"].isTrue());
     if (signedIn) {
         const QString handle = QString::fromStdString(s["username"].getValStr());
+        // Local xsession.json from the last successful users/me / Re-link. Never invent true.
         const bool xVerified = s["x_verified"].isTrue() || s["verified"].isTrue();
         const QString vtype = QString::fromStdString(s["verified_type"].getValStr());
         QString verifiedLine;
@@ -399,15 +438,14 @@ void XHome::refresh()
             "This wallet + this X session = you. Tokens stay off disk and off the wire.")
             .arg(handle)
             .arg(verifiedLine));
-        signInBtn->setText("Wallet linked to @" + handle);
     } else {
         sessionLabel->setObjectName("xunlinked");
         sessionLabel->setText(
             "Not linked yet. Sign in with X to bind this wallet to your account.\n"
             "Send and receive need that private session on this computer. A typed handle cannot steal this.\n"
             "Lottery is X Verified only (blue / business / government check). Unverified has zero chance.");
-        signInBtn->setText("Sign in with X");
     }
+    applyAuthButtons(signedIn);
     sessionLabel->style()->unpolish(sessionLabel);
     sessionLabel->style()->polish(sessionLabel);
 
@@ -637,6 +675,28 @@ void XHome::onCopyNodeAddress()
 
 void XHome::onSignIn()
 {
+    if (XOAuth::cooldownRemainingMs() > 0) {
+        statusLabel->setText("Sign in with X is cooling down (~1 hour). This wallet does not keep calling X.");
+        applyAuthButtons(false);
+        return;
+    }
+    statusLabel->setText("Opening X in your browser…");
+    oauth->startLogin();
+}
+
+void XHome::onReLink()
+{
+    if (QMessageBox::question(this, "Re-link",
+            "Re-link this wallet with X? This uses X API credits.\n"
+            "Linked / Verified stay as the last successful sign-in until this finishes.",
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes)
+        return;
+    if (XOAuth::cooldownRemainingMs() > 0) {
+        QMessageBox::information(this, "X-Coin",
+            "Wait about an hour between Sign in with X attempts. Failed or cancelled attempts count.");
+        applyAuthButtons(true);
+        return;
+    }
     statusLabel->setText("Opening X in your browser…");
     oauth->startLogin();
 }
@@ -743,6 +803,7 @@ void XHome::onOAuthFailed(const QString& error)
     statusLabel->style()->unpolish(statusLabel);
     statusLabel->style()->polish(statusLabel);
     statusLabel->setText(error);
+    refresh();
     QMessageBox::warning(this, "Sign in with X", error);
 }
 

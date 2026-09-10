@@ -62,7 +62,7 @@ it cannot drop a blue-check wallet from the draw. Only `users/me` does.
 4. The operator **Signs in with X** on that node. Typed `-xaccount=`
    is ignored.
 
-The owner handle for this private test is **`NFTRVN`**. On `-regtest`
+The owner handle for this private chain is **`NFTRVN`**. On `-regtest`
 without live OAuth, `-xoauthmock=NFTRVN` mocks `verified=true`.
 
 A node is lottery-eligible only when **session + X Verified + a running

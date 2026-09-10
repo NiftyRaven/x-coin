@@ -294,7 +294,7 @@ UniValue mockxsignin(const JSONRPCRequest& request)
             "payload is JSON {\"data\":{\"id\":\"…\",\"username\":\"…\",\"verified\":true,\"verified_type\":\"blue\"}}\n"
             "or handle[:userid][:verified|:unverified|:blue|:business|:government].\n"
             "Examples: NFTRVN:verified   ghost:unverified   alice:99:verified\n"
-            "Compact NFTRVN with no flag defaults to verified=true (private test).\n"
+            "Compact NFTRVN with no flag defaults to verified=true (regtest).\n"
         );
     if (!xsession::IsRegtest())
         throw JSONRPCError(RPC_MISC_ERROR, "mockxsignin is only available on -regtest");

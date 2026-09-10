@@ -148,7 +148,7 @@ cannot be excluded.
    cannot drop a blue-check wallet from the draw.
 3. Do not type someone else's handle into `linkxaccount`.
 
-The owner handle for this private test is **`NFTRVN`**. Sign in as
+The owner handle for this private chain is **`NFTRVN`**. Sign in as
 NFTRVN (regtest: `-xoauthmock=NFTRVN` mocks verified=true), then claim
 the free root `NFTRVN`. Adding NFTRVN to the invite list is optional
 pins, not eligibility.
