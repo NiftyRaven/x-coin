@@ -8,7 +8,6 @@
 #include "random.h"
 #include "util.h"
 #include "utilstrencodings.h"
-#include "utiltime.h"
 #include "xsession.h"
 
 #include <QDateTime>
@@ -445,7 +444,9 @@ bool XOAuth::finishFromUsersMe(const QByteArray& body, QString& err)
         err = QString::fromStdString(e);
         return false;
     }
-    const int64_t exp = GetTime() + 7200;
+    // Process-lifetime disk proof. No 2h wall kick while the wallet is up.
+    // RavenApplication::requestShutdown deletes xsession.json on GUI clean quit.
+    const int64_t exp = 4102444800LL; // 2100-01-01 UTC
     if (!xsession::SaveSession(me.userId, me.username, exp, e, me.verified, me.verifiedType)) {
         err = QString::fromStdString(e);
         return false;

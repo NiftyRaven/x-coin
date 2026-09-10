@@ -222,6 +222,40 @@ echo "$MY"
 echo "$MY" | grep -q ALICE
 "${CLI[@]}" getmainasset alice | grep -q ALICE
 
+echo "== headless xcoind keeps xsession.json across stop =="
+SESS_PATH="$DATADIR/regtest/xsession.json"
+test -f "$SESS_PATH"
+"${CLI[@]}" stop >/dev/null
+for _ in $(seq 1 50); do
+  if ! "${CLI[@]}" getlotteryinfo >/dev/null 2>&1; then
+    break
+  fi
+  sleep 0.2
+done
+test -f "$SESS_PATH"
+"$XCOIND" -regtest -datadir="$DATADIR" -server -daemon -listen=0
+up=0
+for _ in $(seq 1 100); do
+  if "${CLI[@]}" getlotteryinfo >/dev/null 2>&1; then
+    up=1
+    break
+  fi
+  sleep 0.2
+done
+if [[ "$up" -ne 1 ]]; then
+  echo "xcoind did not become ready after restart" >&2
+  tail -20 "$DATADIR/regtest/debug.log" >&2 || true
+  exit 1
+fi
+SESS3="$("${CLI[@]}" getxsession)"
+echo "$SESS3"
+echo "$SESS3" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("signed_in") is not True or j.get("username") != "alice":
+    sys.exit("headless restart must keep the alice session")
+'
+
 echo "== subs only under this signed-in main asset =="
 if "${CLI[@]}" issue OTHER/NOTE 1 >/tmp/xcoin-xsession-foreignsub.err 2>&1; then
   echo "issue OTHER/NOTE must fail (not alice's main)" >&2

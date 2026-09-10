@@ -56,6 +56,7 @@ bool SaveSession(const std::string& userId, const std::string& username, int64_t
                  std::string& err, bool verified = false, const std::string& verifiedType = "");
 bool LoadSession(Session& out, std::string& err);
 bool HasValidSession();
+/** Delete xsession.json (the HMAC proof). GUI clean quit only; not xcoind. */
 void ClearSession();
 
 /**

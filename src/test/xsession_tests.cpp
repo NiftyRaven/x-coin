@@ -123,4 +123,21 @@ BOOST_AUTO_TEST_CASE(proof_binds_id_username_and_verified)
     BOOST_CHECK(xsession::ComputeProof("1001", "bob", 2000000000, false, "") != s.proofHex);
 }
 
+BOOST_AUTO_TEST_CASE(wall_clock_exp_zero_or_future_ok_past_rejected)
+{
+    xsession::ClearSession();
+    std::string err;
+    BOOST_CHECK(xsession::SaveSession("1", "bob", 1, err, false, ""));
+    xsession::Session s;
+    BOOST_CHECK(!xsession::LoadSession(s, err));
+    BOOST_CHECK(err.find("expired") != std::string::npos);
+
+    BOOST_CHECK(xsession::SaveSession("1", "bob", 0, err, false, ""));
+    BOOST_CHECK(xsession::LoadSession(s, err));
+
+    BOOST_CHECK(xsession::SaveSession("1", "bob", 4102444800LL, err, false, ""));
+    BOOST_CHECK(xsession::LoadSession(s, err));
+    BOOST_CHECK_EQUAL(s.expiresAt, 4102444800LL);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

@@ -30,6 +30,7 @@
 
 #include "init.h"
 #include "rpc/server.h"
+#include "xsession.h"
 #include "scheduler.h"
 #include "ui_interface.h"
 #include "util.h"
@@ -485,6 +486,12 @@ void RavenApplication::requestInitialize()
 
 void RavenApplication::requestShutdown()
 {
+    // GUI clean quit only. Deletes xsession.json (HMAC proof). xcoind never
+    // calls this, so a headless "sign in once" file survives daemon stop.
+    // Crash / kill without this path may leave a stale file; next launch
+    // can still be signed in. No keepalive or X token refresh.
+    xsession::ClearSession();
+
     // Show a simple window indicating shutdown status
     // Do this first as some of the steps may take some time below,
     // for example the RPC console may still be executing a command.
