@@ -14,7 +14,7 @@ Detail table: [RELEASE-AUDIT.md](RELEASE-AUDIT.md).
 ## What a person does
 
 1. Open the repository (default branch, no branch picker).
-2. Click **Download Windows wallet** or **Download Linux wallet** (GitHub Release v1.0.0).
+2. Click **Download Windows wallet** or **Download Linux wallet** (GitHub Release v1.0.5).
 3. Extract. The labeled start is in that first folder.
 4. Double-click **X Coin Wallet** / **X Coin Wallet.exe**. Practice is the other labeled start and always `-regtest`.
 5. Do **not** use **Code → Download ZIP** and do **not** compile.
@@ -34,12 +34,12 @@ Detail table: [RELEASE-AUDIT.md](RELEASE-AUDIT.md).
 
 Live OAuth was not run (no X Client ID callback in this VM). Every mock path above was.
 
-## Node / wallet / send / receive / pool / lottery
+## Node / wallet / send / receive / lottery
 
 | Status | Case |
 | --- | --- |
 | PASS | Full benchmark (mesh, send visible without an explorer) | this run |
-| PASS | Pool create / join / leave | this run |
+| — | Lottery pools were removed after this historical run | |
 | PASS | 26- and 32-character handles | this run |
 | PASS | Linux ELF double-click Practice [regtest] | this run |
 | PASS | Windows zip labeled starts + wine start | this run |

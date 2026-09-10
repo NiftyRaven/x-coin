@@ -13,6 +13,7 @@ per [X’s verification policy](https://help.x.com/en/rules-and-policies/verific
 It is **not** the operator invite list (`addxverified`).
 
 This document is the source of truth for the algorithm.
+Lottery pools (`XPL1`, create / join / leave) were removed.
 
 ## Units and schedule
 
@@ -144,8 +145,6 @@ within the last **180 seconds**. Unverified gossip is dropped (zero chance).
   local). Unsigned, unlisted, userid-only, pinned-mismatch, or
   live-handle-rebind heartbeats are not added to the active set. Forged
   signatures cost banscore.
-- Peers also gossip signed pool adverts (`xpl`). The pool password never
-  goes on the wire.
 
 ## Deterministic seed
 
@@ -206,43 +205,21 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 
 ## Block production
 
-- **Main / test:** the producer thread heartbeats, waits until wall-clock slot
-  ≥ height slot, and if this node is a winner it calls `CreateNewBlock` and
-  `ProcessNewBlock`. There is **no** nonce grind. `CheckProofOfWork` is a
-  no-op. `fMiningRequiresPeers` is false: a **lone eligible node** can
-  produce and store the ledger. Other people seeing the same tip still
-  need `addnode` / `seednode`. More eligible heartbeats make the lottery
-  among active nodes more meaningful; they are not required for the
-  chain to exist.
+- **Main:** the producer thread heartbeats and, if this node is a
+  winner, emits at most **one block per wall-clock minute**
+  (wall-minute latch). Catch-up may target an older lottery slot; the
+  latch still holds. There is no slot+120 abort. There is **no** nonce
+  grind. `CheckProofOfWork` is a no-op. `fMiningRequiresPeers` is
+  false: a **lone eligible node** can produce and store the ledger.
+  Other people seeing the same tip still need `addnode` / `seednode`.
+- **Test:** waits until wall-clock slot ≥ height slot (plus a short
+  settle), then emits if this node is a winner.
 - **Regtest:** the producer only heartbeats. Use `generatetoaddress` /
-  `generate` to assemble blocks on demand (still no PoW). If this wallet
-  is already in a pool, generate does **not** replace the pooled payout
-  script (keeps the ticket). Otherwise the destination script is
-  heartbeated so it is in the active set.
-- Removed / gutted: the legacy miner hash loop, `-gen` / `setgenerate` as a miner,
-  KawPoW submit helpers (`pprpcsb`, `getkawpowhash`).
-
-## Optional pools
-
-A wallet can **create** or **join** a pool from Home (buttons) or RPC
-(`createpool` / `joinpool` / `leavepool`). The creator chooses a **pool id**
-and **password** and shares them only if they want someone else in.
-
-| Rule | Meaning |
-| --- | --- |
-| Lottery tickets | One ticket per **X Verified** member who is running (same as solo nodes). Unverified members have **zero** tickets. |
-| Win payout | That slot’s winner share is split **evenly** across every member payout address — verified or not. |
-| Public | Pool **name** and member **addresses** only (`listpools`). No password. Pool id is shown only on the wallet that created/joined (`getmypool`). |
-
-If you share id + password with an unverified user, they can leech an even
-cut of wins without adding tickets. That is the members’ choice.
-
-Honest `xcoin-qt` / `xcoind` always emit `XPL1` and split when the winner is
-in a pool this node knows. A cheating producer can omit `XPL1` and pay only
-themselves; keep id + password private if you do not want extra members.
-
-Coinbase commits pooled splits as `XPL1` next to `XHB1`. Peers gossip signed
-pool adverts (`xpl`); the password never goes on the wire.
+  `generate` to assemble blocks on demand (still no PoW). The
+  destination script is heartbeated so it is in the active set.
+- Removed / gutted: the legacy miner hash loop, `-gen` / `setgenerate`
+  as a miner, KawPoW submit helpers (`pprpcsb`, `getkawpowhash`).
+  Lottery pools (`XPL1`, `xpl`, create / join / leave) were removed.
 
 ## RPCs
 
@@ -253,9 +230,6 @@ pool adverts (`xpl`); the password never goes on the wire.
 | `registeractivenode (payout xaccount xuserid)` | Heartbeat this node or an address / script hex; rejects unlinked/unverified. User id must match the **local** session; it is not gossiped |
 | `addxverified` / `listxverified` / `removexverified` | Mutate / read the operator invite list (not X Verified) |
 | `loadxverified (path)` | Merge a published invite-list file (no API keys) |
-| `createpool` / `joinpool` / `leavepool` | GUI Home buttons too. Tickets = verified running members; even split to every member address |
-| `listpools` | Public: name + addresses only |
-| `getmypool` | This wallet’s pool, including id for sharing (never the password) |
 | `generatetoaddress` | **Regtest only** on-demand assembly (not mining; rejected on main/test) |
 
 ## Security notes
@@ -279,12 +253,9 @@ Honest write-up: [SECURITY.md](SECURITY.md). This is not hacker-proof.
   additionally requires the session to be **X Verified** (blue check).
   Unverified = zero chance. The invite list is not a lottery gate.
 - Clock skew can delay a slot; height still maps 1:1 (`slot = genesisSlot + h`).
-  You cannot skip or double-pay a height on one chain. Catch-up produces one
-  height per loop when wall-clock is ahead; `generatetoaddress` is regtest-only
-  so RPC cannot burst-mint on main/test.
-- **Pools:** password never on the wire. Public list is name + addresses.
-  Honest nodes emit `XPL1` and split; a cheater can omit it. Last member
-  leaving dissolves the local pool.
+  You cannot skip or double-pay a height on one chain. MAIN catch-up is
+  latched to one block per wall-clock minute. `generatetoaddress` is
+  regtest-only so RPC cannot burst-mint on main/test.
 - Empty committed set ⇒ invalid coinbase (no unpaid extra outputs).
 
 Treat the lottery as specified here; do not reintroduce PoW as the production path.

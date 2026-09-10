@@ -65,7 +65,6 @@ own UTXO ledger. As of this writing the chain remains private until
 | Production | Minute lottery. No Proof-of-Work. |
 | Eligible set | X Verified, signed-in, running nodes |
 | Halvings | Subsidy halves; winner count that minute increases by one |
-| Pools | Optional. Tickets = verified running members. Win split evenly. |
 | Launch | Fair. No premine. No founder allocation. |
 | Spendable supply | 20,999,994,999.727 XFER (~21 billion) |
 | Identity | Sign in with X. One free root per signed-in account. |
@@ -108,9 +107,7 @@ validation. It is not an extra mint.
 
 There is no premine, no founder allocation, and no operator-reserved
 supply. Coins that exist are coins that lottery winners produced after
-height 0, plus whatever later holders transferred. An optional lottery
-pool does not mint extra tickets; it only splits a win among members
-who know the pool id and password.
+height 0, plus whatever later holders transferred.
 
 This paper does not give investment, legal, or tax advice. XFER is a
 protocol unit. Whether, where, or how it is listed is outside the
@@ -184,37 +181,19 @@ The coinbase must:
 
 1. Include an `OP_RETURN` commitment `XHB1` of the sorted active ids
    used for the draw.
-2. Pay the draw. **Solo (no `XPL1`):** one output per winner, in
-   selection order, the correct split of the subsidy (plus fees on the
-   first output). **Pooled:** if the producer also writes `XPL1`, that
-   winner’s share is split evenly across every member payout address
-   listed for that pool (verified or not). Peers validate the split
-   from `XPL1` alone; they do not need the password.
+2. Pay the draw: one output per winner, in selection order, the
+   correct split of the subsidy (plus fees on the first output).
 
 A mismatch is an invalid block. An empty committed set is invalid.
+Lottery pools (`XPL1`, create / join / leave) were removed. One
+lottery. One coinbase per height.
 
-On mainnet and testnet the producer waits until wall-clock slot ≥
-height slot and emits at most one block per minute when this node
-wins. On regtest, `generatetoaddress` assembles a block on demand
-(still without hashing) so tests do not wait on the clock.
-
-### Optional pools
-
-Wallets may create, join, or leave a pool from Home or RPC. The
-creator sets a **pool id** and **password** and shares them only if
-they want someone else in.
-
-| | |
-| --- | --- |
-| Tickets | One per X Verified running member. Unverified members add none. |
-| Win | Even split across every member address, verified or not. |
-| Public | Pool name and member addresses only. The password is never shown after submit and is never gossiped. Pool id is shown only on a wallet that created or joined. |
-| Wire | Signed `xpl` adverts. Last member leaving dissolves the pool on that node. |
-
-Honest `xcoin-qt` / `xcoind` always emit `XPL1` when the winner is in a
-pool this node knows. A modified producer can omit `XPL1` and pay only
-itself. Keep pool id and password private if extra members are not
-wanted.
+On mainnet the producer emits at most one block per wall-clock minute
+when this node wins (catch-up may target an older slot; the latch
+still holds). There is no slot+120 abort. On testnet the producer
+waits until wall-clock slot ≥ height slot. On regtest,
+`generatetoaddress` assembles a block on demand (still without
+hashing) so tests do not wait on the clock.
 
 ## 5. Identity: Sign in with X and the seed
 
@@ -348,11 +327,10 @@ There is no mobile wallet and no in-app X.com wallet. Sign in with X
 is OAuth in `xcoin-qt` / the node. Download packaged wallets from
 [GitHub Releases](https://github.com/NiftyRaven/x-coin/releases).
 
-Creating an address, sending XFER, linking a handle, claiming the
-root, and creating or joining a lottery pool are Home buttons (or
-RPC against `wallet.dat`). Home includes **POOL** and optional
-**Provide my node IP** (off by default). Peer IPs stay hidden unless
-that box is turned on.
+Creating an address, sending XFER, linking a handle, and claiming the
+root are Home buttons (or RPC against `wallet.dat`). Home includes
+optional **Provide my node IP** (off by default). Peer IPs stay hidden
+unless that box is turned on.
 
 Inherited core behavior remains: UTXO wallet, BIP39 12-word HD seed,
 `wallet.dat`, `encryptwallet` / `backupwallet`, fee estimates, P2P,
@@ -389,7 +367,6 @@ network.
 - A live handle cannot be rebound. Residual: first-seen after restart
   unless a payout is pinned; eclipse of a node that only talks to
   attacker peers.
-- A cheating producer can omit `XPL1` and skip a pool split.
 - Clock skew can delay a slot; height still maps 1:1.
 - There are no checkpoints and no public DNS seeds. An eclipsed node
   follows the heaviest *valid* chain its peers feed it. Connect to a
@@ -430,7 +407,7 @@ summarizes are specified in the annexes below.
 
 | Document | Contents |
 | --- | --- |
-| [docs/LOTTERY.md](../docs/LOTTERY.md) | Lottery algorithm, coinbase rules, pools, RPCs |
+| [docs/LOTTERY.md](../docs/LOTTERY.md) | Lottery algorithm, coinbase rules, RPCs |
 | [docs/XSIGNIN.md](../docs/XSIGNIN.md) | Sign in with X, session proof, privacy of login |
 | [docs/WALLET.md](../docs/WALLET.md) | BIP39 seed vs X session |
 | [docs/ASSETS.md](../docs/ASSETS.md) | Roots, subs, uniques, naming |

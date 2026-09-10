@@ -2,7 +2,7 @@ Repository Tools
 ---------------------
 
 Private X Coin tree. Operator docs: [README.md](../README.md),
-[docs/RELEASE-1.1.md](../docs/RELEASE-1.1.md). There is no mining and
+[docs/RELEASE-1.0.md](../docs/RELEASE-1.0.md). There is no mining and
 no public DNS seeds. Historical imported READMEs below still mention
 Raven / raven.org in places.
 

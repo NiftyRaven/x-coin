@@ -75,43 +75,18 @@ matching session. RPC itself still needs the cookie or `rpcpassword`
 The node never pretends login succeeded without a real access token
 (or, on `-regtest` only, a mock `users/me` payload).
 
-## X developer portal (loopback)
+## Operator only (developer portal)
 
-1. Open [developer.x.com](https://developer.x.com/) and create a
-   project + app (User authentication).
-2. App type: **Native App** / public client (PKCE, no secret required).
-   A confidential client may set `-xoauthclientsecret=` if the portal
-   issues one.
-3. Callback URI, exactly:
+Users do **not** open developer.x.com and do **not** paste a Client
+ID. Packaged 1.0.5 `xcoin.conf` already has `xoauthclientid=` set.
+Empty Client ID → Sign in with X says the operator has not baked one;
+it does not fake success. There is no GUI paste box.
 
-   ```
-   http://127.0.0.1:18791/callback
-   ```
-
-   Another port: `-xoauthcallbackport=N` and register
-   `http://127.0.0.1:N/callback`.
-4. Scopes: `users.read` `tweet.read` only. Do **not** request `offline.access`
-   (no refresh token). The access token is held in RAM for the `users/me`
-   call and then discarded — it is never written to disk.
-5. Copy the **Client ID**. This is an **operator bake**, not a user paste field.
-   Put it in the `xcoin.conf` shipped in the Windows and Linux wallet
-   folders (or `-xoauthclientid=`) before people run Sign in with X:
-
-   ```
-   xoauthclientid=
-   ```
-
-   Uncomment that line in `contrib/xcoin/xcoin.conf` (copied into each
-   package) and put the real id after the equals sign. Callback, exactly:
-   `http://127.0.0.1:18791/callback`.
-   Never hardcode a fake client. Empty Client ID → Sign in with X tells
-   you the operator has not baked one; it does not fake success. A typed
-   handle cannot claim verified status. There is no GUI paste box.
-
-6. Click **Sign in with X**. The browser opens
-   `https://twitter.com/i/oauth2/authorize`. After you approve, X
-   redirects to the loopback callback; the wallet exchanges the code,
-   then calls `GET https://api.twitter.com/2/users/me`.
+If an operator must register a new loopback app: Native App / public
+client (PKCE), scopes `users.read` `tweet.read` only (no
+`offline.access`), callback exactly `http://127.0.0.1:18791/callback`.
+Bake the id into package `xcoin.conf` (`xoauthclientid=`). Do not
+invent a different id on launch night.
 
 ## Happy path (GUI, no terminal)
 

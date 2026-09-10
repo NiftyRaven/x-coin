@@ -34,16 +34,14 @@ Do not require four peers to reorg (`nMinReorganizationPeers` must be 1 at launc
 
 ## Seed
 
-Launch node is the public seed on **38443**. Every packaged `xcoin.conf` must ship:
+Launch node is the public seed on **38443**. Packaged `xcoin.conf` already ships:
 
 ```
-seednode=<PUBLIC_IP>:38443
-addnode=<PUBLIC_IP>:38443
+seednode=172.191.195.221:38443
+addnode=172.191.195.221:38443
 ```
 
 `vSeeds` / `vFixedSeeds` in `CMainParams` are cleared today. Leftover Ravencoin entries in `chainparamsseeds.h` (port **8767**) must stay unused or be deleted. Do not point X Coin at Ravencoin seeds.
-
-Paste the listen IP before the 12 September package. Without it, nodes do not auto-connect.
 
 
 ## In the binary (NFTRVN)

@@ -1,7 +1,7 @@
 # X Coin 1.0 (private)
 
-**Superseded for operators by [RELEASE-1.1.md](RELEASE-1.1.md)** (pools,
-private login, X Verified = blue check). This page is the 1.0 snapshot.
+**Current wallets: 1.0.5.** Lottery pools (`XPL1`, create / join / leave)
+were removed. This page is the 1.0 product snapshot.
 
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
@@ -10,10 +10,10 @@ Product version **1.0**. This is a **private** release. Do not make
 the repository public. The **1.0.0** Windows/Linux zips were
 launch-blocking (invisible create/restore choice, empty-wallet fee
 wall on the free root, Sign in with X asked users to paste a Client
-ID). Use **1.0.2** on
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.2)
-(`X-Coin-1.0.2-Windows.zip` and `X-Coin-1.0.2-Linux-x86_64.tar.gz`).
-Do not use **Code → Download ZIP**.
+ID). Use **1.0.5** on
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.5)
+(`X-Coin-1.0.5-Windows.zip` and `X-Coin-1.0.5-Linux-x86_64.tar.gz`).
+Do not use **Code → Download ZIP**. Do not use 1.0.2, 1.0.3, or 1.0.4.
 
 ## What shipped
 
@@ -31,18 +31,18 @@ Do not use **Code → Download ZIP**.
 - **CLI** `xcoind` / `xcoin-cli` still work.
 - Handle → root mapping: X handles `[A-Za-z0-9_]` length 1–32; **26-character
   handles map 1:1** (no truncation). Root names max **32** characters.
-- Lottery among verified-X active nodes (no mining).
+- Lottery among verified-X active nodes (no mining). No pools.
 - One free identity root per **signed-in** handle; user-created roots forbidden.
 
 ## Install the GUI
 
 Do not compile. Download from
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.2),
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.5),
 unpack, and double-click the labeled start. Step-by-step:
 [README.md](../README.md).
 
-- Linux: [X-Coin-1.0.2-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.2/X-Coin-1.0.2-Linux-x86_64.tar.gz) → **X Coin Wallet**
-- Windows: [X-Coin-1.0.2-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.2/X-Coin-1.0.2-Windows.zip) → **X Coin Wallet.exe**
+- Linux: [X-Coin-1.0.5-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.5/X-Coin-1.0.5-Linux-x86_64.tar.gz) → **X Coin Wallet**
+- Windows: [X-Coin-1.0.5-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.5/X-Coin-1.0.5-Windows.zip) → **X Coin Wallet.exe**
 - Practice: **X Coin Practice Wallet** / **X Coin Practice Wallet.exe**
 
 Pack from a developer build: `contrib/xcoin/package-linux.sh` and
@@ -51,8 +51,8 @@ Pack from a developer build: `contrib/xcoin/package-linux.sh` and
 ## Screenshots
 
 1.0 running-GUI captures were taken on regtest. In-tree brand stills:
-[assets/brand/](../assets/brand/). Home in 1.1 shows @handle only (no X
-user id) plus POOL and optional Provide my node IP.
+[assets/brand/](../assets/brand/). Home shows @handle only (no X
+user id) plus optional Provide my node IP.
 
 ## Known limits
 
@@ -60,19 +60,21 @@ user id) plus POOL and optional Provide my node IP.
   is **X Verified** (blue check from `users/me`) plus a running wallet.
   Unverified accounts have zero chance. The operator invite list cannot
   exclude a verified wallet. See [XSIGNIN.md](XSIGNIN.md).
-- Live X OAuth needs a developer Client ID (`xoauthclientid=`). This VM
-  cannot complete a live login; `-regtest` mock `users/me` covers tests.
+- Live X OAuth uses the operator Client ID already baked in package
+  `xcoin.conf` (`xoauthclientid=`). Users never paste a Client ID.
+  This VM cannot complete a live login; `-regtest` mock `users/me`
+  covers tests.
 - No mobile app. No public DNS seeds. No exchange listing.
   DEX criteria (ready to *apply* vs ready to *trade*): [DEX.md](DEX.md).
   Not hacker-proof: [SECURITY.md](SECURITY.md).
-- Restricted assets stay removed.
+- Restricted assets stay removed. Lottery pools were removed.
 - Internal C++ names (`RavenGUI`, `OP_RVN_ASSET`, copyright headers) stay;
   catalog: [FORK.md](FORK.md).
 - Collision suffixes never truncate a valid handle; a suffix that would
   exceed 32 characters is skipped. A 26-character handle plus `_2` always fits.
 - Leading/trailing `_` in an X handle is mapped to `X` (`_alice` → `XALICE`).
-- Dark theme is the default. Light mode is still black/white, not Ravencoin
-  orange/green.
+- Dark theme is the default. Light mode is still black/white, not the
+  imported orange/green.
 
 ## Tests
 

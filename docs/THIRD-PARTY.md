@@ -2,15 +2,15 @@
 
 **Nifty Raven** (@NFTRVN on X)
 
-X Coin is a Bitcoin-family UTXO daemon plus Ravencoin-style assets.
+X Coin is a Bitcoin-family UTXO daemon plus a native asset layer.
 A block explorer, asset explorer, or third-party wallet talks to
 `xcoind` over JSON-RPC (port **38442** locally). There is no in-tree
 explorer URL (`DEFAULT_THIRD_PARTY_BROWSERS` is empty until you publish
 one).
 
 This is a **fully functional chain**: send/receive XFER, protocol
-identity roots, sub/unique issue and transfer, lottery blocks, optional
-pools.
+identity roots, sub/unique issue and transfer, lottery blocks. Lottery
+pools were removed.
 
 ## Explorer node
 
