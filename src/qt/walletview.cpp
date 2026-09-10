@@ -122,6 +122,10 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     connect(xHome, SIGNAL(gotoSend()), this, SLOT(gotoSendCoinsPage()));
     connect(xHome, SIGNAL(gotoActivity()), this, SLOT(gotoHistoryPage()));
     connect(xHome, SIGNAL(gotoAssets()), this, SLOT(gotoAssetsPage()));
+    connect(xHome, SIGNAL(gotoCreateSub(QString)), createAssetsPage, SLOT(focusCreateSub(QString)));
+    connect(xHome, SIGNAL(gotoCreateUnique(QString)), createAssetsPage, SLOT(focusCreateUnique(QString)));
+    connect(xHome, SIGNAL(gotoCreateSub(QString)), this, SLOT(gotoCreateAssetsPage()));
+    connect(xHome, SIGNAL(gotoCreateUnique(QString)), this, SLOT(gotoCreateAssetsPage()));
     /** RNV END */
 }
 
@@ -144,6 +148,9 @@ void WalletView::setRavenGUI(RavenGUI *gui)
 
         // Clicking on a asset menu item Issue Unique
         connect(overviewPage, SIGNAL(assetIssueUniqueClicked(QModelIndex)), gui, SLOT(gotoCreateAssetsPage()));
+
+        connect(xHome, SIGNAL(gotoCreateSub(QString)), gui, SLOT(gotoCreateAssetsPage()));
+        connect(xHome, SIGNAL(gotoCreateUnique(QString)), gui, SLOT(gotoCreateAssetsPage()));
 
         // Clicking on a asset menu item Reissue
         connect(overviewPage, SIGNAL(assetReissueClicked(QModelIndex)), gui, SLOT(gotoManageAssetsPage()));

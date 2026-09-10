@@ -7,6 +7,8 @@ Those two links are the wallets. They live on the
 [Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.8)
 page. Do **not** use **Code → Download ZIP** — that is the source tree,
 not a wallet. Do not use 1.0.2, 1.0.3, 1.0.4, 1.0.5, 1.0.6, or 1.0.7.
+In-tree is **1.0.9** (left-nav Assets tab: sub/unique create). Last
+shipped zip is **1.0.8** until the 1.0.9 package workflow is run.
 
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.

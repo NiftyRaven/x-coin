@@ -190,9 +190,16 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     claimRow->addWidget(claimBtn);
     root->addLayout(claimRow);
 
-    QLabel* issueHead = new QLabel("ISSUE");
+    QLabel* issueHead = new QLabel("ASSETS");
     issueHead->setObjectName("xsection");
     root->addWidget(issueHead);
+
+    QLabel* issueHint = new QLabel(
+        "Create sub and unique on the Assets tab (quantity, units, IPFS/txid, reissuable). "
+        "Unique quantity is 1. The root is Sign-in Claim only — you cannot create a main asset.");
+    issueHint->setObjectName("xhint");
+    issueHint->setWordWrap(true);
+    root->addWidget(issueHint);
 
     QHBoxLayout* subRow = new QHBoxLayout;
     subNameEdit = new QLineEdit;
@@ -242,7 +249,7 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     root->addLayout(money);
 
     QLabel* moneyHint = new QLabel(
-        "Receive, Send, and Activity are also in the left menu. Transfer spends only keys in this wallet.dat.");
+        "Receive, Send, Activity, and Assets are also in the left menu. Transfer spends only keys in this wallet.dat.");
     moneyHint->setObjectName("xhint");
     moneyHint->setWordWrap(true);
     root->addWidget(moneyHint);
@@ -564,7 +571,7 @@ void XHome::refresh()
         assetLabel->setText("My asset\nNo root yet. Sign in, then Claim my root asset. "
                             "Allowlist is an optional invite list — it does not make you X Verified.");
     else
-        assetLabel->setText("My asset\nRoot: " + rootName + "\nIssue a sub or unique below.");
+        assetLabel->setText("My asset\nRoot: " + rootName + "\nCreate a sub or unique on the Assets tab.");
 
     claimBtn->setEnabled(signedIn && rootName.isEmpty());
     allowlistBtn->setEnabled(signedIn);
@@ -740,53 +747,12 @@ void XHome::onClaim()
 
 void XHome::onIssueSub()
 {
-    const QString leaf = subNameEdit->text().trimmed().toUpper();
-    if (leaf.isEmpty()) {
-        QMessageBox::information(this, "X-Coin", "Enter a sub name.");
-        return;
-    }
-    UniValue s;
-    s.read(rpc("getxsession").toStdString());
-    if (!s.isObject() || !s["signed_in"].isTrue()) {
-        QMessageBox::warning(this, "X-Coin", "Sign in with X first. Main assets are created by authentication only.");
-        return;
-    }
-    UniValue m;
-    m.read(rpc("getmainasset").toStdString());
-    if (!m.isObject() || !m["assigned"].isTrue()) {
-        QMessageBox::warning(this, "X-Coin", "Claim your root asset first. Subs are issued under that main asset.");
-        return;
-    }
-    const QString root = QString::fromStdString(m["asset"].getValStr());
-    showRpcOutcome(rpc("issue", QStringList() << (root + "/" + leaf) << "1"),
-                   "Issued " + root + "/" + leaf);
-    refresh();
+    Q_EMIT gotoCreateSub(subNameEdit->text().trimmed());
 }
 
 void XHome::onIssueUnique()
 {
-    const QString leaf = uniqueNameEdit->text().trimmed().toUpper();
-    if (leaf.isEmpty()) {
-        QMessageBox::information(this, "X-Coin", "Enter a unique name.");
-        return;
-    }
-    UniValue s;
-    s.read(rpc("getxsession").toStdString());
-    if (!s.isObject() || !s["signed_in"].isTrue()) {
-        QMessageBox::warning(this, "X-Coin", "Sign in with X first. Main assets are created by authentication only.");
-        return;
-    }
-    UniValue m;
-    m.read(rpc("getmainasset").toStdString());
-    if (!m.isObject() || !m["assigned"].isTrue()) {
-        QMessageBox::warning(this, "X-Coin", "Claim your root asset first. Uniques are issued under that main asset.");
-        return;
-    }
-    const QString root = QString::fromStdString(m["asset"].getValStr());
-    const QString tags = QString("[\"%1\"]").arg(leaf);
-    showRpcOutcome(rpc("issueunique", QStringList() << root << tags),
-                   "Issued unique " + leaf);
-    refresh();
+    Q_EMIT gotoCreateUnique(uniqueNameEdit->text().trimmed());
 }
 
 void XHome::onOAuthSuccess(const QString& username, const QString& userId)

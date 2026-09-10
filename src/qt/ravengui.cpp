@@ -369,8 +369,8 @@ void RavenGUI::createActions()
     tabGroup->addAction(historyAction);
 
     /** XCOIN START */
-    createAssetAction = new QAction(platformStyle->SingleColorIconOnOff(":/icons/asset_create_selected", ":/icons/asset_create"), tr("&Issue (advanced)"), this);
-    createAssetAction->setStatusTip(tr("Classic asset issuer (advanced)"));
+    createAssetAction = new QAction(platformStyle->SingleColorIconOnOff(":/icons/asset_create_selected", ":/icons/asset_create"), tr("&Assets"), this);
+    createAssetAction->setStatusTip(tr("Create a sub or unique asset (quantity, units, IPFS). Main/root is Sign-in Claim only."));
     createAssetAction->setToolTip(createAssetAction->statusTip());
     createAssetAction->setCheckable(true);
     createAssetAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
@@ -638,6 +638,7 @@ void RavenGUI::createToolBars()
         m_toolbar->addAction(receiveCoinsAction);
         m_toolbar->addAction(sendCoinsAction);
         m_toolbar->addAction(historyAction);
+        m_toolbar->addAction(createAssetAction);
 //        m_toolbar->addAction(messagingAction);
 //        m_toolbar->addAction(votingAction);
         restrictedAssetAction->setVisible(false);
@@ -1488,7 +1489,7 @@ void RavenGUI::checkAssets()
         transferAssetAction->setDisabled(false);
         transferAssetAction->setToolTip(tr("Transfer assets to X Coin addresses"));
         createAssetAction->setDisabled(false);
-        createAssetAction->setToolTip(tr("Create new assets"));
+        createAssetAction->setToolTip(tr("Create a sub or unique asset (quantity, units, IPFS). Main/root is Sign-in Claim only."));
         manageAssetAction->setDisabled(false);
         }
     else {
