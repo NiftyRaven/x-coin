@@ -45,7 +45,7 @@ Operator path (no compile): [README.md](../README.md) launch night.
 Do **not** add public DNS seeds. Do not invent a host or a Client ID.
 The operator Client ID is already baked in package `xcoin.conf`.
 
-The shipped **1.0.7** wallet is what you double-click on launch night.
+The shipped **1.0.8** wallet is what you double-click on launch night.
 
 ## Related
 

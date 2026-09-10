@@ -3,9 +3,9 @@
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
 
-**1.1 pool work was removed.** Current wallets are **1.0.7** on
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.7)
-(`X-Coin-1.0.7-Windows.zip` and `X-Coin-1.0.7-Linux-x86_64.tar.gz`).
+**1.1 pool work was removed.** Current wallets are **1.0.8** on
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.8)
+(`X-Coin-1.0.8-Windows.zip` and `X-Coin-1.0.8-Linux-x86_64.tar.gz`).
 Do not make the repository public until go-live ([GO-LIVE.md](GO-LIVE.md)).
 1.0 snapshot: [RELEASE-1.0.md](RELEASE-1.0.md).
 

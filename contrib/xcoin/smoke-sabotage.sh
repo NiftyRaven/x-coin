@@ -47,14 +47,19 @@ stop_node() {
 cleanup() { stop_node; }
 trap cleanup EXIT
 
-echo "== unsigned node cannot send via sendrawtransaction or registeractivenode =="
+echo "== unsigned node: sendrawtransaction is not session-gated; lottery still needs session =="
 start_node -xverified=alice:99 -xverified=eve
 if "${CLI[@]}" sendrawtransaction 00 >/tmp/xcoin-sabotage-raw.err 2>&1; then
-  echo "sendrawtransaction must fail without a session" >&2
+  echo "sendrawtransaction 00 must fail (decode)" >&2
   cat /tmp/xcoin-sabotage-raw.err >&2
   exit 1
 fi
-grep -qi "sign in with x\|session" /tmp/xcoin-sabotage-raw.err
+if grep -qiE "sign in with x required" /tmp/xcoin-sabotage-raw.err; then
+  echo "sendrawtransaction must not session-gate" >&2
+  cat /tmp/xcoin-sabotage-raw.err >&2
+  exit 1
+fi
+grep -qiE "decode|deserial" /tmp/xcoin-sabotage-raw.err
 if "${CLI[@]}" registeractivenode >/tmp/xcoin-sabotage-reg.err 2>&1; then
   echo "registeractivenode must fail without a session" >&2
   cat /tmp/xcoin-sabotage-reg.err >&2
@@ -113,7 +118,7 @@ if handles != ["alice", "eve"]:
 print("active handles", handles)
 '
 
-echo "== signed-in sendraw still requires a decodable tx (session gate already passed) =="
+echo "== signed-in sendraw still requires a decodable tx =="
 if "${CLI[@]}" sendrawtransaction 00 >/tmp/xcoin-sabotage-raw2.err 2>&1; then
   echo "junk hex must not be accepted" >&2
   exit 1

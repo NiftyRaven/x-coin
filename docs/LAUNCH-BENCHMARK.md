@@ -14,7 +14,7 @@ Detail table: [RELEASE-AUDIT.md](RELEASE-AUDIT.md).
 ## What a person does
 
 1. Open the repository (default branch, no branch picker).
-2. Click **Download Windows wallet** or **Download Linux wallet** (GitHub Release v1.0.7).
+2. Click **Download Windows wallet** or **Download Linux wallet** (GitHub Release v1.0.8).
 3. Extract. The labeled start is in that first folder.
 4. Double-click **X Coin Wallet** / **X Coin Wallet.exe**. Practice is the other labeled start and always `-regtest`.
 5. Do **not** use **Code → Download ZIP** and do **not** compile.
@@ -25,12 +25,12 @@ Detail table: [RELEASE-AUDIT.md](RELEASE-AUDIT.md).
 | --- | --- |
 | PASS | Bot / unverified = zero lottery chance; can still receive | this run |
 | PASS | Typed handle cannot claim Verified X or someone else's root | this run |
-| PASS | Unsigned sendraw / handle steal rejected | this run |
+| PASS | Unsigned sendraw decode-fails; handle steal rejected | this run |
 | PASS | Bob cannot spend Alice; stolen session does not import keys | this run |
 | PASS | Two distinct verified handles, two wallets, send/receive | this run |
 | PASS | Same verified handle on two wallets: observer keeps one live binding | this run |
 | PASS | Operator invite list cannot exclude a verified wallet | this run |
-| PASS | Tampered xsession.json / foreign session file cannot send | this run |
+| PASS | Tampered xsession.json / foreign session file is not signed in (send still works) | this run |
 
 Live OAuth was not run (no X Client ID callback in this VM). Every mock path above was.
 

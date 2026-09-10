@@ -2,7 +2,7 @@
 
 **Nifty Raven** (@NFTRVN on X) — display name and handle only.
 
-Historical 1.0.0 audit (2026-09-08). Current wallets are **1.0.7**.
+Historical 1.0.0 audit (2026-09-08). Current wallets are **1.0.8**.
 Lottery pools recorded in this run were later removed.
 
 Runner: `contrib/xcoin/run-release-audit.sh` (2026-09-08 14:52:23 UTC).
@@ -74,7 +74,7 @@ Totals: **32 passed**, **0 failed**, **0 skipped**.
 | PASS | Two distinct verified wallets both eligible; send/receive | this run |
 | PASS | Same verified handle on two wallets (duplicate / spoof) rejected | this run |
 | PASS | Operator invite list cannot exclude a verified wallet | this run |
-| PASS | Session file / mock mismatch cannot send | this run |
+| PASS | Session file / mock mismatch is not signed in (send still works) | this run |
 | PASS | GitHub default-branch README is download-first | this run |
 | PASS | GitHub Release v1.0.0 is published with both wallet assets | this run |
 
@@ -86,9 +86,9 @@ Totals: **32 passed**, **0 failed**, **0 skipped**.
 | `dist/xcoin-1.0.0-win-x86_64.zip` | **X Coin Wallet.exe** in the first unpacked folder |
 
 Those were the assets at this 1.0.0 run. Current wallets:
-[X-Coin-1.0.7-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.7/X-Coin-1.0.7-Windows.zip)
+[X-Coin-1.0.8-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.8/X-Coin-1.0.8-Windows.zip)
 and
-[X-Coin-1.0.7-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.7/X-Coin-1.0.7-Linux-x86_64.tar.gz).
+[X-Coin-1.0.8-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.8/X-Coin-1.0.8-Linux-x86_64.tar.gz).
 
 ## Could not run
 

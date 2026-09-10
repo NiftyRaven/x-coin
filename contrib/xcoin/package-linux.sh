@@ -4,7 +4,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${OUT:-$ROOT/dist}"
-VER="${VER:-1.0.7}"
+VER="${VER:-1.0.8}"
 NAME="xcoin-${VER}-linux-x86_64"
 STAGE="$OUT/$NAME"
 
@@ -218,8 +218,9 @@ The practice window title includes [regtest].
 REAL WALLET
 -----------
 X Coin Wallet starts with no -regtest. First run creates
-~/.xcoin/wallet.dat. Sign in with X is required to send,
-receive, and claim your free root. Lottery needs X Verified.
+~/.xcoin/wallet.dat. Send and receive work without Sign in
+with X. Sign in with X is required to claim your free root.
+Lottery needs X Verified.
 
 UNTIL SEPTEMBER 12, 2026
 ------------------------

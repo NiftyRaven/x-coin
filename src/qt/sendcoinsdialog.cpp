@@ -653,7 +653,7 @@ void SendCoinsDialog::processSendCoinsReturn(const WalletModel::SendCoinsReturn 
     switch(sendCoinsReturn.status)
     {
     case WalletModel::SessionRequired:
-        msgParams.first = tr("Sign in with X required to send. Authentication proves it is you.");
+        msgParams.first = tr("Send spends only keys in this wallet. Sign in with X is not required to send.");
         msgParams.second = CClientUIInterface::MSG_ERROR;
         break;
     case WalletModel::InvalidAddress:

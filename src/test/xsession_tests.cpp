@@ -58,6 +58,8 @@ BOOST_AUTO_TEST_CASE(typed_handle_rejected_session_accepted)
     std::string err;
     BOOST_CHECK(!xsession::RequireSession(err));
     BOOST_CHECK(err.find("Sign in with X") != std::string::npos);
+    BOOST_CHECK(err.find("claim") != std::string::npos);
+    BOOST_CHECK(err.find("send, receive") == std::string::npos);
     BOOST_CHECK(!xsession::RequireHandle("nftrvn", err));
     BOOST_CHECK(err.find("Sign in with X") != std::string::npos);
 

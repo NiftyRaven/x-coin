@@ -31,7 +31,7 @@ XReceive::XReceive(WalletView* walletViewIn, QWidget* parent)
     title->setObjectName("xsection");
     root->addWidget(title);
 
-    tagLabel = new QLabel("Sign in with X on Home first. Receive uses a private session on this computer.");
+    tagLabel = new QLabel("Receive uses keys in this wallet. Sign in with X is only for the free root and lottery.");
     tagLabel->setObjectName("xhint");
     tagLabel->setWordWrap(true);
     root->addWidget(tagLabel);
@@ -87,16 +87,13 @@ void XReceive::setWalletModel(WalletModel* model)
 void XReceive::refresh()
 {
     currentAddress.clear();
-    if (!xsession::HasValidSession()) {
-        tagLabel->setText("This wallet is not linked yet. Sign in with X on Home. "
-                          "A typed handle cannot create a receive address.");
-        addressLabel->setText("(sign in with X to receive)");
-        hintLabel->setText("Receive requires Sign in with X on this computer. A typed handle cannot create an address here.");
-        return;
+    if (xsession::HasValidSession()) {
+        const QString handle = QString::fromStdString(xsession::SignedInHandle());
+        tagLabel->setText(QString("Receiving into the wallet linked to @%1.")
+            .arg(handle));
+    } else {
+        tagLabel->setText("Receiving into this wallet. Sign in with X is only for the free root and lottery.");
     }
-    const QString handle = QString::fromStdString(xsession::SignedInHandle());
-    tagLabel->setText(QString("Receiving into the wallet linked to @%1.")
-        .arg(handle));
     if (!walletModel || !walletModel->getAddressTableModel()) {
         addressLabel->setText("(open a wallet)");
         return;
@@ -112,8 +109,13 @@ void XReceive::refresh()
     if (currentAddress.isEmpty())
         currentAddress = m->addRow(AddressTableModel::Receive, "Receive", "");
     addressLabel->setText(currentAddress.isEmpty() ? QString("(could not create address)") : currentAddress);
-    hintLabel->setText(QString("Address for the wallet linked to @%1. Copy and send this to the payer.")
-        .arg(handle));
+    if (xsession::HasValidSession()) {
+        const QString handle = QString::fromStdString(xsession::SignedInHandle());
+        hintLabel->setText(QString("Address for the wallet linked to @%1. Copy and send this to the payer.")
+            .arg(handle));
+    } else {
+        hintLabel->setText("Copy and send this address to the payer.");
+    }
 }
 
 void XReceive::onCopy()
@@ -122,7 +124,7 @@ void XReceive::onCopy()
         refresh();
     }
     if (currentAddress.isEmpty()) {
-        QMessageBox::warning(this, "X-Coin", "Sign in with X first, then open a wallet.");
+        QMessageBox::warning(this, "X-Coin", "Open a wallet first, then copy a receive address.");
         return;
     }
     QApplication::clipboard()->setText(currentAddress);
@@ -131,10 +133,6 @@ void XReceive::onCopy()
 
 void XReceive::onNewAddress()
 {
-    if (!xsession::HasValidSession()) {
-        QMessageBox::warning(this, "X-Coin", "Sign in with X required to receive.");
-        return;
-    }
     if (!walletModel || !walletModel->getAddressTableModel()) return;
     currentAddress = walletModel->getAddressTableModel()->addRow(AddressTableModel::Receive, "Receive", "");
     addressLabel->setText(currentAddress);

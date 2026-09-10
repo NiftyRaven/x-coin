@@ -100,8 +100,8 @@ echo "== phase 2: connect B (signed-in receiver) and C (unsigned observer) =="
 "$XCOIND" -regtest -datadir="$B_DIR" -server -daemon -listen=1 -port=28553 \
   -rpcport=28552 -addnode=127.0.0.1:28543 -dnsseed=0 -txindex=1 \
   -xoauthmock=bob:verified -xallowlist="$ALLOW"
-# C has no session: still syncs, relays, and can inspect blocks/txs by RPC.
-# It cannot create a receive address or send.
+# C has no session: still syncs, relays, inspects blocks/txs by RPC,
+# and can send/receive (normal wallet). Root claim / lottery stay gated.
 "$XCOIND" -regtest -datadir="$C_DIR" -server -daemon -listen=0 -port=28563 \
   -rpcport=28562 -addnode=127.0.0.1:28543 -dnsseed=0 -txindex=1
 wait_rpc B_CLI
@@ -147,13 +147,10 @@ TIP110="$("${A_CLI[@]}" getbestblockhash)"
 ADDR_B="$("${B_CLI[@]}" getnewaddress)"
 [[ "$ADDR_B" == y* ]]
 echo "B receive $ADDR_B"
-# Unsigned observer cannot open a receive address (wallet gate).
-if "${C_CLI[@]}" getnewaddress >/tmp/xcoin-bench-c-recv.err 2>&1; then
-  echo "unsigned observer must not getnewaddress" >&2
-  cat /tmp/xcoin-bench-c-recv.err >&2
-  exit 1
-fi
-grep -qi "sign in with x\|session" /tmp/xcoin-bench-c-recv.err
+# Unsigned observer can open a receive address (normal wallet).
+ADDR_C="$("${C_CLI[@]}" getnewaddress)"
+[[ "$ADDR_C" == y* ]]
+echo "C unsigned receive $ADDR_C"
 
 SEND_NS="$(date +%s%N)"
 TXID="$("${A_CLI[@]}" sendtoaddress "$ADDR_B" 25)"

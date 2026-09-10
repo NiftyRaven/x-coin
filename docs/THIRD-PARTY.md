@@ -68,12 +68,14 @@ signed-in user calls `linkxaccount` (zero-burn `XID1`). Subs:
 
 ## Third-party wallets (XFER + assets)
 
-Same RPC as `xcoin-cli`. The node you talk to must have a **Sign in
-with X** session to:
+Same RPC as `xcoin-cli`. Send and receive work without a session:
 
-- `getnewaddress` / `sendtoaddress` / `sendrawtransaction`
+- `getnewaddress` / `sendtoaddress` / `sendrawtransaction` / `transfer`
+
+The node you talk to must have a **Sign in with X** session to:
+
 - `linkxaccount` (create the **main** asset — authentication only)
-- `issue` / `issueunique` / `reissue` / `transfer`
+- `issue` / `issueunique` / `reissue`
 
 **No session → no main asset.** `issue` of a new root is rejected.
 Subs and uniques are issued **under that signed-in account’s root**

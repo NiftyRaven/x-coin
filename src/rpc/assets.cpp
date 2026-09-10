@@ -1158,7 +1158,7 @@ UniValue transfer(const JSONRPCRequest& request)
                 "transfer \"asset_name\" qty \"to_address\" \"message\" expire_time \"change_address\" \"asset_change_address\"\n"
                 + AssetActivationWarning() +
                 "\nTransfers a quantity of an asset owned by this wallet.dat to a given address.\n"
-                "Sign in with X is required. The session does not import another user's assets.\n"
+                "Sign in with X is not required to transfer assets you already hold. The session does not import another user's assets.\n"
                 "You cannot transfer Alice's assets from Bob's wallet by signing in as @alice or typing her handle."
 
                 "\nArguments:\n"
@@ -1186,7 +1186,6 @@ UniValue transfer(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -1313,7 +1312,6 @@ UniValue transferfromaddresses(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 
@@ -1467,7 +1465,6 @@ UniValue transferfromaddress(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    EnsureSignedInWithX();
     ObserveSafeMode();
     LOCK2(cs_main, pwallet->cs_wallet);
 

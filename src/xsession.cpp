@@ -478,7 +478,7 @@ bool RequireSession(std::string& err)
 {
     Session s;
     if (!LoadSession(s, err)) {
-        err = "Sign in with X required to send, receive, or own assets; a typed handle is not enough";
+        err = "Sign in with X required to claim a root or prove asset ownership; a typed handle is not enough";
         return false;
     }
     return true;

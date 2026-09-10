@@ -154,9 +154,9 @@ if j.get("xaccount") != "zed":
 stop_cli INV_CLI
 
 # ---------------------------------------------------------------------------
-# Phase 4: session file / mock mismatch cannot send
+# Phase 4: session file / mock mismatch is not signed in; send/receive still work
 # ---------------------------------------------------------------------------
-echo "== tampered xsession.json (username rewrite, old proof) cannot send =="
+echo "== tampered xsession.json (username rewrite, old proof) is not signed in =="
 SES_DIR="$BASE/session"
 mkdir -p "$SES_DIR"
 SES_CLI=("$XCLI" -regtest -datadir="$SES_DIR" -rpcport=28342)
@@ -175,18 +175,24 @@ obj["username"] = "eve"
 json.dump(obj, open(path, "w", encoding="utf-8"))
 print("rewrote username to eve, kept alice proof")
 PY
-if "${SES_CLI[@]}" getnewaddress >/tmp/xcoin-abuse-tamper-recv.err 2>&1; then
-  echo "getnewaddress must fail after xsession.json username/proof mismatch" >&2
-  cat /tmp/xcoin-abuse-tamper-recv.err >&2
+AFTER="$("${SES_CLI[@]}" getnewaddress)"
+[[ "$AFTER" == y* ]]
+if "${SES_CLI[@]}" linkxaccount eve >/tmp/xcoin-abuse-tamper-link.err 2>&1; then
+  echo "linkxaccount must fail after xsession.json username/proof mismatch" >&2
+  cat /tmp/xcoin-abuse-tamper-link.err >&2
   exit 1
 fi
-grep -qiE "sign in with x|session" /tmp/xcoin-abuse-tamper-recv.err
-if "${SES_CLI[@]}" sendtoaddress ySmokeNoSession111111111111111111 1 >/tmp/xcoin-abuse-tamper-send.err 2>&1; then
-  echo "sendtoaddress must fail after xsession.json mismatch" >&2
+grep -qiE "sign in with x|session" /tmp/xcoin-abuse-tamper-link.err
+if "${SES_CLI[@]}" sendtoaddress "$AFTER" 1 >/tmp/xcoin-abuse-tamper-send.err 2>&1; then
+  echo "sendtoaddress 1 XFER must fail (no coins) after tamper, not succeed" >&2
   cat /tmp/xcoin-abuse-tamper-send.err >&2
   exit 1
 fi
-grep -qiE "sign in with x|session" /tmp/xcoin-abuse-tamper-send.err
+if grep -qiE "sign in with x required|required to send" /tmp/xcoin-abuse-tamper-send.err; then
+  echo "sendtoaddress must not require Sign in with X after tamper" >&2
+  cat /tmp/xcoin-abuse-tamper-send.err >&2
+  exit 1
+fi
 TAMPER_SESS="$("${SES_CLI[@]}" getxsession)"
 echo "$TAMPER_SESS" | python3 -c '
 import json,sys
@@ -195,7 +201,7 @@ if j.get("signed_in") is True:
     sys.exit("tampered proof must not report signed_in")
 '
 
-echo "== foreign xsession.json on a datadir with a different xsession.key cannot send =="
+echo "== foreign xsession.json on a datadir with a different xsession.key is not signed in =="
 # Restore a valid alice session, snapshot the json, then sign in as bob
 # (new proof under the same key). Dropping alice's json back is a
 # mockxsignin / file mismatch: proof no longer matches current secret+fields
@@ -219,16 +225,28 @@ B_JSON="$KEY_B/regtest/xsession.json"
 test -f "$A_JSON" && test -f "$B_JSON"
 # Copy Alice's session file onto Bob's datadir (Bob's HMAC key stays).
 cp "$A_JSON" "$B_JSON"
-if "${BKEY_CLI[@]}" getnewaddress >/tmp/xcoin-abuse-foreign-sess.err 2>&1; then
+BOB_RECV="$("${BKEY_CLI[@]}" getnewaddress)"
+[[ "$BOB_RECV" == y* ]]
+if "${BKEY_CLI[@]}" linkxaccount alice >/tmp/xcoin-abuse-foreign-sess.err 2>&1; then
   echo "bob datadir must not accept alice xsession.json (different xsession.key)" >&2
   cat /tmp/xcoin-abuse-foreign-sess.err >&2
   exit 1
 fi
 grep -qiE "sign in with x|session" /tmp/xcoin-abuse-foreign-sess.err
-# mockxsignin on Bob restores a matching session; send/receive works again.
+echo "$("${BKEY_CLI[@]}" getxsession)" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("signed_in") is True:
+    sys.exit("foreign xsession.json must not report signed_in")
+'
+# mockxsignin on Bob restores a matching session.
 "${BKEY_CLI[@]}" mockxsignin bob:verified >/dev/null
-BOB_RECV="$("${BKEY_CLI[@]}" getnewaddress)"
-[[ "$BOB_RECV" == y* ]]
+echo "$("${BKEY_CLI[@]}" getxsession)" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("signed_in") is not True:
+    sys.exit("mockxsignin bob must restore signed_in")
+'
 stop_cli AKEY_CLI
 stop_cli BKEY_CLI
 
