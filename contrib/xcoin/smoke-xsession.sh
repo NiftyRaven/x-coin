@@ -255,6 +255,16 @@ j=json.load(sys.stdin)
 if j.get("signed_in") is not True or j.get("username") != "alice":
     sys.exit("headless restart must keep the alice session")
 '
+# Session file is not the assignment. VerifyDB must not drop the
+# confirmed handle → root (issue ALICE/NOTE uses getmainasset state).
+MAIN="$("${CLI[@]}" getmainasset alice)"
+echo "$MAIN"
+echo "$MAIN" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("assigned") is not True or j.get("asset") != "ALICE":
+    sys.exit("headless restart must keep alice → ALICE (got %r)" % j)
+'
 
 echo "== subs only under this signed-in main asset =="
 if "${CLI[@]}" issue OTHER/NOTE 1 >/tmp/xcoin-xsession-foreignsub.err 2>&1; then

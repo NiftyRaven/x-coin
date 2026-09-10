@@ -56,7 +56,10 @@ actually quits, or RPC `stop` against the GUI), the wallet deletes
 and must Sign in with X again. `xsession.key` stays in the datadir.
 
 **Headless `xcoind` keeps the file.** There is no Qt quit hook. Seed /
-operator “sign in once” still works across daemon restarts.
+operator “sign in once” still works across daemon restarts. The claimed
+identity root (`getmainasset` / `linkxaccount`) is on-chain and must
+still be assigned after that restart; do not re-link unless
+`getmainasset` reports unassigned.
 
 A crash, kill, or power loss **without** a clean GUI quit may leave
 `xsession.json` on disk. The next launch can still be signed in. This

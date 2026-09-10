@@ -85,7 +85,8 @@ src/xcoin-cli getlotteryinfo            # local_eligible must be true (session +
 
 Typed `linkxaccount OtherHandle` is rejected unless that is the signed-in
 username. Headless seed: sign in once on this datadir (GUI), then run
-`xcoind` against the same `~/.xcoin`.
+`xcoind` against the same `~/.xcoin`. The session file and the claimed
+root both survive that daemon restart.
 
 ### Publish the invite list (seed / operator, optional pins)
 

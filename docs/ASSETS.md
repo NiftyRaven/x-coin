@@ -40,7 +40,8 @@ xcoin-cli linkxaccount                # assign the free identity root from the s
 
 `AssignLinkedUserMainAsset(xHandleOrId, dest)` is the C++ hook. The existing
 verified-X link path (`registeractivenode`) calls it; so does
-`linkxaccount`. Idempotent.
+`linkxaccount`. Idempotent. A confirmed assignment survives `xcoind`
+restart (headless seed); the session file alone is not the root claim.
 
 The owner’s X handle for this private chain is **`NFTRVN`**. That handle
 derives the root name `NFTRVN`. Operators confirm the public profile
