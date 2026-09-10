@@ -72,7 +72,7 @@ bool IsOfficialXVerified(bool verified, const std::string& verifiedType);
  * Inject a mock users/me. Allowed only on regtest.
  * `payload` is JSON as above, or "handle" / "handle:userid" /
  * "handle:verified" / "handle:userid:verified" / "handle:unverified".
- * Compact NFTRVN with no flag defaults to verified=true (private test).
+ * Compact NFTRVN with no flag defaults to verified=true (regtest).
  */
 bool ApplyUsersMePayload(const std::string& payload, std::string& err, UniValue* parsedOut = nullptr);
 

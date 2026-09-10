@@ -27,7 +27,7 @@ xcoin-cli linkxaccount                # assign the free identity root from the s
 verified-X link path (`registeractivenode`) calls it; so does
 `linkxaccount`. Idempotent.
 
-The owner’s X handle for this private test is **`NFTRVN`**. That handle
+The owner’s X handle for this private chain is **`NFTRVN`**. That handle
 derives the root name `NFTRVN`. Operators confirm the public profile
 offline (see [LOTTERY.md](LOTTERY.md) and [XSIGNIN.md](XSIGNIN.md)).
 Signing in is what stops impersonation. X Verified (blue check from

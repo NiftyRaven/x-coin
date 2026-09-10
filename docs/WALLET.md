@@ -2,7 +2,7 @@
 
 **Nifty Raven** (@NFTRVN on X)
 
-Private test only.
+Private only.
 
 X Coin kept the imported **12-word BIP39 / BIP44 mnemonic wallet**.
 Sign in with X did **not** replace it.

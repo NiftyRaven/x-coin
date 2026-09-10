@@ -14,7 +14,7 @@ Detail table: [RELEASE-AUDIT.md](RELEASE-AUDIT.md).
 ## What a person does
 
 1. Open the repository (default branch, no branch picker).
-2. Click **Download Windows wallet** or **Download Linux wallet** (GitHub Release v1.0.6).
+2. Click **Download Windows wallet** or **Download Linux wallet** (GitHub Release v1.0.7).
 3. Extract. The labeled start is in that first folder.
 4. Double-click **X Coin Wallet** / **X Coin Wallet.exe**. Practice is the other labeled start and always `-regtest`.
 5. Do **not** use **Code → Download ZIP** and do **not** compile.

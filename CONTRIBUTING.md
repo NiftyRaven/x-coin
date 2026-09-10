@@ -1,7 +1,7 @@
 Contributing to X Coin
 ============================
 
-Private test. Do not publish this repository. Product spec:
+Private. Do not publish this repository. Product spec:
 [whitepaper/XCOIN.md](whitepaper/XCOIN.md), [README.md](README.md).
 Credit **Nifty Raven (@NFTRVN on X)** only.
 

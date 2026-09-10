@@ -1,4 +1,4 @@
-Imported upstream stub. **Not** the current X Coin 1.0.6 notes.
+Imported upstream stub. **Not** the current X Coin 1.0.7 notes.
 
 Current private package: [docs/RELEASE-1.0.md](../docs/RELEASE-1.0.md).
 Do not publish this repository.

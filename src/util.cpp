@@ -1022,14 +1022,8 @@ int GetNumCores()
 
 std::string CopyrightHolders(const std::string &strPrefix)
 {
-    std::string strCopyrightHolders = strPrefix + strprintf(_(COPYRIGHT_HOLDERS), _(COPYRIGHT_HOLDERS_SUBSTITUTION));
-
-    // Check for untranslated substitution to make sure X Coin copyright is not removed by accident
-    if (strprintf(COPYRIGHT_HOLDERS, COPYRIGHT_HOLDERS_SUBSTITUTION).find("Raven Core") == std::string::npos)
-    {
-        strCopyrightHolders += "\n" + strPrefix + "The Raven Core developers";
-    }
-    return strCopyrightHolders;
+    // X Coin only. Do not append imported Raven Core credit lines (splash / About).
+    return strPrefix + strprintf(_(COPYRIGHT_HOLDERS), _(COPYRIGHT_HOLDERS_SUBSTITUTION));
 }
 
 // Obtain the application startup time (used for uptime calculation)

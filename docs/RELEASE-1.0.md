@@ -1,7 +1,7 @@
 # X Coin 1.0 (private)
 
-**Current wallets: 1.0.6.** Lottery pools (`XPL1`, create / join / leave)
-were removed. This page is the 1.0 product snapshot.
+**Current wallets: 1.0.7.** Lottery pools (`XPL1`, create / join / leave)
+were removed. This page is the 1.0 product snapshot. No pool sell.
 
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
@@ -10,10 +10,10 @@ Product version **1.0**. This is a **private** release. Do not make
 the repository public. The **1.0.0** Windows/Linux zips were
 launch-blocking (invisible create/restore choice, empty-wallet fee
 wall on the free root, Sign in with X asked users to paste a Client
-ID). Use **1.0.6** on
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.6)
-(`X-Coin-1.0.6-Windows.zip` and `X-Coin-1.0.6-Linux-x86_64.tar.gz`).
-Do not use **Code → Download ZIP**. Do not use 1.0.2, 1.0.3, 1.0.4, or 1.0.5.
+ID). Use **1.0.7** on
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.7)
+(`X-Coin-1.0.7-Windows.zip` and `X-Coin-1.0.7-Linux-x86_64.tar.gz`).
+Do not use **Code → Download ZIP**. Do not use 1.0.2, 1.0.3, 1.0.4, 1.0.5, or 1.0.6.
 
 ## What shipped
 
@@ -37,12 +37,12 @@ Do not use **Code → Download ZIP**. Do not use 1.0.2, 1.0.3, 1.0.4, or 1.0.5.
 ## Install the GUI
 
 Do not compile. Download from
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.6),
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.7),
 unpack, and double-click the labeled start. Step-by-step:
 [README.md](../README.md).
 
-- Linux: [X-Coin-1.0.6-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.6/X-Coin-1.0.6-Linux-x86_64.tar.gz) → **X Coin Wallet**
-- Windows: [X-Coin-1.0.6-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.6/X-Coin-1.0.6-Windows.zip) → **X Coin Wallet.exe**
+- Linux: [X-Coin-1.0.7-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.7/X-Coin-1.0.7-Linux-x86_64.tar.gz) → **X Coin Wallet**
+- Windows: [X-Coin-1.0.7-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.7/X-Coin-1.0.7-Windows.zip) → **X Coin Wallet.exe**
 - Practice: **X Coin Practice Wallet** / **X Coin Practice Wallet.exe**
 
 Pack from a developer build: `contrib/xcoin/package-linux.sh` and
@@ -93,5 +93,5 @@ contrib/xcoin/smoke-sabotage.sh     # unsigned sendraw / handle steal rejected
 `smoke-benchmark.sh` answers “are txs visible?” and “own ledger + more
 than one node” on a private mesh (no public explorer).
 
-Private-test audit: [AUDIT.md](AUDIT.md). Release-day notes: [SECURITY.md](SECURITY.md).
+Private audit: [AUDIT.md](AUDIT.md). Release-day notes: [SECURITY.md](SECURITY.md).
 DEX listing criteria (do not apply while private): [DEX.md](DEX.md).

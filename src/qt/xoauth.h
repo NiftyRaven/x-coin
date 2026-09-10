@@ -7,6 +7,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QtGlobal>
 
 class QNetworkAccessManager;
 class QNetworkReply;
@@ -29,6 +30,14 @@ public:
     void startLogin();
     /** Regtest only: inject a mock users/me payload. */
     bool mockSignIn(const QString& payload, QString& err);
+
+    /** Local wallet cooldown (~1 hour) after a real Sign in / Re-link attempt. */
+    static qint64 CooldownMs();
+    static qint64 cooldownRemainingMs();
+    /** Last successful OAuth users/me (never invented). Empty / false if none. */
+    static bool cachedLinked();
+    static QString cachedHandle();
+    static bool cachedVerified();
 
 Q_SIGNALS:
     void signedIn(QString username, QString userId);

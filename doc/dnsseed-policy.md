@@ -58,4 +58,4 @@ situations but should be discussed in public in advance.
 
 See also
 ----------
-- This private test does not ship public DNS seeds. Use `addnode` / `seednode`.
+- This private chain does not ship public DNS seeds. Use `addnode` / `seednode`.
