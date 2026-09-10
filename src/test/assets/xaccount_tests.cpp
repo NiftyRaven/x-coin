@@ -2,6 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <assets/assetdb.h>
 #include <assets/assets.h>
 #include <assets/xaccount.h>
 #include <key.h>
@@ -11,6 +12,7 @@
 #include <serialize.h>
 #include <streams.h>
 #include <test/test_raven.h>
+#include <validation.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -181,6 +183,29 @@ BOOST_AUTO_TEST_CASE(identity_claim_full_tx_roundtrip)
     BOOST_CHECK(tx2.vin[0].prevout == tx.vin[0].prevout);
     BOOST_CHECK(IsXAccountIdentityClaim(tx2));
     BOOST_CHECK(tx2.IsNewAsset());
+}
+
+BOOST_AUTO_TEST_CASE(assignment_reloads_from_assets_db)
+{
+    CAssetsDB* prev = passetsdb;
+    passetsdb = new CAssetsDB(1 << 20, true);
+    BOOST_CHECK(AddXAccountAssignment("alice", "ALICE"));
+    std::string name;
+    BOOST_CHECK(CheckIfXAccountAssigned("alice", &name));
+    BOOST_CHECK_EQUAL(name, "ALICE");
+
+    // Drop the in-memory row (and the DB row), then put only the DB row back.
+    // CheckIfXAccountAssigned must reload ALICE without a new session-main map.
+    BOOST_CHECK(RemoveXAccountAssignment("alice"));
+    BOOST_CHECK(!CheckIfXAccountAssigned("alice", &name));
+    BOOST_CHECK(passetsdb->WriteXAccountAssignment("alice", "ALICE"));
+    name.clear();
+    BOOST_CHECK(CheckIfXAccountAssigned("alice", &name));
+    BOOST_CHECK_EQUAL(name, "ALICE");
+
+    BOOST_CHECK(RemoveXAccountAssignment("alice"));
+    delete passetsdb;
+    passetsdb = prev;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

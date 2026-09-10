@@ -60,6 +60,8 @@ bool IsXAccountIdentityClaim(const CTransaction& tx, std::string* handleOut = nu
 /** Reject dummy prevouts that are not a valid identity claim. */
 bool CheckXAccountDummyInputs(const CTransaction& tx, std::string& err);
 
+/** True if this handle already has a protocol main/root. Checks the live map,
+ *  then the assets DB (reload), then the mempool. */
 bool CheckIfXAccountAssigned(const std::string& xId, std::string* assetName = nullptr);
 bool AddXAccountAssignment(const std::string& xId, const std::string& assetName);
 bool RemoveXAccountAssignment(const std::string& xId);

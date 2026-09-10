@@ -102,12 +102,17 @@ bool CAssetsDB::ReadBlockUndoAssetData(const uint256 &blockhash, std::vector<std
 
 bool CAssetsDB::WriteXAccountAssignment(const std::string& xId, const std::string& assetName)
 {
-    return Write(std::make_pair(XACCOUNT_ASSIGN_FLAG, xId), assetName);
+    return Write(std::make_pair(XACCOUNT_ASSIGN_FLAG, xId), assetName, true);
+}
+
+bool CAssetsDB::ReadXAccountAssignment(const std::string& xId, std::string& assetName)
+{
+    return Read(std::make_pair(XACCOUNT_ASSIGN_FLAG, xId), assetName);
 }
 
 bool CAssetsDB::EraseXAccountAssignment(const std::string& xId)
 {
-    return Erase(std::make_pair(XACCOUNT_ASSIGN_FLAG, xId));
+    return Erase(std::make_pair(XACCOUNT_ASSIGN_FLAG, xId), true);
 }
 
 bool CAssetsDB::LoadXAccountAssignments(std::map<std::string, std::string>& out)

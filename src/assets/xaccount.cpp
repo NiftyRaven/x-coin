@@ -334,6 +334,21 @@ bool CheckIfXAccountAssigned(const std::string& xId, std::string* assetName)
             return true;
         }
     }
+    // In-memory miss: reload this handle from the assets DB (same store
+    // LoadXAccountAssignments uses at start). Does not invent a mapping.
+    if (passetsdb) {
+        std::string persisted;
+        if (passetsdb->ReadXAccountAssignment(xId, persisted) && !persisted.empty()) {
+            {
+                LOCK(cs_xaccount);
+                mapXAccountToAsset[xId] = persisted;
+                mapAssetToXAccount[persisted] = xId;
+            }
+            if (assetName)
+                *assetName = persisted;
+            return true;
+        }
+    }
     {
         LOCK(mempool.cs);
         auto it = mempool.mapXAccountToHash.find(xId);

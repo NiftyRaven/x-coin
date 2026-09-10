@@ -72,6 +72,7 @@ public:
     bool WriteBlockUndoAssetData(const uint256& blockhash, const std::vector<std::pair<std::string, CBlockAssetUndo> >& assetUndoData);
     bool WriteReissuedMempoolState();
     bool WriteXAccountAssignment(const std::string& xId, const std::string& assetName);
+    bool ReadXAccountAssignment(const std::string& xId, std::string& assetName);
     bool EraseXAccountAssignment(const std::string& xId);
 
     // Read from database functions

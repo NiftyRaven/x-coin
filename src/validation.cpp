@@ -1839,8 +1839,12 @@ int ApplyTxInUndo(Coin&& undo, CCoinsViewCache& view, const COutPoint& out, CAss
 }
 
 /** Undo the effects of this block (with given index) on the UTXO set represented by coins.
- *  When FAILED is returned, view is left in an indeterminate state. */
-static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* pindex, CCoinsViewCache& view, CAssetsCache* assetsCache = nullptr, bool ignoreAddressIndex = false, bool databaseMessaging = true)
+ *  When FAILED is returned, view is left in an indeterminate state.
+ *  persistXAccountAssignment: real disconnects (DisconnectTip / ReplayBlocks)
+ *  must drop the XID1 handle→root map. VerifyDB level ≥3 is a memory-only
+ *  walk of the tip and must not (it used to erase the live assignment so
+ *  getmainasset / issue died after a clean headless restart). */
+static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* pindex, CCoinsViewCache& view, CAssetsCache* assetsCache = nullptr, bool ignoreAddressIndex = false, bool databaseMessaging = true, bool persistXAccountAssignment = true)
 {
     bool fClean = true;
 
@@ -2001,7 +2005,7 @@ static DisconnectResult DisconnectBlock(const CBlock& block, const CBlockIndex* 
                     }
 
                     std::string xid;
-                    if (ParseXAccountAssignment(tx, xid))
+                    if (persistXAccountAssignment && ParseXAccountAssignment(tx, xid))
                         RemoveXAccountAssignment(xid);
                 } else if (tx.IsReissueAsset()) {
                     CReissueAsset reissue;
@@ -5039,7 +5043,7 @@ bool CVerifyDB::VerifyDB(const CChainParams& chainparams, CCoinsView *coinsview,
         // check level 3: check for inconsistencies during memory-only disconnect of tip blocks
         if (nCheckLevel >= 3 && pindex == pindexState && (coins.DynamicMemoryUsage() + pcoinsTip->DynamicMemoryUsage()) <= nCoinCacheUsage) {
             assert(coins.GetBestBlock() == pindex->GetBlockHash());
-            DisconnectResult res = DisconnectBlock(block, pindex, coins, &assetCache, true, false);
+            DisconnectResult res = DisconnectBlock(block, pindex, coins, &assetCache, true, false, false);
             if (res == DISCONNECT_FAILED) {
                 return error("VerifyDB(): *** irrecoverable inconsistency in block data at %d, hash=%s", pindex->nHeight, pindex->GetBlockHash().ToString());
             }

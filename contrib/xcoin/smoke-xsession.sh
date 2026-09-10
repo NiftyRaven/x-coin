@@ -256,6 +256,22 @@ if j.get("signed_in") is not True or j.get("username") != "alice":
     sys.exit("headless restart must keep the alice session")
 '
 
+echo "== after headless restart, main assignment must still be visible =="
+MAIN="$("${CLI[@]}" getmainasset alice)"
+echo "$MAIN"
+echo "$MAIN" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("assigned") is not True:
+    sys.exit("getmainasset alice must stay assigned after restart")
+if j.get("asset") != "ALICE":
+    sys.exit("getmainasset alice must still be ALICE, got %r" % j.get("asset"))
+'
+MY2="$("${CLI[@]}" listmyassets)"
+echo "$MY2"
+echo "$MY2" | grep -q ALICE
+echo "$MY2" | grep -q 'ALICE!'
+
 echo "== subs only under this signed-in main asset =="
 if "${CLI[@]}" issue OTHER/NOTE 1 >/tmp/xcoin-xsession-foreignsub.err 2>&1; then
   echo "issue OTHER/NOTE must fail (not alice's main)" >&2
@@ -263,6 +279,10 @@ if "${CLI[@]}" issue OTHER/NOTE 1 >/tmp/xcoin-xsession-foreignsub.err 2>&1; then
   exit 1
 fi
 cat /tmp/xcoin-xsession-foreignsub.err
+if grep -qi "claim your main" /tmp/xcoin-xsession-foreignsub.err; then
+  echo "OTHER/NOTE failed because main assignment is missing (not a foreign-root reject)" >&2
+  exit 1
+fi
 "${CLI[@]}" issue ALICE/NOTE 1
 "${CLI[@]}" listmyassets | grep -q ALICE/NOTE
 
