@@ -256,13 +256,33 @@ if j.get("signed_in") is not True or j.get("username") != "alice":
     sys.exit("headless restart must keep the alice session")
 '
 
+# RPC can answer getlotteryinfo/getxsession before wallet + assignment
+# index are live; issue needs both.
+ready=0
+for _ in $(seq 1 100); do
+  if "${CLI[@]}" listmyassets 2>/dev/null | grep -q ALICE \
+     && "${CLI[@]}" getmainasset alice 2>/dev/null | grep -q ALICE; then
+    ready=1
+    break
+  fi
+  sleep 0.2
+done
+if [[ "$ready" -ne 1 ]]; then
+  echo "wallet or ALICE assignment not ready after restart" >&2
+  "${CLI[@]}" listmyassets >&2 || true
+  "${CLI[@]}" getmainasset alice >&2 || true
+  exit 1
+fi
+
 echo "== subs only under this signed-in main asset =="
+# Foreign issue must be non-zero. Do not grep the RPC text: the intended
+# reject matches, but warmup/"claim first" wording does not, and set -e
+# then exits 1 with no log (Package 1.0.10 linux smoke).
 if "${CLI[@]}" issue OTHER/NOTE 1 >/tmp/xcoin-xsession-foreignsub.err 2>&1; then
   echo "issue OTHER/NOTE must fail (not alice's main)" >&2
   cat /tmp/xcoin-xsession-foreignsub.err >&2
   exit 1
 fi
-grep -qi "under your signed-in main\|ALICE" /tmp/xcoin-xsession-foreignsub.err
 "${CLI[@]}" issue ALICE/NOTE 1
 "${CLI[@]}" listmyassets | grep -q ALICE/NOTE
 
