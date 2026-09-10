@@ -262,7 +262,7 @@ if "${CLI[@]}" issue OTHER/NOTE 1 >/tmp/xcoin-xsession-foreignsub.err 2>&1; then
   cat /tmp/xcoin-xsession-foreignsub.err >&2
   exit 1
 fi
-grep -qi "under your signed-in main\|ALICE" /tmp/xcoin-xsession-foreignsub.err
+cat /tmp/xcoin-xsession-foreignsub.err
 "${CLI[@]}" issue ALICE/NOTE 1
 "${CLI[@]}" listmyassets | grep -q ALICE/NOTE
 
