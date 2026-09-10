@@ -226,9 +226,12 @@ echo "== headless xcoind keeps xsession.json across stop =="
 SESS_PATH="$DATADIR/regtest/xsession.json"
 test -f "$SESS_PATH"
 "${CLI[@]}" stop >/dev/null
-for _ in $(seq 1 50); do
+# RPC can go down before xcoind releases the datadir lock.
+for _ in $(seq 1 80); do
   if ! "${CLI[@]}" getlotteryinfo >/dev/null 2>&1; then
-    break
+    if ! pgrep -af 'xcoind' | grep -F -- "$DATADIR" >/dev/null 2>&1; then
+      break
+    fi
   fi
   sleep 0.2
 done
