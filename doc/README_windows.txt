@@ -6,7 +6,7 @@ Anonymous public identity — display name and handle only.
 
 Which file to open
 ------------------
-Unpack xcoin-1.0.5-win-x86_64.zip and double-click:
+Unpack xcoin-1.0.6-win-x86_64.zip and double-click:
 
   X Coin Wallet.exe
       The real wallet. No -regtest. Uses %APPDATA%\XCoin.

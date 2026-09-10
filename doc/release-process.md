@@ -3,7 +3,7 @@ Release Process
 
 Imported upstream checklist. **X Coin private releases do not use a
 public GitHub Release page.** Pack with `contrib/xcoin/package-linux.sh`
-(currently 1.0.5). Operator notes: [docs/RELEASE-1.0.md](../docs/RELEASE-1.0.md).
+(currently 1.0.6). Operator notes: [docs/RELEASE-1.0.md](../docs/RELEASE-1.0.md).
 Do not add public DNS seeds. Credit **Nifty Raven (@NFTRVN on X)** only.
 
 Before every release candidate:

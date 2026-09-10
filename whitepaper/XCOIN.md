@@ -53,7 +53,7 @@ That implies four design choices:
 
 X Coin is not an exchange and not a hosted wallet on X.com. It is its
 own UTXO ledger. As of this writing the chain remains private until
-**12 September 2026**.
+**12 September 2026 around 3:16 AM ET**.
 
 ## 2. Design at a glance
 
@@ -89,7 +89,9 @@ hidden allocation, and not a founder output. **Height 1** is the first
 subsidy: 5000 XFER, produced in the first lottery minute after genesis
 when an X Verified eligible node is running.
 
-The genesis timestamp is the lottery clock. Height `h` maps to minute
+The genesis timestamp is the lottery clock. Main `nTime` is
+**1789197360** — **12 September 2026, 3:16:00 AM America/New_York
+(EDT)** / 07:16:00 UTC (John 3:16). Height `h` maps to minute
 
 ```
 slot = floor(genesisTime / 60) + h

@@ -78,7 +78,7 @@ The node never pretends login succeeded without a real access token
 ## Operator only (developer portal)
 
 Users do **not** open developer.x.com and do **not** paste a Client
-ID. Packaged 1.0.5 `xcoin.conf` already has `xoauthclientid=` set.
+ID. Packaged 1.0.6 `xcoin.conf` already has `xoauthclientid=` set.
 Empty Client ID → Sign in with X says the operator has not baked one;
 it does not fake success. There is no GUI paste box.
 

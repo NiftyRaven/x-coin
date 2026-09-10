@@ -2,7 +2,7 @@
 
 **Nifty Raven** (@NFTRVN on X) — display name and handle only.
 
-Historical 1.0.0 audit (2026-09-08). Current wallets are **1.0.5**.
+Historical 1.0.0 audit (2026-09-08). Current wallets are **1.0.6**.
 Lottery pools recorded in this run were later removed.
 
 Runner: `contrib/xcoin/run-release-audit.sh` (2026-09-08 14:52:23 UTC).
@@ -86,9 +86,9 @@ Totals: **32 passed**, **0 failed**, **0 skipped**.
 | `dist/xcoin-1.0.0-win-x86_64.zip` | **X Coin Wallet.exe** in the first unpacked folder |
 
 Those were the assets at this 1.0.0 run. Current wallets:
-[X-Coin-1.0.5-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.5/X-Coin-1.0.5-Windows.zip)
+[X-Coin-1.0.6-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.6/X-Coin-1.0.6-Windows.zip)
 and
-[X-Coin-1.0.5-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.5/X-Coin-1.0.5-Linux-x86_64.tar.gz).
+[X-Coin-1.0.6-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.6/X-Coin-1.0.6-Linux-x86_64.tar.gz).
 
 ## Could not run
 

@@ -15,7 +15,7 @@ C_DIR="$BASE/c"
 A_CLI=("$XCLI" -regtest -datadir="$A_DIR" -rpcport=28542)
 B_CLI=("$XCLI" -regtest -datadir="$B_DIR" -rpcport=28552)
 C_CLI=("$XCLI" -regtest -datadir="$C_DIR" -rpcport=28562)
-GENESIS_REGTEST="bfce7bfad8116b82f4a0ce4be2fa52e9c9f166248e318ce45728b8fe87451d89"
+GENESIS_REGTEST="1dc800dace1cc1222e03ba3c7852f60d379539074bba923599d0458aeba2b2e4"
 
 if [[ ! -x "$XCOIND" ]]; then
   echo "missing $XCOIND — build first" >&2

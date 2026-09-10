@@ -53,12 +53,12 @@ Collision table: [FORK.md](FORK.md).
 
 All three networks use the same frozen coinbase timestamp string
 (consensus-critical — quoted once in [FORK.md](FORK.md); do not edit it).
-**Main `nTime` stays `1788825600`.** Do not re-run
-`freeze-genesis.sh` at go-live. [GO-LIVE.md](GO-LIVE.md).
+**Main `nTime` is `1789197360`** (2026-09-12 03:16:00 America/New_York,
+John 3:16). [GO-LIVE.md](GO-LIVE.md).
 
 | | Main | Testnet | Regtest |
 | --- | --- | --- | --- |
-| `nTime` | `1788825600` | `1537466400` | `1524179366` |
+| `nTime` | `1789197360` | `1537466400` | `1524179366` |
 | `nNonce` | 1 | 1 | 1 |
 | `nBits` | `0x207fffff` | `0x207fffff` | `0x207fffff` |
 | `nVersion` | 4 | 2 | 4 |
@@ -69,19 +69,20 @@ headers — no leading-zero PoW grind):
 
 | | `hashGenesisBlock` | `hashMerkleRoot` |
 | --- | --- | --- |
-| Main | `db9bcd7597648d68a0f8f1491e0c068faa626090fab516b355cb70e46e5347d0` | `57622a8eb1e132f766eb4e9df94c6acc963860cefe9bea0d25861ef2d1a92a6e` |
-| Testnet | `9a3909c86638c73c5cd3e8921936cbdeb7273524ecb85048caa7c62cfe23429b` | same merkle (same coinbase timestamp string) |
-| Regtest | `bfce7bfad8116b82f4a0ce4be2fa52e9c9f166248e318ce45728b8fe87451d89` | same merkle |
+| Main | `7c790cdb7a233c020cb71346082709a185eb6577643a327349112d425a712beb` | `bacf268e26e66e3c7c3ac634652bc7765c5f6d97c796fe1b288d16b9f0e4b0b5` |
+| Testnet | `f30becee764cae209a8c7f00e0bd2de34b7ef4645d7b776dbd066c8d0600c002` | same merkle (same coinbase timestamp string) |
+| Regtest | `1dc800dace1cc1222e03ba3c7852f60d379539074bba923599d0458aeba2b2e4` | same merkle |
 
 `nMinimumChainWork` and `defaultAssumeValid` are zero. Checkpoints are empty.
 No imported UTXO, assumevalid hash, or checkpoint is inherited.
 
-**Birth of the chain:** keep main genesis `nTime` **1788825600**.
-Start the first X Verified node on launch night. Height 0 is that
-header; height 1 is the first payday. Connecting a peer later does
-not rewrite genesis. MAIN emits at most one block per wall-clock
-minute (wall-minute latch). There is no slot+120 abort and no
-two-hour backfill refuse. Full order: [GO-LIVE.md](GO-LIVE.md).
+**Birth of the chain:** main genesis `nTime` is **1789197360**
+(12 September 2026 around 3:16 AM ET, John 3:16). Start the first
+X Verified node on launch night. Height 0 is that header; height 1
+is the first payday. Connecting a peer later does not rewrite
+genesis. MAIN emits at most one block per wall-clock minute
+(wall-minute latch). There is no slot+120 abort and no two-hour
+backfill refuse. Full order: [GO-LIVE.md](GO-LIVE.md).
 Third-party explorers/wallets: [THIRD-PARTY.md](THIRD-PARTY.md).
 
 **Fair launch:** no IPO, no premine, no founder allocation. Height 0 is not a

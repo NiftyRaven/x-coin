@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Freeze mainnet genesis nTime to now (or NTIME=unix) and patch hashes.
-# Run this at go-live, then start the first eligible node immediately
-# so lottery timestamps are the birth of the chain — not a development midnight.
+# Freeze mainnet genesis nTime to now (or NTIME=unix) and patch hash + merkle.
+# Run this before any mainnet peer so lottery timestamps are the chosen birth
+# clock — not a leftover development midnight.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 CPP="$ROOT/src/chainparams.cpp"
@@ -56,24 +56,30 @@ fi
 HASH="$(printf '%s\n' "$LINE" | python3 -c 'import sys
 p=sys.stdin.read().split()
 print([x.split("=",1)[1] for x in p if x.startswith("hash=")][0])')"
+MERKLE="$(printf '%s\n' "$LINE" | python3 -c 'import sys
+p=sys.stdin.read().split()
+print([x.split("=",1)[1] for x in p if x.startswith("merkle=")][0])')"
 if [[ "$HASH" != 0x* ]]; then
   HASH="0x$HASH"
 fi
+if [[ "$MERKLE" != 0x* ]]; then
+  MERKLE="0x$MERKLE"
+fi
 
-python3 - "$CPP" "$HASH" <<'PY'
+python3 - "$CPP" "$HASH" "$MERKLE" <<'PY'
 import pathlib, re, sys
-path, newhash = pathlib.Path(sys.argv[1]), sys.argv[2]
+path, newhash, newmerkle = pathlib.Path(sys.argv[1]), sys.argv[2], sys.argv[3]
 text = path.read_text()
 text2, n = re.subn(
-    r'(CheckGenesis\("main", genesis, consensus.hashGenesisBlock,\n\s+")0x[0-9a-f]+(")',
-    r'\g<1>' + newhash + r'\2',
+    r'(CheckGenesis\("main", genesis, consensus.hashGenesisBlock,\n\s+")0x[0-9a-f]+(",\n\s+")0x[0-9a-f]+(")',
+    r'\g<1>' + newhash + r'\g<2>' + newmerkle + r'\g<3>',
     text,
     count=1,
 )
 if n != 1:
-    sys.exit('failed to patch main genesis hash')
+    sys.exit('failed to patch main genesis hash and merkle')
 path.write_text(text2)
-print(f'patched main hash={newhash}')
+print(f'patched main hash={newhash} merkle={newmerkle}')
 PY
 
 make -j"$JOBS" -C "$ROOT" src/xcoind >/dev/null
