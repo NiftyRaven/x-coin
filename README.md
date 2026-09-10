@@ -1,12 +1,12 @@
 # X Coin (XFER)
 
-**[Download Windows wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.5/X-Coin-1.0.5-Windows.zip)**  
-**[Download Linux wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.5/X-Coin-1.0.5-Linux-x86_64.tar.gz)**
+**[Download Windows wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.6/X-Coin-1.0.6-Windows.zip)**  
+**[Download Linux wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.6/X-Coin-1.0.6-Linux-x86_64.tar.gz)**
 
 Those two links are the wallets. They live on the
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.5)
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.6)
 page. Do **not** use **Code → Download ZIP** — that is the source tree,
-not a wallet. Do not use 1.0.2, 1.0.3, or 1.0.4.
+not a wallet. Do not use 1.0.2, 1.0.3, 1.0.4, or 1.0.5.
 
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
@@ -20,7 +20,7 @@ on **Linux** and **Windows**.
 
 ### Windows, double-click
 
-1. Download [X-Coin-1.0.5-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.5/X-Coin-1.0.5-Windows.zip).
+1. Download [X-Coin-1.0.6-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.6/X-Coin-1.0.6-Windows.zip).
 2. Right-click → Extract All.
 3. Open the folder that appears. **X Coin Wallet.exe** is in that first folder.
 4. Double-click **X Coin Wallet.exe**. The wallet window opens.
@@ -29,13 +29,13 @@ on **Linux** and **Windows**.
 `xcoin-qt.exe` is the same GUI as **X Coin Wallet.exe**. Use the labeled
 starts so practice cannot mix with the main ledger.
 
-Before **12 September 2026 around 9:00 PM ET**, use **X Coin Practice
+Before **12 September 2026 around 3:16 AM ET**, use **X Coin Practice
 Wallet.exe** only. Do not open the real wallet until launch night.
 
 ### Linux, double-click
 
-1. Download [X-Coin-1.0.5-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.5/X-Coin-1.0.5-Linux-x86_64.tar.gz).
-2. Right-click → Extract, or run `tar -xzf X-Coin-1.0.5-Linux-x86_64.tar.gz`.
+1. Download [X-Coin-1.0.6-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.6/X-Coin-1.0.6-Linux-x86_64.tar.gz).
+2. Right-click → Extract, or run `tar -xzf X-Coin-1.0.6-Linux-x86_64.tar.gz`.
 3. Open the folder that appears. **X Coin Wallet** is in that first folder.
 4. Double-click **X Coin Wallet**. The wallet window opens. You do not
    need a terminal.
@@ -44,7 +44,7 @@ Wallet.exe** only. Do not open the real wallet until launch night.
 If your file manager asks to trust or allow launching, allow it. The
 starts are the wallet, not a setup script.
 
-Before **12 September 2026 around 9:00 PM ET**, use **X Coin Practice
+Before **12 September 2026 around 3:16 AM ET**, use **X Coin Practice
 Wallet** only. Do not open the real wallet until launch night.
 
 Whitepaper: [whitepaper/XCOIN.md](whitepaper/XCOIN.md).
@@ -71,7 +71,7 @@ practice network.
 
 ## Launch night (operator)
 
-Wait until **12 September 2026 around 9:00 PM ET**. Do not open the
+Wait until **12 September 2026 around 3:16 AM ET**. Do not open the
 real wallet before then. Practice is fine until that window. You do
 not compile. You do not use **Code → Download ZIP**.
 

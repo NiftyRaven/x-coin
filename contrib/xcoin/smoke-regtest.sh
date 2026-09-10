@@ -47,7 +47,7 @@ fi
 echo "== genesis / lottery =="
 GENESIS="$("${CLI[@]}" getblockhash 0)"
 echo "genesis $GENESIS"
-[[ "$GENESIS" == "bfce7bfad8116b82f4a0ce4be2fa52e9c9f166248e318ce45728b8fe87451d89" ]]
+[[ "$GENESIS" == "1dc800dace1cc1222e03ba3c7852f60d379539074bba923599d0458aeba2b2e4" ]]
 # Height 0 is not a payday: genesis coinbase is not in the UTXO set.
 GENTX="$("${CLI[@]}" getblock "$GENESIS" true | python3 -c 'import json,sys; print(json.load(sys.stdin)["tx"][0])')"
 GOUT="$("${CLI[@]}" gettxout "$GENTX" 0 || true)"

@@ -73,7 +73,7 @@ def main():
     w2 = select_winners(ids, s, 2)
     assert w1 == w2
     assert len(set(w1)) == 2
-    assert slot_from_height(1, 1788825600) == 1788825600 // 60 + 1
+    assert slot_from_height(1, 1789197360) == 1789197360 // 60 + 1
 
     # Fair-launch subsidy: height 0 unpaid; 5000 XFER >> halvings; 64-shift cap.
     COIN = 10**8

@@ -69,7 +69,10 @@ static CBlock CreateGenesisBlock(const char* pszTimestamp, const CScript& genesi
  */
 static CBlock CreateGenesisBlock(uint32_t nTime, uint32_t nNonce, uint32_t nBits, int32_t nVersion, const CAmount& genesisReward)
 {
-    const char* pszTimestamp = "X Coin / XFER: Ravencoin hard-fork, assets kept, lottery not mining. 2026-09-08";
+    // Coinbase scriptSig must be 2..100 bytes (CheckTransaction bad-cb-length).
+    // Full KJV John 3:16 is 157 chars and will not fit; keep the longest
+    // prefix that still ends with the required citation.
+    const char* pszTimestamp = "For God so loved the world, that he gave his only begotten Son, that whoso John 3:16 (KJV)";
     const CScript genesisOutputScript = CScript() << ParseHex("04678afdb0fe5548271967f1a67130b7105cd6a828e03909a67962e0ea1f61deb649f6bc3f4cef38c4f35504e51ec112de5c384df7ba0b8d578a4c702b6bf11d5f") << OP_CHECKSIG;
     return CreateGenesisBlock(pszTimestamp, genesisOutputScript, nTime, nNonce, nBits, nVersion, genesisReward);
 }
@@ -198,15 +201,16 @@ public:
         nDefaultPort = 38443;
         nPruneAfterHeight = 100000;
 
-        // Main genesis nTime is the public birth clock. Freeze it at go-live with
-        // contrib/xcoin/freeze-genesis.sh so explorers show first-connect time, not
-        // a development midnight. Lottery height maps 1:1 to minutes from this nTime.
-        genesis = CreateGenesisBlock(1788825600, 1, 0x207fffff, 4, 5000 * COIN); // mainnet-genesis
+        // Main genesis nTime is the public birth clock (John 3:16):
+        // 1789197360 = 2026-09-12 03:16:00 America/New_York (EDT).
+        // Freeze with contrib/xcoin/freeze-genesis.sh before any mainnet peer.
+        // Lottery height maps 1:1 to minutes from this nTime.
+        genesis = CreateGenesisBlock(1789197360, 1, 0x207fffff, 4, 5000 * COIN); // mainnet-genesis
 
         consensus.hashGenesisBlock = genesis.GetX16RHash();
         CheckGenesis("main", genesis, consensus.hashGenesisBlock,
-                     "0xdb9bcd7597648d68a0f8f1491e0c068faa626090fab516b355cb70e46e5347d0",
-                     "0x57622a8eb1e132f766eb4e9df94c6acc963860cefe9bea0d25861ef2d1a92a6e");
+                     "0x7c790cdb7a233c020cb71346082709a185eb6577643a327349112d425a712beb",
+                     "0xbacf268e26e66e3c7c3ac634652bc7765c5f6d97c796fe1b288d16b9f0e4b0b5");
 
         vSeeds.clear(); // no DNS seeds
         vFixedSeeds = std::vector<SeedSpec6>(pnSeed6_main, pnSeed6_main + ARRAYLEN(pnSeed6_main));
@@ -421,8 +425,8 @@ public:
         genesis = CreateGenesisBlock(nGenesisTime, 1, 0x207fffff, 2, 5000 * COIN);
         consensus.hashGenesisBlock = genesis.GetX16RHash();
         CheckGenesis("test", genesis, consensus.hashGenesisBlock,
-                     "0x9a3909c86638c73c5cd3e8921936cbdeb7273524ecb85048caa7c62cfe23429b",
-                     "0x57622a8eb1e132f766eb4e9df94c6acc963860cefe9bea0d25861ef2d1a92a6e");
+                     "0xf30becee764cae209a8c7f00e0bd2de34b7ef4645d7b776dbd066c8d0600c002",
+                     "0xbacf268e26e66e3c7c3ac634652bc7765c5f6d97c796fe1b288d16b9f0e4b0b5");
 
         vFixedSeeds.clear();
         vSeeds.clear();
@@ -634,8 +638,8 @@ public:
         genesis = CreateGenesisBlock(1524179366, 1, 0x207fffff, 4, 5000 * COIN);
         consensus.hashGenesisBlock = genesis.GetX16RHash();
         CheckGenesis("regtest", genesis, consensus.hashGenesisBlock,
-                     "0xbfce7bfad8116b82f4a0ce4be2fa52e9c9f166248e318ce45728b8fe87451d89",
-                     "0x57622a8eb1e132f766eb4e9df94c6acc963860cefe9bea0d25861ef2d1a92a6e");
+                     "0x1dc800dace1cc1222e03ba3c7852f60d379539074bba923599d0458aeba2b2e4",
+                     "0xbacf268e26e66e3c7c3ac634652bc7765c5f6d97c796fe1b288d16b9f0e4b0b5");
 
         vFixedSeeds.clear(); //!< Regtest mode doesn't have any fixed seeds.
         vSeeds.clear();      //!< Regtest mode doesn't have any DNS seeds.

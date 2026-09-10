@@ -22,7 +22,7 @@ Lottery pools (`XPL1`, create / join / leave) were removed.
 | Ticker | **XFER** |
 | Subunit | **xferon** — 1 XFER = 100,000,000 xferons |
 | Slot length | 60 seconds (one lottery minute) |
-| Height mapping | height `h` uses slot `floor(genesisTime / 60) + h` |
+| Height mapping | height `h` uses slot `floor(genesisTime / 60) + h`. Main `genesisTime` is **1789197360** (2026-09-12 03:16:00 ET, John 3:16). |
 | Target spacing | 1 block per minute (no hashing) |
 | Subsidy | 5000 XFER at height **1**, halved every `nSubsidyHalvingInterval` blocks (2,100,000 on main/test, 150 on regtest). Height 0 pays **0**. |
 | Spendable lifetime | **20,999,994,999.727 XFER** (integer `>>=` halvings; ~21B minus unpaid genesis and shift dust) |

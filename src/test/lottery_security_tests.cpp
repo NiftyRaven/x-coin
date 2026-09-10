@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(slot_seconds_is_sixty_and_compile_time)
 
 BOOST_AUTO_TEST_CASE(block_time_must_sit_in_height_slot)
 {
-    const int64_t genesis = 1788825600; // frozen main genesis nTime
+    const int64_t genesis = 1789197360; // frozen main genesis nTime
     const int height = 1;
     const int64_t slotStart = lottery::SlotStartTime(height, genesis);
     const int64_t now = slotStart + 5;
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE(block_time_must_sit_in_height_slot)
 
 BOOST_AUTO_TEST_CASE(clock_advance_cannot_mint_many_future_slots)
 {
-    const int64_t genesis = 1788825600;
+    const int64_t genesis = 1789197360;
     const int64_t now = lottery::SlotStartTime(1, genesis) + 10;
     CValidationState state;
     // Height 3 is two slots ahead of height 1 — rejected.
@@ -172,12 +172,12 @@ BOOST_AUTO_TEST_CASE(clock_advance_cannot_mint_many_future_slots)
 BOOST_AUTO_TEST_CASE(regtest_skips_slot_lock)
 {
     CValidationState state;
-    BOOST_CHECK(lottery::CheckBlockTime(99, 1, 1788825600, 10, true, state));
+    BOOST_CHECK(lottery::CheckBlockTime(99, 1, 1789197360, 10, true, state));
 }
 
 BOOST_AUTO_TEST_CASE(historical_slot_is_a_function_of_height_not_peer_data)
 {
-    const int64_t genesis = 1788825600;
+    const int64_t genesis = 1789197360;
     BOOST_CHECK_EQUAL(lottery::SlotFromHeight(1, genesis), lottery::SlotFromTime(genesis) + 1);
     BOOST_CHECK_EQUAL(lottery::SlotStartTime(2, genesis), lottery::SlotStartTime(1, genesis) + lottery::SLOT_SECONDS);
     // Peer messages cannot change SLOT_SECONDS; it is a compile-time constant.

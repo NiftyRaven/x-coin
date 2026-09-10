@@ -7,23 +7,22 @@ window (and until you say go). There is no public GitHub Release and
 no DNS seed until then.
 
 Launch night for the operator is in [README.md](../README.md): wait
-until **12 September 2026 around 9:00 PM ET**, then double-click the
-**real** wallet (not Practice). Do not open the real wallet before
-then. Do not compile that night. Opening that wallet starts the first
-node. It listens on **38443**. That running wallet is the seed.
+until **12 September 2026 around 3:16 AM ET** (John 3:16), then
+double-click the **real** wallet (not Practice). Do not open the real
+wallet before then. Do not compile that night. Opening that wallet
+starts the first node. It listens on **38443**. That running wallet
+is the seed.
 Packaged `xcoin.conf` already has `addnode=172.191.195.221:38443` and
 `seednode=172.191.195.221:38443`. Other wallets do not find you
 through GitHub.
 
 ## Birth of the chain
 
-Genesis `nTime` is **1788825600** and stays that value. Height `h` is
-minute `floor(nTime/60)+h`. Connecting a node does **not** rewrite
-height 0.
-
-Do **not** re-run `contrib/xcoin/freeze-genesis.sh` at go-live. Do
-**not** change main genesis `nTime`. Explorer timestamps will show
-that frozen birth; the MAIN producer does not abort on a late start.
+Genesis `nTime` is **1789197360** — **2026-09-12 03:16:00
+America/New_York (EDT)** = **2026-09-12 07:16:00 UTC** (John 3:16).
+Height `h` is minute `floor(nTime/60)+h`. Connecting a node does
+**not** rewrite height 0. Explorer timestamps will show that birth;
+the MAIN producer does not abort on a late start.
 
 MAIN producer rule: at most **one block per wall-clock minute**
 (wall-minute latch). Catch-up may target an older lottery slot; the
@@ -46,7 +45,7 @@ Operator path (no compile): [README.md](../README.md) launch night.
 Do **not** add public DNS seeds. Do not invent a host or a Client ID.
 The operator Client ID is already baked in package `xcoin.conf`.
 
-The shipped **1.0.5** wallet is what you double-click on launch night.
+The shipped **1.0.6** wallet is what you double-click on launch night.
 
 ## Related
 

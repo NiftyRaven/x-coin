@@ -53,16 +53,22 @@ versions 60 (`R…`) / 111 (`n…`).
 
 **Unit:** ticker **XFER**, subunit **xferon** (1 XFER = 1e8 xferons).
 
-**Genesis:** coinbase timestamp string frozen 2026-09-08 (see [LAUNCH.md](LAUNCH.md)).
-Main header `nTime` is **1788825600** and stays that value. Do not
-re-freeze it at go-live ([GO-LIVE.md](GO-LIVE.md)). The coinbase string is
-consensus-critical and still reads:
+**Genesis:** coinbase timestamp string and main `nTime` frozen before
+any mainnet peer (see [LAUNCH.md](LAUNCH.md), [GO-LIVE.md](GO-LIVE.md)).
+Main header `nTime` is **1789197360** (2026-09-12 03:16:00
+America/New_York, John 3:16). The coinbase string is consensus-critical
+and reads:
 
 ```
-X Coin / XFER: Ravencoin hard-fork, assets kept, lottery not mining. 2026-09-08
+For God so loved the world, that he gave his only begotten Son, that whoso John 3:16 (KJV)
 ```
 
-Do **not** edit that string. Changing it would change the genesis hash.
+That is the longest prefix of the KJV John 3:16 verse that still ends
+with `John 3:16 (KJV)` and fits the consensus coinbase `scriptSig`
+limit of 100 bytes (`bad-cb-length` in `src/consensus/tx_verify.cpp`;
+also documented on `BLOCK_VALID_TRANSACTIONS` in `src/chain.h`). The
+full 157-character verse does not fit. Do **not** edit that string.
+Changing it would change the genesis hash.
 Hashes are X16R of that block (not the imported genesis and not PoW-ground).
 `nMinimumChainWork` and `defaultAssumeValid` are zero; checkpoints and DNS
 seeds are empty — publish a seed with `addnode` / `seednode`. This is **X
