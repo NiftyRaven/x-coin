@@ -2,7 +2,7 @@ RPM Spec File Notes
 -------------------
 
 Imported historical spec for an older Raven-Core build. **Not** the
-current X Coin 1.0.8 pack path. Use `contrib/xcoin/package-linux.sh`.
+current X Coin 1.0.9 pack path. Use `contrib/xcoin/package-linux.sh`.
 There is no raven.org tarball.
 
 The RPM spec file provided here is for Raven-Core 0.12.0 and builds on CentOS

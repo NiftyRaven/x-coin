@@ -609,6 +609,16 @@
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_6">
           <item>
+           <widget class="QLabel" name="assetModelHint">
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+            <property name="text">
+             <string>Sub or unique only. Quantity, units, IPFS/txid, and reissuable work like Ravencoin Create Asset. Unique quantity is fixed at 1. Main/root is Sign-in Claim only — typed MAIN names fail.</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <layout class="QHBoxLayout" name="horizontalLayout_10">
             <item>
              <widget class="QLabel" name="assetTypeLabel">

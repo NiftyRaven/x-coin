@@ -2,7 +2,7 @@
 
 **Nifty Raven** (@NFTRVN on X) — display name and handle only.
 
-Historical 1.0.0 audit (2026-09-08). Current wallets are **1.0.8**.
+Historical 1.0.0 audit (2026-09-08). Current wallets are **1.0.9**.
 Lottery pools recorded in this run were later removed.
 
 Runner: `contrib/xcoin/run-release-audit.sh` (2026-09-08 14:52:23 UTC).

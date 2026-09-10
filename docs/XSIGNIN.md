@@ -80,7 +80,7 @@ The node never pretends login succeeded without a real access token
 ## Operator only (developer portal)
 
 Users do **not** open developer.x.com and do **not** paste a Client
-ID. Packaged 1.0.8 `xcoin.conf` already has `xoauthclientid=` set.
+ID. Packaged 1.0.9 `xcoin.conf` already has `xoauthclientid=` set.
 Empty Client ID → Sign in with X says the operator has not baked one;
 it does not fake success. There is no GUI paste box.
 
@@ -100,8 +100,12 @@ invent a different id on launch night.
    (identity asset, 0 XFER). Unsigned-in wallets cannot claim a root
    and cannot `issue` a main. Subs/uniques are issued under that root.
 5. **Receive** (address + Copy) / **Send** (paste address, amount, Send).
-6. **Activity** (history). Issue sub / unique from Home. Lottery status is on Home.
-7. Home shows **this wallet is yours / linked to @handle**. Transfer assets is a Home button (and the left tab).
+6. **Activity** (history). Lottery status is on Home.
+7. Left-nav **Assets** (or Home **Issue sub** / **Issue unique**) opens
+   the Create Asset form: sub (quantity, units, IPFS, reissuable) or
+   unique (qty 1, same IPFS). Main/root is Claim only — typed MAIN names
+   fail. Transfer assets is a Home button (Advanced).
+8. Home shows **this wallet is yours / linked to @handle**.
    **Provide my node IP** is off by default.
 
 This wallet + this X session = you. Another user cannot send from inside

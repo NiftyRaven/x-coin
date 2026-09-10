@@ -54,6 +54,11 @@ public:
     void clear();
     void selectTypeName(int type, QString name);
 
+public Q_SLOTS:
+    void focusCreateSub(const QString& leaf);
+    void focusCreateUnique(const QString& leaf);
+
+public:
     QStringListModel* stringModel;
     QSortFilterProxyModel* proxy;
     QCompleter* completer;
@@ -85,6 +90,11 @@ private:
     void setUniqueSelected();
     void setQualifierSelected();
     void clearSelected();
+    int comboIndexForType(int assetType) const;
+    void applyCreateType(int assetType);
+    bool rejectMainOrUnsupportedCreate();
+    void preferOwnedParent();
+    void applyLeafName(const QString& leaf);
 
     //CoinControl
     // Update the passed in CCoinControl with state from the GUI

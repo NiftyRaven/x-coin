@@ -1,8 +1,9 @@
-X Coin (XFER)
+X Coin (XFER) 1.0.9
 
 A peer-to-peer coin for users on X. No mining. Every minute a lottery
 among verified active nodes produces the block. Fair launch, no premine.
-One free root identity asset per verified X handle.
+One free root identity asset per verified X handle. Create sub and unique
+on the Assets tab (quantity, units, IPFS). Root is Sign-in Claim only.
 
 Wallet: the core node (`xcoind` / `xcoin-cli`). See README.md.
 Paper: whitepaper/XCOIN.md.

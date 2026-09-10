@@ -1,6 +1,6 @@
 # X Coin 1.0 (private)
 
-**Current wallets: 1.0.8.** Lottery pools (`XPL1`, create / join / leave)
+**Current wallets: 1.0.9.** Lottery pools (`XPL1`, create / join / leave)
 were removed. This page is the 1.0 product snapshot. No pool sell.
 
 **Nifty Raven** (@NFTRVN on X)  
@@ -10,16 +10,18 @@ Product version **1.0**. This is a **private** release. Do not make
 the repository public. The **1.0.0** Windows/Linux zips were
 launch-blocking (invisible create/restore choice, empty-wallet fee
 wall on the free root, Sign in with X asked users to paste a Client
-ID). Use **1.0.8** on
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.8)
-(`X-Coin-1.0.8-Windows.zip` and `X-Coin-1.0.8-Linux-x86_64.tar.gz`).
-Do not use **Code → Download ZIP**. Do not use 1.0.2, 1.0.3, 1.0.4, 1.0.5, 1.0.6, or 1.0.7.
+ID). Use **1.0.9** on
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.9)
+(`X-Coin-1.0.9-Windows.zip` and `X-Coin-1.0.9-Linux-x86_64.tar.gz`)
+after the package workflow is run. Until then the last shipped zips are
+**1.0.8**. Do not use **Code → Download ZIP**. Do not use 1.0.2–1.0.7.
 
 ## What shipped
 
 - **Desktop GUI** `xcoin-qt` — X theme (black / white / sharp X mark).
   Home (this wallet linked to @handle, lottery, claim root,
-  issue sub/unique, Receive / Send / Activity / Transfer assets),
+  Receive / Send / Activity / Transfer assets), left-nav **Assets**
+  (create sub/unique via `createassetdialog`; no MAIN),
   Receive (address + Copy), Send (paste + amount + Send), Activity.
   Same node/wallet as CLI. No CLI required for the happy path.
   **This wallet + this X session = you** — another user cannot send

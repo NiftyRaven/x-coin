@@ -36,6 +36,8 @@ Q_SIGNALS:
     void gotoSend();
     void gotoActivity();
     void gotoAssets();
+    void gotoCreateSub(const QString& leaf);
+    void gotoCreateUnique(const QString& leaf);
 
 public Q_SLOTS:
     void refresh();

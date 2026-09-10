@@ -15,6 +15,21 @@ check. Subs and uniques are created **from that signed-in account’s
 main asset** (`NAME/CHILD`, `NAME#tag`) and require owning `NAME!`.
 Issuing under any other root is rejected.
 
+## GUI (1.0.9)
+
+Left-nav **Assets** opens the existing Ravencoin **Create Asset** form
+(`createassetdialog` / `issue` RPCs). There is no second asset engine.
+
+| Kind | GUI | Quantity | Metadata |
+| --- | --- | --- | --- |
+| Main / root | **Not** on this tab. Sign in, then **Claim my root asset**. | Protocol assigns 1 | — |
+| Sub `NAME/CHILD` | Assets tab → Sub | Quantity + units + reissuable | IPFS or txid hash |
+| Unique `NAME#tag` | Assets tab → Unique | Fixed **1** (units 0, not reissuable) | Same IPFS/txid options |
+
+Typed MAIN/root names fail. Home **Issue sub** / **Issue unique** open
+this tab (same dialog). Transfer assets stays a separate Home / Advanced
+action.
+
 ```
 # GUI: Sign in with X, then Claim my root asset.
 # Allowlist my handle is an optional operator invite list (not X Verified).

@@ -27,6 +27,7 @@
 #include <core_io.h>
 #include <policy/policy.h>
 #include "assets/assettypes.h"
+#include "assets/assets.h"
 #include "assettablemodel.h"
 #include "xsession.h"
 
@@ -52,7 +53,7 @@ CreateAssetDialog::CreateAssetDialog(const PlatformStyle *_platformStyle, QWidge
         platformStyle(_platformStyle)
 {
     ui->setupUi(this);
-    setWindowTitle("Create Assets");
+    setWindowTitle("Assets");
     connect(ui->ipfsBox, SIGNAL(clicked()), this, SLOT(ipfsStateChanged()));
     connect(ui->openIpfsButton, SIGNAL(clicked()), this, SLOT(openIpfsBrowser()));
     connect(ui->availabilityButton, SIGNAL(clicked()), this, SLOT(checkAvailabilityClicked()));
@@ -276,22 +277,20 @@ void CreateAssetDialog::setUpValues()
 
     ui->unitExampleLabel->setStyleSheet("font-weight: bold");
 
-    // Setup the asset types
-    QStringList list;
-    list.append(tr("Main Asset (assigned free on X-link)") + " (0 XFER)");
-    list.append(tr("Sub Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::SUB)) + ")");
-    list.append(tr("Unique Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::UNIQUE)) + ")");
-    list.append(tr("Messaging Channel Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::MSGCHANNEL)) + ")");
-
-    ui->assetType->addItems(list);
+    // Sub + unique only. Main/root is Sign-in Claim — never a create type.
+    ui->assetType->clear();
+    ui->assetType->addItem(tr("Sub Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::SUB)) + ")",
+                           IntFromAssetType(AssetType::SUB));
+    ui->assetType->addItem(tr("Unique Asset") + " (" + RavenUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(), GetBurnAmount(AssetType::UNIQUE)) + ")",
+                           IntFromAssetType(AssetType::UNIQUE));
     type = IntFromAssetType(AssetType::SUB);
-    ui->assetType->setCurrentIndex(IntFromAssetType(AssetType::SUB));
+    ui->assetType->setCurrentIndex(comboIndexForType(type));
     ui->assetTypeLabel->setText(tr("Asset Type") + ":");
 
     // Setup the asset list (default to sub-asset under a main the wallet owns)
     ui->assetList->hide();
     updateAssetList();
-    onAssetTypeActivated(IntFromAssetType(AssetType::SUB));
+    applyCreateType(IntFromAssetType(AssetType::SUB));
 
     ui->assetFullName->setTextFormat(Qt::RichText);
     ui->assetFullName->setStyleSheet("font-weight: bold");
@@ -349,6 +348,11 @@ void CreateAssetDialog::setupAssetDataView(const PlatformStyle *platformStyle)
 
     ui->assetTypeLabel->setStyleSheet(STRING_LABEL_COLOR);
     ui->assetTypeLabel->setFont(GUIUtil::getSubLabelFont());
+    if (ui->assetModelHint) {
+        ui->assetModelHint->setStyleSheet(STRING_LABEL_COLOR);
+        ui->assetModelHint->setFont(GUIUtil::getSubLabelFont());
+        ui->assetModelHint->setWordWrap(true);
+    }
 
     ui->assetNameLabel->setStyleSheet(STRING_LABEL_COLOR);
     ui->assetNameLabel->setFont(GUIUtil::getSubLabelFont());
@@ -538,6 +542,11 @@ void CreateAssetDialog::CheckFormState()
 
     const CTxDestination dest = DecodeDestination(ui->addressText->text().toStdString());
 
+    if (!ui->nameText->text().trimmed().isEmpty() && rejectMainOrUnsupportedCreate()) {
+        ui->availabilityButton->setDisabled(true);
+        return;
+    }
+
     QString name = GetAssetName();
 
     std::string error;
@@ -675,6 +684,11 @@ void CreateAssetDialog::onNameChanged(QString name)
     // Update the displayed name to uppercase if the type only accepts uppercase
     name = type == IntFromAssetType(AssetType::UNIQUE) ? name : name.toUpper();
     UpdateAssetNameToUpper();
+    if (!ui->nameText->text().trimmed().isEmpty() && rejectMainOrUnsupportedCreate()) {
+        ui->availabilityButton->setDisabled(true);
+        disableCreateButton();
+        return;
+    }
 
     QString assetName = name;
 
@@ -781,12 +795,7 @@ void CreateAssetDialog::onCreateAssetClicked()
         showMessage(tr("Sign in with X required to issue assets. Authentication proves ownership."));
         return;
     }
-    if (type == IntFromAssetType(AssetType::ROOT)) {
-        showMessage(tr("Users cannot create main assets. Sign in with X, then claim your root. Subs and uniques are issued under that root."));
-        return;
-    }
-    if (type == IntFromAssetType(AssetType::RESTRICTED) || type == IntFromAssetType(AssetType::QUALIFIER) || type == IntFromAssetType(AssetType::SUB_QUALIFIER)) {
-        showMessage(tr("Restricted assets were removed"));
+    if (rejectMainOrUnsupportedCreate()) {
         return;
     }
 
@@ -802,6 +811,15 @@ void CreateAssetDialog::onCreateAssetClicked()
     int units = ui->unitBox->value();
     bool reissuable = ui->reissuableBox->isChecked();
     bool hasIPFS = ui->ipfsBox->isChecked() && !ui->ipfsText->text().isEmpty();
+
+    if (type == IntFromAssetType(AssetType::UNIQUE)) {
+        quantity = COIN;
+        units = 0;
+        reissuable = false;
+        ui->quantitySpinBox->setValue(1);
+        ui->unitBox->setValue(0);
+        ui->reissuableBox->setChecked(false);
+    }
 
     std::string ipfsDecoded = "";
     if (hasIPFS)
@@ -972,18 +990,21 @@ void CreateAssetDialog::onAssetTypeActivated(int index)
     checkedAvailablity = false;
 
     int nCurrentType = type;
-    // Update the selected type
-    type = index;
-
-    bool fOrginalTypeAsset = type == IntFromAssetType(AssetType::ROOT) || type == IntFromAssetType(AssetType::SUB) || type == IntFromAssetType(AssetType::UNIQUE) || type == IntFromAssetType(AssetType::MSGCHANNEL);
-    bool fRestrictedTypeAsset = type == IntFromAssetType(AssetType::QUALIFIER) || type == IntFromAssetType(AssetType::SUB_QUALIFIER) || type == IntFromAssetType(AssetType::RESTRICTED);
-
-    bool fShowList = type == IntFromAssetType(AssetType::SUB) || type == IntFromAssetType(AssetType::UNIQUE) || type == IntFromAssetType(AssetType::SUB_QUALIFIER) || type == IntFromAssetType(AssetType::RESTRICTED) || type == IntFromAssetType(AssetType::MSGCHANNEL);
-
-    // Make sure the type is only the the supported issue types
-    if(!(fOrginalTypeAsset || fRestrictedTypeAsset)) {
-        type = IntFromAssetType(AssetType::ROOT);
+    // Combo item data holds AssetType. Index is not the enum (MAIN is not listed).
+    int selectedType = ui->assetType->itemData(index).toInt();
+    if (selectedType != IntFromAssetType(AssetType::SUB) && selectedType != IntFromAssetType(AssetType::UNIQUE)) {
+        showMessage(tr("Assets tab creates sub or unique only. Main/root is Sign-in Claim only."));
+        selectedType = IntFromAssetType(AssetType::SUB);
+        const int subIdx = comboIndexForType(selectedType);
+        if (subIdx >= 0 && ui->assetType->currentIndex() != subIdx)
+            ui->assetType->setCurrentIndex(subIdx);
     }
+    type = selectedType;
+
+    bool fOrginalTypeAsset = type == IntFromAssetType(AssetType::SUB) || type == IntFromAssetType(AssetType::UNIQUE);
+    bool fRestrictedTypeAsset = false;
+
+    bool fShowList = type == IntFromAssetType(AssetType::SUB) || type == IntFromAssetType(AssetType::UNIQUE);
 
     // If the type is UNIQUE, set the units and amount to the correct value, and disable them.
     if (type == IntFromAssetType(AssetType::UNIQUE) || type == IntFromAssetType(AssetType::MSGCHANNEL)) {
@@ -1477,7 +1498,9 @@ void CreateAssetDialog::updateAssetListForSubQualifierIssuance()
 
 void CreateAssetDialog::clear()
 {
-    ui->assetType->setCurrentIndex(0);
+    type = IntFromAssetType(AssetType::SUB);
+    const int subIdx = comboIndexForType(type);
+    ui->assetType->setCurrentIndex(subIdx >= 0 ? subIdx : 0);
     ui->nameText->clear();
     ui->addressText->clear();
     ui->quantitySpinBox->setValue(1);
@@ -1486,9 +1509,8 @@ void CreateAssetDialog::clear()
     ui->ipfsBox->setChecked(false);
     ui->ipfsText->hide();
     ui->openIpfsButton->hide();
-    ui->assetList->hide();
+    ui->assetList->show();
     ui->assetList->setCurrentIndex(0);
-    type = 0;
     ui->assetFullName->clear();
     ui->unitBox->setDisabled(false);
     ui->quantitySpinBox->setDisabled(false);
@@ -1498,6 +1520,8 @@ void CreateAssetDialog::clear()
     ui->reissuableBox->setDisabled(false);
     hideMessage();
     disableCreateButton();
+    if (subIdx >= 0)
+        applyCreateType(type);
 }
 
 void CreateAssetDialog::onClearButtonClicked()
@@ -1515,19 +1539,94 @@ void CreateAssetDialog::focusUniqueAsset(const QModelIndex &index)
     selectTypeName(2,index.data(AssetTableModel::AssetNameRole).toString());
 }
 
-void CreateAssetDialog::selectTypeName(int type, QString name)
+void CreateAssetDialog::selectTypeName(int typeIn, QString name)
 {
     clear();
 
     if (IsAssetNameAnOwner(name.toStdString()))
         name = name.left(name.size() - 1);
 
-    ui->assetType->setCurrentIndex(type);
-    onAssetTypeActivated(type);
+    applyCreateType(typeIn);
 
     ui->assetList->setCurrentIndex(ui->assetList->findText(name));
     onAssetListActivated(ui->assetList->currentIndex());
 
+    ui->nameText->setFocus();
+}
+
+int CreateAssetDialog::comboIndexForType(int assetType) const
+{
+    return ui->assetType->findData(assetType);
+}
+
+void CreateAssetDialog::applyCreateType(int assetType)
+{
+    int idx = comboIndexForType(assetType);
+    if (idx < 0)
+        idx = comboIndexForType(IntFromAssetType(AssetType::SUB));
+    if (idx < 0)
+        idx = 0;
+    ui->assetType->setCurrentIndex(idx);
+    onAssetTypeActivated(idx);
+}
+
+bool CreateAssetDialog::rejectMainOrUnsupportedCreate()
+{
+    const QString full = GetAssetName();
+
+    if (type != IntFromAssetType(AssetType::SUB) && type != IntFromAssetType(AssetType::UNIQUE)) {
+        showMessage(tr("Assets tab creates sub or unique only. Main/root is Sign-in Claim only."));
+        disableCreateButton();
+        return true;
+    }
+
+    AssetType parsed = AssetType::INVALID;
+    std::string nameErr;
+    if (!full.isEmpty() && IsAssetNameValid(full.toStdString(), parsed, nameErr) && parsed == AssetType::ROOT) {
+        showMessage(tr("Users cannot create main assets. Sign in with X, then claim your root. Typed MAIN names fail."));
+        disableCreateButton();
+        return true;
+    }
+    if (!full.isEmpty() && IsAssetNameARoot(full.toStdString())) {
+        showMessage(tr("Users cannot create main assets. Sign in with X, then claim your root. Typed MAIN names fail."));
+        disableCreateButton();
+        return true;
+    }
+    return false;
+}
+
+void CreateAssetDialog::preferOwnedParent()
+{
+    if (ui->assetList->count() <= 1)
+        return;
+    if (ui->assetList->currentIndex() <= 0) {
+        ui->assetList->setCurrentIndex(1);
+        onAssetListActivated(1);
+    }
+}
+
+void CreateAssetDialog::applyLeafName(const QString& leaf)
+{
+    if (leaf.isEmpty())
+        return;
+    const QString name = type == IntFromAssetType(AssetType::UNIQUE) ? leaf : leaf.toUpper();
+    ui->nameText->setText(name);
+    onNameChanged(ui->nameText->text());
+}
+
+void CreateAssetDialog::focusCreateSub(const QString& leaf)
+{
+    selectTypeName(IntFromAssetType(AssetType::SUB), QString());
+    preferOwnedParent();
+    applyLeafName(leaf);
+    ui->nameText->setFocus();
+}
+
+void CreateAssetDialog::focusCreateUnique(const QString& leaf)
+{
+    selectTypeName(IntFromAssetType(AssetType::UNIQUE), QString());
+    preferOwnedParent();
+    applyLeafName(leaf);
     ui->nameText->setFocus();
 }
 
