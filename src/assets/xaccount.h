@@ -62,6 +62,7 @@ bool CheckXAccountDummyInputs(const CTransaction& tx, std::string& err);
 
 bool CheckIfXAccountAssigned(const std::string& xId, std::string* assetName = nullptr);
 bool AddXAccountAssignment(const std::string& xId, const std::string& assetName);
+/** Real disconnect / reorg only. VerifyDB dry-run must not call this. */
 bool RemoveXAccountAssignment(const std::string& xId);
 bool LoadXAccountAssignments();
 
