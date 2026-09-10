@@ -442,7 +442,7 @@ void XHome::refresh()
         sessionLabel->setObjectName("xunlinked");
         sessionLabel->setText(
             "Not linked yet. Sign in with X to bind this wallet to your account.\n"
-            "Send and receive need that private session on this computer. A typed handle cannot steal this.\n"
+            "Send and receive work without Sign-in. Sign in to claim the free root. A typed handle cannot steal this.\n"
             "Lottery is X Verified only (blue / business / government check). Unverified has zero chance.");
     }
     applyAuthButtons(signedIn);
