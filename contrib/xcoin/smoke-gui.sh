@@ -133,6 +133,18 @@ if "xsession.json" not in str(j.get("session_file","")):
 
 echo "GUI smoke: ok (xcoin-qt pid $QT_PID)"
 if [[ "${KEEP_GUI:-0}" != "1" ]]; then
+  test -f "$DATADIR/regtest/xsession.json"
   "$CLI" "${CLI_ARGS[@]}" stop >/dev/null 2>&1 || kill "$QT_PID"
+  wait "$QT_PID" 2>/dev/null || true
   QT_PID=""
+  for _ in $(seq 1 40); do
+    if [[ ! -f "$DATADIR/regtest/xsession.json" ]]; then
+      break
+    fi
+    sleep 0.2
+  done
+  if [[ -f "$DATADIR/regtest/xsession.json" ]]; then
+    echo "GUI clean quit must delete xsession.json" >&2
+    exit 1
+  fi
 fi
