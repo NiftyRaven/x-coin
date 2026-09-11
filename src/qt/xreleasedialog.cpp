@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xreleasedialog.h"
+#include "xrelease.h"
 
 #include <QDesktopServices>
 #include <QHBoxLayout>
@@ -18,7 +19,7 @@ XReleaseDialog::XReleaseDialog(QWidget* parent,
                                const QString& url,
                                bool newerAvailable)
     : QDialog(parent)
-    , m_url(url)
+    , m_url(xrelease::IsSafeDownloadUrl(url.toStdString()) ? url : QString())
     , m_dismissed(false)
 {
     setWindowTitle(newerAvailable ? tr("New X Coin release") : tr("What's new"));

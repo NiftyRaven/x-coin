@@ -303,6 +303,19 @@ std::string LastFetchError()
     return g_fetchErr;
 }
 
+bool IsSafeDownloadUrl(const std::string& url)
+{
+    const std::string u = TrimCopy(url);
+    static const char* pfx = "https://github.com/NiftyRaven/x-coin/";
+    if (u.rfind(pfx, 0) != 0)
+        return false;
+    for (unsigned char c : u) {
+        if (c <= 32 || c == '\\' || c == '"' || c == '\'' )
+            return false;
+    }
+    return true;
+}
+
 UniValue ToUniValue(const Release& r)
 {
     UniValue o(UniValue::VOBJ);

@@ -13,13 +13,13 @@ BOOST_AUTO_TEST_CASE(parse_version_tags)
 {
     int v = 0;
     BOOST_CHECK(xrelease::ParseVersion("v1.0.11", v));
-    BOOST_CHECK_EQUAL(v, 100001100);
+    BOOST_CHECK_EQUAL(v, 1001100); // 1000000*1 + 10000*0 + 100*11
     BOOST_CHECK(xrelease::ParseVersion("1.0.10", v));
-    BOOST_CHECK_EQUAL(v, 100001000);
+    BOOST_CHECK_EQUAL(v, 1001000);
     BOOST_CHECK(xrelease::ParseVersion("v1.0.11.0-gabc", v));
-    BOOST_CHECK_EQUAL(v, 100001100);
+    BOOST_CHECK_EQUAL(v, 1001100);
     BOOST_CHECK(xrelease::ParseVersion("2.0.0", v));
-    BOOST_CHECK_EQUAL(v, 200000000);
+    BOOST_CHECK_EQUAL(v, 2000000);
     BOOST_CHECK(!xrelease::ParseVersion("", v));
     BOOST_CHECK(!xrelease::ParseVersion("nope", v));
     BOOST_CHECK(!xrelease::ParseVersion("v", v));
@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE(running_matches_configure)
 {
     BOOST_CHECK_EQUAL(xrelease::RunningVersionString(), "1.0.11");
     BOOST_CHECK_EQUAL(xrelease::RunningTag(), "v1.0.11");
-    BOOST_CHECK_EQUAL(xrelease::RunningVersion(), 100001100);
+    BOOST_CHECK_EQUAL(xrelease::RunningVersion(), 1001100);
     BOOST_CHECK(xrelease::BundledNotes().find("Sign in with X stays signed in") != std::string::npos);
     BOOST_CHECK(xrelease::BundledNotes().find("What's new") != std::string::npos);
 }
@@ -54,12 +54,12 @@ BOOST_AUTO_TEST_CASE(parse_github_array_picks_newer)
     BOOST_CHECK_EQUAL(all.size(), 3);
 
     xrelease::Release newer;
-    BOOST_CHECK(xrelease::LatestNewer(all, newer, 100001100));
+    BOOST_CHECK(xrelease::LatestNewer(all, newer, 1001100));
     BOOST_CHECK_EQUAL(newer.tag, "v1.0.12");
     BOOST_CHECK(newer.body.find("Fixed send") != std::string::npos);
 
     xrelease::Release none;
-    BOOST_CHECK(!xrelease::LatestNewer(all, none, 100001200));
+    BOOST_CHECK(!xrelease::LatestNewer(all, none, 1001200));
 
     xrelease::Release me;
     BOOST_CHECK(xrelease::FindByTag(all, "v1.0.11", me));
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(skips_draft_and_prerelease)
     std::string err;
     BOOST_CHECK(xrelease::ParseReleaseFeed(json, all, err));
     xrelease::Release newer;
-    BOOST_CHECK(xrelease::LatestNewer(all, newer, 100001100));
+    BOOST_CHECK(xrelease::LatestNewer(all, newer, 1001100));
     BOOST_CHECK_EQUAL(newer.tag, "v1.0.12");
 }
 
@@ -98,6 +98,14 @@ BOOST_AUTO_TEST_CASE(single_object_and_wrapped_and_not_found)
     BOOST_CHECK(!xrelease::ParseReleaseFeed("{\"message\":\"Not Found\"}", all, err));
     BOOST_CHECK_EQUAL(err, "Not Found");
     BOOST_CHECK(!xrelease::ParseReleaseFeed("not-json", all, err));
+}
+
+BOOST_AUTO_TEST_CASE(download_url_must_be_this_repo)
+{
+    BOOST_CHECK(xrelease::IsSafeDownloadUrl("https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.12"));
+    BOOST_CHECK(!xrelease::IsSafeDownloadUrl("https://evil.example/payload"));
+    BOOST_CHECK(!xrelease::IsSafeDownloadUrl("http://github.com/NiftyRaven/x-coin/releases"));
+    BOOST_CHECK(!xrelease::IsSafeDownloadUrl("https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.12\nhttps://evil"));
 }
 
 BOOST_AUTO_TEST_SUITE_END()

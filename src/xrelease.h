@@ -65,6 +65,9 @@ std::string LastFetchError();
 
 UniValue ToUniValue(const Release& r);
 
+/** Only https://github.com/NiftyRaven/x-coin/… (download / tag pages). */
+bool IsSafeDownloadUrl(const std::string& url);
+
 } // namespace xrelease
 
 #endif

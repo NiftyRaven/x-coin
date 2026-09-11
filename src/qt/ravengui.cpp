@@ -1807,7 +1807,9 @@ void RavenGUI::getLatestVersion()
     req.setHeader(QNetworkRequest::UserAgentHeader,
                   QString("XCoin-Wallet/%1").arg(QString::fromStdString(xrelease::RunningVersionString())));
     req.setRawHeader("Accept", "application/vnd.github+json");
-#if QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(5, 9, 0)
+    req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+#elif QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
     req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
 #endif
     networkVersionManager->get(req);

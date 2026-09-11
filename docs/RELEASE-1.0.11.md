@@ -31,12 +31,17 @@ installs once 1.0.11 is on Releases.
 - 12-word BIP39 create/restore
 - OAuth cooldown (~1 hour on deliberate Sign-in / Re-link)
 
-## Verify
+## Verify (this tree)
 
-```bash
-src/test/test_raven --log_level=test_suite --run_test=xsession_tests
-src/test/test_raven --log_level=test_suite --run_test=xrelease_tests
-contrib/xcoin/smoke-xsession.sh
-```
+| Test | Result |
+| --- | --- |
+| `xsession_tests` (6, including `wall_clock_exp_does_not_kick_live_session`) | PASS |
+| `xrelease_tests` (6, parse feed / newer / draft skip / safe URL) | PASS |
+| `xaccount_tests` (7) | PASS |
+| `smoke-xsession.sh` (bundled notes, feed parse → v1.0.12, mocktime past `exp` stays signed in, headless keep) | PASS |
+| `smoke-isolation.sh` | PASS |
+| `xcoin-qt` / `xcoind` compile | PASS |
 
-Workflow: `.github/workflows/package-xcoin-1.0.11.yml` (workflow_dispatch).
+Live X OAuth and a physical Windows double-click were not run here.
+
+Workflow: `.github/workflows/package-xcoin-1.0.11.yml` (workflow_dispatch, `ref` = `x-coin` after merge).
