@@ -12,6 +12,8 @@
 #include "optionsmodel.h"
 #include "ravenunits.h"
 #include "xoauth.h"
+#include "xrelease.h"
+#include "xreleasedialog.h"
 #include "xsession.h"
 #include "net.h"
 #include "util.h"
@@ -47,6 +49,7 @@ static const char *kTheme =
     "QLabel#xlotteryno { background: #0a0a0a; border: 1px solid #3f3f46; border-radius: 0px; padding: 16px; color: #a1a1aa; font-size: 13px; }"
     "QLabel#xlinked { background: #0a0a0a; border: 1px solid #ffffff; border-radius: 0px; padding: 16px; color: #ffffff; font-size: 13px; }"
     "QLabel#xunlinked { background: #0a0a0a; border: 1px solid #3f3f46; border-radius: 0px; padding: 16px; color: #a1a1aa; font-size: 13px; }"
+    "QLabel#xrelease { background: #0a0a0a; border: 1px solid #ffffff; border-radius: 0px; padding: 16px; color: #ffffff; font-size: 13px; }"
     "QLabel#xhint { color: #71717a; font-size: 12px; }"
     "QLabel#xstatuserr { color: #fca5a5; font-size: 12px; }"
     "QPushButton#xprimary { background: #ffffff; color: #000000; border: none; border-radius: 0px; padding: 10px 22px; font-weight: 700; font-size: 14px; }"
@@ -75,6 +78,10 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     , nodeSharePanel(0)
     , nodeEndpointLabel(0)
     , nodeStatusLabel(0)
+    , releasePanel(0)
+    , releaseLabel(0)
+    , releaseNotesBtn(0)
+    , releaseLaterBtn(0)
 {
     applyTheme();
 
@@ -104,6 +111,28 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     tag->setAlignment(Qt::AlignHCenter);
     tag->setWordWrap(true);
     root->addWidget(tag);
+
+    releasePanel = new QWidget;
+    QVBoxLayout* relLay = new QVBoxLayout(releasePanel);
+    relLay->setContentsMargins(0, 0, 0, 0);
+    relLay->setSpacing(10);
+    releaseLabel = new QLabel;
+    releaseLabel->setObjectName("xrelease");
+    releaseLabel->setWordWrap(true);
+    relLay->addWidget(releaseLabel);
+    QHBoxLayout* relRow = new QHBoxLayout;
+    releaseNotesBtn = new QPushButton("What's new");
+    releaseNotesBtn->setObjectName("xprimary");
+    releaseNotesBtn->setCursor(Qt::PointingHandCursor);
+    releaseLaterBtn = new QPushButton("Later");
+    releaseLaterBtn->setObjectName("xghost");
+    releaseLaterBtn->setCursor(Qt::PointingHandCursor);
+    relRow->addWidget(releaseNotesBtn);
+    relRow->addWidget(releaseLaterBtn);
+    relRow->addStretch(1);
+    relLay->addLayout(relRow);
+    releasePanel->setVisible(false);
+    root->addWidget(releasePanel);
 
     // Count only. Never list other people's addresses here — every xcoin-qt is already a node.
     // A user's node IP is their choice to provide. Off by default; never show automatically.
@@ -331,6 +360,8 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     connect(oauth, SIGNAL(status(QString)), this, SLOT(onOAuthStatus(QString)));
     connect(shareNodeChk, SIGNAL(toggled(bool)), this, SLOT(onShareNodeToggled(bool)));
     connect(copyNodeBtn, SIGNAL(clicked()), this, SLOT(onCopyNodeAddress()));
+    connect(releaseNotesBtn, SIGNAL(clicked()), this, SLOT(onReleaseNotes()));
+    connect(releaseLaterBtn, SIGNAL(clicked()), this, SLOT(onReleaseLater()));
 
     QTimer* t = new QTimer(this);
     connect(t, SIGNAL(timeout()), this, SLOT(refresh()));
@@ -420,15 +451,16 @@ void XHome::applyAuthButtons(bool signedIn)
 void XHome::refresh()
 {
     // Local session proof only. Do not call GET /2/users/me on Home paint.
-    // Linked / Verified refresh from X only after a successful OAuth or Re-link.
-    UniValue s;
-    s.read(rpc("getxsession").toStdString());
-    const bool signedIn = s.isObject() && (s["signed_in"].isTrue() || s["linked"].isTrue());
+    // Do not fail-closed through getxsession RPC — warmup / parse miss
+    // would look like a sign-out while the process is still up.
+    xsession::Session sess;
+    std::string serr;
+    const bool signedIn = xsession::LoadSession(sess, serr);
     if (signedIn) {
-        const QString handle = QString::fromStdString(s["username"].getValStr());
+        const QString handle = QString::fromStdString(sess.username);
         // Local xsession.json from the last successful users/me / Re-link. Never invent true.
-        const bool xVerified = s["x_verified"].isTrue() || s["verified"].isTrue();
-        const QString vtype = QString::fromStdString(s["verified_type"].getValStr());
+        const bool xVerified = sess.IsXVerified();
+        const QString vtype = QString::fromStdString(sess.verifiedType);
         QString verifiedLine;
         if (xVerified) {
             verifiedLine = QString("X Verified: yes (%1). This running wallet cannot be excluded from the lottery.")
@@ -559,7 +591,7 @@ void XHome::refresh()
     QString rootName;
     if (signedIn) {
         std::string expect, err;
-        if (MapXHandleToRootName(s["username"].getValStr(), expect, err)) {
+        if (MapXHandleToRootName(sess.username, expect, err)) {
             UniValue a;
             if (a.read(rpc("listmyassets").toStdString()) && a.isObject()) {
                 if (a.exists(expect) || a.exists(expect + "!"))
@@ -575,6 +607,39 @@ void XHome::refresh()
 
     claimBtn->setEnabled(signedIn && rootName.isEmpty());
     allowlistBtn->setEnabled(signedIn);
+
+    if (releasePanel && releaseLabel) {
+        xrelease::Release newer;
+        QSettings rel;
+        const QString dismissed = rel.value("xrelease/dismissedTag").toString();
+        const QString seen = rel.value("xrelease/seenCurrent").toString();
+        const QString cur = QString::fromStdString(xrelease::RunningTag());
+        const bool showNewer = xrelease::GetCachedNewer(newer)
+            && QString::fromStdString(newer.tag) != dismissed;
+        const bool showThis = !showNewer && seen != cur;
+        releasePanel->setVisible(showNewer || showThis);
+        if (showNewer) {
+            const QString ver = QString::fromStdString(newer.tag);
+            const QString title = QString::fromStdString(newer.name.empty() ? newer.tag : newer.name);
+            releaseLabel->setText(QString(
+                "New wallet %1 is on GitHub Releases.\n%2\n"
+                "Read the notes here — you do not have to leave this wallet.")
+                .arg(ver)
+                .arg(title));
+            if (releaseNotesBtn)
+                releaseNotesBtn->setText("What's new");
+            if (releaseLaterBtn)
+                releaseLaterBtn->setText("Later");
+        } else if (showThis) {
+            releaseLabel->setText(QString(
+                "This wallet is %1.\nWhat's new is in this window — session lasts until you close the wallet.")
+                .arg(cur));
+            if (releaseNotesBtn)
+                releaseNotesBtn->setText("What's new");
+            if (releaseLaterBtn)
+                releaseLaterBtn->setText("OK");
+        }
+    }
 }
 
 QString XHome::localListenEndpoint() const
@@ -684,7 +749,7 @@ void XHome::onSignIn()
 {
     if (XOAuth::cooldownRemainingMs() > 0) {
         statusLabel->setText("Sign in with X is cooling down (~1 hour). This wallet does not keep calling X.");
-        applyAuthButtons(false);
+        applyAuthButtons(xsession::HasValidSession());
         return;
     }
     statusLabel->setText("Opening X in your browser…");
@@ -728,13 +793,13 @@ void XHome::onMockSignIn()
 
 void XHome::onAllowlistMe()
 {
-    UniValue s;
-    s.read(rpc("getxsession").toStdString());
-    if (!s.isObject() || !s["signed_in"].isTrue()) {
+    xsession::Session sess;
+    std::string serr;
+    if (!xsession::LoadSession(sess, serr)) {
         QMessageBox::warning(this, "X-Coin", "Sign in with X first. The invite list uses the session username, not a typed field. Allowlisting is not X Verified.");
         return;
     }
-    showRpcOutcome(rpc("addxverified", QStringList() << QString::fromStdString(s["username"].getValStr())),
+    showRpcOutcome(rpc("addxverified", QStringList() << QString::fromStdString(sess.username)),
                    "Invite list updated");
     refresh();
 }
@@ -776,4 +841,43 @@ void XHome::onOAuthFailed(const QString& error)
 void XHome::onOAuthStatus(const QString& message)
 {
     statusLabel->setText(message);
+}
+
+void XHome::onReleaseNotes()
+{
+    xrelease::Release newer;
+    QSettings rel;
+    if (!xrelease::GetCachedNewer(newer)) {
+        const xrelease::Release bundled = xrelease::BundledRelease();
+        XReleaseDialog dlg(this,
+                           QString::fromStdString(bundled.name),
+                           QString::fromStdString(bundled.body),
+                           QString::fromStdString(bundled.htmlUrl),
+                           false);
+        dlg.exec();
+        rel.setValue("xrelease/seenCurrent", QString::fromStdString(xrelease::RunningTag()));
+        if (releasePanel)
+            releasePanel->setVisible(false);
+        return;
+    }
+    XReleaseDialog dlg(this,
+                       QString::fromStdString(newer.name.empty() ? newer.tag : newer.name),
+                       QString::fromStdString(newer.body.empty() ? xrelease::BundledNotes() : newer.body),
+                       QString::fromStdString(newer.htmlUrl),
+                       true);
+    dlg.exec();
+    rel.setValue("xrelease/seenCurrent", QString::fromStdString(xrelease::RunningTag()));
+    if (dlg.dismissed())
+        onReleaseLater();
+}
+
+void XHome::onReleaseLater()
+{
+    QSettings rel;
+    rel.setValue("xrelease/seenCurrent", QString::fromStdString(xrelease::RunningTag()));
+    xrelease::Release newer;
+    if (xrelease::GetCachedNewer(newer))
+        rel.setValue("xrelease/dismissedTag", QString::fromStdString(newer.tag));
+    if (releasePanel)
+        releasePanel->setVisible(false);
 }

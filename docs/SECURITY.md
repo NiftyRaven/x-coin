@@ -38,6 +38,9 @@ Attacker goals we actually designed against:
   script is rejected.
 - **Network isolation from Ravencoin:** magic, genesis, ports, versions.
 - **RPC:** cookie or password. `sendrawtransaction` is a normal wallet send (no session).
+- **What's new feed:** the GUI may GET GitHub Releases (or `-xreleaseurl=`).
+  No wallet, session, or token is sent. 404 while the repo is private is
+  expected. `-nocheckupdates` turns the GET off. [UPDATES.md](UPDATES.md).
 
 ## What an attacker can still do on a small private mesh
 

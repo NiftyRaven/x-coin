@@ -48,3 +48,7 @@ Every signed-in user can send and receive.
 
 See [XSIGNIN.md](XSIGNIN.md) for the OAuth loopback. Home / Receive /
 Send show the linked `@handle` when the proof is present. The GUI does not show X user ids or session file paths.
+
+The session lasts until a **clean GUI quit**. Wall-clock `exp` is not a
+kick. **Help → What's new** and the Home card show release notes in
+this wallet ([UPDATES.md](UPDATES.md)).

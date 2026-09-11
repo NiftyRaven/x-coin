@@ -55,6 +55,8 @@ private Q_SLOTS:
     void onOAuthStatus(const QString& message);
     void onShareNodeToggled(bool on);
     void onCopyNodeAddress();
+    void onReleaseNotes();
+    void onReleaseLater();
 
 private:
     void applyTheme();
@@ -91,6 +93,10 @@ private:
     QWidget* nodeSharePanel;
     QLabel* nodeEndpointLabel;
     QLabel* nodeStatusLabel;
+    QWidget* releasePanel;
+    QLabel* releaseLabel;
+    QPushButton* releaseNotesBtn;
+    QPushButton* releaseLaterBtn;
 };
 
 #endif // RAVEN_QT_XHOME_H

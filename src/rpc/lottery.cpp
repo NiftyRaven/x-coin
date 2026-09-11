@@ -13,6 +13,7 @@
 #include "util.h"
 #include "utilstrencodings.h"
 #include "validation.h"
+#include "xrelease.h"
 #include "xsession.h"
 
 #ifdef ENABLE_WALLET
@@ -285,6 +286,48 @@ UniValue getxsession(const JSONRPCRequest& request)
     return ret;
 }
 
+UniValue getreleasenotes(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 1)
+        throw std::runtime_error(
+            "getreleasenotes ( json )\n"
+            "\nReturn What's new for this wallet, and optionally parse a\n"
+            "GitHub Releases JSON feed (no network). The GUI fetches the feed\n"
+            "and shows notes in Help → What's new / the Home banner.\n"
+            "\nArguments:\n"
+            "1. json    (string, optional) GitHub releases array or {releases:[...]}\n"
+        );
+    UniValue ret(UniValue::VOBJ);
+    const xrelease::Release bundled = xrelease::BundledRelease();
+    ret.push_back(Pair("version", xrelease::RunningVersionString()));
+    ret.push_back(Pair("tag", bundled.tag));
+    ret.push_back(Pair("client_version", bundled.version));
+    ret.push_back(Pair("name", bundled.name));
+    ret.push_back(Pair("notes", bundled.body));
+    ret.push_back(Pair("url", bundled.htmlUrl));
+    ret.push_back(Pair("feed_url", xrelease::FeedUrl()));
+    ret.push_back(Pair("check_enabled", xrelease::CheckEnabled()));
+    if (request.params.size() == 1) {
+        std::vector<xrelease::Release> all;
+        std::string err;
+        const std::string json = request.params[0].isStr()
+            ? request.params[0].get_str()
+            : request.params[0].write();
+        if (!xrelease::ParseReleaseFeed(json, all, err))
+            throw JSONRPCError(RPC_DESERIALIZATION_ERROR, err);
+        UniValue arr(UniValue::VARR);
+        for (const xrelease::Release& r : all)
+            arr.push_back(xrelease::ToUniValue(r));
+        ret.push_back(Pair("releases", arr));
+        xrelease::Release newer;
+        if (xrelease::LatestNewer(all, newer))
+            ret.push_back(Pair("newer", xrelease::ToUniValue(newer)));
+        else
+            ret.push_back(Pair("newer", NullUniValue));
+    }
+    return ret;
+}
+
 UniValue mockxsignin(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 1)
@@ -442,6 +485,7 @@ static const CRPCCommand commands[] =
     { "lottery",            "getlotteryinfo",         &getlotteryinfo,         {} },
     { "lottery",            "getactivenodes",         &getactivenodes,         {} },
     { "lottery",            "getxsession",            &getxsession,            {} },
+    { "lottery",            "getreleasenotes",        &getreleasenotes,        {"json"} },
     { "lottery",            "mockxsignin",            &mockxsignin,            {"payload"} },
     { "lottery",            "registeractivenode",     &registeractivenode,     {"payout", "xaccount", "xuserid"} },
     { "lottery",            "addxverified",           &addxverified,           {"handle", "userid"} },

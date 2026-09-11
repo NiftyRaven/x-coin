@@ -1,14 +1,14 @@
 # X Coin (XFER)
 
-**[Download Windows wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.8/X-Coin-1.0.8-Windows.zip)**  
-**[Download Linux wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.8/X-Coin-1.0.8-Linux-x86_64.tar.gz)**
+**[Download Windows wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.10/X-Coin-1.0.10-Windows.zip)**  
+**[Download Linux wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.10/X-Coin-1.0.10-Linux-x86_64.tar.gz)**
 
 Those two links are the wallets. They live on the
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.8)
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.10)
 page. Do **not** use **Code → Download ZIP** — that is the source tree,
 not a wallet. Do not use 1.0.2, 1.0.3, 1.0.4, 1.0.5, 1.0.6, or 1.0.7.
-In-tree is **1.0.10** (session lasts while the wallet is open; GUI quit
-clears it). Last shipped zip is **1.0.8** until the 1.0.10 package
+In-tree is **1.0.11** (session until a clean GUI quit; What's new in
+the wallet). Last shipped zip is **1.0.10** until the 1.0.11 package
 workflow is run.
 
 **Nifty Raven** (@NFTRVN on X)  
@@ -23,7 +23,7 @@ on **Linux** and **Windows**.
 
 ### Windows, double-click
 
-1. Download [X-Coin-1.0.8-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.8/X-Coin-1.0.8-Windows.zip).
+1. Download [X-Coin-1.0.10-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.10/X-Coin-1.0.10-Windows.zip).
 2. Right-click → Extract All.
 3. Open the folder that appears. **X Coin Wallet.exe** is in that first folder.
 4. Double-click **X Coin Wallet.exe**. The wallet window opens.
@@ -37,7 +37,7 @@ Wallet.exe** only. Do not open the real wallet until launch night.
 
 ### Linux, double-click
 
-1. Download [X-Coin-1.0.8-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.8/X-Coin-1.0.8-Linux-x86_64.tar.gz).
+1. Download [X-Coin-1.0.10-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.10/X-Coin-1.0.10-Linux-x86_64.tar.gz).
 2. Right-click → Extract, or run `tar -xzf X-Coin-1.0.8-Linux-x86_64.tar.gz`.
 3. Open the folder that appears. **X Coin Wallet** is in that first folder.
 4. Double-click **X Coin Wallet**. The wallet window opens. You do not

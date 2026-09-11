@@ -1,6 +1,6 @@
 # X Coin 1.0 (private)
 
-**Current wallets: 1.0.10.** Lottery pools (`XPL1`, create / join / leave)
+**Current wallets: 1.0.11.** Lottery pools (`XPL1`, create / join / leave)
 were removed. This page is the 1.0 product snapshot. No pool sell.
 
 **Nifty Raven** (@NFTRVN on X)  
@@ -10,11 +10,13 @@ Product version **1.0**. This is a **private** release. Do not make
 the repository public. The **1.0.0** Windows/Linux zips were
 launch-blocking (invisible create/restore choice, empty-wallet fee
 wall on the free root, Sign in with X asked users to paste a Client
-ID). Use **1.0.10** on
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.10)
-(`X-Coin-1.0.10-Windows.zip` and `X-Coin-1.0.10-Linux-x86_64.tar.gz`)
+ID). Use **1.0.11** on
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.11)
+(`X-Coin-1.0.11-Windows.zip` and `X-Coin-1.0.11-Linux-x86_64.tar.gz`)
 after the package workflow is run. Until then the last shipped zips are
-**1.0.8**. Do not use **Code → Download ZIP**. Do not use 1.0.2–1.0.9.
+**1.0.10**. Do not use **Code → Download ZIP**. Do not use 1.0.2–1.0.10.
+1.0.11 notes: [RELEASE-1.0.11.md](RELEASE-1.0.11.md). In-wallet What's
+new: [UPDATES.md](UPDATES.md).
 
 ## What shipped
 
@@ -39,12 +41,12 @@ after the package workflow is run. Until then the last shipped zips are
 ## Install the GUI
 
 Do not compile. Download from
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.8),
-unpack, and double-click the labeled start. Step-by-step:
-[README.md](../README.md).
+[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.10)
+until 1.0.11 is packaged, unpack, and double-click the labeled start.
+Step-by-step: [README.md](../README.md).
 
-- Linux: [X-Coin-1.0.8-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.8/X-Coin-1.0.8-Linux-x86_64.tar.gz) → **X Coin Wallet**
-- Windows: [X-Coin-1.0.8-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.8/X-Coin-1.0.8-Windows.zip) → **X Coin Wallet.exe**
+- Linux: [X-Coin-1.0.10-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.10/X-Coin-1.0.10-Linux-x86_64.tar.gz) → **X Coin Wallet**
+- Windows: [X-Coin-1.0.10-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.10/X-Coin-1.0.10-Windows.zip) → **X Coin Wallet.exe**
 - Practice: **X Coin Practice Wallet** / **X Coin Practice Wallet.exe**
 
 Pack from a developer build: `contrib/xcoin/package-linux.sh` and

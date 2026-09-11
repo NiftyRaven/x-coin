@@ -45,8 +45,10 @@ Operator path (no compile): [README.md](../README.md) launch night.
 Do **not** add public DNS seeds. Do not invent a host or a Client ID.
 The operator Client ID is already baked in package `xcoin.conf`.
 
-The in-tree wallet is **1.0.10**. Last shipped zip is **1.0.8** until
-the 1.0.10 package workflow is run.
+The in-tree wallet is **1.0.11**. Last shipped zip is **1.0.10** until
+the 1.0.11 package workflow is run. After the repo is public, running
+wallets can show later GitHub release notes in-wallet
+([UPDATES.md](UPDATES.md)).
 
 ## Related
 
