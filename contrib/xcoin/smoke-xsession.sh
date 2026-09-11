@@ -199,6 +199,34 @@ if j.get("local_eligible") is not True:
     sys.exit("signed-in X Verified alice must be eligible; invite list is not a gate")
 '
 
+echo "== wall-clock exp must not sign out a live process =="
+# mockxsignin writes exp=GetTime()+365d. Jump mocktime past that.
+# 1.0.10 LoadSession still did GetTime()>exp and signed the user out.
+"${CLI[@]}" setmocktime 1000000 >/dev/null
+"${CLI[@]}" mockxsignin '{"data":{"id":"99","username":"alice","verified":true,"verified_type":"blue"}}' >/dev/null
+"${CLI[@]}" setmocktime $((1000000 + 86400 * 365 + 60)) >/dev/null
+SESS_LIVE="$("${CLI[@]}" getxsession)"
+echo "$SESS_LIVE"
+echo "$SESS_LIVE" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("signed_in") is not True or j.get("username") != "alice":
+    sys.exit("live process must stay signed in after exp elapses (got %r)" % j)
+if "expired" in str(j.get("error", "")).lower():
+    sys.exit("getxsession must not report expired while the process is up")
+'
+INFO_LIVE="$("${CLI[@]}" getlotteryinfo)"
+echo "$INFO_LIVE"
+echo "$INFO_LIVE" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("local_xaccount") != "alice":
+    sys.exit("lottery identity must survive mocktime past exp")
+if j.get("local_x_verified") is not True:
+    sys.exit("X Verified must survive mocktime past exp")
+'
+"${CLI[@]}" setmocktime 0 >/dev/null
+
 echo "== session handle alice can provision the root =="
 ADDR="$("${CLI[@]}" getnewaddress)"
 # Identity root burn is 0 but the assignment tx still pays a relay fee.

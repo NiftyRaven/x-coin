@@ -420,15 +420,16 @@ void XHome::applyAuthButtons(bool signedIn)
 void XHome::refresh()
 {
     // Local session proof only. Do not call GET /2/users/me on Home paint.
-    // Linked / Verified refresh from X only after a successful OAuth or Re-link.
-    UniValue s;
-    s.read(rpc("getxsession").toStdString());
-    const bool signedIn = s.isObject() && (s["signed_in"].isTrue() || s["linked"].isTrue());
+    // Do not fail-closed through getxsession RPC — warmup / parse miss
+    // would look like a sign-out while the process is still up.
+    xsession::Session sess;
+    std::string serr;
+    const bool signedIn = xsession::LoadSession(sess, serr);
     if (signedIn) {
-        const QString handle = QString::fromStdString(s["username"].getValStr());
+        const QString handle = QString::fromStdString(sess.username);
         // Local xsession.json from the last successful users/me / Re-link. Never invent true.
-        const bool xVerified = s["x_verified"].isTrue() || s["verified"].isTrue();
-        const QString vtype = QString::fromStdString(s["verified_type"].getValStr());
+        const bool xVerified = sess.IsXVerified();
+        const QString vtype = QString::fromStdString(sess.verifiedType);
         QString verifiedLine;
         if (xVerified) {
             verifiedLine = QString("X Verified: yes (%1). This running wallet cannot be excluded from the lottery.")
@@ -559,7 +560,7 @@ void XHome::refresh()
     QString rootName;
     if (signedIn) {
         std::string expect, err;
-        if (MapXHandleToRootName(s["username"].getValStr(), expect, err)) {
+        if (MapXHandleToRootName(sess.username, expect, err)) {
             UniValue a;
             if (a.read(rpc("listmyassets").toStdString()) && a.isObject()) {
                 if (a.exists(expect) || a.exists(expect + "!"))
@@ -684,7 +685,7 @@ void XHome::onSignIn()
 {
     if (XOAuth::cooldownRemainingMs() > 0) {
         statusLabel->setText("Sign in with X is cooling down (~1 hour). This wallet does not keep calling X.");
-        applyAuthButtons(false);
+        applyAuthButtons(xsession::HasValidSession());
         return;
     }
     statusLabel->setText("Opening X in your browser…");
@@ -728,13 +729,13 @@ void XHome::onMockSignIn()
 
 void XHome::onAllowlistMe()
 {
-    UniValue s;
-    s.read(rpc("getxsession").toStdString());
-    if (!s.isObject() || !s["signed_in"].isTrue()) {
+    xsession::Session sess;
+    std::string serr;
+    if (!xsession::LoadSession(sess, serr)) {
         QMessageBox::warning(this, "X-Coin", "Sign in with X first. The invite list uses the session username, not a typed field. Allowlisting is not X Verified.");
         return;
     }
-    showRpcOutcome(rpc("addxverified", QStringList() << QString::fromStdString(s["username"].getValStr())),
+    showRpcOutcome(rpc("addxverified", QStringList() << QString::fromStdString(sess.username)),
                    "Invite list updated");
     refresh();
 }

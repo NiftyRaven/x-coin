@@ -46,9 +46,16 @@ is X Verified.
 
 ## Session lifetime
 
-Live GUI Sign-in writes a long-lived disk proof. There is **no 2-hour
-wall-clock kick** while the wallet process is up. Lottery does not drop
-mid-run because `exp` elapsed.
+A valid `xsession.json` HMAC proof is signed-in until the file is
+deleted. `exp` is HMAC input only — `LoadSession` does **not** reject
+on wall-clock. Home reads the local proof directly (not `getxsession`
+RPC), so a warmup or RPC miss cannot look like a sign-out. Lottery
+does not drop mid-run because `exp` elapsed.
+
+Live GUI Sign-in writes `exp=0` (no wall-clock kick). 1.0.10 wrote a
+far-future `exp` but left the `GetTime() > exp` check in place; a
+leftover 2-hour file or a clock/`-mocktime` jump still signed the
+user out while the process was up.
 
 On a **clean GUI quit** (`xcoin-qt` File → Exit, a window close that
 actually quits, or RPC `stop` against the GUI), the wallet deletes
@@ -69,8 +76,8 @@ second session framework.
 OAuth still has a local ~1 hour cooldown on deliberate Sign-in /
 Re-link clicks (success, cancel, or fail). That is not a session TTL.
 
-Regtest mock (`-xoauthmock` / `mockxsignin`) still uses a 365-day
-expiry. That path is unchanged.
+Regtest mock (`-xoauthmock` / `mockxsignin`) still writes a 365-day
+`exp`. That value is not a kick.
 
 ## Privacy (login is not public)
 
@@ -108,7 +115,7 @@ The node never pretends login succeeded without a real access token
 ## Operator only (developer portal)
 
 Users do **not** open developer.x.com and do **not** paste a Client
-ID. Packaged 1.0.10 `xcoin.conf` already has `xoauthclientid=` set.
+ID. Packaged 1.0.11 `xcoin.conf` already has `xoauthclientid=` set.
 Empty Client ID → Sign in with X says the operator has not baked one;
 it does not fake success. There is no GUI paste box.
 
@@ -121,7 +128,7 @@ invent a different id on launch night.
 ## Happy path (GUI, no terminal)
 
 1. Create / open wallet (first-run **12 secret words** — still required).
-2. **Sign in with X** (browser redirect; binds this node to your X account; does not replace the seed). The session lasts while the wallet is open; a clean GUI quit deletes `xsession.json`. Home does **not** call `users/me` again while Linked. **Re-link** asks first and shares a local ~1 hour cooldown with failed or cancelled attempts.
+2. **Sign in with X** (browser redirect; binds this node to your X account; does not replace the seed). The session lasts until a clean GUI quit deletes `xsession.json` (`exp` is not a kick). Home does **not** call `users/me` again while Linked. **Re-link** asks first and shares a local ~1 hour cooldown with failed or cancelled attempts.
 3. Home shows **this wallet linked to @handle**. There is no Client ID paste field.
 4. **Allowlist my handle** (optional operator invite list — not a blue check)
    then **Claim my root asset**. An empty wallet can claim that one free root

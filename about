@@ -1,10 +1,10 @@
-X Coin (XFER) 1.0.10
+X Coin (XFER) 1.0.11
 
 A peer-to-peer coin for users on X. No mining. Every minute a lottery
 among verified active nodes produces the block. Fair launch, no premine.
 One free root identity asset per verified X handle. Create sub and unique
 on the Assets tab (quantity, units, IPFS). Root is Sign-in Claim only.
-Sign-in lasts while the wallet is open; a clean GUI quit signs out.
+Sign-in lasts until a clean GUI quit; wall-clock exp is not a kick.
 
 Wallet: the core node (`xcoind` / `xcoin-cli`). See README.md.
 Paper: whitepaper/XCOIN.md.

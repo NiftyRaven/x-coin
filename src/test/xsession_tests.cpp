@@ -6,6 +6,7 @@
 #include <xsession.h>
 #include <lottery.h>
 #include <chainparamsbase.h>
+#include <utiltime.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -123,21 +124,35 @@ BOOST_AUTO_TEST_CASE(proof_binds_id_username_and_verified)
     BOOST_CHECK(xsession::ComputeProof("1001", "bob", 2000000000, false, "") != s.proofHex);
 }
 
-BOOST_AUTO_TEST_CASE(wall_clock_exp_zero_or_future_ok_past_rejected)
+BOOST_AUTO_TEST_CASE(wall_clock_exp_does_not_kick_live_session)
 {
     xsession::ClearSession();
     std::string err;
-    BOOST_CHECK(xsession::SaveSession("1", "bob", 1, err, false, ""));
     xsession::Session s;
-    BOOST_CHECK(!xsession::LoadSession(s, err));
-    BOOST_CHECK(err.find("expired") != std::string::npos);
+
+    // Past exp (the old 2h leftover / mocktime-past-exp case) must still
+    // load. File + valid HMAC is the session; ClearSession is the only kick.
+    BOOST_CHECK(xsession::SaveSession("1", "bob", 1, err, false, ""));
+    SetMockTime(100000);
+    BOOST_CHECK(xsession::LoadSession(s, err));
+    BOOST_CHECK_EQUAL(s.username, "bob");
+    BOOST_CHECK_EQUAL(s.expiresAt, 1);
 
     BOOST_CHECK(xsession::SaveSession("1", "bob", 0, err, false, ""));
     BOOST_CHECK(xsession::LoadSession(s, err));
+    BOOST_CHECK_EQUAL(s.expiresAt, 0);
 
     BOOST_CHECK(xsession::SaveSession("1", "bob", 4102444800LL, err, false, ""));
+    SetMockTime(4102444801LL);
     BOOST_CHECK(xsession::LoadSession(s, err));
     BOOST_CHECK_EQUAL(s.expiresAt, 4102444800LL);
+    BOOST_CHECK(xsession::HasValidSession());
+    BOOST_CHECK_EQUAL(xsession::SignedInHandle(), "bob");
+
+    SetMockTime(0);
+    xsession::ClearSession();
+    BOOST_CHECK(!xsession::LoadSession(s, err));
+    BOOST_CHECK(!xsession::HasValidSession());
 }
 
 BOOST_AUTO_TEST_SUITE_END()
