@@ -44,6 +44,33 @@ if [[ "$up" -ne 1 ]]; then
   exit 1
 fi
 
+echo "== getreleasenotes bundled + parse feed =="
+NOTES="$("${CLI[@]}" getreleasenotes)"
+echo "$NOTES"
+echo "$NOTES" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("version") != "1.0.11" or j.get("tag") != "v1.0.11":
+    sys.exit("getreleasenotes must report this wallet as 1.0.11 (got %r)" % j)
+notes = j.get("notes") or ""
+if "Sign in with X stays signed in" not in notes:
+    sys.exit("bundled notes must mention session until close")
+if "What" not in notes and "new" not in notes.lower():
+    sys.exit("bundled notes must mention What'\''s new")
+'
+FEED='[{"tag_name":"v1.0.12","name":"X Coin 1.0.12","body":"Newer notes.","html_url":"https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.12","draft":false,"prerelease":false},{"tag_name":"v1.0.11","body":"this","draft":false,"prerelease":false}]'
+PARSED="$("${CLI[@]}" getreleasenotes "$FEED")"
+echo "$PARSED"
+echo "$PARSED" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+n=j.get("newer") or {}
+if n.get("tag") != "v1.0.12":
+    sys.exit("feed parse must pick v1.0.12 as newer (got %r)" % n)
+if "Newer notes" not in (n.get("notes") or ""):
+    sys.exit("newer notes must come from the feed body")
+'
+
 echo "== typed -xaccount is ignored without a session =="
 INFO="$("${CLI[@]}" getlotteryinfo)"
 echo "$INFO"
@@ -198,6 +225,34 @@ if j.get("local_x_verified") is not True:
 if j.get("local_eligible") is not True:
     sys.exit("signed-in X Verified alice must be eligible; invite list is not a gate")
 '
+
+echo "== wall-clock exp must not sign out a live process =="
+# mockxsignin writes exp=GetTime()+365d. Jump mocktime past that.
+# 1.0.10 LoadSession still did GetTime()>exp and signed the user out.
+"${CLI[@]}" setmocktime 1000000 >/dev/null
+"${CLI[@]}" mockxsignin '{"data":{"id":"99","username":"alice","verified":true,"verified_type":"blue"}}' >/dev/null
+"${CLI[@]}" setmocktime $((1000000 + 86400 * 365 + 60)) >/dev/null
+SESS_LIVE="$("${CLI[@]}" getxsession)"
+echo "$SESS_LIVE"
+echo "$SESS_LIVE" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("signed_in") is not True or j.get("username") != "alice":
+    sys.exit("live process must stay signed in after exp elapses (got %r)" % j)
+if "expired" in str(j.get("error", "")).lower():
+    sys.exit("getxsession must not report expired while the process is up")
+'
+INFO_LIVE="$("${CLI[@]}" getlotteryinfo)"
+echo "$INFO_LIVE"
+echo "$INFO_LIVE" | python3 -c '
+import json,sys
+j=json.load(sys.stdin)
+if j.get("local_xaccount") != "alice":
+    sys.exit("lottery identity must survive mocktime past exp")
+if j.get("local_x_verified") is not True:
+    sys.exit("X Verified must survive mocktime past exp")
+'
+"${CLI[@]}" setmocktime 0 >/dev/null
 
 echo "== session handle alice can provision the root =="
 ADDR="$("${CLI[@]}" getnewaddress)"

@@ -93,7 +93,8 @@ different address prefixes (`X` / `y` vs `R` / `n`).
   Root claim / own require a session.
   Lottery requires X Verified (blue check) plus a running wallet.
   Unverified = zero chance. Invite list cannot exclude a verified wallet.
-  Session ≠ BIP39 seed.
+  Session ≠ BIP39 seed. Live session is not kicked by wall-clock `exp`.
+  What's new / newer GitHub notes are in-wallet ([UPDATES.md](UPDATES.md)).
 
 ## P2P
 
@@ -153,6 +154,7 @@ Accepted residual (not blockers for a private release):
 ## Smokes
 
 ```bash
+src/test/test_raven --run_test=xrelease_tests,xsession_tests
 contrib/xcoin/smoke-xsession.sh
 contrib/xcoin/smoke-eligibility.sh
 contrib/xcoin/smoke-regtest.sh

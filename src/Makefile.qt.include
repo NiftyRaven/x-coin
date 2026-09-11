@@ -179,6 +179,7 @@ QT_MOC_CPP = \
   qt/moc_walletview.cpp \
   qt/moc_xhome.cpp \
   qt/moc_xoauth.cpp \
+  qt/moc_xreleasedialog.cpp \
   qt/moc_xreceive.cpp \
   qt/moc_xsend.cpp \
   qt/moc_assetsdialog.cpp \
@@ -284,6 +285,7 @@ RAVEN_QT_H = \
   qt/mnemonicdialog.h \
   qt/xhome.h \
   qt/xoauth.h \
+  qt/xreleasedialog.h \
   qt/xreceive.h \
   qt/xsend.h
 
@@ -469,6 +471,7 @@ RAVEN_QT_WALLET_CPP = \
   qt/mnemonicdialog.cpp \
   qt/xhome.cpp \
   qt/xoauth.cpp \
+  qt/xreleasedialog.cpp \
   qt/xreceive.cpp \
   qt/xsend.cpp
 

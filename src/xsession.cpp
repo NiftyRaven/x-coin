@@ -229,10 +229,11 @@ bool LoadSession(Session& out, std::string& err)
         err = "xsession.json missing fields";
         return false;
     }
-    if (out.expiresAt > 0 && GetTime() > out.expiresAt) {
-        err = "Sign in with X session expired; sign in again";
-        return false;
-    }
+    // exp is HMAC input only. A valid proof stays signed-in until
+    // ClearSession deletes the file (GUI clean quit). Wall-clock exp
+    // must not fail-closed while the process is up — that is the 1.0.10
+    // auto sign-out: far-future write still left this check in place, so
+    // a leftover 2h file or a mocktime/clock jump kicked a live session.
     const std::string want = ComputeProof(out.userId, out.username, out.expiresAt,
                                           out.verified, out.verifiedType);
     if (want.empty() || want != out.proofHex) {

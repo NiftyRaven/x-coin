@@ -39,12 +39,16 @@
 #include "util.h"
 #include "core_io.h"
 #include "darkstyle.h"
+#include "xrelease.h"
+#include "xreleasedialog.h"
 
 #include <iostream>
 
 #include <QDebug>
 #include <QtNetwork/QNetworkAccessManager>
 #include <QtNetwork/QNetworkReply>
+#include <QtNetwork/QNetworkRequest>
+#include <QUrl>
 #include <QGraphicsDropShadowEffect>
 #include <QToolButton>
 #include <QPushButton>
@@ -496,6 +500,11 @@ void RavenGUI::createActions()
     openAction = new QAction(platformStyle->TextColorIcon(":/icons/open"), tr("Open &URI..."), this);
     openAction->setStatusTip(tr("Open an X Coin payment URI or payment request"));
 
+    whatsNewAction = new QAction(tr("&What's new"), this);
+    whatsNewAction->setStatusTip(tr("Show release notes for this wallet and any newer GitHub Release"));
+    checkUpdatesAction = new QAction(tr("&Check for updates"), this);
+    checkUpdatesAction->setStatusTip(tr("Fetch GitHub Releases notes (no wallet data is sent)"));
+
     showHelpMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/info"), tr("&Command-line options"), this);
     showHelpMessageAction->setMenuRole(QAction::NoRole);
     showHelpMessageAction->setStatusTip(tr("Show the %1 help message to get a list with possible X Coin command-line options").arg(tr(PACKAGE_NAME)));
@@ -506,6 +515,8 @@ void RavenGUI::createActions()
     connect(optionsAction, SIGNAL(triggered()), this, SLOT(optionsClicked()));
     connect(toggleHideAction, SIGNAL(triggered()), this, SLOT(toggleHidden()));
     connect(showHelpMessageAction, SIGNAL(triggered()), this, SLOT(showHelpMessageClicked()));
+    connect(whatsNewAction, SIGNAL(triggered()), this, SLOT(showWhatsNew()));
+    connect(checkUpdatesAction, SIGNAL(triggered()), this, SLOT(checkForUpdates()));
     connect(openRPCConsoleAction, SIGNAL(triggered()), this, SLOT(showDebugWindow()));
     connect(openWalletRepairAction, SIGNAL(triggered()), this, SLOT(showWalletRepair()));
     // Get restart command-line parameters and handle restart
@@ -582,6 +593,9 @@ void RavenGUI::createMenuBar()
     }
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
+    help->addAction(whatsNewAction);
+    help->addAction(checkUpdatesAction);
+    help->addSeparator();
     if(walletFrame)
     {
         help->addAction(openRPCConsoleAction);
@@ -729,15 +743,16 @@ void RavenGUI::createToolBars()
         comboRvnUnit->hide();
         labelCurrentPrice->setText(tr("—"));
 
-        labelVersionUpdate->setText("<a href=\"https://github.com/NiftyRaven/x-coin\">X Coin 1.1</a>");
+        labelVersionUpdate->setText(tr("What's new"));
         labelVersionUpdate->setTextFormat(Qt::RichText);
         labelVersionUpdate->setTextInteractionFlags(Qt::TextBrowserInteraction);
-        labelVersionUpdate->setOpenExternalLinks(true);
+        labelVersionUpdate->setOpenExternalLinks(false);
         labelVersionUpdate->setContentsMargins(0,0,15,0);
         labelVersionUpdate->setAlignment(Qt::AlignVCenter);
         labelVersionUpdate->setStyleSheet(STRING_LABEL_COLOR);
         labelVersionUpdate->setFont(currentMarketFont);
         labelVersionUpdate->hide();
+        connect(labelVersionUpdate, SIGNAL(linkActivated(QString)), this, SLOT(showWhatsNew()));
 
         priceLayout->setGeometry(headerWidget->rect());
         priceLayout->addWidget(labelCurrentMarket, 0, Qt::AlignVCenter | Qt::AlignLeft);
@@ -770,99 +785,7 @@ void RavenGUI::createToolBars()
         connect(quitAction, SIGNAL(triggered()), qApp, SLOT(quit()));
         /** XCOIN END */
 
-        // Get the latest X Coin release and let the user know if they are using the latest version
-        // Network request code for the header widget
-        QObject::connect(networkVersionManager, &QNetworkAccessManager::finished,
-                         this, [=](QNetworkReply *reply) {
-                    if (reply->error()) {
-                        qDebug() << reply->errorString();
-                        return;
-                    }
-
-                    // Get the data from the network request
-                    QString answer = reply->readAll();
-
-                    UniValue releases(UniValue::VARR);
-                    releases.read(answer.toStdString());
-
-                    if (!releases.isArray()) {
-                        return;
-                    }
-
-                    if (!releases.size()) {
-                        return;
-                    }
-
-                    // Latest release lives in the first index of the array return from github v3 api
-                    auto latestRelease = releases[0];
-
-                    auto keys = latestRelease.getKeys();
-                    for (auto key : keys) {
-                       if (key == "tag_name") {
-                           auto latestVersion = latestRelease["tag_name"].get_str();
-
-                           QRegExp rx("v(\\d+).(\\d+).(\\d+)");
-                           rx.indexIn(QString::fromStdString(latestVersion));
-
-                           // List the found values
-                           QStringList list = rx.capturedTexts();
-                           static const int CLIENT_VERSION_MAJOR_INDEX = 1;
-                           static const int CLIENT_VERSION_MINOR_INDEX = 2;
-                           static const int CLIENT_VERSION_REVISION_INDEX = 3;
-                           bool fNewSoftwareFound = false;
-                           bool fStopSearch = false;
-                           if (list.size() >= 4) {
-                               if (CLIENT_VERSION_MAJOR < list[CLIENT_VERSION_MAJOR_INDEX].toInt()) {
-                                   fNewSoftwareFound = true;
-                               } else {
-                                   if (CLIENT_VERSION_MAJOR > list[CLIENT_VERSION_MAJOR_INDEX].toInt()) {
-                                       fStopSearch = true;
-                                   }
-                               }
-
-                               if (!fStopSearch) {
-                                   if (CLIENT_VERSION_MINOR < list[CLIENT_VERSION_MINOR_INDEX].toInt()) {
-                                       fNewSoftwareFound = true;
-                                   } else {
-                                       if (CLIENT_VERSION_MINOR > list[CLIENT_VERSION_MINOR_INDEX].toInt()) {
-                                           fStopSearch = true;
-                                       }
-                                   }
-                               }
-
-                               if (!fStopSearch) {
-                                   if (CLIENT_VERSION_REVISION < list[CLIENT_VERSION_REVISION_INDEX].toInt()) {
-                                       fNewSoftwareFound = true;
-                                   }
-                               }
-                           }
-
-                           if (fNewSoftwareFound) {
-                               labelVersionUpdate->setToolTip(QString::fromStdString(strprintf("Currently running: %s\nLatest version: %s", FormatFullVersion(),
-                                                                                               latestVersion)));
-                               labelVersionUpdate->show();
-
-                               // Only display the message on startup to the user around 1/2 of the time
-                               if (GetRandInt(2) == 1) {
-                                   bool fRet = uiInterface.ThreadSafeQuestion(
-                                           strprintf("\nCurrently running: %s\nLatest version: %s", FormatFullVersion(),
-                                                     latestVersion) + "\n\nWould you like to visit the releases page?",
-                                           "",
-                                           "New Wallet Version Found",
-                                           CClientUIInterface::MSG_VERSION | CClientUIInterface::BTN_NO);
-                                   if (fRet) {
-                                       QString link = "https://github.com/NiftyRaven/x-coin";
-                                       QDesktopServices::openUrl(QUrl(link));
-                                   }
-                               }
-                           } else {
-                               labelVersionUpdate->hide();
-                           }
-                       }
-                    }
-                }
-        );
-
+        connect(networkVersionManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(onReleaseFeedFinished(QNetworkReply*)));
         getLatestVersion();
     }
 }
@@ -1874,5 +1797,135 @@ void RavenGUI::mnemonic()
 
 void RavenGUI::getLatestVersion()
 {
-    // Private release: do not poll GitHub or display an upstream version nag.
+    if (!networkVersionManager)
+        return;
+    if (!xrelease::CheckEnabled()) {
+        xrelease::SetFetchStatus(false, "disabled (-nocheckupdates)");
+        return;
+    }
+    QNetworkRequest req(QUrl(QString::fromStdString(xrelease::FeedUrl())));
+    req.setHeader(QNetworkRequest::UserAgentHeader,
+                  QString("XCoin-Wallet/%1").arg(QString::fromStdString(xrelease::RunningVersionString())));
+    req.setRawHeader("Accept", "application/vnd.github+json");
+#if QT_VERSION >= QT_VERSION_CHECK(5, 9, 0)
+    req.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+#elif QT_VERSION >= QT_VERSION_CHECK(5, 6, 0)
+    req.setAttribute(QNetworkRequest::FollowRedirectsAttribute, true);
+#endif
+    networkVersionManager->get(req);
+}
+
+void RavenGUI::onReleaseFeedFinished(QNetworkReply *reply)
+{
+    if (!reply)
+        return;
+    reply->deleteLater();
+    if (reply->error() != QNetworkReply::NoError) {
+        const QString err = reply->errorString();
+        xrelease::SetFetchStatus(false, err.toStdString());
+        qDebug() << "release feed:" << err;
+        if (pendingInteractiveCheck) {
+            pendingInteractiveCheck = false;
+            QMessageBox::information(this, tr("Check for updates"),
+                                     tr("Could not reach the release feed (%1).\n"
+                                        "While the GitHub repo is private the API 404s; Help → What's new still shows notes for this installed wallet.\n\n%2")
+                                         .arg(QString::fromStdString(xrelease::FeedUrl()))
+                                         .arg(err));
+            showThisVersionNotes();
+        }
+        return;
+    }
+    const QByteArray raw = reply->readAll();
+    std::vector<xrelease::Release> all;
+    std::string err;
+    if (!xrelease::ParseReleaseFeed(std::string(raw.constData(), (size_t)raw.size()), all, err)) {
+        xrelease::SetFetchStatus(false, err);
+        return;
+    }
+    xrelease::SetFetchStatus(true, "");
+    xrelease::Release newer;
+    if (xrelease::LatestNewer(all, newer)) {
+        xrelease::SetCachedNewer(newer);
+        QSettings settings;
+        const QString dismissed = settings.value("xrelease/dismissedTag").toString();
+        if (QString::fromStdString(newer.tag) != dismissed && labelVersionUpdate) {
+            labelVersionUpdate->setText(QString("<a href=\"whatsnew\">New: %1 — What's new</a>")
+                                            .arg(QString::fromStdString(newer.tag)));
+            labelVersionUpdate->setToolTip(tr("This wallet is %1. Latest published: %2. Click for notes.")
+                                               .arg(QString::fromStdString(xrelease::RunningVersionString()))
+                                               .arg(QString::fromStdString(newer.tag)));
+            labelVersionUpdate->show();
+        }
+    } else {
+        xrelease::ClearCachedNewer();
+        if (labelVersionUpdate)
+            labelVersionUpdate->hide();
+    }
+    if (pendingInteractiveCheck) {
+        pendingInteractiveCheck = false;
+        xrelease::Release shown;
+        if (xrelease::GetCachedNewer(shown)) {
+            showWhatsNew();
+        } else if (xrelease::LastFetchOk()) {
+            QMessageBox::information(this, tr("Check for updates"),
+                                     tr("This wallet is %1. No newer published release in the feed.")
+                                         .arg(QString::fromStdString(xrelease::RunningVersionString())));
+            showThisVersionNotes();
+        } else {
+            QMessageBox::information(this, tr("Check for updates"),
+                                     tr("Could not read the release feed.\n"
+                                        "While the GitHub repo is private the API 404s; Help → What's new still shows notes for this installed wallet.\n\n%1")
+                                         .arg(QString::fromStdString(xrelease::LastFetchError())));
+            showThisVersionNotes();
+        }
+    }
+}
+
+void RavenGUI::showThisVersionNotes()
+{
+    const xrelease::Release bundled = xrelease::BundledRelease();
+    XReleaseDialog dlg(this,
+                       QString::fromStdString(bundled.name),
+                       QString::fromStdString(bundled.body),
+                       QString::fromStdString(bundled.htmlUrl),
+                       false);
+    dlg.exec();
+}
+
+void RavenGUI::showWhatsNew()
+{
+    xrelease::Release newer;
+    if (xrelease::GetCachedNewer(newer)) {
+        XReleaseDialog dlg(this,
+                           QString::fromStdString(newer.name.empty() ? newer.tag : newer.name),
+                           QString::fromStdString(newer.body.empty() ? xrelease::BundledNotes() : newer.body),
+                           QString::fromStdString(newer.htmlUrl),
+                           true);
+        dlg.exec();
+        if (dlg.dismissed()) {
+            QSettings settings;
+            settings.setValue("xrelease/dismissedTag", QString::fromStdString(newer.tag));
+            if (labelVersionUpdate)
+                labelVersionUpdate->hide();
+        }
+        return;
+    }
+    showThisVersionNotes();
+}
+
+void RavenGUI::checkForUpdates()
+{
+    if (!xrelease::CheckEnabled()) {
+        QMessageBox::information(this, tr("Check for updates"),
+                                 tr("Update checks are off (-nocheckupdates). Help → What's new still shows notes for this version."));
+        showThisVersionNotes();
+        return;
+    }
+    xrelease::Release newer;
+    if (xrelease::GetCachedNewer(newer)) {
+        showWhatsNew();
+        return;
+    }
+    pendingInteractiveCheck = true;
+    getLatestVersion();
 }

@@ -102,7 +102,8 @@ bool RequireXVerified(std::string& err);
 
 /**
  * True if `handle` is the signed-in username.
- * Fails closed: no session, expired session, or mismatch → false.
+ * Fails closed: no session or mismatch → false.
+ * Wall-clock exp is not a kick; the proof is valid until ClearSession.
  */
 bool RequireHandle(const std::string& handle, std::string& err);
 

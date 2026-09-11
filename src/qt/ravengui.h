@@ -41,6 +41,7 @@ class QProgressBar;
 class QProgressDialog;
 class QNetworkAccessManager;
 class QNetworkRequest;
+class QNetworkReply;
 QT_END_NAMESPACE
 
 /**
@@ -126,6 +127,8 @@ private:
     QAction *openWalletRepairAction = nullptr;
     QAction *openAction = nullptr;
     QAction *showHelpMessageAction = nullptr;
+    QAction *whatsNewAction = nullptr;
+    QAction *checkUpdatesAction = nullptr;
 
     /** XCOIN START */
     QAction *transferAssetAction = nullptr;
@@ -144,6 +147,7 @@ private:
     QLabel *labelVersionUpdate = nullptr;
     QNetworkAccessManager* networkVersionManager = nullptr;
     QNetworkRequest* versionRequest = nullptr;
+    bool pendingInteractiveCheck = false;
 
     QLabel *labelToolbar = nullptr;
     QToolBar *m_toolbar = nullptr;
@@ -223,6 +227,10 @@ public Q_SLOTS:
     void getPriceInfo();
 
     void getLatestVersion();
+    void onReleaseFeedFinished(QNetworkReply *reply);
+    void showWhatsNew();
+    void showThisVersionNotes();
+    void checkForUpdates();
 
     /** IconsOnly true/false and updates toolbar accordingly. */
     void updateIconsOnlyToolbar(bool);

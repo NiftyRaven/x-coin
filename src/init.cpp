@@ -611,6 +611,8 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-xuserid=<id>", _("Optional numeric X user id (informational; session id wins)"));
     strUsage += HelpMessageOpt("-xallowlist=<file>", _("Load the operator invite / payout-pin list (not X Verified). Cannot exclude a verified wallet from the lottery"));
     strUsage += HelpMessageOpt("-xverified=<handle>", _("Add a handle to the operator invite list (repeatable; handle or handle:userid). This is not X Verified"));
+    strUsage += HelpMessageOpt("-xreleaseurl=<url>", _("HTTPS JSON feed of GitHub-style releases for in-wallet What's new (default: api.github.com/repos/NiftyRaven/x-coin/releases). No wallet data is sent."));
+    strUsage += HelpMessageOpt("-nocheckupdates", _("Do not fetch the release feed on GUI start. Help → What's new still shows notes for this version."));
 
     strUsage += HelpMessageGroup(_("Block creation options:"));
     strUsage += HelpMessageOpt("-blockmaxweight=<n>", strprintf(_("Set maximum BIP141 block weight (default: %d)"), MAX_BLOCK_WEIGHT - 4000));
