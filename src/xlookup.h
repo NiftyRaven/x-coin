@@ -22,7 +22,7 @@ namespace xlookup {
 enum Status {
     VERIFIED = 0,
     NOT_VERIFIED = 1,
-    ERROR = 2,
+    LOOKUP_FAILED = 2,
 };
 
 /** True if this process can call X (bearer or XCOIN_X_BEARER). */
