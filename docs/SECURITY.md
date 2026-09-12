@@ -36,9 +36,9 @@ Attacker goals we actually designed against:
 - **Lottery membership:** unverified or unsigned gossip is not added to the
   active set (zero chance). On main/test the seed also checks X for a
   live blue check and stamps the payout (`XVA1`). Official Sign in with
-  X is still required on this wallet. A custom app that only flips
-  `verified=true` is not eligible. Replacing an online handle’s payout
-  script is rejected.
+  X is still required on **user** wallets. The baked seed has no
+  session. A custom app that only flips `verified=true` is not
+  eligible. Replacing an online handle’s payout script is rejected.
 - **Network isolation from Ravencoin:** magic, genesis, ports, versions.
 - **RPC:** cookie or password. `sendrawtransaction` is a normal wallet send (no session).
 - **What's new feed:** the GUI may GET GitHub Releases (or `-xreleaseurl=`).
@@ -72,17 +72,22 @@ Do not claim the chain is military-grade or unhackable.
 
 Stay private. Do **not** add public DNS seeds.
 
-1. **One trusted seed** you control. Open **TCP 38443** only. Run:
+1. **One trusted seed** you control. Open **TCP 38443** only. The seed
+   does **not** Sign in (no `xsession`). It needs the attestor key, an
+   X API bearer for lookup, and listen:
 
    ```bash
    src/xcoind -listen=1 -port=38443 -server \
      -bind=0.0.0.0:38443 \
      -maxconnections=32 \
-     -xallowlist=/shared/verified-x-accounts.txt
+     -xlookupbearer="$XCOIN_X_BEARER" \
+     -xattestorkey=/root/.xcoin/xattestor.key
    ```
 
-   RPC stays local (default). Use the cookie or a strong `-rpcpassword`.
-   Do not expose **38442**.
+   Or set `XCOIN_X_BEARER` and keep `~/.xcoin/xattestor.key` (must
+   match the baked pubkey). Do not put the bearer or the key in the
+   user zip. RPC stays local (default). Use the cookie or a strong
+   `-rpcpassword`. Do not expose **38442**.
 
 2. **Every other node** puts a **trusted peer IP in the config file**
    (`xcoin.conf`) — not a stranger, not a BIP39 seed, not a required
@@ -106,8 +111,9 @@ Stay private. Do **not** add public DNS seeds.
    NFTRVN 123456789 XyourPinnedAddressxxxxxxxxxxxxxxxxx
    ```
 
-4. **Sign in with X** on each datadir (or `-regtest` mock). Do not type
-   someone else’s handle into `linkxaccount` / `-xaccount`.
+4. **Sign in with X** on each **user** datadir (or `-regtest` mock).
+   Do not Sign in on the baked seed. Do not type someone else’s handle
+   into `linkxaccount` / `-xaccount`.
 
 5. **Confirm you are on the same tip** as the seed (`getblockchaininfo`
    best hash / height). If you only have attacker peers, you will agree

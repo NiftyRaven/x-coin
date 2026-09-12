@@ -460,6 +460,10 @@ void BindLotteryFromSession()
         if (!s.IsXVerified()) {
             LogPrintf("xsession: signed in @%s but not X Verified (users/me.verified); lottery closed, send/receive ok\n",
                       local.handle);
+        } else if (lottery::IsBakedSeed()) {
+            LogPrintf("xsession: leftover session @%s ignored — baked seed is not a lottery player\n",
+                      local.handle);
+            lottery::GetRegistry().SetLocalXAccount(lottery::XAccount());
         } else {
             LogPrintf("xsession: lottery identity @%s X Verified type=%s — notifying baked seed\n",
                       local.handle,
@@ -474,7 +478,10 @@ void BindLotteryFromSession()
                   gArgs.GetArg("-xaccount", ""));
     }
     lottery::GetRegistry().SetLocalXAccount(lottery::XAccount());
-    LogPrintf("xsession: no signed-in X session; this node is not lottery-eligible\n");
+    if (lottery::IsBakedSeed())
+        LogPrintf("xsession: baked seed has no Sign-in (attestor key + X lookup only)\n");
+    else
+        LogPrintf("xsession: no signed-in X session; this node is not lottery-eligible\n");
 }
 
 bool RequireSession(std::string& err)

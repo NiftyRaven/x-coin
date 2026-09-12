@@ -68,8 +68,9 @@ without live OAuth, `-xoauthmock=NFTRVN` mocks `verified=true`.
 A node is lottery-eligible only when **session + X Verified + a running
 wallet** are true. Unverified heartbeats from this node are **ignored**
 for the active set (zero chance). The local producer refuses to produce
-if this node is not X Verified. The invite list cannot exclude a
-verified running wallet.
+if this node is not X Verified — except the **baked seed**, which
+produces without Sign-in (attestor key + X lookup + `XSD1`). The invite
+list cannot exclude a verified running wallet.
 
 ### Link an X account (every operator)
 
@@ -84,9 +85,15 @@ src/xcoin-cli getlotteryinfo            # local_eligible must be true (session +
 ```
 
 Typed `linkxaccount OtherHandle` is rejected unless that is the signed-in
-username. Headless seed: sign in once on this datadir (GUI), then run
-`xcoind` against the same `~/.xcoin`. The session file and the claimed
-root both survive that daemon restart.
+username. Headless **user** wallets: sign in once on this datadir (GUI),
+then run `xcoind` against the same `~/.xcoin`. The session file and the
+claimed root both survive that daemon restart.
+
+Headless **baked seed** (`172.191.195.221`): do **not** Sign in. The
+seed is infrastructure — `~/.xcoin/xattestor.key`,
+`-xlookupbearer=` / `XCOIN_X_BEARER`, and `xcoind -listen`. No
+`xsession`. It stamps other users after X lookup. Those stamped users
+are the lottery winners; the seed is not in the hat.
 
 ### Publish the invite list (seed / operator, optional pins)
 
@@ -178,7 +185,9 @@ If the active set is smaller than `winnerCount`, every active node wins.
 2. Draw `k = min(winnerCount, n)` winners with a partial Fisher–Yates shuffle.
 3. At step `i`, `r = SHA256(seed || LE32(i))` (first 8 bytes, little-endian) and
    swap index `i` with `i + (r % (n - i))`.
-4. The **first** selected winner is the block producer for that slot.
+4. The **first** selected winner is the first coinbase payee (fees go
+   here). On main/test the **baked seed** produces the block; it is not
+   required to be in the winner list.
 
 Same active set + same seed ⇒ same winner list on every honest node.
 
@@ -206,15 +215,17 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 
 ## Block production
 
-- **Main:** the producer thread heartbeats and, if this node is a
-  winner, emits at most **one block per wall-clock minute**
-  (wall-minute latch). Catch-up may target an older lottery slot; the
-  latch still holds. There is no slot+120 abort. There is **no** nonce
-  grind. `CheckProofOfWork` is a no-op. `fMiningRequiresPeers` is
-  false: a **lone eligible node** can produce and store the ledger.
-  Other people seeing the same tip still need `addnode` / `seednode`.
+- **Main:** only the **baked seed** emits. It does not Sign in and is
+  not a lottery winner. After X lookup it stamps live blue-check
+  peers; those stamped ids are the hat. The seed writes at most
+  **one block per wall-clock minute** (wall-minute latch) paying the
+  drawn stamped users and signing `XSD1`. Catch-up may target an
+  older lottery slot; the latch still holds. There is no slot+120
+  abort. There is **no** nonce grind. `CheckProofOfWork` is a no-op.
+  `fMiningRequiresPeers` is false. Other people seeing the same tip
+  still need `addnode` / `seednode`.
 - **Test:** waits until wall-clock slot ≥ height slot (plus a short
-  settle), then emits if this node is a winner.
+  settle), then the baked seed emits if the stamped set is non-empty.
 - **Regtest:** the producer only heartbeats. Use `generatetoaddress` /
   `generate` to assemble blocks on demand (still no PoW). The
   destination script is heartbeated so it is in the active set.
@@ -243,10 +254,11 @@ Honest write-up: [SECURITY.md](SECURITY.md). This is not hacker-proof.
   stamp. Every height ≥ 1 coinbase must include `XVA1` stamps for the
   committed `XHB1` set; peers check the baked attestor key. A modified
   binary cannot invent eligibility. Only the **baked seed** may produce
-  main/test blocks (`XSD1` signature). Sign in with X notifies that seed.
-  Residual: a bot can wear a **real** verified handle. The invite list
-  is still not a lottery gate. Regular send/receive still works without
-  Sign-in; lottery XFER does not.
+  main/test blocks (`XSD1` signature). The seed has no Sign-in
+  (`xattestor.key` + X bearer + listen). User Sign-in notifies that
+  seed. Residual: a bot can wear a **real** verified handle. The invite
+  list is still not a lottery gate. Regular send/receive still works
+  without Sign-in; lottery XFER does not.
 - **xhb:** gossip is compact-signed by the payout key. A live handle cannot
   be rebound to another script. A listed userid alone cannot authorize a
   different handle. Residual: first-seen after restart unless you pin a

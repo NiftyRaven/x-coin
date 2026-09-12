@@ -16,15 +16,21 @@ send/receive still works without Sign-in.
 
 ## Seed (you)
 
-On `172.191.195.221` only:
+On `172.191.195.221` only. The seed is infrastructure: attestor key +
+X API lookup + listen. **No Sign-in.** There is no `xsession` on the
+seed. Lottery winners are stamped users, not the seed.
 
 ```
+xcoind -listen=1 -port=38443 -server -bind=0.0.0.0:38443
 xlookupbearer=<X API app bearer>
 # or: export XCOIN_X_BEARER=...
 ```
 
 Install `~/.xcoin/xattestor.key` (the key that matches the baked pubkey
 in `chainparams.cpp`). Do not put the bearer or the key in the user zip.
+
+The seed produces with the wallet keypool script + `xattestor.key` +
+`XSD1` only. It stamps other users after X lookup.
 
 ## Package
 

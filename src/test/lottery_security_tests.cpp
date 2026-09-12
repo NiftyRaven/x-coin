@@ -5,6 +5,7 @@
 #include <test/test_raven.h>
 #include <lottery.h>
 #include <xlookup.h>
+#include <xsession.h>
 #include <key.h>
 #include <script/standard.h>
 #include <consensus/validation.h>
@@ -290,6 +291,24 @@ BOOST_AUTO_TEST_CASE(seed_stamp_binds_payout_and_handle)
     lottery::ResetAttestations();
     CKey empty;
     lottery::SetAttestorKeyForTest(empty);
+}
+
+BOOST_AUTO_TEST_CASE(baked_seed_produce_does_not_need_session)
+{
+    BOOST_CHECK(!xsession::SessionIsXVerified());
+    BOOST_CHECK(!lottery::GetRegistry().LocalEligible());
+    BOOST_CHECK(!lottery::IsBakedSeed());
+    BOOST_CHECK(!lottery::MayProduceBlock());
+
+    lottery::SetBakedSeedForTest(true);
+    BOOST_CHECK(lottery::IsBakedSeed());
+    BOOST_CHECK(!xsession::SessionIsXVerified());
+    BOOST_CHECK(!lottery::GetRegistry().LocalEligible());
+    BOOST_CHECK(lottery::MayProduceBlock());
+    BOOST_CHECK(!lottery::GetRegistry().HeartbeatLocal(10));
+    lottery::SetBakedSeedForTest(false);
+    BOOST_CHECK(!lottery::IsBakedSeed());
+    BOOST_CHECK(!lottery::MayProduceBlock());
 }
 
 BOOST_AUTO_TEST_CASE(baked_seed_block_sig_binds_height_and_set)

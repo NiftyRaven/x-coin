@@ -49,7 +49,9 @@ class CValidationState;
  *    a real blue check, it is not eligible. The seed stamps the payout id.
  *    A custom wallet cannot skip this: coinbase must carry `XVA1` stamps
  *    for every committed id plus an `XSD1` signature from the baked seed.
- *    Only the baked seed produces main/test blocks. Login notifies that seed.
+ *    Only the baked seed produces main/test blocks. The seed is
+ *    infrastructure (attestor key + X API lookup + listen). It does not
+ *    Sign in. User Sign-in notifies that seed; stamped users win, not the seed.
  */
 namespace lottery {
 
@@ -302,6 +304,8 @@ bool VerifyAttestationPub(const CPubKey& pub, const uint160& id,
                           const std::vector<unsigned char>& sig);
 /** Test helper: use this key as the seed attestor. */
 void SetAttestorKeyForTest(const CKey& key);
+/** Test helper: treat this process as the baked seed (produce without Sign-in). */
+void SetBakedSeedForTest(bool on);
 void ResetAttestations();
 void StoreAttestation(const uint160& id, const std::string& handle,
                       const std::vector<unsigned char>& sig);
@@ -322,6 +326,8 @@ bool CheckXvaForIds(const std::vector<uint160>& ids, const CScript& script);
 
 /** Main/test: only the baked seed (attestor key) may produce a valid block. */
 bool IsBakedSeed();
+/** True if this node may emit a block. Baked seed: no Sign-in. */
+bool MayProduceBlock();
 void RequestSeedNotify();
 bool SeedNotifyActive();
 uint256 SeedBlockDigest(int nHeight, const uint256& prevBlockHash,

@@ -54,6 +54,7 @@ static boost::thread_group* g_producerThreads = nullptr;
 static CCriticalSection cs_producer;
 static CKey g_localPayoutKey;
 static CKey g_attestorKey;
+static bool g_forceBakedSeedForTest = false;
 static CCriticalSection cs_attest;
 struct AttestRow {
     std::string handle;
@@ -439,8 +440,8 @@ void InitEligibility()
     }
 
     xsession::ApplyStartupArgs();
-    xsession::BindLotteryFromSession();
     InitAttestation();
+    xsession::BindLotteryFromSession();
 }
 
 uint160 IdFromScript(const CScript& script)
@@ -532,10 +533,17 @@ void InitAttestation()
                   "cannot stamp blue-check eligibility\n");
     }
 
+    // Self-stamp of a local X handle is optional. The seed has no Sign-in;
+    // it stamps OTHER users after X lookup when their xhb arrives.
+    if (IsBakedSeed()) {
+        LogPrintf("lottery: baked seed ready (no Sign-in; attestor key + "
+                  "X lookup + XSD1; stamps peers, does not enter the hat)\n");
+        return;
+    }
     if (xlookup::LookupEnabled() && g_attestorKey.IsValid()) {
         const XAccount x = GetRegistry().LocalXAccount();
         const CScript s = GetRegistry().LocalScript();
-        if (!x.handle.empty() && !s.empty()) {
+        if (!x.handle.empty() && !s.empty() && xsession::SessionIsXVerified()) {
             std::vector<unsigned char> sig;
             if (LookupAndAttest(s, x.handle, sig))
                 LogPrintf("lottery: self-attested @%s against X\n", x.handle);
@@ -577,6 +585,11 @@ bool VerifyAttestation(const uint160& id, const std::string& handle,
 void SetAttestorKeyForTest(const CKey& key)
 {
     g_attestorKey = key;
+}
+
+void SetBakedSeedForTest(bool on)
+{
+    g_forceBakedSeedForTest = on;
 }
 
 void ResetAttestations()
@@ -626,8 +639,21 @@ bool IsXLookupNode()
 
 bool IsBakedSeed()
 {
+    if (g_forceBakedSeedForTest)
+        return true;
     const CPubKey want = AttestorPub();
     return g_attestorKey.IsValid() && want.IsFullyValid() && g_attestorKey.GetPubKey() == want;
+}
+
+bool MayProduceBlock()
+{
+    // Infrastructure seed: wallet keypool script + xattestor.key + XSD1.
+    // No Sign-in. Lottery winners are stamped users, not the seed.
+    if (IsBakedSeed())
+        return true;
+    if (RequireXAttestation())
+        return false;
+    return GetRegistry().LocalEligible();
 }
 
 void RequestSeedNotify()
@@ -1059,6 +1085,9 @@ void Registry::Reset()
 
 bool Registry::HeartbeatLocal(int64_t now)
 {
+    if (IsBakedSeed())
+        return false;
+
     CScript s;
     XAccount x;
     {
@@ -1576,12 +1605,11 @@ static CWallet* FirstWalletOrNull()
 
 static bool ProduceOneBlock(const CChainParams& chainparams)
 {
-    if (RequireXAttestation() && !IsBakedSeed()) {
-        LogPrintf("lottery: only the baked seed produces main/test blocks\n");
-        return false;
-    }
-    if (!GetRegistry().LocalEligible()) {
-        LogPrintf("lottery: refusing to produce; local node is not X Verified (blue check)\n");
+    if (!MayProduceBlock()) {
+        if (RequireXAttestation() && !IsBakedSeed())
+            LogPrintf("lottery: only the baked seed produces main/test blocks\n");
+        else
+            LogPrintf("lottery: refusing to produce; local node is not X Verified (blue check)\n");
         return false;
     }
 #ifdef ENABLE_WALLET
@@ -1681,7 +1709,7 @@ static void ProducerThread(const CChainParams& chainparams)
 #endif
             GetRegistry().HeartbeatLocal(now);
 
-            if (!GetRegistry().LocalEligible()) {
+            if (!MayProduceBlock()) {
                 if (!fLoggedIneligible) {
                     LogPrintf("lottery: not X Verified (users/me.verified); sync/relay only, not producing\n");
                     fLoggedIneligible = true;
@@ -1777,8 +1805,9 @@ static void ProducerThread(const CChainParams& chainparams)
                 continue;
             }
 
-            // Only winners[0] produces. Other drawn ids are payees on that coinbase.
-            if (!draw.winners.empty() && GetRegistry().LocalId() == draw.winners[0]) {
+            // Baked seed produces for stamped users (it is not a lottery winner).
+            // On regtest, only winners[0] emits.
+            if (IsBakedSeed() || GetRegistry().LocalId() == draw.winners[0]) {
                 if (ProduceOneBlock(chainparams)) {
                     lastProducedSlot = slot;
                     lastProducedWallMinute = GetTime() / 60;
