@@ -20,7 +20,9 @@
 #include "script/standard.h"
 #include "util.h"
 #include "utilstrencodings.h"
+#include "crypto/sha256.h"
 #include "validation.h"
+#include "xlookup.h"
 #include "xsession.h"
 
 #include <exception>
@@ -36,6 +38,7 @@ class CWallet;
 #include <boost/bind/bind.hpp>
 #include <boost/thread.hpp>
 
+#include <atomic>
 #include <algorithm>
 #include <cctype>
 #include <cstring>
@@ -50,6 +53,14 @@ static Allowlist g_allowlist;
 static boost::thread_group* g_producerThreads = nullptr;
 static CCriticalSection cs_producer;
 static CKey g_localPayoutKey;
+static CKey g_attestorKey;
+static CCriticalSection cs_attest;
+struct AttestRow {
+    std::string handle;
+    std::vector<unsigned char> sig;
+};
+static std::map<uint160, AttestRow> g_attest;
+static std::atomic<int64_t> g_seedNotifyUntil{0};
 static CWallet* FirstWalletOrNull();
 
 Registry& GetRegistry()
@@ -429,11 +440,414 @@ void InitEligibility()
 
     xsession::ApplyStartupArgs();
     xsession::BindLotteryFromSession();
+    InitAttestation();
 }
 
 uint160 IdFromScript(const CScript& script)
 {
     return Hash160(script);
+}
+
+bool RequireXAttestation()
+{
+    try {
+        const CChainParams& p = GetParams();
+        if (p.MineBlocksOnDemand())
+            return false;
+        return !p.XAttestorPub().empty();
+    } catch (...) {
+        return false;
+    }
+}
+
+CPubKey AttestorPub()
+{
+    CPubKey pub;
+    try {
+        const std::vector<unsigned char>& v = GetParams().XAttestorPub();
+        if (!v.empty())
+            pub.Set(v.begin(), v.end());
+    } catch (...) {
+    }
+    return pub;
+}
+
+uint256 AttestDigest(const uint160& id, const std::string& handle)
+{
+    std::string norm;
+    std::string err;
+    if (!NormalizeXHandle(handle, norm, err))
+        norm.clear();
+    uint256 h;
+    CSHA256()
+        .Write((const unsigned char*)ATTEST_DIGEST_MAGIC, strlen(ATTEST_DIGEST_MAGIC))
+        .Write(id.begin(), id.size())
+        .Write((const unsigned char*)norm.data(), norm.size())
+        .Finalize(h.begin());
+    return h;
+}
+
+static bool LoadAttestorKeyFromPath(const std::string& path)
+{
+    FILE* f = fsbridge::fopen(path, "rb");
+    if (!f)
+        return false;
+    std::string raw;
+    fseek(f, 0, SEEK_END);
+    const long n = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    if (n > 0 && n < 256) {
+        raw.resize((size_t)n);
+        if (fread(&raw[0], 1, (size_t)n, f) != (size_t)n)
+            raw.clear();
+    }
+    fclose(f);
+    while (!raw.empty() && (raw.back() == '\n' || raw.back() == '\r' || raw.back() == ' '))
+        raw.pop_back();
+    if (!(IsHex(raw) && raw.size() == 64))
+        return false;
+    const std::vector<unsigned char> secret = ParseHex(raw);
+    if (secret.size() != 32)
+        return false;
+    g_attestorKey.Set(secret.begin(), secret.end(), true);
+    return g_attestorKey.IsValid();
+}
+
+void InitAttestation()
+{
+    const std::string path = gArgs.GetArg("-xattestorkey",
+                                          (GetDataDir() / "xattestor.key").string());
+    if (fs::exists(path)) {
+        if (!LoadAttestorKeyFromPath(path))
+            LogPrintf("lottery: failed to load xattestor.key\n");
+        else {
+            const CPubKey want = AttestorPub();
+            if (want.IsValid() && g_attestorKey.GetPubKey() != want)
+                LogPrintf("lottery: ERROR xattestor.key does not match consensus attestor pub\n");
+            else
+                LogPrintf("lottery: loaded seed attestor key\n");
+        }
+    } else if (xlookup::LookupEnabled() && RequireXAttestation()) {
+        LogPrintf("lottery: -xlookupbearer set but xattestor.key missing — "
+                  "cannot stamp blue-check eligibility\n");
+    }
+
+    if (xlookup::LookupEnabled() && g_attestorKey.IsValid()) {
+        const XAccount x = GetRegistry().LocalXAccount();
+        const CScript s = GetRegistry().LocalScript();
+        if (!x.handle.empty() && !s.empty()) {
+            std::vector<unsigned char> sig;
+            if (LookupAndAttest(s, x.handle, sig))
+                LogPrintf("lottery: self-attested @%s against X\n", x.handle);
+            else
+                LogPrintf("lottery: self-attest @%s failed (not a live blue check?)\n", x.handle);
+        }
+    }
+}
+
+bool SignAttestation(const uint160& id, const std::string& handle,
+                     std::vector<unsigned char>& sigOut)
+{
+    sigOut.clear();
+    if (!g_attestorKey.IsValid())
+        return false;
+    const uint256 digest = AttestDigest(id, handle);
+    return g_attestorKey.SignCompact(digest, sigOut);
+}
+
+bool VerifyAttestationPub(const CPubKey& want, const uint160& id,
+                          const std::string& handle,
+                          const std::vector<unsigned char>& sig)
+{
+    if (sig.size() != 65 || !want.IsFullyValid())
+        return false;
+    const uint256 digest = AttestDigest(id, handle);
+    CPubKey rec;
+    if (!rec.RecoverCompact(digest, sig))
+        return false;
+    return rec == want;
+}
+
+bool VerifyAttestation(const uint160& id, const std::string& handle,
+                       const std::vector<unsigned char>& sig)
+{
+    return VerifyAttestationPub(AttestorPub(), id, handle, sig);
+}
+
+void SetAttestorKeyForTest(const CKey& key)
+{
+    g_attestorKey = key;
+}
+
+void ResetAttestations()
+{
+    LOCK(cs_attest);
+    g_attest.clear();
+}
+
+void StoreAttestation(const uint160& id, const std::string& handle,
+                      const std::vector<unsigned char>& sig)
+{
+    std::string norm;
+    std::string err;
+    if (!NormalizeXHandle(handle, norm, err))
+        return;
+    if (!VerifyAttestation(id, norm, sig))
+        return;
+    LOCK(cs_attest);
+    AttestRow row;
+    row.handle = norm;
+    row.sig = sig;
+    g_attest[id] = row;
+}
+
+bool HasAttestation(const uint160& id)
+{
+    LOCK(cs_attest);
+    return g_attest.count(id) > 0;
+}
+
+bool GetAttestation(const uint160& id, std::string& handle,
+                    std::vector<unsigned char>& sig)
+{
+    LOCK(cs_attest);
+    auto it = g_attest.find(id);
+    if (it == g_attest.end())
+        return false;
+    handle = it->second.handle;
+    sig = it->second.sig;
+    return true;
+}
+
+bool IsXLookupNode()
+{
+    return xlookup::LookupEnabled() && g_attestorKey.IsValid();
+}
+
+bool IsBakedSeed()
+{
+    const CPubKey want = AttestorPub();
+    return g_attestorKey.IsValid() && want.IsFullyValid() && g_attestorKey.GetPubKey() == want;
+}
+
+void RequestSeedNotify()
+{
+    g_seedNotifyUntil.store(GetTime() + 20);
+}
+
+bool SeedNotifyActive()
+{
+    return GetTime() <= g_seedNotifyUntil.load();
+}
+
+uint256 SeedBlockDigest(int nHeight, const uint256& prevBlockHash,
+                        const std::vector<uint160>& ids)
+{
+    uint256 h;
+    unsigned char ht[4];
+    ht[0] = (uint32_t)nHeight & 0xff;
+    ht[1] = ((uint32_t)nHeight >> 8) & 0xff;
+    ht[2] = ((uint32_t)nHeight >> 16) & 0xff;
+    ht[3] = ((uint32_t)nHeight >> 24) & 0xff;
+    CSHA256 w;
+    w.Write((const unsigned char*)SEED_DIGEST_MAGIC, strlen(SEED_DIGEST_MAGIC));
+    w.Write(prevBlockHash.begin(), prevBlockHash.size());
+    w.Write(ht, 4);
+    for (const auto& id : ids)
+        w.Write(id.begin(), id.size());
+    w.Finalize(h.begin());
+    return h;
+}
+
+CScript MakeSeedBlockCommitment(int nHeight, const uint256& prevBlockHash,
+                                const std::vector<uint160>& ids)
+{
+    std::vector<unsigned char> sig;
+    const uint256 digest = SeedBlockDigest(nHeight, prevBlockHash, ids);
+    if (!g_attestorKey.IsValid() || !g_attestorKey.SignCompact(digest, sig) || sig.size() != 65)
+        return CScript();
+    std::vector<unsigned char> data;
+    data.push_back((unsigned char)SEED_BLOCK_MAGIC[0]);
+    data.push_back((unsigned char)SEED_BLOCK_MAGIC[1]);
+    data.push_back((unsigned char)SEED_BLOCK_MAGIC[2]);
+    data.push_back((unsigned char)SEED_BLOCK_MAGIC[3]);
+    data.insert(data.end(), sig.begin(), sig.end());
+    return CScript() << OP_RETURN << data;
+}
+
+bool VerifySeedBlockSig(const CPubKey& pub, int nHeight, const uint256& prevBlockHash,
+                        const std::vector<uint160>& ids,
+                        const std::vector<unsigned char>& sig)
+{
+    if (sig.size() != 65 || !pub.IsFullyValid())
+        return false;
+    const uint256 digest = SeedBlockDigest(nHeight, prevBlockHash, ids);
+    CPubKey rec;
+    if (!rec.RecoverCompact(digest, sig))
+        return false;
+    return rec == pub;
+}
+
+bool CheckSeedBlockCommitment(int nHeight, const uint256& prevBlockHash,
+                              const std::vector<uint160>& ids, const CScript& script)
+{
+    if (script.empty() || script[0] != OP_RETURN)
+        return false;
+    CScript::const_iterator pc = script.begin() + 1;
+    std::vector<unsigned char> data;
+    opcodetype opcode;
+    if (!script.GetOp(pc, opcode, data) || data.size() != 4 + 65)
+        return false;
+    if (data[0] != (unsigned char)SEED_BLOCK_MAGIC[0] ||
+        data[1] != (unsigned char)SEED_BLOCK_MAGIC[1] ||
+        data[2] != (unsigned char)SEED_BLOCK_MAGIC[2] ||
+        data[3] != (unsigned char)SEED_BLOCK_MAGIC[3])
+        return false;
+    std::vector<unsigned char> sig(data.begin() + 4, data.end());
+    return VerifySeedBlockSig(AttestorPub(), nHeight, prevBlockHash, ids, sig);
+}
+
+bool LookupAndAttest(const CScript& script, const std::string& handle,
+                     std::vector<unsigned char>& sigOut)
+{
+    sigOut.clear();
+    std::string norm;
+    std::string nerr;
+    if (!NormalizeXHandle(handle, norm, nerr))
+        return false;
+    const uint160 id = IdFromScript(script);
+    if (HasAttestation(id)) {
+        std::string have;
+        return GetAttestation(id, have, sigOut) && have == norm;
+    }
+    if (!IsXLookupNode())
+        return false;
+    std::string lerr;
+    const xlookup::Status st = xlookup::LookupHandle(norm, lerr);
+    if (st != xlookup::VERIFIED) {
+        if (st == xlookup::NOT_VERIFIED)
+            LogPrintf("lottery: drop @%s — X says not blue-check\n", norm);
+        else
+            LogPrintf("lottery: X lookup error @%s: %s\n", norm, lerr);
+        return false;
+    }
+    if (!SignAttestation(id, norm, sigOut))
+        return false;
+    StoreAttestation(id, norm, sigOut);
+    return true;
+}
+
+CScript MakeXvaCommitment(const std::vector<uint160>& sortedIds)
+{
+    std::vector<unsigned char> data;
+    data.push_back((unsigned char)ATTEST_MAGIC[0]);
+    data.push_back((unsigned char)ATTEST_MAGIC[1]);
+    data.push_back((unsigned char)ATTEST_MAGIC[2]);
+    data.push_back((unsigned char)ATTEST_MAGIC[3]);
+    uint32_t n = 0;
+    std::vector<unsigned char> body;
+    for (const auto& id : sortedIds) {
+        std::string handle;
+        std::vector<unsigned char> sig;
+        if (!GetAttestation(id, handle, sig) || sig.size() != 65)
+            continue;
+        if (handle.empty() || handle.size() > MAX_X_HANDLE)
+            continue;
+        n++;
+        body.push_back((unsigned char)handle.size());
+        body.insert(body.end(), handle.begin(), handle.end());
+        body.insert(body.end(), id.begin(), id.end());
+        body.insert(body.end(), sig.begin(), sig.end());
+    }
+    data.push_back(n & 0xff);
+    data.push_back((n >> 8) & 0xff);
+    data.push_back((n >> 16) & 0xff);
+    data.push_back((n >> 24) & 0xff);
+    data.insert(data.end(), body.begin(), body.end());
+    return CScript() << OP_RETURN << data;
+}
+
+bool ParseXvaCommitment(const CScript& script,
+                        std::vector<uint160>& ids,
+                        std::vector<std::vector<unsigned char> >& sigs)
+{
+    ids.clear();
+    sigs.clear();
+    std::vector<std::string> handles;
+    if (script.empty() || script[0] != OP_RETURN)
+        return false;
+    CScript::const_iterator pc = script.begin() + 1;
+    std::vector<unsigned char> data;
+    opcodetype opcode;
+    if (!script.GetOp(pc, opcode, data))
+        return false;
+    if (data.size() < 8)
+        return false;
+    if (data[0] != (unsigned char)ATTEST_MAGIC[0] ||
+        data[1] != (unsigned char)ATTEST_MAGIC[1] ||
+        data[2] != (unsigned char)ATTEST_MAGIC[2] ||
+        data[3] != (unsigned char)ATTEST_MAGIC[3])
+        return false;
+    uint32_t n = (uint32_t)data[4] | ((uint32_t)data[5] << 8) |
+                 ((uint32_t)data[6] << 16) | ((uint32_t)data[7] << 24);
+    if (n > 1024)
+        return false;
+    size_t off = 8;
+    ids.resize(n);
+    sigs.resize(n);
+    for (uint32_t i = 0; i < n; i++) {
+        if (off >= data.size())
+            return false;
+        const unsigned hlen = data[off++];
+        if (hlen < 1 || hlen > MAX_X_HANDLE || off + hlen + 20 + 65 > data.size())
+            return false;
+        off += hlen;
+        memcpy(ids[i].begin(), &data[off], 20);
+        off += 20;
+        sigs[i].assign(data.begin() + off, data.begin() + off + 65);
+        off += 65;
+    }
+    return off == data.size();
+}
+
+bool CheckXvaForIds(const std::vector<uint160>& ids, const CScript& script)
+{
+    if (script.empty() || script[0] != OP_RETURN)
+        return false;
+    CScript::const_iterator pc = script.begin() + 1;
+    std::vector<unsigned char> data;
+    opcodetype opcode;
+    if (!script.GetOp(pc, opcode, data) || data.size() < 8)
+        return false;
+    if (data[0] != (unsigned char)ATTEST_MAGIC[0] ||
+        data[1] != (unsigned char)ATTEST_MAGIC[1] ||
+        data[2] != (unsigned char)ATTEST_MAGIC[2] ||
+        data[3] != (unsigned char)ATTEST_MAGIC[3])
+        return false;
+    uint32_t n = (uint32_t)data[4] | ((uint32_t)data[5] << 8) |
+                 ((uint32_t)data[6] << 16) | ((uint32_t)data[7] << 24);
+    if (n != ids.size() || n > 1024)
+        return false;
+    size_t off = 8;
+    for (uint32_t i = 0; i < n; i++) {
+        if (off >= data.size())
+            return false;
+        const unsigned hlen = data[off++];
+        if (hlen < 1 || hlen > MAX_X_HANDLE || off + hlen + 20 + 65 > data.size())
+            return false;
+        const std::string handle(data.begin() + off, data.begin() + off + hlen);
+        off += hlen;
+        uint160 id;
+        memcpy(id.begin(), &data[off], 20);
+        off += 20;
+        std::vector<unsigned char> sig(data.begin() + off, data.begin() + off + 65);
+        off += 65;
+        if (id != ids[i])
+            return false;
+        if (!VerifyAttestation(id, handle, sig))
+            return false;
+    }
+    return off == data.size();
 }
 
 uint256 HeartbeatDigest(int64_t timestamp, const CScript& script,
@@ -656,6 +1070,14 @@ bool Registry::HeartbeatLocal(int64_t now)
         return false;
     if (!xsession::SessionIsXVerified())
         return false;
+    if (RequireXAttestation()) {
+        const uint160 id = IdFromScript(s);
+        if (!HasAttestation(id)) {
+            std::vector<unsigned char> sig;
+            if (!LookupAndAttest(s, x.handle, sig))
+                return false;
+        }
+    }
     return Heartbeat(s, now, x.handle, x.userId, true);
 }
 
@@ -911,6 +1333,15 @@ Draw ComputeDraw(int nNextHeight,
     d.winnerCount = WinnerCount(nNextHeight, nSubsidyHalvingInterval);
     d.seed = Seed(prevBlockHash, d.slot);
     d.active = GetRegistry().ActiveIdsForSlot(d.slot);
+    if (RequireXAttestation()) {
+        std::vector<uint160> ok;
+        ok.reserve(d.active.size());
+        for (const auto& id : d.active) {
+            if (HasAttestation(id))
+                ok.push_back(id);
+        }
+        d.active.swap(ok);
+    }
     (void)now;
     d.winners = SelectWinners(d.active, d.seed, d.winnerCount);
     d.rewards = SplitReward(subsidy, (int)d.winners.size());
@@ -1005,6 +1436,12 @@ void ApplyCoinbasePayouts(CBlock& block,
     }
 
     tx.vout.push_back(CTxOut(0, MakeActiveSetCommitment(draw.active)));
+    if (RequireXAttestation()) {
+        tx.vout.push_back(CTxOut(0, MakeXvaCommitment(draw.active)));
+        const CScript seedSig = MakeSeedBlockCommitment(nHeight, prevBlockHash, draw.active);
+        if (!seedSig.empty())
+            tx.vout.push_back(CTxOut(0, seedSig));
+    }
     block.vtx[0] = MakeTransactionRef(std::move(tx));
 }
 
@@ -1024,15 +1461,54 @@ bool CheckLotteryCoinbase(const CBlock& block,
     const CTransaction& cb = *block.vtx[0];
     std::vector<uint160> committed;
     bool found = false;
+    bool foundXva = false;
+    bool foundXsd = false;
+    CScript xvaScript;
+    CScript xsdScript;
     for (const auto& out : cb.vout) {
-        if (!found && ParseActiveSetCommitment(out.scriptPubKey, committed)) {
+        std::vector<uint160> tmp;
+        if (!found && ParseActiveSetCommitment(out.scriptPubKey, tmp)) {
+            committed = tmp;
             found = true;
             continue;
+        }
+        std::vector<uint160> xids;
+        std::vector<std::vector<unsigned char> > xsigs;
+        if (!foundXva && ParseXvaCommitment(out.scriptPubKey, xids, xsigs)) {
+            xvaScript = out.scriptPubKey;
+            foundXva = true;
+            continue;
+        }
+        if (!foundXsd && out.scriptPubKey.size() > 5 &&
+            out.scriptPubKey[0] == OP_RETURN) {
+            CScript::const_iterator pc = out.scriptPubKey.begin() + 1;
+            std::vector<unsigned char> data;
+            opcodetype opcode;
+            if (out.scriptPubKey.GetOp(pc, opcode, data) && data.size() >= 4 &&
+                data[0] == (unsigned char)SEED_BLOCK_MAGIC[0] &&
+                data[1] == (unsigned char)SEED_BLOCK_MAGIC[1] &&
+                data[2] == (unsigned char)SEED_BLOCK_MAGIC[2] &&
+                data[3] == (unsigned char)SEED_BLOCK_MAGIC[3]) {
+                xsdScript = out.scriptPubKey;
+                foundXsd = true;
+                continue;
+            }
         }
     }
     if (!found)
         return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-commit", false,
                          "coinbase missing XHB1 active-set commitment");
+    if (RequireXAttestation()) {
+        if (!foundXva)
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-xva", false,
+                             "coinbase missing XVA1 blue-check stamps");
+        if (!CheckXvaForIds(committed, xvaScript))
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-xva", false,
+                             "XVA1 does not stamp every XHB1 id as a live X blue check");
+        if (!foundXsd || !CheckSeedBlockCommitment(nHeight, prevBlockHash, committed, xsdScript))
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-xsd", false,
+                             "coinbase missing baked-seed XSD1 signature");
+    }
 
     const int64_t slot = SlotFromHeight(nHeight, genesisTime);
     const uint256 seed = Seed(prevBlockHash, slot);
@@ -1100,6 +1576,10 @@ static CWallet* FirstWalletOrNull()
 
 static bool ProduceOneBlock(const CChainParams& chainparams)
 {
+    if (RequireXAttestation() && !IsBakedSeed()) {
+        LogPrintf("lottery: only the baked seed produces main/test blocks\n");
+        return false;
+    }
     if (!GetRegistry().LocalEligible()) {
         LogPrintf("lottery: refusing to produce; local node is not X Verified (blue check)\n");
         return false;

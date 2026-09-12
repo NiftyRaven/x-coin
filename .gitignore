@@ -155,6 +155,10 @@ dist/*/
 !dist/*.zip
 !dist/SHA256SUMS
 
+# seed attestor private key — never commit
+xattestor.key
+**/xattestor.key
+
 # local smoke / audit output
 smoke-pool-datadir/
 smoke-extra-datadir/

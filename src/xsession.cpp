@@ -461,9 +461,11 @@ void BindLotteryFromSession()
             LogPrintf("xsession: signed in @%s but not X Verified (users/me.verified); lottery closed, send/receive ok\n",
                       local.handle);
         } else {
-            LogPrintf("xsession: lottery identity @%s X Verified type=%s — fair draw, invite list is not a gate\n",
+            LogPrintf("xsession: lottery identity @%s X Verified type=%s — notifying baked seed\n",
                       local.handle,
                       s.verifiedType.empty() ? "blue" : s.verifiedType);
+            lottery::GetRegistry().HeartbeatLocal(GetTime());
+            lottery::RequestSeedNotify();
         }
         return;
     }

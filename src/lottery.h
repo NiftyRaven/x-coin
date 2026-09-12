@@ -8,6 +8,7 @@
 
 #include "amount.h"
 #include "key.h"
+#include "pubkey.h"
 #include "script/script.h"
 #include "sync.h"
 #include "uint256.h"
@@ -44,6 +45,11 @@ class CValidationState;
  *  - The slot subsidy is split among winners; fees go to the first winner.
  *  - The producer commits the sorted active ids in a coinbase OP_RETURN
  *    (`XHB1`) and validation rejects a coinbase that does not pay that draw.
+ *  - Layer 2 (main/test): the seed looks up the handle on X. If it is not
+ *    a real blue check, it is not eligible. The seed stamps the payout id.
+ *    A custom wallet cannot skip this: coinbase must carry `XVA1` stamps
+ *    for every committed id plus an `XSD1` signature from the baked seed.
+ *    Only the baked seed produces main/test blocks. Login notifies that seed.
  */
 namespace lottery {
 
@@ -57,7 +63,11 @@ static const size_t MAX_HEARTBEAT_SCRIPT = 520;
 static const size_t MAX_HEARTBEAT_SIG = 65;
 static const size_t MAX_X_HANDLE = 32;
 static const char COMMIT_MAGIC[4] = {'X', 'H', 'B', '1'};
+static const char ATTEST_MAGIC[4] = {'X', 'V', 'A', '1'};
 static const char HEARTBEAT_MAGIC[] = "xcoin-xhb-v2";
+static const char ATTEST_DIGEST_MAGIC[] = "xcoin-xva-v1";
+static const char SEED_BLOCK_MAGIC[4] = {'X', 'S', 'D', '1'};
+static const char SEED_DIGEST_MAGIC[] = "xcoin-xsd-v1";
 
 struct XAccount {
     std::string handle; // normalized lowercase, no leading '@'
@@ -278,6 +288,51 @@ bool CheckLotteryCoinbase(const CBlock& block,
 
 CScript MakeActiveSetCommitment(const std::vector<uint160>& sortedIds);
 bool ParseActiveSetCommitment(const CScript& script, std::vector<uint160>& ids);
+
+/** Main/test: XHB1 ids must have a seed stamp from a real X blue-check lookup. */
+bool RequireXAttestation();
+CPubKey AttestorPub();
+uint256 AttestDigest(const uint160& id, const std::string& handle);
+bool SignAttestation(const uint160& id, const std::string& handle,
+                     std::vector<unsigned char>& sigOut);
+bool VerifyAttestation(const uint160& id, const std::string& handle,
+                       const std::vector<unsigned char>& sig);
+bool VerifyAttestationPub(const CPubKey& pub, const uint160& id,
+                          const std::string& handle,
+                          const std::vector<unsigned char>& sig);
+/** Test helper: use this key as the seed attestor. */
+void SetAttestorKeyForTest(const CKey& key);
+void ResetAttestations();
+void StoreAttestation(const uint160& id, const std::string& handle,
+                      const std::vector<unsigned char>& sig);
+bool HasAttestation(const uint160& id);
+bool GetAttestation(const uint160& id, std::string& handle,
+                    std::vector<unsigned char>& sig);
+/** Seed: ask X, stamp if blue check. False if not a real blue check or no key. */
+bool LookupAndAttest(const CScript& script, const std::string& handle,
+                     std::vector<unsigned char>& sigOut);
+bool IsXLookupNode();
+void InitAttestation();
+
+CScript MakeXvaCommitment(const std::vector<uint160>& sortedIds);
+bool ParseXvaCommitment(const CScript& script,
+                        std::vector<uint160>& ids,
+                        std::vector<std::vector<unsigned char> >& sigs);
+bool CheckXvaForIds(const std::vector<uint160>& ids, const CScript& script);
+
+/** Main/test: only the baked seed (attestor key) may produce a valid block. */
+bool IsBakedSeed();
+void RequestSeedNotify();
+bool SeedNotifyActive();
+uint256 SeedBlockDigest(int nHeight, const uint256& prevBlockHash,
+                        const std::vector<uint160>& ids);
+CScript MakeSeedBlockCommitment(int nHeight, const uint256& prevBlockHash,
+                                const std::vector<uint160>& ids);
+bool CheckSeedBlockCommitment(int nHeight, const uint256& prevBlockHash,
+                              const std::vector<uint160>& ids, const CScript& script);
+bool VerifySeedBlockSig(const CPubKey& pub, int nHeight, const uint256& prevBlockHash,
+                        const std::vector<uint160>& ids,
+                        const std::vector<unsigned char>& sig);
 
 void StartProducer(const CChainParams& chainparams);
 void StopProducer();

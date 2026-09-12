@@ -48,6 +48,9 @@ UniValue getlotteryinfo(const JSONRPCRequest& request)
             "  \"local_xuserid\": n,          (numeric) optional numeric X user id\n"
             "  \"local_x_verified\": true|false,(boolean) session users/me.verified (blue check)\n"
             "  \"local_eligible\": true|false,(boolean) X Verified (blue check) + running wallet\n"
+            "  \"attestation_required\": true|false, (boolean) main/test: XHB1 needs seed XVA1 stamps\n"
+            "  \"local_attested\": true|false, (boolean) seed has stamped this payout as a live blue check\n"
+            "  \"x_lookup\": true|false,       (boolean) this node calls X to check actual blue checks\n"
             "  \"local_is_winner\": true|false,\n"
             "  \"allowlist_accounts\": n,     (numeric) operator invite list size (not X Verified)\n"
             "  \"verified_accounts\": n,      (numeric) deprecated alias of allowlist_accounts\n"
@@ -103,6 +106,10 @@ UniValue getlotteryinfo(const JSONRPCRequest& request)
     ret.push_back(Pair("winners", winners));
     ret.push_back(Pair("rewards", rewards));
     ret.push_back(Pair("producer_running", lottery::IsProducerRunning()));
+    ret.push_back(Pair("attestation_required", lottery::RequireXAttestation()));
+    ret.push_back(Pair("local_attested", lottery::HasAttestation(lottery::GetRegistry().LocalId())));
+    ret.push_back(Pair("x_lookup", lottery::IsXLookupNode()));
+    ret.push_back(Pair("baked_seed", lottery::IsBakedSeed()));
     ret.push_back(Pair("currency", std::string("XFER")));
     ret.push_back(Pair("subunit", std::string("xferon")));
     return ret;
@@ -137,6 +144,7 @@ UniValue getactivenodes(const JSONRPCRequest& request)
         obj.push_back(Pair("lastseen", n.lastSeen));
         obj.push_back(Pair("local", n.id == lottery::GetRegistry().LocalId()));
         obj.push_back(Pair("xaccount", n.x.handle));
+        obj.push_back(Pair("attested", lottery::HasAttestation(n.id)));
         ret.push_back(obj);
     }
     return ret;

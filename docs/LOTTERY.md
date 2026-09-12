@@ -237,14 +237,16 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 
 Honest write-up: [SECURITY.md](SECURITY.md). This is not hacker-proof.
 
-- **Sybil:** X Verified (session `users/me.verified`) is the meaning of
-  Verified. Unverified accounts have zero chance. The operator invite
-  list is optional pins / invites and cannot exclude a verified running
-  wallet. Remote gossip still accepts compact-signed heartbeats that
-  assert verified; honest wallets only set that bit from `users/me`.
-  It is not a bonded public lottery: a producer can still
-  commit an active set of scripts, and validation only proves
-  the coinbase matches the *committed* set.
+- **Sybil / custom wallet:** Layer 1 is Sign in with X on the official
+  app (`users/me.verified`). Layer 2 (main/test): the seed looks up the
+  handle on X (`GET /2/users/by/username`). No live blue check → no
+  stamp. Every height ≥ 1 coinbase must include `XVA1` stamps for the
+  committed `XHB1` set; peers check the baked attestor key. A modified
+  binary cannot invent eligibility. Only the **baked seed** may produce
+  main/test blocks (`XSD1` signature). Sign in with X notifies that seed.
+  Residual: a bot can wear a **real** verified handle. The invite list
+  is still not a lottery gate. Regular send/receive still works without
+  Sign-in; lottery XFER does not.
 - **xhb:** gossip is compact-signed by the payout key. A live handle cannot
   be rebound to another script. A listed userid alone cannot authorize a
   different handle. Residual: first-seen after restart unless you pin a

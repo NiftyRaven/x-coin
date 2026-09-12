@@ -201,7 +201,7 @@ bool FindByTag(const std::vector<Release>& all, const std::string& tag, Release&
 std::string BundledNotes()
 {
     return
-        "X Coin 1.0.11\n"
+        "X Coin 1.0.12\n"
         "\n"
         "What changed in this wallet\n"
         "\n"
@@ -213,23 +213,26 @@ std::string BundledNotes()
         "  When a newer GitHub Release is published and the feed is reachable,\n"
         "  Home and the header show that version plus its release notes.\n"
         "  You do not have to leave the wallet to read them.\n"
+        "- Lottery XFER is seed law. Sign in with X notifies the baked seed.\n"
+        "  The seed checks X for a live blue check and stamps that payout.\n"
+        "  Only that seed can produce main/test blocks. A custom wallet\n"
+        "  cannot invent eligibility or mint the lottery.\n"
         "- Assets tab is still sub + unique only. The free MAIN/root is Claim\n"
-        "  after Sign-in. Send and receive work without Sign-in. Lottery still\n"
-        "  needs X Verified (blue check).\n"
+        "  after Sign-in. Send and receive work without Sign-in.\n"
         "\n"
         "Download later wallets from GitHub Releases (not Code → Download ZIP).\n"
-        "Windows: X-Coin-1.0.11-Windows.zip → X Coin Wallet.exe\n"
-        "Linux: X-Coin-1.0.11-Linux-x86_64.tar.gz → X Coin Wallet\n";
+        "Windows: X-Coin-1.0.12-Windows.zip → X Coin Wallet.exe\n"
+        "Linux: X-Coin-1.0.12-Linux-x86_64.tar.gz → X Coin Wallet\n";
 }
 
 std::string BundledName()
 {
-    return "X Coin 1.0.11 — session until quit; What's new in the wallet";
+    return "X Coin 1.0.12 — seed checks live X blue checks";
 }
 
 std::string BundledHtmlUrl()
 {
-    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.11";
+    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.12";
 }
 
 Release BundledRelease()

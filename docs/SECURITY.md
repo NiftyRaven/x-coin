@@ -18,7 +18,8 @@ Attacker goals we actually designed against:
 | Impersonate a typed `@handle` on *this* node | `RequireHandle` / `RequireSession` on root claim, `linkxaccount`, `registeractivenode`. Typed `-xaccount=` is ignored. Send/receive are a normal wallet (keys in this `wallet.dat`). | Steal `xsession.key` + `xsession.json` from this datadir → that attacker *is* the session on this node. |
 | Publish login / OAuth secrets | Access tokens never written. Session files `0600`. GUI does not show user ids or secret paths. P2P `xhb` sends @handle only (no X user id, no token). | A screenshot of RPC `getxsession`, or a copied datadir. |
 | Spend someone else’s wallet | Spend only keys in **this** `wallet.dat`. Session does not import another wallet. | Copy `wallet.dat` (or the 12 words) → they have the keys. |
-| Steal lottery rewards with a spoofed `xhb` | Gossip `xhb` must be compact-signed by the payout key. A **live** handle cannot be rebound to another script. Allowlist match is **handle**, not “any handle + a listed userid.” Optional payout pin. | First-seen race after restart if the handle is not pinned. A producer can still commit a set; consensus checks the coinbase matches that commitment, not “the true mesh.” |
+| Steal lottery rewards with a spoofed `xhb` | Gossip `xhb` must be compact-signed by the payout key. A **live** handle cannot be rebound to another script. Allowlist match is **handle**, not “any handle + a listed userid.” Optional payout pin. | First-seen race after restart if the handle is not pinned. |
+| Invent lottery eligibility with a custom wallet | The seed looks up the handle on X. No live blue check → not stamped. Main/test coinbase must carry `XVA1` stamps for every `XHB1` id. A modified binary cannot skip the stamp. | A bot can still wear a **real** verified handle (name check, not “this program is that person”). |
 | Replay Ravencoin blocks / addresses | Different genesis, magic `XFER` / `XFTN` / `XFRT`, ports, address versions (`X…` / `y…`). | A malicious binary that changes those constants is a different coin. |
 | Unauthenticated RPC spend | HTTP RPC requires cookie or `rpcuser`/`rpcpassword`. No auth header → 401. | Bind RPC on a public interface and leak the cookie / password. |
 | Feed a lone node a fake chain | Consensus still rejects invalid lottery coinbases and wrong subsidy. | `fMiningRequiresPeers` is **false** (a lone eligible node must be able to produce). Checkpoints are empty. An eclipsed node will follow the heaviest *valid* chain its peers feed it. |
@@ -33,8 +34,10 @@ Attacker goals we actually designed against:
   session HMAC (`xsession.json` + `xsession.key`). Send and receive do not.
   A typed handle cannot pass `RequireHandle`.
 - **Lottery membership:** unverified or unsigned gossip is not added to the
-  active set and is not relayed (zero chance). An X Verified running
-  wallet cannot be excluded. Replacing an online handle’s payout
+  active set (zero chance). On main/test the seed also checks X for a
+  live blue check and stamps the payout (`XVA1`). Official Sign in with
+  X is still required on this wallet. A custom app that only flips
+  `verified=true` is not eligible. Replacing an online handle’s payout
   script is rejected.
 - **Network isolation from Ravencoin:** magic, genesis, ports, versions.
 - **RPC:** cookie or password. `sendrawtransaction` is a normal wallet send (no session).
