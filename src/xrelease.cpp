@@ -201,38 +201,32 @@ bool FindByTag(const std::vector<Release>& all, const std::string& tag, Release&
 std::string BundledNotes()
 {
     return
-        "X Coin 1.0.12\n"
+        "X Coin 1.0.13\n"
         "\n"
         "What changed in this wallet\n"
         "\n"
-        "- Sign in with X stays signed in until you close the wallet. There is\n"
-        "  no 2-hour (or any wall-clock) kick while X Coin Wallet is open.\n"
-        "  File → Exit or closing the window signs you out. Headless xcoind\n"
-        "  keeps the session across restart.\n"
-        "- What's new lives in the wallet. Help → What's new shows these notes.\n"
-        "  When a newer GitHub Release is published and the feed is reachable,\n"
-        "  Home and the header show that version plus its release notes.\n"
-        "  You do not have to leave the wallet to read them.\n"
-        "- Lottery XFER is seed law. Sign in with X notifies the baked seed.\n"
-        "  The seed checks X for a live blue check and stamps that payout.\n"
-        "  Only that seed can produce main/test blocks. A custom wallet\n"
-        "  cannot invent eligibility or mint the lottery.\n"
-        "- Assets tab is still sub + unique only. The free MAIN/root is Claim\n"
-        "  after Sign-in. Send and receive work without Sign-in.\n"
+        "- Claim My Asset now reaches the baked seed. 1.0.12 built a valid\n"
+        "  0-fee XID1 root and then hid it behind BIP133 feefilter, so the\n"
+        "  only printer never saw it. This wallet announces identity claims\n"
+        "  even at 0 fee. Sign-in is still required to *build* the claim.\n"
+        "- sendrawtransaction of a well-formed XID1 no longer demands a\n"
+        "  local Sign-in on the submitting node. The seed has no session.\n"
+        "- Sign in with X stays signed in until you close the wallet.\n"
+        "- Lottery XFER is still seed law. No consensus change.\n"
         "\n"
         "Download later wallets from GitHub Releases (not Code → Download ZIP).\n"
-        "Windows: X-Coin-1.0.12-Windows.zip → X Coin Wallet.exe\n"
-        "Linux: X-Coin-1.0.12-Linux-x86_64.tar.gz → X Coin Wallet\n";
+        "Windows: X-Coin-1.0.13-Windows.zip → X Coin Wallet.exe\n"
+        "Linux: X-Coin-1.0.13-Linux-x86_64.tar.gz → X Coin Wallet\n";
 }
 
 std::string BundledName()
 {
-    return "X Coin 1.0.12 — seed checks live X blue checks";
+    return "X Coin 1.0.13 — Claim My Asset reaches the seed";
 }
 
 std::string BundledHtmlUrl()
 {
-    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.12";
+    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.13";
 }
 
 Release BundledRelease()

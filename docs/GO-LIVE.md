@@ -19,7 +19,7 @@ There are no public DNS seeds. Packaged `xcoin.conf` already has
 | Role | What to run |
 | --- | --- |
 | Baked seed | Headless `xcoind` 1.0.12 on Azure. Attestor key + X bearer. **No Sign-in.** |
-| Everyone else | **1.0.12** desktop zip from [Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.12). Sign in with X. Leave the window open. |
+| Everyone else | **1.0.13** desktop zip from [Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.13). Sign in with X. Leave the window open. |
 
 The seed is **not** a user’s double-clicked wallet. Do not Sign in on
 the seed. Do not put `xattestor.key` or the bearer in the zip.
@@ -30,7 +30,7 @@ There is **no** slot+120 abort.
 
 ## User path (launch night)
 
-1. Download **1.0.12** (not 1.0.11, not Code → Download ZIP).
+1. Download **1.0.13** (not 1.0.12 for Claim, not Code → Download ZIP).
 2. Double-click **X Coin Wallet** / **X Coin Wallet.exe**.
 3. Sign in with X once. Claim the free root if you want the identity
    asset (blue check not required for the root; required for the hat).

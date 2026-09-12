@@ -50,23 +50,23 @@ echo "$NOTES"
 echo "$NOTES" | python3 -c '
 import json,sys
 j=json.load(sys.stdin)
-if j.get("version") != "1.0.12" or j.get("tag") != "v1.0.12":
-    sys.exit("getreleasenotes must report this wallet as 1.0.12 (got %r)" % j)
+if j.get("version") != "1.0.13" or j.get("tag") != "v1.0.13":
+    sys.exit("getreleasenotes must report this wallet as 1.0.13 (got %r)" % j)
 notes = j.get("notes") or ""
-if "Sign in with X stays signed in" not in notes:
-    sys.exit("bundled notes must mention session until close")
+if "Claim My Asset" not in notes and "Sign in with X stays signed in" not in notes:
+    sys.exit("bundled notes must mention Claim My Asset or session until close")
 if "What" not in notes and "new" not in notes.lower():
     sys.exit("bundled notes must mention What'\''s new")
 '
-FEED='[{"tag_name":"v1.0.13","name":"X Coin 1.0.13","body":"Newer notes.","html_url":"https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.13","draft":false,"prerelease":false},{"tag_name":"v1.0.11","body":"this","draft":false,"prerelease":false}]'
+FEED='[{"tag_name":"v1.0.14","name":"X Coin 1.0.14","body":"Newer notes.","html_url":"https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.14","draft":false,"prerelease":false},{"tag_name":"v1.0.11","body":"this","draft":false,"prerelease":false}]'
 PARSED="$("${CLI[@]}" getreleasenotes "$FEED")"
 echo "$PARSED"
 echo "$PARSED" | python3 -c '
 import json,sys
 j=json.load(sys.stdin)
 n=j.get("newer") or {}
-if n.get("tag") != "v1.0.13":
-    sys.exit("feed parse must pick v1.0.13 as newer (got %r)" % n)
+if n.get("tag") != "v1.0.14":
+    sys.exit("feed parse must pick v1.0.14 as newer (got %r)" % n)
 if "Newer notes" not in (n.get("notes") or ""):
     sys.exit("newer notes must come from the feed body")
 '
