@@ -9,7 +9,9 @@ A typed handle is not an identity. The wallet uses OAuth 2.0 PKCE, then
 `GET /2/users/me`, and binds **that** user id + username to this node's
 datadir. Send and receive do **not** require that session (normal wallet).
 Claiming the free root does. Only **X Verified**
-signed-in handles enter the lottery.
+signed-in handles enter the lottery, and only after the **baked seed**
+looks that handle up on X and stamps it (`XVA1`). Local Home
+“eligible” is this session. The draw is the seed’s stamp.
 
 **X Verified** is X’s blue check / X Premium (and org checks per that
 policy) — a user X itself marks verified. Official meaning:

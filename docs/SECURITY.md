@@ -2,132 +2,141 @@
 
 **Nifty Raven** (@NFTRVN on X)
 
-Nothing here is “hacker proof.” This is a **small private / fair-launch
-UTXO + lottery mesh**. Honest operators plus the checks below make
-*cheap* sabotage fail. A well-resourced peer who can eclipse you, steal
-your datadir, or out-vote a lone node can still lie to you.
+Ship is **1.0.12**. Nothing here is “hacker proof.” This is a **small
+fair-launch UTXO + lottery mesh** whose **baked seed is lottery law**
+on main/test. Honest operators plus the checks below make *cheap*
+sabotage fail. A stolen attestor key, an eclipsed lone node, or a
+clique of **real** X Verified accounts can still hurt you.
 
-Repo stays **private**. There are no public DNS seeds on purpose.
+Downloads:
+[Releases v1.0.12](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.12).
+There are no public DNS seeds on purpose.
+
+## What 1.0.12 closed
+
+The issue that was actually shipping: a modified wallet could assert
+`verified=true`, enter the hat, and (on older builds) emit a block.
+
+On **1.0.12 main/test**:
+
+| Attack | Status |
+| --- | --- |
+| User app emits a height ≥ 1 block | **Dead.** Only the baked seed’s `XSD1` is valid. |
+| Flip `verified=true` and join the hat | **Dead.** Seed looks the handle up on X. No live blue check → no `XVA1` stamp → not in the draw. |
+| Invent `@nobody` in `XHB1` | **Dead.** Every id in `XHB1` must carry a seed `XVA1` stamp peers check against the baked pubkey. |
+| Seed takes the prize | **Dead.** The printer is not in the hat. |
+| Download `xattestor.key` over P2P `:38443` | **Dead.** P2P is blocks and `xhb`. RPC `:38442` is localhost. |
+
+That is **counterfeit tickets** and **homemade mint**. It is not
+personhood and it is not a trustless census of every live blue-check
+node on Earth.
+
+## What consensus actually checks
+
+Peers verify **consistency of the paper the seed published**:
+
+1. `XSD1` is signed by the baked attestor pubkey.
+2. Every id in `XHB1` has a matching `XVA1` stamp for a handle the seed
+   signed.
+3. Coinbase pays that draw and does not underpay the subsidy.
+
+Peers do **not** call X. They do **not** prove “this list is every live
+X Verified node.” Eligibility is the seed’s `GET /2/users/by/username`
+lookup. Consensus checks the **seal**, not attendance in the parking
+lot. That completeness gap is still there. Say that plainly.
 
 ## Threat model (release sabotage)
 
-Attacker goals we actually designed against:
-
 | Goal | What we guarantee | What we do not |
 | --- | --- | --- |
-| Impersonate a typed `@handle` on *this* node | `RequireHandle` / `RequireSession` on root claim, `linkxaccount`, `registeractivenode`. Typed `-xaccount=` is ignored. Send/receive are a normal wallet (keys in this `wallet.dat`). | Steal `xsession.key` + `xsession.json` from this datadir → that attacker *is* the session on this node. |
-| Publish login / OAuth secrets | Access tokens never written. Session files `0600`. GUI does not show user ids or secret paths. P2P `xhb` sends @handle only (no X user id, no token). | A screenshot of RPC `getxsession`, or a copied datadir. |
-| Spend someone else’s wallet | Spend only keys in **this** `wallet.dat`. Session does not import another wallet. | Copy `wallet.dat` (or the 12 words) → they have the keys. |
-| Steal lottery rewards with a spoofed `xhb` | Gossip `xhb` must be compact-signed by the payout key. A **live** handle cannot be rebound to another script. Allowlist match is **handle**, not “any handle + a listed userid.” Optional payout pin. | First-seen race after restart if the handle is not pinned. |
-| Invent lottery eligibility with a custom wallet | The seed looks up the handle on X. No live blue check → not stamped. Main/test coinbase must carry `XVA1` stamps for every `XHB1` id. A modified binary cannot skip the stamp. | A bot can still wear a **real** verified handle (name check, not “this program is that person”). |
-| Replay Ravencoin blocks / addresses | Different genesis, magic `XFER` / `XFTN` / `XFRT`, ports, address versions (`X…` / `y…`). | A malicious binary that changes those constants is a different coin. |
-| Unauthenticated RPC spend | HTTP RPC requires cookie or `rpcuser`/`rpcpassword`. No auth header → 401. | Bind RPC on a public interface and leak the cookie / password. |
-| Feed a lone node a fake chain | Consensus still rejects invalid lottery coinbases and wrong subsidy. | `fMiningRequiresPeers` is **false** (a lone eligible node must be able to produce). Checkpoints are empty. An eclipsed node will follow the heaviest *valid* chain its peers feed it. |
+| Impersonate a typed `@handle` on *this* node | `RequireHandle` / `RequireSession` on root claim, `linkxaccount`, `registeractivenode`. Typed `-xaccount=` is ignored. Send/receive are a normal wallet. | Steal `xsession.key` + `xsession.json` from this datadir → that attacker *is* the session on this node. |
+| Publish login / OAuth secrets | Access tokens never written. Session files `0600`. P2P `xhb` sends @handle only (no X user id, no token). | A screenshot of RPC `getxsession`, or a copied datadir. |
+| Spend someone else’s wallet | Spend only keys in **this** `wallet.dat`. | Copy `wallet.dat` (or the 12 words) → they have the keys. |
+| Steal lottery rewards with a spoofed `xhb` | Gossip `xhb` must be compact-signed by the payout key. A **live** handle cannot be rebound. Seed must still stamp after a live X lookup. | First-seen race after restart if the handle is not pinned. |
+| Invent lottery eligibility with a custom wallet | Seed X lookup + `XVA1` + `XSD1`. A modified binary cannot skip the stamp or mint. | A bot can still wear a **real** verified handle (name check, not personhood). |
+| Replay Ravencoin blocks / addresses | Different genesis, magic `XFER` / `XFTN` / `XFRT`, ports, address versions (`X…`). | A malicious binary that changes those constants is a different coin. |
+| Unauthenticated RPC spend | Cookie or `rpcuser`/`rpcpassword`. No auth header → 401. | Bind RPC on a public interface and leak the cookie. |
+| Feed a lone node a fake chain | Height ≥ 1 main/test blocks without valid `XHB1`+`XVA1`+`XSD1` are rejected. | Checkpoints are empty. An eclipsed node follows the heaviest *valid* seed-signed chain its peers feed it. |
 
 ## What is tamper-resistant
 
-- **Ledger rules:** height ≥ 1 coinbase must commit `XHB1`, pay the draw,
-  and not underpay the subsidy. Height 0 genesis coinbase is unspendable.
-  Invalid blocks are rejected. There is no PoW grind; `CheckProofOfWork`
-  is a no-op by design (lottery, not hash). Lottery pools were removed.
-- **Identity on this node:** root claim / own require a
-  session HMAC (`xsession.json` + `xsession.key`). Send and receive do not.
-  A typed handle cannot pass `RequireHandle`.
-- **Lottery membership:** unverified or unsigned gossip is not added to the
-  active set (zero chance). On main/test the seed also checks X for a
-  live blue check and stamps the payout (`XVA1`). Official Sign in with
-  X is still required on **user** wallets. The baked seed has no
-  session. A custom app that only flips `verified=true` is not
-  eligible. Replacing an online handle’s payout script is rejected.
+- **Ledger rules:** height ≥ 1 coinbase must commit `XHB1`, carry
+  `XVA1` and `XSD1` on main/test, pay the draw, and not underpay the
+  subsidy. Height 0 genesis coinbase is unspendable. There is no PoW
+  grind; `CheckProofOfWork` is a no-op. Lottery pools were removed.
+- **Identity on this node:** root claim requires a session HMAC.
+  Send and receive do not. A typed handle cannot pass `RequireHandle`.
+- **Lottery membership:** unsigned / unverified gossip is dropped. The
+  baked seed checks X and stamps (`XVA1`). User wallets Sign in with X.
+  The seed has no session and is not in the hat. A custom app that only
+  flips `verified=true` is not eligible.
 - **Network isolation from Ravencoin:** magic, genesis, ports, versions.
-- **RPC:** cookie or password. `sendrawtransaction` is a normal wallet send (no session).
-- **What's new feed:** the GUI may GET GitHub Releases (or `-xreleaseurl=`).
-  No wallet, session, or token is sent. 404 while the repo is private is
-  expected. `-nocheckupdates` turns the GET off. [UPDATES.md](UPDATES.md).
+- **RPC:** cookie or password. `sendrawtransaction` is a normal send.
+- **What's new feed:** GUI may GET GitHub Releases. No wallet or token
+  is sent. [UPDATES.md](UPDATES.md).
 
-## What an attacker can still do on a small private mesh
+## What an attacker can still do
 
-1. **Eclipse / fake peers.** Connect only to attacker nodes. They can
-   stall you or feed another *valid* lottery chain. There is no assumevalid
-   checkpoint. **Connect to a known seed** (`addnode=` / `seednode=`).
-2. **Majority of eligible producers.** Whoever the committed active set
-   selects can mint. Unverified accounts have zero chance. A modified
-   client can still assert `xVerified` on gossip (compact-signed by the
-   payout key); honest wallets only set that bit from `users/me`.
-3. **First-seen handle grab** (no payout pin). After a restart, the first
-   signed `xhb` for `alice` wins until TTL. Pin the payout in the allowlist
-   (`handle [userid] Xaddress…`) if you need to close that window.
-4. **Datadir theft.** `wallet.dat` / 12 words = coins. `xsession.key` +
-   `xsession.json` = identity on that node (not spend of another machine’s
-   wallet).
-5. **Mempool / inv spam.** Inherited Bitcoin-family limits (`MAX_INV_SZ`,
-   min relay fee, banscore). A loud peer can still waste bandwidth; ban it
-   (`setban`) and lower `-maxconnections` on a seed.
-6. **Host / binary / RPC exposure.** Compromise of the operator box, a
-   backdoored build, or an open `38442` is out of consensus scope.
+1. **Omit / incomplete hopper.** The seed publishes whoever it stamped
+   this minute. A live peer the seed did not hear (or whose lookup
+   failed) is absent from `XHB1`. Honest peers still accept the block.
+2. **X API 401 / 429.** A bad or rate-limited bearer means **no new
+   stamps**. After a seed restart the in-memory stamp table is empty.
+   An empty hat that minute pays nobody. Keep the portal bearer string
+   as copied (`%2B` / `%3D` left encoded). The seed HTTP client must
+   dechunk X’s body (1.0.12 `094f159`); raw `74\\r\\n{` is not JSON.
+3. **Several real blue checks.** One human with many verified accounts
+   and many online boxes holds many legal tickets.
+4. **Eclipse.** Attacker peers can stall you. They cannot make 1.0.12
+   accept a block the seed did not sign. Connect to
+   `addnode=172.191.195.221:38443`.
+5. **Seed offline.** Only the baked seed produces. If that process is
+   down, **liveness stops**. History already written stays. Do not give
+   users a “I am a backup seed” checkbox.
+6. **Stolen `xattestor.key`.** That file **is** the printer. P2P cannot
+   fetch it. A copied datadir / PEM / screenshot can.
+7. **1.0.11 leftovers.** Old wallets share genesis and can emit a side
+   fork. 1.0.12 rejects those blocks. Do not run 1.0.11.
+8. **Datadir theft.** `wallet.dat` / 12 words = coins. Session files =
+   identity on that node.
+9. **Host / binary / open `38442`.** Out of consensus scope.
 
-Do not claim the chain is military-grade or unhackable.
+Do not claim the chain is PoW-equivalent or unhackable.
 
-## Operator checklist (release day)
+## Operator checklist (launch night)
 
 Stay private. Do **not** add public DNS seeds.
 
-1. **One trusted seed** you control. Open **TCP 38443** only. The seed
-   does **not** Sign in (no `xsession`). It needs the attestor key, an
-   X API bearer for lookup, and listen:
+1. **One baked seed** (`172.191.195.221`). Open **TCP 38443** only. No
+   Sign-in on the seed. Attestor key + X app bearer + listen.
 
    ```bash
-   src/xcoind -listen=1 -port=38443 -server \
+   xcoind -listen=1 -port=38443 -server \
      -bind=0.0.0.0:38443 \
      -maxconnections=32 \
      -xlookupbearer="$XCOIN_X_BEARER" \
-     -xattestorkey=/root/.xcoin/xattestor.key
+     -xattestorkey=/home/azureuser/.xcoin/xattestor.key
    ```
 
-   Or set `XCOIN_X_BEARER` and keep `~/.xcoin/xattestor.key` (must
-   match the baked pubkey). Do not put the bearer or the key in the
-   user zip. RPC stays local (default). Use the cookie or a strong
-   `-rpcpassword`. Do not expose **38442**.
+   Confirm `getlotteryinfo`: `baked_seed=true`, `x_lookup=true`,
+   `local_eligible=false`. `stamped_handles` is the hat. Never put the
+   bearer or the key in the user zip. Do not expose **38442**.
 
-2. **Every other node** puts a **trusted peer IP in the config file**
-   (`xcoin.conf`) — not a stranger, not a BIP39 seed, not a required
-   GUI field:
+2. Everyone else runs the **1.0.12** zip. Packaged `xcoin.conf` already
+   has `addnode=172.191.195.221:38443`.
 
-   ```
-   addnode=<trusted-peer-ip>:38443
-   ```
+3. **Sign in with X** on each **user** datadir. Leave the GUI open
+   through the first payday (File → Exit drops the session).
 
-   Optional: `-connect=<trusted-peer-ip>:38443` (only that peer; harder
-   to eclipse *if* the seed is honest; you also cannot see a second
-   honest view). The wallet GUI never lists other people's IPs. Sharing
-   *your* listen address is opt-in on Home (**Provide my node IP**; off
-   by default).
+4. After height 1, confirm the same tip as the seed
+   (`getblockchaininfo`).
 
-3. **Optional invite / payout-pin file** (not a lottery gate). Confirm
-   each handle offline if you use pins. Prefer `handle userid` and, for
-   the seed operators you care about, pin the payout:
-
-   ```
-   NFTRVN 123456789 XyourPinnedAddressxxxxxxxxxxxxxxxxx
-   ```
-
-4. **Sign in with X** on each **user** datadir (or `-regtest` mock).
-   Do not Sign in on the baked seed. Do not type someone else’s handle
-   into `linkxaccount` / `-xaccount`.
-
-5. **Confirm you are on the same tip** as the seed (`getblockchaininfo`
-   best hash / height). If you only have attacker peers, you will agree
-   with *them*.
-
-6. **Ban obvious junk.** `-banscore`, `-bantime`, `setban`. Lower
-   `-maxconnections` on the seed so a connection flood cannot occupy every
-   slot.
-
-7. **Datadir permissions.** `~/.xcoin` is the wallet, session, and
-   payout key (`lottery-payout.key`). Treat it like a hot wallet.
+5. Seed `~/.xcoin` holds `xattestor.key` and the bearer line. Mode
+   `600`. Treat it like the printer.
 
 ## Related
 
-- Private-test facts: [AUDIT.md](AUDIT.md)
-- Operator runbook: [LAUNCH.md](LAUNCH.md)
-- Lottery / session: [LOTTERY.md](LOTTERY.md), [XSIGNIN.md](XSIGNIN.md), [WALLET.md](WALLET.md)
+- Lottery / session: [LOTTERY.md](LOTTERY.md), [XSIGNIN.md](XSIGNIN.md)
+- 1.0.12 notes: [RELEASE-1.0.12.md](RELEASE-1.0.12.md)
+- Operator runbook: [LAUNCH.md](LAUNCH.md), [GO-LIVE.md](GO-LIVE.md)
+- Whitepaper: [../whitepaper/XCOIN.md](../whitepaper/XCOIN.md)

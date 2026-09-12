@@ -17,9 +17,11 @@ they issue.
 
 There is no mining. Block production is a **minute lottery** among
 nodes that are signed in as **X Verified** — X’s blue check / X Premium
-(and business or government organization checks) as reported by
-`GET /2/users/me`. Unverified accounts have no lottery chance. Each
-subsidy halving adds one more winner that minute.
+(and business or government organization checks). On main/test the
+**baked seed** is the only printer. It looks each competing handle up
+on X, stamps live blue checks (`XVA1`), and signs the block (`XSD1`).
+User wallets cannot mint. Unverified accounts have no lottery chance.
+Each subsidy halving adds one more winner that minute.
 
 Launch is a **fair launch**: no premine, no founder allocation, no IPO.
 Height 0 is genesis, not a payday. Spendable lifetime supply is about
@@ -64,7 +66,8 @@ own UTXO ledger. As of this writing the chain remains private until
 | Ticker | XFER |
 | Subunit | xferon (1e8 per XFER) |
 | Production | Minute lottery. No Proof-of-Work. |
-| Eligible set | X Verified, signed-in, running nodes |
+| Eligible set | X Verified running nodes **stamped by the baked seed** |
+| Printer (main/test) | Baked seed only (`XSD1`). Seed is not in the hat. |
 | Halvings | Subsidy halves; winner count that minute increases by one |
 | Launch | Fair. No premine. No founder allocation. |
 | Spendable supply | 20,999,994,999.727 XFER (~21 billion) |
@@ -76,9 +79,12 @@ own UTXO ledger. As of this writing the chain remains private until
 | Wallets | Desktop GUI on Linux and Windows (`xcoin-qt`). Practice is always `-regtest`. |
 | License | MIT |
 
-Consensus does not call X.com on every block. Sign in with X binds a
-real X account to a node’s data directory once. After that, lottery
-gossip carries the public `@handle` only.
+Consensus does not call X.com on every peer. **User** Sign in with X
+binds a real X account to a node’s data directory (`GET /2/users/me`).
+The **baked seed** is the only node that looks handles up on X
+(`GET /2/users/by/username`) and stamps the hat. After that, lottery
+gossip carries the public `@handle` only. Peers check the seed’s
+signature, not X.
 
 ## 3. Fair launch and supply
 
@@ -88,7 +94,7 @@ X Coin starts with an empty spendable set.
 block and is never added to the UTXO set. It is not a payday, not a
 hidden allocation, and not a founder output. **Height 1** is the first
 subsidy: 5000 XFER, produced in the first lottery minute after genesis
-when an X Verified eligible node is running.
+when a stamped X Verified node is in the seed’s hat.
 
 The genesis timestamp is the lottery clock. Main `nTime` is
 **1789197360** — **12 September 2026, 3:16:00 AM America/New_York
@@ -152,22 +158,32 @@ The numeric X user id and OAuth tokens never go on the wire. Heartbeats
 that are unsigned, unverified, or that try to rebind a live handle are
 ignored.
 
-**X Verified** is what X itself reports on `GET /2/users/me`
-(`verified` / `verified_type`): the blue check / X Premium, plus
-business and government organization checks.
+On **main/test** a node is in the **hat** only if the baked seed
+stamped that payout after a live X blue-check lookup. Local GUI
+“eligible” is Sign-in + `users/me`. Seed “eligible” is `XVA1`.
+Gossip that only flips `verified=true` does not enter the draw.
+
+**X Verified** is what X itself reports (`verified` /
+`verified_type`): the blue check / X Premium, plus business and
+government organization checks.
 [About the blue check](https://help.x.com/en/managing-your-account/about-x-bluecheck)
 per [X’s verification policy](https://help.x.com/en/rules-and-policies/verification-policy).
 It is not an operator invite list.
 
-Lottery eligibility on this node is all three of:
+Lottery eligibility for a **user** wallet is all of:
 
 1. A valid Sign in with X session (user id + username + proof).
 2. That session reports X Verified (`verified == true`).
-3. This wallet is running (local payout + heartbeat).
+3. This wallet is running and heartbeating to the baked seed.
+4. The seed’s X lookup stamps that handle (`stamped_handles` /
+   `XVA1`).
 
 A signed-in handle that is not X Verified can still send and receive.
-It has **zero lottery chance**. A verified running wallet cannot be
-excluded from the draw.
+It has **zero lottery chance**. A verified running wallet that the
+seed never hears is also not in that minute’s draw (completeness;
+peers will not reject the block).
+
+The **baked seed** does not Sign in and is not a lottery winner.
 
 ### Seed and winners
 
@@ -175,26 +191,28 @@ excluded from the draw.
 seed = SHA256( prevBlockHash || LE64(slot) )
 ```
 
-Winners are drawn from the sorted active ids with a partial
-Fisher–Yates shuffle driven by `SHA256(seed || LE32(i))`. The first
-selected winner may produce the block. Honest nodes that agree on the
-tip and the slot therefore agree on the draw.
+Winners are drawn from the sorted **stamped** active ids with a partial
+Fisher–Yates shuffle driven by `SHA256(seed || LE32(i))`. The baked
+seed produces the block; it is not required to be a winner. Honest
+nodes that agree on the tip and the slot therefore agree on the draw
+from the committed set.
 
 The coinbase must:
 
 1. Include an `OP_RETURN` commitment `XHB1` of the sorted active ids
    used for the draw.
-2. Pay the draw: one output per winner, in selection order, the
+2. On main/test, include `XVA1` stamps for every id in that set and
+   `XSD1` signed by the baked attestor key.
+3. Pay the draw: one output per winner, in selection order, the
    correct split of the subsidy (plus fees on the first output).
 
 A mismatch is an invalid block. An empty committed set is invalid.
 Lottery pools (`XPL1`, create / join / leave) were removed. One
 lottery. One coinbase per height.
 
-On mainnet the producer emits at most one block per wall-clock minute
-when this node wins (catch-up may target an older slot; the latch
-still holds). There is no slot+120 abort. On testnet the producer
-waits until wall-clock slot ≥ height slot. On regtest,
+On mainnet the **baked seed** emits at most one block per wall-clock
+minute. Catch-up may target an older slot; the latch still holds.
+There is no slot+120 abort. User wallets do not mint. On regtest,
 `generatetoaddress` assembles a block on demand (still without
 hashing) so tests do not wait on the clock.
 
@@ -296,8 +314,10 @@ of that chain.
 | Data dir (Unix) | `~/.xcoin` | `~/.xcoin/testnet1` | `~/.xcoin/regtest` |
 
 There are no public DNS seeds. A mesh uses `addnode` / `seednode` on
-port **38443**. A lone eligible node can produce and store the ledger.
-Other people seeing the same tip still need two or more peers.
+port **38443**. Packaged wallets already add
+`172.191.195.221:38443`. Only the baked seed produces main/test
+blocks. If that seed is offline, the chain does not grow until it
+returns. Other people seeing the same tip still need to peer it.
 
 User agent is `XCoin`. Signed messages use `X Coin Signed Message:\n`.
 Mainnet P2PKH addresses start with **X**.
@@ -365,15 +385,16 @@ network.
 
 - Gossip `xVerified` is compact-signed by the payout key. Honest
   wallets set that bit only from `users/me`. A modified client can
-  still assert it on the wire. Consensus checks that a coinbase matches
-  the *committed* active set, not “the true mesh.”
-- A live handle cannot be rebound. Residual: first-seen after restart
-  unless a payout is pinned; eclipse of a node that only talks to
-  attacker peers.
+  still assert it on the wire. **1.0.12** does not put that bit in the
+  hat: the seed must stamp the handle after a live X lookup. Consensus
+  checks the seed-signed `XHB1` set, not “the true mesh.”
+- Completeness: a live verified node the seed did not stamp is omitted
+  and peers still accept the block.
+- Real extra tickets: many real blue checks = many legal tickets.
+- Seed offline stops new blocks. Stolen `xattestor.key` is the printer.
 - Clock skew can delay a slot; height still maps 1:1.
-- There are no checkpoints and no public DNS seeds. An eclipsed node
-  follows the heaviest *valid* chain its peers feed it. Connect to a
-  known seed.
+- There are no checkpoints and no public DNS seeds. Connect to the
+  baked seed.
 
 Threat model: [docs/SECURITY.md](../docs/SECURITY.md). Treat the
 lottery as specified here. Do not reintroduce Proof-of-Work as the
@@ -396,12 +417,12 @@ for compatibility, not as product branding — is in
 ## 11. Conclusion
 
 X Coin is a fair-launched UTXO ledger whose native unit is XFER, whose
-block producers are X Verified running nodes chosen each minute by a
-deterministic lottery, and whose identity layer binds a wallet to a
-real X account without replacing the BIP39 seed.
+**baked seed** prints each main/test minute and pays X Verified
+running nodes the seed stamped that minute, and whose identity layer
+binds a wallet to a real X account without replacing the BIP39 seed.
 
-No premine. No founder allocation. No mining. One free root per
-signed-in X account. Desktop wallets on Linux and Windows.
+No premine. No founder allocation. No mining. No user mint. One free
+root per signed-in X account. Desktop wallets on Linux and Windows.
 
 The running node enforces these rules. Algorithms this paper
 summarizes are specified in the annexes below.
