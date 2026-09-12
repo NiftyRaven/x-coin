@@ -58,15 +58,15 @@ if "Sign in with X stays signed in" not in notes:
 if "What" not in notes and "new" not in notes.lower():
     sys.exit("bundled notes must mention What'\''s new")
 '
-FEED='[{"tag_name":"v1.0.12","name":"X Coin 1.0.12","body":"Newer notes.","html_url":"https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.12","draft":false,"prerelease":false},{"tag_name":"v1.0.11","body":"this","draft":false,"prerelease":false}]'
+FEED='[{"tag_name":"v1.0.13","name":"X Coin 1.0.13","body":"Newer notes.","html_url":"https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.13","draft":false,"prerelease":false},{"tag_name":"v1.0.11","body":"this","draft":false,"prerelease":false}]'
 PARSED="$("${CLI[@]}" getreleasenotes "$FEED")"
 echo "$PARSED"
 echo "$PARSED" | python3 -c '
 import json,sys
 j=json.load(sys.stdin)
 n=j.get("newer") or {}
-if n.get("tag") != "v1.0.12":
-    sys.exit("feed parse must pick v1.0.12 as newer (got %r)" % n)
+if n.get("tag") != "v1.0.13":
+    sys.exit("feed parse must pick v1.0.13 as newer (got %r)" % n)
 if "Newer notes" not in (n.get("notes") or ""):
     sys.exit("newer notes must come from the feed body")
 '
