@@ -4,7 +4,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${OUT:-$ROOT/dist}"
-VER="${VER:-1.0.12}"
+VER="${VER:-1.0.13}"
 NAME="xcoin-${VER}-linux-x86_64"
 STAGE="$OUT/$NAME"
 
