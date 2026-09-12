@@ -2110,9 +2110,9 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
                 if (!ParseXAccountAssignment(*tx, xid))
                     throw JSONRPCError(RPC_INVALID_PARAMETER,
                         "Users cannot create main assets. Sign in with X, then linkxaccount.");
-                std::string herr;
-                if (!xsession::RequireHandle(xid, herr))
-                    throw JSONRPCError(RPC_INVALID_PARAMETER, herr);
+                // Do not RequireHandle here. That check belongs on the wallet
+                // that *builds* the claim. The baked seed has no session; a
+                // well-formed XID1 must still be injectable / relayable.
             } else {
                 std::string oerr;
                 if (!RequireIssueUnderOwnMain(asset.strName, oerr))
