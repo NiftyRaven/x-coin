@@ -175,7 +175,7 @@ Status LookupHandle(const std::string& handle, std::string& err)
     const std::string bearer = BearerToken();
     if (bearer.empty()) {
         err = "no -xlookupbearer / XCOIN_X_BEARER";
-        return ERROR;
+        return LOOKUP_FAILED;
     }
 
     int httpStatus = 0;
@@ -183,7 +183,7 @@ Status LookupHandle(const std::string& handle, std::string& err)
     const std::string path = "/2/users/by/username/" + norm +
                              "?user.fields=verified,verified_type";
     if (!HttpsGetTwitter(path, bearer, httpStatus, body, err))
-        return ERROR;
+        return LOOKUP_FAILED;
 
     if (httpStatus == 404) {
         LOCK(cs_lookup);
@@ -192,7 +192,7 @@ Status LookupHandle(const std::string& handle, std::string& err)
     }
     if (httpStatus == 429 || httpStatus >= 500) {
         err = strprintf("x lookup http %d", httpStatus);
-        return ERROR;
+        return LOOKUP_FAILED;
     }
     if (httpStatus != 200) {
         LOCK(cs_lookup);
@@ -204,7 +204,7 @@ Status LookupHandle(const std::string& handle, std::string& err)
     std::string perr;
     if (!xsession::ParseUsersMe(body, me, perr)) {
         err = perr.empty() ? "parse users/by" : perr;
-        return ERROR;
+        return LOOKUP_FAILED;
     }
     const Status st = xsession::IsOfficialXVerified(me.verified, me.verifiedType)
                           ? VERIFIED
