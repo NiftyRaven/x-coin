@@ -34,6 +34,7 @@
 #include "utilstrencodings.h"
 #include "lottery.h"
 #include "xsession.h"
+#include "assets/xaccount.h"
 #include "validationinterface.h"
 
 #if defined(NDEBUG)
@@ -3698,7 +3699,11 @@ bool PeerLogicValidation::SendMessages(CNode* pto, std::atomic<bool>& interruptM
                     CInv inv(MSG_TX, hash);
                     pto->setInventoryTxToSend.erase(hash);
                     if (filterrate) {
-                        if (txinfo.feeRate.GetFeePerK() < filterrate)
+                        // 0-fee XID1 identity claims are consensus-free by design.
+                        // Do not hide them behind BIP133 feefilter or they never
+                        // reach the baked seed (the only main/test printer).
+                        if (txinfo.feeRate.GetFeePerK() < filterrate &&
+                            !IsXAccountIdentityClaim(*txinfo.tx))
                             continue;
                     }
                     if (pto->pfilter) {
@@ -3752,7 +3757,8 @@ bool PeerLogicValidation::SendMessages(CNode* pto, std::atomic<bool>& interruptM
                     if (!txinfo.tx) {
                         continue;
                     }
-                    if (filterrate && txinfo.feeRate.GetFeePerK() < filterrate) {
+                    if (filterrate && txinfo.feeRate.GetFeePerK() < filterrate &&
+                        !IsXAccountIdentityClaim(*txinfo.tx)) {
                         continue;
                     }
                     if (pto->pfilter && !pto->pfilter->IsRelevantAndUpdate(*txinfo.tx)) continue;

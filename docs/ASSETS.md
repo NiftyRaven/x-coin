@@ -95,7 +95,17 @@ The assignment transaction carries an `OP_RETURN` `XID1` + normalized
 handle so consensus can enforce one X account → one root. An empty
 wallet can claim that root: the claim is a 0-XFER identity transaction
 with a dummy prevout unique per X handle (empty vin is BIP144-illegal).
-That dummy is not a spendable coin and is not a premine. Subs still burn
+That dummy is not a spendable coin and is not a premine.
+
+Relay of that 0-fee claim **must** ignore BIP133 `feefilter`. Mempool
+accept already exempts `IsXAccountIdentityClaim` from min-relay; the
+baked seed is the only main/test printer. If announce honors the seed’s
+fee filter, Claim sits `0/unconfirmed` forever. `sendrawtransaction` of
+a well-formed `XID1` does **not** require a session on the submitting
+node (the seed has none). Sign-in is required on the wallet that
+*builds* the claim.
+
+Subs still burn
 100 XFER. Uniques still burn 5 XFER.
 
 ## What you can issue
