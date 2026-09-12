@@ -31,18 +31,26 @@ Genesis (height 0) is not a lottery block and is not a payday. The serialized ge
 
 ## X Verified eligibility (anti-bot)
 
-Consensus does **not** call X.com on every block. **Sign in with X**
-stores `verified` / `verified_type` from `GET /2/users/me` in
-`xsession.json` with the HMAC proof. Lottery eligibility for this node:
+Consensus does **not** call X.com on every peer. Two layers:
+
+1. **User wallet:** Sign in with X stores `verified` / `verified_type`
+   from `GET /2/users/me` in `xsession.json` with the HMAC proof.
+2. **Baked seed (main/test):** `GET /2/users/by/username` for that
+   handle. Live blue check → `XVA1` stamp. No stamp → not in the hat.
+   Height ≥ 1 coinbase must carry `XHB1` + `XVA1` + `XSD1`.
+
+User-wallet eligibility:
 
 1. A valid Sign in with X session (user id + username + proof).
 2. That session is **X Verified** (`verified==true`, including `blue` /
    `business` / `government` check types X exposes).
-3. This wallet is running (local payout script + heartbeat).
+3. This wallet is running (local payout script + heartbeat to the seed).
+4. The seed stamped that payout (`getlotteryinfo.stamped_handles`).
 
-Fair code: nobody who meets (1)–(3) can be excluded. The operator invite
+Local GUI “eligible” is (1)–(3). The draw is (4). The operator invite
 list is **not** a lottery gate. A session that is **not** X Verified has
-**zero chance** (no heartbeat, not in the active set).
+**zero chance**. A patched `verified=true` without a seed stamp has
+zero chance on main/test.
 
 See [XSIGNIN.md](XSIGNIN.md).
 

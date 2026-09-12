@@ -10,7 +10,8 @@ This directory **is** the X Coin whitepaper.
 
 X Coin (ticker **XFER**, subunit **xferon**) is a peer-to-peer cash and
 asset ledger for people on X. There is no mining. Blocks are produced
-by a minute lottery among **X Verified** (blue check) active nodes.
+by a minute lottery among **X Verified** (blue check) nodes the
+**baked seed** stamped that minute. User wallets do not mint.
 Launch is a **fair launch**: no premine, no founder allocation.
 
 [XCOIN.md](XCOIN.md) is the product paper: motivation, lottery and
@@ -22,7 +23,7 @@ stand alone. Deep mechanics stay in the technical annexes
 [go-live](../docs/GO-LIVE.md)).
 
 Packaged Linux and Windows wallets are on
-[GitHub Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.8).
+[GitHub Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.12).
 Download those assets. Do not use **Code → Download ZIP** — that is
 the source tree, not a wallet. How to open the wallet:
 [README](../README.md).
