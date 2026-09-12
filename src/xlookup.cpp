@@ -80,6 +80,52 @@ void ClearLookupMocks()
     g_cache.clear();
 }
 
+static bool DecodeChunkedBody(const std::string& in, std::string& out)
+{
+    out.clear();
+    size_t i = 0;
+    while (i < in.size()) {
+        const size_t nl = in.find("\r\n", i);
+        if (nl == std::string::npos)
+            return false;
+        char* endp = nullptr;
+        const unsigned long sz = strtoul(in.c_str() + i, &endp, 16);
+        if (endp == in.c_str() + i)
+            return false;
+        i = nl + 2;
+        if (sz == 0)
+            return true;
+        if (i + sz > in.size())
+            return false;
+        out.append(in, i, sz);
+        i += sz;
+        if (i + 1 < in.size() && in[i] == '\r' && in[i + 1] == '\n')
+            i += 2;
+    }
+    return !out.empty();
+}
+
+static void ExtractJsonObject(std::string& body)
+{
+    const size_t start = body.find('{');
+    if (start == std::string::npos)
+        return;
+    const size_t end = body.rfind('}');
+    if (end == std::string::npos || end < start)
+        return;
+    body = body.substr(start, end - start + 1);
+}
+
+static bool HeaderHas(const std::string& headers, const char* keyNeedle)
+{
+    std::string low = headers;
+    for (char& c : low) {
+        if (c >= 'A' && c <= 'Z')
+            c = static_cast<char>(c - 'A' + 'a');
+    }
+    return low.find(keyNeedle) != std::string::npos;
+}
+
 static bool HttpsGetTwitter(const std::string& path, const std::string& bearer,
                             int& httpStatus, std::string& body, std::string& err)
 {
@@ -110,7 +156,8 @@ static bool HttpsGetTwitter(const std::string& path, const std::string& bearer,
         SSL_CTX_free(ctx);
         return false;
     }
-    std::string req = "GET " + path + " HTTP/1.1\r\n"
+    // HTTP/1.0 avoids chunked when the peer honors it. Still dechunk below.
+    std::string req = "GET " + path + " HTTP/1.0\r\n"
                       "Host: api.twitter.com\r\n"
                       "Authorization: Bearer " + bearer + "\r\n"
                       "User-Agent: xcoin-seed-xlookup/1.0\r\n"
@@ -149,6 +196,12 @@ static bool HttpsGetTwitter(const std::string& path, const std::string& bearer,
         if (sp != std::string::npos)
             httpStatus = atoi(headers.c_str() + sp + 1);
     }
+    if (HeaderHas(headers, "transfer-encoding: chunked")) {
+        std::string decoded;
+        if (DecodeChunkedBody(body, decoded))
+            body.swap(decoded);
+    }
+    ExtractJsonObject(body);
     return true;
 }
 
@@ -190,7 +243,7 @@ Status LookupHandle(const std::string& handle, std::string& err)
         g_cache[norm] = {NOT_VERIFIED, now + 600};
         return NOT_VERIFIED;
     }
-    if (httpStatus == 429 || httpStatus >= 500) {
+    if (httpStatus == 429 || httpStatus >= 500 || httpStatus == 401 || httpStatus == 403) {
         err = strprintf("x lookup http %d", httpStatus);
         return LOOKUP_FAILED;
     }
