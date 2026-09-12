@@ -1020,6 +1020,8 @@ bool Registry::LocalEligible() const
 bool Registry::Heartbeat(const CScript& script, int64_t now,
                          const std::string& xHandle, uint64_t xUserId, bool xVerified)
 {
+    if (IsBakedSeed() && IdFromScript(script) == LocalId() && !LocalId().IsNull())
+        return false; // printer stays out of the hat
     if (!xVerified)
         return false;
     if (script.empty() || script.size() > MAX_HEARTBEAT_SCRIPT)

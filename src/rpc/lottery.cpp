@@ -110,6 +110,14 @@ UniValue getlotteryinfo(const JSONRPCRequest& request)
     ret.push_back(Pair("local_attested", lottery::HasAttestation(lottery::GetRegistry().LocalId())));
     ret.push_back(Pair("x_lookup", lottery::IsXLookupNode()));
     ret.push_back(Pair("baked_seed", lottery::IsBakedSeed()));
+    UniValue stamped(UniValue::VARR);
+    for (const auto& id : draw.active) {
+        std::string h;
+        std::vector<unsigned char> sig;
+        if (lottery::GetAttestation(id, h, sig))
+            stamped.push_back(h);
+    }
+    ret.push_back(Pair("stamped_handles", stamped));
     ret.push_back(Pair("currency", std::string("XFER")));
     ret.push_back(Pair("subunit", std::string("xferon")));
     return ret;
@@ -190,6 +198,9 @@ UniValue registeractivenode(const JSONRPCRequest& request)
             + HelpExampleRpc("registeractivenode", "")
         );
 
+    if (lottery::IsBakedSeed())
+        throw JSONRPCError(RPC_INVALID_PARAMETER,
+                           "baked seed is the printer, not a lottery player");
     std::string serr;
     if (!xsession::RequireSession(serr))
         throw JSONRPCError(RPC_INVALID_PARAMETER, serr);
