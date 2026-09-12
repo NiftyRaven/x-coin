@@ -50,8 +50,8 @@ echo "$NOTES"
 echo "$NOTES" | python3 -c '
 import json,sys
 j=json.load(sys.stdin)
-if j.get("version") != "1.0.11" or j.get("tag") != "v1.0.11":
-    sys.exit("getreleasenotes must report this wallet as 1.0.11 (got %r)" % j)
+if j.get("version") != "1.0.12" or j.get("tag") != "v1.0.12":
+    sys.exit("getreleasenotes must report this wallet as 1.0.12 (got %r)" % j)
 notes = j.get("notes") or ""
 if "Sign in with X stays signed in" not in notes:
     sys.exit("bundled notes must mention session until close")

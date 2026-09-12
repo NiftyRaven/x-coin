@@ -143,6 +143,9 @@ public:
     int GetAssetActivationHeight() const { return nAssetActivationHeight; }
     /** RVN End **/
 
+    /** Compressed secp256k1 pubkey of the seed attestor (main/test). Empty on regtest. */
+    const std::vector<unsigned char>& XAttestorPub() const { return vXAttestorPub; }
+
 protected:
     CChainParams() {}
 
@@ -201,6 +204,8 @@ protected:
 
     uint32_t nKAAAWWWPOWActivationTime;
     /** RVN End **/
+
+    std::vector<unsigned char> vXAttestorPub;
 };
 
 /**

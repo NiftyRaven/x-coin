@@ -287,6 +287,11 @@ public:
         nKAAAWWWPOWActivationTime = 4102444800; // far future: KawPoW unused (lottery, not PoW)
         nKAWPOWActivationTime = nKAAAWWWPOWActivationTime;
         /** RVN End **/
+
+        // Seed stamps XHB1 members after a live X blue-check lookup. Private
+        // key lives only on the seed (datadir xattestor.key). Do not rotate
+        // without a coordinated wallet release — this is consensus.
+        vXAttestorPub = ParseHex("03e6aa360762777b19f3f234a3829b1457df8125f8a35bfe1d864828c69c517b52");
     }
 };
 
@@ -500,6 +505,8 @@ public:
         nKAAAWWWPOWActivationTime = 4102444800; // far future: KawPoW unused
         nKAWPOWActivationTime = nKAAAWWWPOWActivationTime;
         /** RVN End **/
+
+        vXAttestorPub = ParseHex("03e6aa360762777b19f3f234a3829b1457df8125f8a35bfe1d864828c69c517b52");
     }
 };
 

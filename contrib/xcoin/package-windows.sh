@@ -8,7 +8,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${OUT:-$ROOT/dist}"
-VER="${VER:-1.0.11}"
+VER="${VER:-1.0.12}"
 NAME="xcoin-${VER}-win-x86_64"
 STAGE="$OUT/$NAME"
 HOST="${MINGW_HOST:-x86_64-w64-mingw32}"

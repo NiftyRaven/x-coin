@@ -4,6 +4,8 @@
 
 #include <test/test_raven.h>
 #include <lottery.h>
+#include <xlookup.h>
+#include <xsession.h>
 #include <key.h>
 #include <script/standard.h>
 #include <consensus/validation.h>
@@ -258,6 +260,75 @@ BOOST_AUTO_TEST_CASE(acceptblock_equal_work_smaller_hash_wins)
         BOOST_CHECK(chainActive.Tip()->nChainWork == mapBlockIndex[hashA]->nChainWork);
         BOOST_CHECK(GetBlockProof(*chainActive.Tip()) == arith_uint256(1));
     }
+}
+
+BOOST_AUTO_TEST_CASE(x_lookup_rejects_unverified_handle)
+{
+    xlookup::ClearLookupMocks();
+    xlookup::SetLookupMock("ghost", xlookup::NOT_VERIFIED);
+    xlookup::SetLookupMock("nftrvn", xlookup::VERIFIED);
+    std::string err;
+    BOOST_CHECK_EQUAL(xlookup::LookupHandle("ghost", err), xlookup::NOT_VERIFIED);
+    BOOST_CHECK_EQUAL(xlookup::LookupHandle("NFTRVN", err), xlookup::VERIFIED);
+    xlookup::ClearLookupMocks();
+}
+
+BOOST_AUTO_TEST_CASE(seed_stamp_binds_payout_and_handle)
+{
+    lottery::ResetAttestations();
+    CKey key;
+    key.MakeNewKey(true);
+    lottery::SetAttestorKeyForTest(key);
+    const CScript script = P2PKHFromKey(key);
+    const uint160 id = lottery::IdFromScript(script);
+    std::vector<unsigned char> sig;
+    BOOST_CHECK(lottery::SignAttestation(id, "alice", sig));
+    BOOST_CHECK(lottery::VerifyAttestationPub(key.GetPubKey(), id, "alice", sig));
+    BOOST_CHECK(!lottery::VerifyAttestationPub(key.GetPubKey(), id, "bob", sig));
+    CKey other;
+    other.MakeNewKey(true);
+    BOOST_CHECK(!lottery::VerifyAttestationPub(other.GetPubKey(), id, "alice", sig));
+    lottery::ResetAttestations();
+    CKey empty;
+    lottery::SetAttestorKeyForTest(empty);
+}
+
+BOOST_AUTO_TEST_CASE(baked_seed_produce_does_not_need_session)
+{
+    BOOST_CHECK(!xsession::SessionIsXVerified());
+    BOOST_CHECK(!lottery::GetRegistry().LocalEligible());
+    BOOST_CHECK(!lottery::IsBakedSeed());
+    BOOST_CHECK(!lottery::MayProduceBlock());
+
+    lottery::SetBakedSeedForTest(true);
+    BOOST_CHECK(lottery::IsBakedSeed());
+    BOOST_CHECK(!xsession::SessionIsXVerified());
+    BOOST_CHECK(!lottery::GetRegistry().LocalEligible());
+    BOOST_CHECK(lottery::MayProduceBlock());
+    BOOST_CHECK(!lottery::GetRegistry().HeartbeatLocal(10));
+    lottery::SetBakedSeedForTest(false);
+    BOOST_CHECK(!lottery::IsBakedSeed());
+    BOOST_CHECK(!lottery::MayProduceBlock());
+}
+
+BOOST_AUTO_TEST_CASE(baked_seed_block_sig_binds_height_and_set)
+{
+    CKey key;
+    key.MakeNewKey(true);
+    lottery::SetAttestorKeyForTest(key);
+    std::vector<uint160> ids;
+    ids.push_back(lottery::IdFromScript(P2PKHFromKey(key)));
+    const uint256 prev = uint256S("aa");
+    const uint256 d = lottery::SeedBlockDigest(1, prev, ids);
+    std::vector<unsigned char> sig;
+    BOOST_CHECK(key.SignCompact(d, sig));
+    BOOST_CHECK(lottery::VerifySeedBlockSig(key.GetPubKey(), 1, prev, ids, sig));
+    BOOST_CHECK(!lottery::VerifySeedBlockSig(key.GetPubKey(), 2, prev, ids, sig));
+    CKey other;
+    other.MakeNewKey(true);
+    BOOST_CHECK(!lottery::VerifySeedBlockSig(other.GetPubKey(), 1, prev, ids, sig));
+    CKey empty;
+    lottery::SetAttestorKeyForTest(empty);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
