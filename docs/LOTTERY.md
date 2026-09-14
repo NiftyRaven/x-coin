@@ -251,6 +251,7 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 | `addxverified` / `listxverified` / `removexverified` | Mutate / read the operator invite list (not X Verified) |
 | `loadxverified (path)` | Merge a published invite-list file (no API keys) |
 | `generatetoaddress` | **Regtest only** on-demand assembly (not mining; rejected on main/test) |
+| `sethostshare` / `setguestpercent` / `inviteguest` / `listguests` | Wallet-only: share a percent of this host’s mature lottery output with invited guests. Not consensus. Guests never enter the hat. |
 
 ## Security notes
 
@@ -279,6 +280,9 @@ Honest write-up: [SECURITY.md](SECURITY.md). This is not hacker-proof.
   You cannot skip or double-pay a height on one chain. MAIN catch-up is
   latched to one block per wall-clock minute. `generatetoaddress` is
   regtest-only so RPC cannot burst-mint on main/test.
+- **Host/guest share** is a wallet send after a mature lottery coinbase.
+  It does not change the hat or coinbase. Guests never enter the active
+  set. A recoded host can skip the send.
 - Empty committed set ⇒ invalid coinbase (no unpaid extra outputs).
 
 Treat the lottery as specified here; do not reintroduce PoW as the production path.

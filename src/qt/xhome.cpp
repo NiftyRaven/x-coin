@@ -32,6 +32,7 @@
 #include <QPushButton>
 #include <QScrollArea>
 #include <QSettings>
+#include <QStringList>
 #include <QStyle>
 #include <QTimer>
 #include <QVBoxLayout>
@@ -75,6 +76,13 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     , reLinkBtn(0)
     , copyNodeBtn(0)
     , shareNodeChk(0)
+    , shareWinsChk(0)
+    , guestPanel(0)
+    , guestPctEdit(0)
+    , guestHandleEdit(0)
+    , guestAddBtn(0)
+    , guestRemoveBtn(0)
+    , guestListLabel(0)
     , nodeSharePanel(0)
     , nodeEndpointLabel(0)
     , nodeStatusLabel(0)
@@ -200,6 +208,50 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     lotteryLabel->setObjectName("xlotteryno");
     lotteryLabel->setWordWrap(true);
     root->addWidget(lotteryLabel);
+
+    guestPanel = new QWidget;
+    QVBoxLayout* guestLay = new QVBoxLayout(guestPanel);
+    guestLay->setContentsMargins(0, 0, 0, 0);
+    guestLay->setSpacing(10);
+    shareWinsChk = new QCheckBox("Share lottery wins");
+    shareWinsChk->setObjectName("xcheck");
+    shareWinsChk->setCursor(Qt::PointingHandCursor);
+    shareWinsChk->setToolTip("Send a percent of each mature lottery payout equally among invited guests’ root-asset addresses. Guests do not enter the lottery.");
+    guestLay->addWidget(shareWinsChk);
+    QHBoxLayout* pctRow = new QHBoxLayout;
+    QLabel* pctLbl = new QLabel("Guest percent");
+    pctLbl->setObjectName("xhint");
+    guestPctEdit = new QLineEdit;
+    guestPctEdit->setPlaceholderText("20");
+    guestPctEdit->setMaxLength(3);
+    guestPctEdit->setFixedWidth(72);
+    guestPctEdit->setToolTip("Percent of your lottery output that guests split equally.");
+    QLabel* pctSign = new QLabel("% of this wallet’s payout that minute");
+    pctSign->setObjectName("xhint");
+    pctSign->setWordWrap(true);
+    pctRow->addWidget(pctLbl);
+    pctRow->addWidget(guestPctEdit);
+    pctRow->addWidget(pctSign, 1);
+    guestLay->addLayout(pctRow);
+    QHBoxLayout* guestRow = new QHBoxLayout;
+    guestHandleEdit = new QLineEdit;
+    guestHandleEdit->setPlaceholderText("guest handle — @ optional");
+    guestAddBtn = new QPushButton("Add");
+    guestAddBtn->setObjectName("xghost");
+    guestAddBtn->setCursor(Qt::PointingHandCursor);
+    guestRemoveBtn = new QPushButton("Remove");
+    guestRemoveBtn->setObjectName("xghost");
+    guestRemoveBtn->setCursor(Qt::PointingHandCursor);
+    guestRow->addWidget(guestHandleEdit, 1);
+    guestRow->addWidget(guestAddBtn);
+    guestRow->addWidget(guestRemoveBtn);
+    guestLay->addLayout(guestRow);
+    guestListLabel = new QLabel;
+    guestListLabel->setObjectName("xcard");
+    guestListLabel->setWordWrap(true);
+    guestLay->addWidget(guestListLabel);
+    guestPanel->setVisible(false);
+    root->addWidget(guestPanel);
 
     assetLabel = new QLabel;
     assetLabel->setObjectName("xcard");
@@ -359,6 +411,10 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     connect(oauth, SIGNAL(failed(QString)), this, SLOT(onOAuthFailed(QString)));
     connect(oauth, SIGNAL(status(QString)), this, SLOT(onOAuthStatus(QString)));
     connect(shareNodeChk, SIGNAL(toggled(bool)), this, SLOT(onShareNodeToggled(bool)));
+    connect(shareWinsChk, SIGNAL(toggled(bool)), this, SLOT(onShareWinsToggled(bool)));
+    connect(guestAddBtn, SIGNAL(clicked()), this, SLOT(onAddGuest()));
+    connect(guestRemoveBtn, SIGNAL(clicked()), this, SLOT(onRemoveGuest()));
+    connect(guestPctEdit, SIGNAL(editingFinished()), this, SLOT(onGuestPercentEdited()));
     connect(copyNodeBtn, SIGNAL(clicked()), this, SLOT(onCopyNodeAddress()));
     connect(releaseNotesBtn, SIGNAL(clicked()), this, SLOT(onReleaseNotes()));
     connect(releaseLaterBtn, SIGNAL(clicked()), this, SLOT(onReleaseLater()));
@@ -467,7 +523,8 @@ void XHome::refresh()
                 .arg(vtype.isEmpty() ? QString("blue check") : vtype + " check");
         } else {
             verifiedLine = QString(
-                "X Verified: no. Lottery chance is zero. Allowlist is an invite list — it does not make @%1 verified.")
+                "X Verified: no. Lottery chance is zero. A host can invite @%1 after you claim your root. "
+                "Allowlist is an invite list — it does not make you verified.")
                 .arg(handle);
         }
         sessionLabel->setObjectName("xlinked");
@@ -586,6 +643,45 @@ void XHome::refresh()
         lotteryLabel->setText("Lottery\nNode starting…");
         lotteryLabel->style()->unpolish(lotteryLabel);
         lotteryLabel->style()->polish(lotteryLabel);
+    }
+
+    const bool showGuests = signedIn && sess.IsXVerified();
+    if (guestPanel)
+        guestPanel->setVisible(showGuests);
+    if (showGuests && guestListLabel && shareWinsChk) {
+        UniValue g;
+        if (g.read(rpc("listguests").toStdString()) && g.isObject() && !g.exists("error")) {
+            const bool on = g["enabled"].isTrue();
+            const int pct = g["guest_percent"].isNum() ? g["guest_percent"].get_int() : 20;
+            const bool indexed = g["assetindex"].isTrue();
+            shareWinsChk->blockSignals(true);
+            shareWinsChk->setChecked(on);
+            shareWinsChk->blockSignals(false);
+            if (guestPctEdit && !guestPctEdit->hasFocus()) {
+                guestPctEdit->blockSignals(true);
+                guestPctEdit->setText(QString::number(pct));
+                guestPctEdit->blockSignals(false);
+            }
+            QStringList lines;
+            if (!indexed)
+                lines << "Asset index is off. Checking the box writes assetindex=1 and asks you to restart (reindex). Then add handles.";
+            else
+                lines << QString("Sharing %1%% of each mature win equally among ready guests.").arg(pct);
+            if (g.exists("guests") && g["guests"].isArray()) {
+                const UniValue& arr = g["guests"];
+                if (arr.size() == 0)
+                    lines << "No guests yet. Add a handle that has claimed a root.";
+                for (size_t i = 0; i < arr.size(); i++) {
+                    const UniValue& row = arr[i];
+                    const QString h = QString::fromStdString(row["handle"].getValStr());
+                    const bool ready = row["ready"].isTrue();
+                    lines << QString("@%1 — %2").arg(h).arg(ready ? "ready" : "no holder yet");
+                }
+            }
+            guestListLabel->setText(lines.join("\n"));
+        }
+    } else if (!showGuests && signedIn && guestListLabel) {
+        // unverified signed-in users: hint on session card already
     }
 
     QString rootName;
@@ -713,6 +809,77 @@ void XHome::applyNodeShareVisibility(bool on)
     } else {
         fillNodeShareWidgets();
     }
+}
+
+void XHome::onShareWinsToggled(bool on)
+{
+    if (on) {
+        bool indexed = false;
+        UniValue cur;
+        if (cur.read(rpc("listguests").toStdString()) && cur.isObject() && !cur.exists("error"))
+            indexed = cur["assetindex"].isTrue();
+        if (!indexed) {
+            const int ans = QMessageBox::question(this, "X-Coin",
+                "Sharing looks up each guest’s root-asset address. That needs assetindex=1 "
+                "and a one-time restart that rebuilds indexes.\n\nWrite the setting and restart the wallet after this?",
+                QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
+            if (ans != QMessageBox::Yes) {
+                shareWinsChk->blockSignals(true);
+                shareWinsChk->setChecked(false);
+                shareWinsChk->blockSignals(false);
+                return;
+            }
+            showRpcOutcome(rpc("enableassetindex"),
+                           "Wrote assetindex=1. Close this wallet and open it again so it can reindex. Then check Share lottery wins.");
+            shareWinsChk->blockSignals(true);
+            shareWinsChk->setChecked(false);
+            shareWinsChk->blockSignals(false);
+            return;
+        }
+        showRpcOutcome(rpc("sethostshare", QStringList() << "true"), "Sharing lottery wins with guests.");
+    } else {
+        showRpcOutcome(rpc("sethostshare", QStringList() << "false"), "Stopped sharing lottery wins.");
+    }
+}
+
+void XHome::onAddGuest()
+{
+    if (!guestHandleEdit)
+        return;
+    const QString handle = guestHandleEdit->text().trimmed();
+    if (handle.isEmpty()) {
+        QMessageBox::information(this, "X-Coin", "Type the guest’s X handle first.");
+        return;
+    }
+    showRpcOutcome(rpc("inviteguest", QStringList() << handle), "Guest added.");
+    refresh();
+}
+
+void XHome::onRemoveGuest()
+{
+    if (!guestHandleEdit)
+        return;
+    const QString handle = guestHandleEdit->text().trimmed();
+    if (handle.isEmpty()) {
+        QMessageBox::information(this, "X-Coin", "Type the guest handle to remove.");
+        return;
+    }
+    showRpcOutcome(rpc("removeguest", QStringList() << handle), "Guest removed.");
+    refresh();
+}
+
+void XHome::onGuestPercentEdited()
+{
+    if (!guestPctEdit)
+        return;
+    bool ok = false;
+    const int pct = guestPctEdit->text().trimmed().toInt(&ok);
+    if (!ok) {
+        QMessageBox::warning(this, "X-Coin", "Guest percent must be a number from 1 to 100.");
+        return;
+    }
+    showRpcOutcome(rpc("setguestpercent", QStringList() << QString::number(pct)),
+                   QString("Guests will split %1%% of each mature win.").arg(pct));
 }
 
 void XHome::onShareNodeToggled(bool on)

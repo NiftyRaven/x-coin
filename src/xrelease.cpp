@@ -201,32 +201,33 @@ bool FindByTag(const std::vector<Release>& all, const std::string& tag, Release&
 std::string BundledNotes()
 {
     return
-        "X Coin 1.0.13\n"
+        "X Coin 1.0.14\n"
         "\n"
         "What changed in this wallet\n"
         "\n"
-        "- Claim My Asset now reaches the baked seed. 1.0.12 built a valid\n"
-        "  0-fee XID1 root and then hid it behind BIP133 feefilter, so the\n"
-        "  only printer never saw it. This wallet announces identity claims\n"
-        "  even at 0 fee. Sign-in is still required to *build* the claim.\n"
-        "- sendrawtransaction of a well-formed XID1 no longer demands a\n"
-        "  local Sign-in on the submitting node. The seed has no session.\n"
+        "- Share lottery wins: an X Verified host can send a percent of\n"
+        "  each mature lottery payout equally among invited guests. Guests\n"
+        "  sign in with X and claim a root; they do not need a blue check\n"
+        "  and they never enter the hat.\n"
+        "- First enable writes assetindex=1 and asks for a restart so the\n"
+        "  wallet can look up guest root addresses. Consensus is unchanged.\n"
+        "- After a halving, guests get a percent of this wallet’s slice\n"
+        "  (for example 20% of 1250), not of the whole block subsidy.\n"
         "- Sign in with X stays signed in until you close the wallet.\n"
-        "- Lottery XFER is still seed law. No consensus change.\n"
         "\n"
         "Download later wallets from GitHub Releases (not Code → Download ZIP).\n"
-        "Windows: X-Coin-1.0.13-Windows.zip → X Coin Wallet.exe\n"
-        "Linux: X-Coin-1.0.13-Linux-x86_64.tar.gz → X Coin Wallet\n";
+        "Windows: X-Coin-1.0.14-Windows.zip → X Coin Wallet.exe\n"
+        "Linux: X-Coin-1.0.14-Linux-x86_64.tar.gz → X Coin Wallet\n";
 }
 
 std::string BundledName()
 {
-    return "X Coin 1.0.13 — Claim My Asset reaches the seed";
+    return "X Coin 1.0.14 — Share lottery wins with guests";
 }
 
 std::string BundledHtmlUrl()
 {
-    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.13";
+    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.14";
 }
 
 Release BundledRelease()

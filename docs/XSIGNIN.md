@@ -103,6 +103,9 @@ to asset ownership — it proves it is you.** Send and receive
 do not. Lottery also requires
 **X Verified** from that `users/me` response. A signed-in handle that is
 not X Verified can still send and receive, but has **zero lottery chance**.
+A verified host may invite that handle as a **guest** (`Share lottery wins`)
+after they claim a root; that is a wallet send of a percent of the host’s
+mature payout, not a second lottery.
 An X Verified session plus a running wallet **cannot be excluded** from
 the draw. The operator invite list (`addxverified` / `-xverified` /
 `-xallowlist`) is optional pins / invites, not a lottery gate.

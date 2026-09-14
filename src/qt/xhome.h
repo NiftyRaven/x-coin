@@ -54,6 +54,10 @@ private Q_SLOTS:
     void onOAuthFailed(const QString& error);
     void onOAuthStatus(const QString& message);
     void onShareNodeToggled(bool on);
+    void onShareWinsToggled(bool on);
+    void onAddGuest();
+    void onRemoveGuest();
+    void onGuestPercentEdited();
     void onCopyNodeAddress();
     void onReleaseNotes();
     void onReleaseLater();
@@ -90,6 +94,13 @@ private:
     QPushButton* allowlistBtn;
     QPushButton* copyNodeBtn;
     QCheckBox* shareNodeChk;
+    QCheckBox* shareWinsChk;
+    QWidget* guestPanel;
+    QLineEdit* guestPctEdit;
+    QLineEdit* guestHandleEdit;
+    QPushButton* guestAddBtn;
+    QPushButton* guestRemoveBtn;
+    QLabel* guestListLabel;
     QWidget* nodeSharePanel;
     QLabel* nodeEndpointLabel;
     QLabel* nodeStatusLabel;

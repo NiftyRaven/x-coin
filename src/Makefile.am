@@ -172,6 +172,7 @@ RAVEN_CORE_H = \
   merkleblock.h \
   miner.h \
   lottery.h \
+  hostshare.h \
   xlookup.h \
   xrelease.h \
   xsession.h \
@@ -266,6 +267,7 @@ libraven_server_a_SOURCES = \
   merkleblock.cpp \
   miner.cpp \
   lottery.cpp \
+  hostshare.cpp \
   xlookup.cpp \
   xrelease.cpp \
   xsession.cpp \

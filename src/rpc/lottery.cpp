@@ -7,6 +7,7 @@
 #include "base58.h"
 #include "chain.h"
 #include "chainparams.h"
+#include "hostshare.h"
 #include "lottery.h"
 #include "rpc/server.h"
 #include "script/standard.h"
@@ -499,6 +500,121 @@ UniValue loadxverified(const JSONRPCRequest& request)
     return ret;
 }
 
+UniValue sethostshare(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error(
+            "sethostshare enabled\n"
+            "\nTurn host/guest lottery sharing on or off. X Verified session required.\n"
+            "Guests never enter the lottery hat. Consensus is unchanged.\n"
+            "\nArguments:\n"
+            "1. enabled    (boolean, required) true to share a percent of each mature win\n"
+        );
+    const bool on = request.params[0].get_bool();
+    std::string err;
+    if (!hostshare::SetEnabled(on, err))
+        throw JSONRPCError(RPC_MISC_ERROR, err);
+    UniValue ret(UniValue::VOBJ);
+    ret.push_back(Pair("enabled", hostshare::Enabled()));
+    ret.push_back(Pair("guest_percent", hostshare::Percent()));
+    ret.push_back(Pair("assetindex", hostshare::AssetIndexReady()));
+    return ret;
+}
+
+UniValue setguestpercent(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error(
+            "setguestpercent percent\n"
+            "\nSet what percent of this host’s mature lottery output is split equally among guests.\n"
+            "\nArguments:\n"
+            "1. percent    (numeric, required) 1–100\n"
+        );
+    const int percent = request.params[0].get_int();
+    std::string err;
+    if (!hostshare::SetPercent(percent, err))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, err);
+    UniValue ret(UniValue::VOBJ);
+    ret.push_back(Pair("guest_percent", hostshare::Percent()));
+    return ret;
+}
+
+UniValue inviteguest(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error(
+            "inviteguest \"handle\"\n"
+            "\nInvite an X handle as a guest. They must already have claimed a root asset.\n"
+            "\nArguments:\n"
+            "1. handle     (string, required) X handle, @ optional\n"
+        );
+    std::string err;
+    if (!hostshare::InviteGuest(request.params[0].get_str(), err))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, err);
+    UniValue ret(UniValue::VOBJ);
+    ret.push_back(Pair("invited", request.params[0].get_str()));
+    ret.push_back(Pair("guest_count", (int)hostshare::GuestHandles().size()));
+    return ret;
+}
+
+UniValue removeguest(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error(
+            "removeguest \"handle\"\n"
+            "\nRemove a guest handle.\n"
+        );
+    std::string err;
+    if (!hostshare::RemoveGuest(request.params[0].get_str(), err))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, err);
+    return request.params[0];
+}
+
+UniValue listguests(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 0)
+        throw std::runtime_error(
+            "listguests\n"
+            "\nList invited guests and whether a root-asset address is ready.\n"
+        );
+#ifdef ENABLE_WALLET
+    hostshare::MaybeShareMatureWins();
+#endif
+    UniValue guests(UniValue::VARR);
+    for (const auto& g : hostshare::ListGuests()) {
+        UniValue o(UniValue::VOBJ);
+        o.push_back(Pair("handle", g.handle));
+        o.push_back(Pair("asset", g.asset));
+        o.push_back(Pair("address", g.address));
+        o.push_back(Pair("ready", g.ready));
+        guests.push_back(o);
+    }
+    UniValue ret(UniValue::VOBJ);
+    ret.push_back(Pair("enabled", hostshare::Enabled()));
+    ret.push_back(Pair("guest_percent", hostshare::Percent()));
+    ret.push_back(Pair("assetindex", hostshare::AssetIndexReady()));
+    ret.push_back(Pair("guests", guests));
+    return ret;
+}
+
+UniValue enableassetindex(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 0)
+        throw std::runtime_error(
+            "enableassetindex\n"
+            "\nWrite assetindex=1 and request a reindex on the next start.\n"
+            "Needed once so listaddressesbyasset can find guest root holders.\n"
+        );
+    std::string err;
+    bool needsRestart = false;
+    if (!hostshare::EnableAssetIndex(err, needsRestart))
+        throw JSONRPCError(RPC_MISC_ERROR, err);
+    UniValue ret(UniValue::VOBJ);
+    ret.push_back(Pair("assetindex", hostshare::AssetIndexReady()));
+    ret.push_back(Pair("needs_restart", needsRestart));
+    return ret;
+}
+
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
     { "lottery",            "getlotteryinfo",         &getlotteryinfo,         {} },
@@ -511,6 +627,12 @@ static const CRPCCommand commands[] =
     { "lottery",            "removexverified",        &removexverified,        {"handle"} },
     { "lottery",            "listxverified",          &listxverified,          {} },
     { "lottery",            "loadxverified",          &loadxverified,          {"path"} },
+    { "lottery",            "sethostshare",           &sethostshare,           {"enabled"} },
+    { "lottery",            "setguestpercent",        &setguestpercent,        {"percent"} },
+    { "lottery",            "inviteguest",            &inviteguest,            {"handle"} },
+    { "lottery",            "removeguest",            &removeguest,            {"handle"} },
+    { "lottery",            "listguests",             &listguests,             {} },
+    { "lottery",            "enableassetindex",       &enableassetindex,       {} },
 };
 
 void RegisterLotteryRPCCommands(CRPCTable &t)
