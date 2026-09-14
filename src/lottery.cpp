@@ -22,6 +22,7 @@
 #include "utilstrencodings.h"
 #include "crypto/sha256.h"
 #include "validation.h"
+#include "hostshare.h"
 #include "xlookup.h"
 #include "xsession.h"
 
@@ -1710,6 +1711,9 @@ static void ProducerThread(const CChainParams& chainparams)
             }
 #endif
             GetRegistry().HeartbeatLocal(now);
+#ifdef ENABLE_WALLET
+            hostshare::MaybeShareMatureWins();
+#endif
 
             if (!MayProduceBlock()) {
                 if (!fLoggedIneligible) {
@@ -1829,6 +1833,7 @@ void StartProducer(const CChainParams& chainparams)
     if (g_producerThreads)
         return;
     InitEligibility();
+    hostshare::Load();
     GetRegistry().SetLocalScript(LoadOrCreateLocalScript());
     GetRegistry().HeartbeatLocal(GetTime());
     g_producerThreads = new boost::thread_group();

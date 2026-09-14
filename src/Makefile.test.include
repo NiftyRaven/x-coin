@@ -30,6 +30,7 @@ RAVEN_TESTS =\
   test/xsession_tests.cpp \
   test/xrelease_tests.cpp \
   test/lottery_security_tests.cpp \
+  test/hostshare_tests.cpp \
   test/assets/serialization_tests.cpp \
   test/assets/asset_tx_tests.cpp \
   test/assets/cache_tests.cpp \

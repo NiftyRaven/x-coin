@@ -1517,6 +1517,18 @@ bool AppInitMain(boost::thread_group& threadGroup, CScheduler& scheduler)
     // ********************************************************* Step 7: load block chain
 
     fReindex = gArgs.GetBoolArg("-reindex", false);
+    {
+        const fs::path reindexMarker = GetDataDir() / "request-reindex";
+        if (fs::exists(reindexMarker)) {
+            fReindex = true;
+            LogPrintf("init: request-reindex present; rebuilding indexes (assetindex)\n");
+            try {
+                fs::remove(reindexMarker);
+            } catch (const std::exception& e) {
+                LogPrintf("init: could not remove request-reindex: %s\n", e.what());
+            }
+        }
+    }
     bool fReindexChainState = gArgs.GetBoolArg("-reindex-chainstate", false);
 
     // block tree db settings
