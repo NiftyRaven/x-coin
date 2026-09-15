@@ -1,6 +1,8 @@
 # X Coin private launch checklist
 
 Wallet how-to: [README.md](../README.md). Paper: [whitepaper/XCOIN.md](../whitepaper/XCOIN.md).
+Light: [RELEASE-1.0.14.md](RELEASE-1.0.14.md). Heavy:
+[RELEASE-1.0.15.md](RELEASE-1.0.15.md). Market (Heavy): [MARKET.md](MARKET.md).
 DEX listing criteria (private; do not submit a listing): [DEX.md](DEX.md).
 
 This is the operator runbook for a **private launch**. There is no public

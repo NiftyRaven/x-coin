@@ -52,3 +52,27 @@ Send show the linked `@handle` when the proof is present. The GUI does not show 
 The session lasts until a **clean GUI quit**. Wall-clock `exp` is not a
 kick. **Help → What's new** and the Home card show release notes in
 this wallet ([UPDATES.md](UPDATES.md)).
+
+## Pages
+
+**Light 1.0.14** — Home is buttons (Receive, Send, Activity, Transfer
+assets, Share lottery wins). Left-nav Assets is Create. No Market.
+[RELEASE-1.0.14.md](RELEASE-1.0.14.md).
+
+**Heavy 1.0.15** — tree nav, black / white pages. Home is the name card
+(Sign in with X, claim root, lottery). It is not a row of Receive /
+Send / Assets buttons.
+
+| Group | Pages |
+| --- | --- |
+| WALLET | Home, Receive, Send, Activity |
+| ASSETS | Create, Transfer, Manage, **Market** |
+| REWARDS | **Lottery share**, Asset dividends |
+| NODE | My node |
+| ADVANCED | Balances, RPC |
+
+Receive always shows an address and QR; **Create new address** is one
+click. Send takes `@handle` or an `X…` address. Market:
+[MARKET.md](MARKET.md). Lottery share: [LOTTERY.md](LOTTERY.md)
+(wallet send, not consensus). Heavy notes:
+[RELEASE-1.0.15.md](RELEASE-1.0.15.md).

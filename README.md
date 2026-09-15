@@ -1,11 +1,25 @@
 # X Coin (XFER)
 
-**Download [1.0.14](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.14).**
-Do not run 1.0.13 or older if you need Share lottery wins. Seed is lottery law.
-Do **not** use **Code → Download ZIP**.
+Two wallets. **Same chain.** Same 12-word data folder. Pick one.
 
-- Windows: [X-Coin-1.0.14-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.14/X-Coin-1.0.14-Windows.zip)
-- Linux: [X-Coin-1.0.14-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.14/X-Coin-1.0.14-Linux-x86_64.tar.gz)
+| | **Light 1.0.14** | **Heavy 1.0.15** |
+| --- | --- | --- |
+| Feel | Simple Home buttons | Tree nav, more pages |
+| Share lottery wins | On Home | **Rewards → Lottery share** |
+| Market (list bags for XFER) | No | **Assets → Market** |
+| Zip | [v1.0.14](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.14) | [v1.0.15](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.15) |
+
+Stay on **Light** if you want the original wallet. Use **Heavy** only if
+you want Market. Do **not** use **Code → Download ZIP**. Seed is lottery
+law. Do not run 1.0.13 or older if you need Share lottery wins.
+
+**Light (Windows):** [X-Coin-1.0.14-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.14/X-Coin-1.0.14-Windows.zip)
+
+**Light (Linux):** [X-Coin-1.0.14-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.14/X-Coin-1.0.14-Linux-x86_64.tar.gz)
+
+**Heavy (Windows):** [X-Coin-1.0.15-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.15/X-Coin-1.0.15-Windows.zip)
+
+**Heavy (Linux):** [X-Coin-1.0.15-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.15/X-Coin-1.0.15-Linux-x86_64.tar.gz)
 
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
@@ -130,13 +144,33 @@ receive work without Sign in with X (normal wallet). Sign in with
 X is required to claim your **one free root**. Lottery additionally
 needs **X Verified** (blue check).
 
-Home is buttons first: Sign in with X, lottery, Receive, Send,
-Activity, Transfer assets. A typed handle is not Verified X and cannot
-claim someone else's root.
+**Light 1.0.14** — Home is buttons first: Sign in with X, lottery,
+Receive, Send, Activity, Transfer assets, Share lottery wins. Left-nav
+**Assets** is Create (sub / unique). No Market.
+
+**Heavy 1.0.15** — left tree:
+
+| | |
+| --- | --- |
+| **WALLET** | Home, Receive, Send, Activity |
+| **ASSETS** | Create, Transfer, Manage, **Market** |
+| **REWARDS** | Lottery share, Asset dividends |
+| **NODE** | My node |
+| **ADVANCED** | Balances, RPC |
+
+Home is the name card. Receive always shows an address and QR. Send
+takes `@handle` or an `X…` address. **Assets → Market** lists a bag
+for XFER; other Heavy wallets buy it. Light ignores those listings and
+still confirms the buy.
+
+A typed handle is not Verified X and cannot claim someone else's root.
 
 First run still asks for a **12-word BIP39 seed** (create or restore).
 Sign in with X is a separate identity proof on this node.
 
+Light notes: [docs/RELEASE-1.0.14.md](docs/RELEASE-1.0.14.md).
+Heavy notes: [docs/RELEASE-1.0.15.md](docs/RELEASE-1.0.15.md).
+Market: [docs/MARKET.md](docs/MARKET.md).
 Operator Client ID for live login (not a user paste field; one line in
 the `xcoin.conf` shipped in the Windows and Linux folders):
 [docs/XSIGNIN.md](docs/XSIGNIN.md).

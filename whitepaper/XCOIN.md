@@ -55,8 +55,10 @@ That implies four design choices:
    to a typed handle and not to an operator invite list.
 
 X Coin is not an exchange and not a hosted wallet on X.com. It is its
-own UTXO ledger. As of this writing the chain remains private until
-**12 September 2026 around 3:16 AM ET**.
+own UTXO ledger. The in-wallet Market (**Heavy 1.0.15**) is peer
+listings of asset bags for XFER, not a venue order book. **Light
+1.0.14** does not include Market. As of this writing the chain remains
+private until **12 September 2026 around 3:16 AM ET**.
 
 ## 2. Design at a glance
 
@@ -278,7 +280,9 @@ coin and is not a premine.
 
 The root name is the handle, uppercased, in `A-Z 0-9 . _`, up to
 **32** characters. A 26-character X handle maps 1:1 and is never
-truncated. Short handles are padded; a leading or trailing `_` is
+truncated. A 32-character handle can claim the identity root. They
+cannot issue `NAME/CHILD` or `NAME#tag` (the full name would exceed
+33). Short handles are padded; a leading or trailing `_` is
 substituted so it remains a valid asset name without colliding with the
 stripped form. Reserved product names (`XFER`, `XCOIN`) are not
 assignable.
@@ -351,9 +355,14 @@ is OAuth in `xcoin-qt` / the node. Download packaged wallets from
 [GitHub Releases](https://github.com/NiftyRaven/x-coin/releases).
 
 Creating an address, sending XFER, linking a handle, and claiming the
-root are Home buttons (or RPC against `wallet.dat`). Home includes
-optional **Provide my node IP** (off by default). Peer IPs stay hidden
-unless that box is turned on.
+root are wallet pages (or RPC against `wallet.dat`). **Light 1.0.14**
+keeps Receive / Send / Assets on Home. **Heavy 1.0.15** uses a tree:
+Home is the name card; **Receive** / **Send** / **Activity** sit under
+WALLET. **Assets → Market** (Heavy only) lists a bag for XFER (peer
+gossip, not a venue DEX; [docs/MARKET.md](../docs/MARKET.md)). Share
+lottery wins is on Home (Light) or **Rewards → Lottery share** (Heavy).
+Home includes optional **Provide my node IP** (off by default). Peer IPs
+stay hidden unless that box is turned on.
 
 Inherited core behavior remains: UTXO wallet, BIP39 12-word HD seed,
 `wallet.dat`, `encryptwallet` / `backupwallet`, fee estimates, P2P,
@@ -435,6 +444,9 @@ summarizes are specified in the annexes below.
 | [docs/XSIGNIN.md](../docs/XSIGNIN.md) | Sign in with X, session proof, privacy of login |
 | [docs/WALLET.md](../docs/WALLET.md) | BIP39 seed vs X session |
 | [docs/ASSETS.md](../docs/ASSETS.md) | Roots, subs, uniques, naming |
+| [docs/MARKET.md](../docs/MARKET.md) | In-wallet asset listings vs XFER (Heavy) |
+| [docs/RELEASE-1.0.14.md](../docs/RELEASE-1.0.14.md) | Light 1.0.14 |
+| [docs/RELEASE-1.0.15.md](../docs/RELEASE-1.0.15.md) | Heavy 1.0.15 |
 | [docs/FORK.md](../docs/FORK.md) | Upstream attribution, leftover names |
 | [docs/GO-LIVE.md](../docs/GO-LIVE.md) | Birth timestamp and go-live order |
 | [docs/THIRD-PARTY.md](../docs/THIRD-PARTY.md) | Explorers and external wallets |

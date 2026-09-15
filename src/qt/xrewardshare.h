@@ -15,7 +15,7 @@ class QLabel;
 class QLineEdit;
 class QTableWidget;
 
-/** Rewards → Lottery share. Same hostshare RPCs as 1.0.14 Home. */
+/** Rewards → Lottery share. Same hostshare RPCs as 1.0.14 Light Home. */
 class XRewardShare : public QWidget
 {
     Q_OBJECT

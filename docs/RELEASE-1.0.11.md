@@ -2,9 +2,9 @@
 
 **Nifty Raven** (@NFTRVN on X)
 
-In-tree product notes for the 1.0.11 package. Last shipped zip before
-this workflow runs is **1.0.10**. After you run **Package X Coin 1.0.11**,
-attach:
+Superseded by **Light 1.0.14** ([RELEASE-1.0.14.md](RELEASE-1.0.14.md))
+and **Heavy 1.0.15** ([RELEASE-1.0.15.md](RELEASE-1.0.15.md)).
+This page is the 1.0.11 session / What's new notes. Historical package:
 
 - `X-Coin-1.0.11-Windows.zip` → **X Coin Wallet.exe**
 - `X-Coin-1.0.11-Linux-x86_64.tar.gz` → **X Coin Wallet**

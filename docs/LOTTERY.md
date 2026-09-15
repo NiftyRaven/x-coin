@@ -251,7 +251,27 @@ commitment, pays the wrong count/scripts, or splits the subsidy incorrectly.
 | `addxverified` / `listxverified` / `removexverified` | Mutate / read the operator invite list (not X Verified) |
 | `loadxverified (path)` | Merge a published invite-list file (no API keys) |
 | `generatetoaddress` | **Regtest only** on-demand assembly (not mining; rejected on main/test) |
-| `sethostshare` / `setguestpercent` / `inviteguest` / `listguests` | Wallet-only: share a percent of this host’s mature lottery output with invited guests. Not consensus. Guests never enter the hat. |
+| `sethostshare` / `setguestpercent` / `inviteguest` / `listguests` | Wallet-only: share a percent of this host’s mature lottery output with invited guests. **Light 1.0.14:** Home. **Heavy 1.0.15:** **Rewards → Lottery share**. Not consensus. Guests never enter the hat. |
+
+## Share lottery wins
+
+An **X Verified** host can send a percent of **their** mature lottery
+output equally among invited guests. Guests sign in, claim a root, and
+do **not** need a blue check. They never enter the hat. After a
+halving, the percent is of this host’s slice (for example 20% of 1250
+XFER), not of the whole subsidy.
+
+On **Light 1.0.14** this is a Home control. On **Heavy 1.0.15** it is
+**Rewards → Lottery share**. Same RPCs.
+
+This is a wallet send after maturity. A recoded or offline host can
+keep the win. Fake handles still cannot win the lottery.
+
+First enable of sharing writes `assetindex=1` **in this wallet’s data
+directory** and asks for a restart (reindex) so `listaddressesbyasset`
+can find each guest’s current root address. That is opt-in. It is
+**not** in the packaged zip. Do not add it to the seed. Existing roots
+stay valid. Consensus is unchanged.
 
 ## Security notes
 
@@ -280,9 +300,11 @@ Honest write-up: [SECURITY.md](SECURITY.md). This is not hacker-proof.
   You cannot skip or double-pay a height on one chain. MAIN catch-up is
   latched to one block per wall-clock minute. `generatetoaddress` is
   regtest-only so RPC cannot burst-mint on main/test.
-- **Host/guest share** is a wallet send after a mature lottery coinbase.
-  It does not change the hat or coinbase. Guests never enter the active
-  set. A recoded host can skip the send.
+- **Host/guest share** is a wallet send after a mature lottery coinbase
+  (Light: Home; Heavy: **Rewards → Lottery share**). It does not change
+  the hat or coinbase. Guests never enter the active set. A recoded
+  host can skip the send. Opt-in `assetindex=1` is this datadir only,
+  not the zip.
 - Empty committed set ⇒ invalid coinbase (no unpaid extra outputs).
 
 Treat the lottery as specified here; do not reintroduce PoW as the production path.

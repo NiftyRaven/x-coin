@@ -1,10 +1,19 @@
 Releases are **private** (this repository is private). The wallets are
-the two files on the GitHub
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.10)
-page, not **Code → Download ZIP**. In-tree is **1.0.11**. Do not use 1.0.2–1.0.9.
+the files on GitHub Releases, not **Code → Download ZIP**.
 
-- [Windows wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.10/X-Coin-1.0.10-Windows.zip) → double-click **X Coin Wallet.exe**
-- [Linux wallet](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.10/X-Coin-1.0.10-Linux-x86_64.tar.gz) → double-click **X Coin Wallet**
+**Light 1.0.14** (simple Home):
+[v1.0.14](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.14)
+
+- [Windows Light](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.14/X-Coin-1.0.14-Windows.zip) → **X Coin Wallet.exe**
+- [Linux Light](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.14/X-Coin-1.0.14-Linux-x86_64.tar.gz) → **X Coin Wallet**
+
+**Heavy 1.0.15** (Market + tree nav). In-tree is Heavy:
+[v1.0.15](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.15)
+
+- [Windows Heavy](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.15/X-Coin-1.0.15-Windows.zip) → **X Coin Wallet.exe**
+- [Linux Heavy](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.15/X-Coin-1.0.15-Linux-x86_64.tar.gz) → **X Coin Wallet**
+
+Do not use 1.0.2–1.0.13.
 
 Practice starts are labeled **X Coin Practice Wallet** and always pass
 `-regtest`. Step-by-step: [README.md](../README.md).
@@ -18,3 +27,4 @@ contrib/xcoin/package-windows.sh   # after depends HOST=x86_64-w64-mingw32
 
 Do not publish this repository. Do not add public DNS seeds.
 Credit **Nifty Raven (@NFTRVN on X)** only.
+

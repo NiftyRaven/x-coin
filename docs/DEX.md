@@ -23,6 +23,12 @@ XFER is the **base coin for pairs** (e.g. a future `XFER/BTC`). Identity
 roots (`NFTRVN`, `ALICE`) and their subs/uniques are **not** the listing
 ticker.
 
+The **in-wallet Market** (**1.0.15 Heavy**, **Assets → Market**) is a peer
+listing board for asset bags vs XFER. **1.0.14 Light** does not have it.
+It is **not** a venue DEX, not an order book a listing engineer can plug
+into, and not a substitute for liquidity on an exchange. See
+[MARKET.md](MARKET.md).
+
 There is no in-tree ERC-20 wrap. A wrap would be a later, separate
 contract + custodian/bridge decision. Do not invent one for listing.
 
@@ -42,7 +48,7 @@ contract + custodian/bridge decision. Do not invent one for listing.
 | `getblock` | **Met** | By hash; verbosity 0/1/2. |
 | `getrawtransaction` | **Met** | Mempool + wallet txs always. **Observer / listing nodes: `-txindex=1`.** Documented in RPC help. |
 | Whitepaper | **Met** | [whitepaper/XCOIN.md](../whitepaper/XCOIN.md) |
-| How-to | **Met** | [README.md](../README.md), [RELEASE-1.0.md](RELEASE-1.0.md) |
+| How-to | **Met** | [README.md](../README.md), [RELEASE-1.0.14.md](RELEASE-1.0.14.md), [RELEASE-1.0.15.md](RELEASE-1.0.15.md) |
 | Explorer | **Missing** (listing dependency) | No in-tree explorer. `DEFAULT_THIRD_PARTY_BROWSERS` is empty. Do not invent a public URL. A Bitcoin-family explorer pointed at `-txindex=1` `xcoind` can index blocks and assets (`listassets` / `getassetdata`) when the owner stands one up. |
 | P2P port + how a seed operator publishes `addnode` | **Met** (operator docs) | Port **38443**. Join: `addnode=<trusted-peer-ip>:38443` in `xcoin.conf`. Optional Home control to share *your* listen address (off by default). Never a list of other people's IPs. [LAUNCH.md](LAUNCH.md). |
 | Public DNS seeds | **Missing** (listing dependency) | `vSeeds.clear()`. Correct while private. |
@@ -52,7 +58,7 @@ contract + custodian/bridge decision. Do not invent one for listing.
 | Block time | **Met** | One lottery slot per minute on main/test (regtest is on-demand). |
 | Confirmations (typical DEX) | **Partial** | Venue policy. Reasonable starting point: **6** confirmations (~6 minutes) for deposits; coinbase mature at **100** blocks. Not a consensus listing field. |
 | Public GitHub / website | **Missing** (listing dependency) | Repo stays **private** until the owner lists. Credit **Nifty Raven (@NFTRVN on X)** only. |
-| Existing liquidity | **Missing** (listing dependency) | No market, no order book, no inventory. |
+| Existing liquidity | **Missing** (listing dependency) | No venue market, no venue order book, no inventory. In-wallet Market ([MARKET.md](MARKET.md)) is not this. |
 | Listing application submitted | **Missing** (operator action) | Do not apply from this tree. |
 
 ## What an operator still needs (not code)
@@ -104,4 +110,7 @@ as the X Coin listing path.
 
 - Private-test audit: [AUDIT.md](AUDIT.md)
 - Operator runbook: [LAUNCH.md](LAUNCH.md)
-- Current private package: [RELEASE-1.0.md](RELEASE-1.0.md)
+- Light 1.0.14: [RELEASE-1.0.14.md](RELEASE-1.0.14.md)
+- Heavy 1.0.15: [RELEASE-1.0.15.md](RELEASE-1.0.15.md)
+- In-wallet Market (not a venue DEX): [MARKET.md](MARKET.md)
+- 1.0 product snapshot: [RELEASE-1.0.md](RELEASE-1.0.md)

@@ -120,7 +120,8 @@ The node never pretends login succeeded without a real access token
 ## Operator only (developer portal)
 
 Users do **not** open developer.x.com and do **not** paste a Client
-ID. Packaged 1.0.11 `xcoin.conf` already has `xoauthclientid=` set.
+ID. Packaged Light 1.0.14 and Heavy 1.0.15 `xcoin.conf` already have
+`xoauthclientid=` set.
 Empty Client ID → Sign in with X says the operator has not baked one;
 it does not fake success. There is no GUI paste box.
 
@@ -139,12 +140,14 @@ invent a different id on launch night.
    then **Claim my root asset**. An empty wallet can claim that one free root
    (identity asset, 0 XFER). Unsigned-in wallets cannot claim a root
    and cannot `issue` a main. Subs/uniques are issued under that root.
-5. **Receive** (address + Copy) / **Send** (paste address, amount, Send).
+5. **Receive** / **Send**. Light: Home buttons (address + Copy; paste
+   address and amount). Heavy: WALLET pages (address + QR; `@handle`
+   or an `X…` address).
 6. **Activity** (history). Lottery status is on Home.
-7. Left-nav **Assets** (or Home **Issue sub** / **Issue unique**) opens
-   the Create Asset form: sub (quantity, units, IPFS, reissuable) or
-   unique (qty 1, same IPFS). Main/root is Claim only — typed MAIN names
-   fail. Transfer assets is a Home button (Advanced).
+7. **Assets.** Light: left-nav Create (sub / unique; Main/root is Claim
+   only). Heavy: Create, Transfer, Manage, **Market**. **Rewards →
+   Lottery share** on Heavy if a verified host invites guests; on Light
+   that control is on Home.
 8. Home shows **this wallet is yours / linked to @handle**.
    **Provide my node IP** is off by default.
 

@@ -27,11 +27,14 @@ BOOST_AUTO_TEST_CASE(parse_version_tags)
 
 BOOST_AUTO_TEST_CASE(running_matches_configure)
 {
-    BOOST_CHECK_EQUAL(xrelease::RunningVersionString(), "1.0.14");
-    BOOST_CHECK_EQUAL(xrelease::RunningTag(), "v1.0.14");
-    BOOST_CHECK_EQUAL(xrelease::RunningVersion(), 1001400);
+    BOOST_CHECK_EQUAL(xrelease::RunningVersionString(), "1.0.15");
+    BOOST_CHECK_EQUAL(xrelease::RunningTag(), "v1.0.15");
+    BOOST_CHECK_EQUAL(xrelease::RunningVersion(), 1001500);
     BOOST_CHECK(xrelease::BundledNotes().find("Share lottery wins") != std::string::npos);
     BOOST_CHECK(xrelease::BundledNotes().find("guest") != std::string::npos);
+    BOOST_CHECK(xrelease::BundledNotes().find("Market") != std::string::npos);
+    BOOST_CHECK(xrelease::BundledNotes().find("Heavy") != std::string::npos);
+    BOOST_CHECK(xrelease::BundledName().find("Heavy") != std::string::npos);
 }
 
 BOOST_AUTO_TEST_CASE(parse_github_array_picks_newer)

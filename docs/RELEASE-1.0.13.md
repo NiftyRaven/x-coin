@@ -1,5 +1,9 @@
 # X Coin 1.0.13
 
+Superseded by **Light 1.0.14** ([RELEASE-1.0.14.md](RELEASE-1.0.14.md))
+and **Heavy 1.0.15** ([RELEASE-1.0.15.md](RELEASE-1.0.15.md)).
+This page is the Claim-relay fix.
+
 User wallets **1.0.13** from
 [Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.13).
 Do not run 1.0.12 or older if you need **Claim My Asset** to confirm.

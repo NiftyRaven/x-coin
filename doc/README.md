@@ -38,8 +38,9 @@ BDB 5.3 is accepted with `--with-incompatible-bdb`. A wallet is required to
 produce lottery blocks. Man pages under `doc/man/` and files under
 `doc/release-notes/` are imported stubs (old version strings and raven.org
 URLs); use `--help` / `--version` on the binaries and
-[docs/RELEASE-1.0.md](../docs/RELEASE-1.0.md) and
-[docs/RELEASE-1.0.11.md](../docs/RELEASE-1.0.11.md). In-wallet What's new:
+[docs/RELEASE-1.0.md](../docs/RELEASE-1.0.md),
+[docs/RELEASE-1.0.14.md](../docs/RELEASE-1.0.14.md) (Light), and
+[docs/RELEASE-1.0.15.md](../docs/RELEASE-1.0.15.md) (Heavy). In-wallet What's new:
 [docs/UPDATES.md](../docs/UPDATES.md).
 
 ### OS X
