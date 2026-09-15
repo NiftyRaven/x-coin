@@ -104,6 +104,10 @@ public Q_SLOTS:
     void gotoCreateAssetsPage();
     void gotoManageAssetsPage();
     void gotoRestrictedAssetsPage();
+    void gotoLotterySharePage();
+    void gotoAssetDividendPage();
+    void gotoMyNodePage();
+    void gotoSwapPage();
     /** XCOIN END */
 };
 
