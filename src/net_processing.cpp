@@ -1804,7 +1804,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                                                           xsession::SessionIsXVerified(), hbSig, attest));
             }
         }
-        xmarket::PushBook(pfrom, connman);
+        xmarket::PushBook(pfrom, *connman);
     }
 
     else if (!pfrom->fSuccessfullyConnected)
@@ -3046,7 +3046,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     else if (strCommand == NetMsgType::XORD)
     {
-        const int score = xmarket::ProcessXord(pfrom, vRecv, connman);
+        const int score = xmarket::ProcessXord(pfrom, vRecv, *connman);
         if (score > 0) {
             LOCK(cs_main);
             Misbehaving(pfrom->GetId(), score);
