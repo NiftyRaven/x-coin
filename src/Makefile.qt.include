@@ -182,6 +182,10 @@ QT_MOC_CPP = \
   qt/moc_xreleasedialog.cpp \
   qt/moc_xreceive.cpp \
   qt/moc_xsend.cpp \
+  qt/moc_xrewardshare.cpp \
+  qt/moc_xrewarddividend.cpp \
+  qt/moc_xnodepage.cpp \
+  qt/moc_xswap.cpp \
   qt/moc_assetsdialog.cpp \
   qt/moc_createassetdialog.cpp \
   qt/moc_reissueassetdialog.cpp \
@@ -287,7 +291,12 @@ RAVEN_QT_H = \
   qt/xoauth.h \
   qt/xreleasedialog.h \
   qt/xreceive.h \
-  qt/xsend.h
+  qt/xsend.h \
+  qt/xrewardshare.h \
+  qt/xrewarddividend.h \
+  qt/xnodepage.h \
+  qt/xtheme.h \
+  qt/xswap.h
 
 RES_ICONS = \
   qt/res/icons/add.png \
@@ -389,6 +398,7 @@ RES_ICONS = \
   qt/res/darkstyle/icon_radiobutton_unchecked_pressed.png \
   qt/res/darkstyle/icon_radiobutton_checked_disabled.png \
   qt/res/darkstyle/icon_radiobutton_unchecked_disabled.png \
+  qt/res/darkstyle/xpages.qss \
   qt/res/fonts/OpenSans-Bold.ttf \
   qt/res/fonts/OpenSans-BoldItalic.ttf \
   qt/res/fonts/OpenSans-ExtraBold.ttf \
@@ -473,7 +483,12 @@ RAVEN_QT_WALLET_CPP = \
   qt/xoauth.cpp \
   qt/xreleasedialog.cpp \
   qt/xreceive.cpp \
-  qt/xsend.cpp
+  qt/xsend.cpp \
+  qt/xtheme.cpp \
+  qt/xrewardshare.cpp \
+  qt/xrewarddividend.cpp \
+  qt/xnodepage.cpp \
+  qt/xswap.cpp
 
 RAVEN_QT_CPP = $(RAVEN_QT_BASE_CPP)
 if TARGET_WINDOWS

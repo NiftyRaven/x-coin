@@ -42,6 +42,8 @@ class QProgressDialog;
 class QNetworkAccessManager;
 class QNetworkRequest;
 class QNetworkReply;
+class QTreeWidget;
+class QTreeWidgetItem;
 QT_END_NAMESPACE
 
 /**
@@ -137,6 +139,10 @@ private:
     QAction *messagingAction = nullptr;
     QAction *votingAction = nullptr;
     QAction *restrictedAssetAction = nullptr;
+    QAction *lotteryShareAction = nullptr;
+    QAction *assetDividendAction = nullptr;
+    QAction *myNodeAction = nullptr;
+    QAction *swapAction = nullptr;
     QWidget *headerWidget = nullptr;
     QLabel *labelCurrentMarket = nullptr;
     QLabel *labelCurrentPrice = nullptr;
@@ -151,6 +157,7 @@ private:
 
     QLabel *labelToolbar = nullptr;
     QToolBar *m_toolbar = nullptr;
+    QTreeWidget *navTree = nullptr;
 
     /** XCOIN END */
 
@@ -195,6 +202,8 @@ private:
     void updateNetworkState();
 
     void updateHeadersSyncProgressLabel();
+    void selectNav(const QString& id);
+    QTreeWidgetItem* addNavLeaf(QTreeWidgetItem* parent, const QString& label, const QString& id);
 
 Q_SIGNALS:
     /** Signal raised when a URI was entered or dragged to the GUI */
@@ -284,6 +293,11 @@ private Q_SLOTS:
     void gotoCreateAssetsPage();
     void gotoManageAssetsPage();
     void gotoRestrictedAssetsPage();
+    void gotoLotterySharePage();
+    void gotoAssetDividendPage();
+    void gotoMyNodePage();
+    void gotoSwapPage();
+    void onNavItemClicked(QTreeWidgetItem* item, int column);
     /** XCOIN END */
 
 #endif // ENABLE_WALLET

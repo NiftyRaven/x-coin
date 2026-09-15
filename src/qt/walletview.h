@@ -28,6 +28,10 @@ class RestrictedAssetsDialog;
 class XHome;
 class XReceive;
 class XSend;
+class XRewardShare;
+class XRewardDividend;
+class XNodePage;
+class XSwap;
 
 QT_BEGIN_NAMESPACE
 class QModelIndex;
@@ -93,6 +97,10 @@ private:
     XHome *xHome;
     XReceive *xReceive;
     XSend *xSend;
+    XRewardShare *xRewardShare;
+    XRewardDividend *xRewardDividend;
+    XNodePage *xNodePage;
+    XSwap *xSwap;
     /** XCOIN END */
 
 public Q_SLOTS:
@@ -151,6 +159,10 @@ public Q_SLOTS:
     void gotoCreateAssetsPage();
     void gotoManageAssetsPage();
     void gotoRestrictedAssetsPage();
+    void gotoLotterySharePage();
+    void gotoAssetDividendPage();
+    void gotoMyNodePage();
+    void gotoSwapPage();
 
     /** XCOIN END */
 

@@ -218,6 +218,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "getkawpowhash", 3, "height"},
     { "sethostshare", 0, "enabled" },
     { "setguestpercent", 0, "percent" },
+    { "postask", 1, "price" },
+    { "postask", 3, "vout" },
 };
 
 class CRPCConvertTable

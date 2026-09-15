@@ -41,6 +41,7 @@
 #include "darkstyle.h"
 #include "xrelease.h"
 #include "xreleasedialog.h"
+#include "xtheme.h"
 
 #include <iostream>
 
@@ -71,6 +72,9 @@
 #include <QStyle>
 #include <QTimer>
 #include <QToolBar>
+#include <QTreeWidget>
+#include <QTreeWidgetItem>
+#include <QTreeWidgetItemIterator>
 #include <QVBoxLayout>
 #include <QComboBox>
 
@@ -344,7 +348,7 @@ void RavenGUI::createActions()
     sendCoinsAction->setStatusTip(tr("Send coins to an X Coin address"));
     sendCoinsAction->setToolTip(sendCoinsAction->statusTip());
     sendCoinsAction->setCheckable(true);
-    sendCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_2));
+    sendCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_3));
     sendCoinsAction->setFont(font);
     tabGroup->addAction(sendCoinsAction);
 
@@ -356,7 +360,7 @@ void RavenGUI::createActions()
     receiveCoinsAction->setStatusTip(tr("Show your address and copy it"));
     receiveCoinsAction->setToolTip(receiveCoinsAction->statusTip());
     receiveCoinsAction->setCheckable(true);
-    receiveCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_3));
+    receiveCoinsAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_2));
     receiveCoinsAction->setFont(font);
     tabGroup->addAction(receiveCoinsAction);
 
@@ -373,8 +377,8 @@ void RavenGUI::createActions()
     tabGroup->addAction(historyAction);
 
     /** XCOIN START */
-    createAssetAction = new QAction(platformStyle->SingleColorIconOnOff(":/icons/asset_create_selected", ":/icons/asset_create"), tr("&Assets"), this);
-    createAssetAction->setStatusTip(tr("Create a sub or unique asset (quantity, units, IPFS). Main/root is Sign-in Claim only."));
+    createAssetAction = new QAction(platformStyle->SingleColorIconOnOff(":/icons/asset_create_selected", ":/icons/asset_create"), tr("&Create"), this);
+    createAssetAction->setStatusTip(tr("Create a sub or unique asset. Main/root is Sign-in Claim only."));
     createAssetAction->setToolTip(createAssetAction->statusTip());
     createAssetAction->setCheckable(true);
     createAssetAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_5));
@@ -421,6 +425,30 @@ void RavenGUI::createActions()
     restrictedAssetAction->setFont(font);
     tabGroup->addAction(restrictedAssetAction);
 
+    lotteryShareAction = new QAction(tr("Lottery share"), this);
+    lotteryShareAction->setStatusTip(tr("Share a percent of mature lottery wins with invited guests"));
+    lotteryShareAction->setCheckable(true);
+    lotteryShareAction->setFont(font);
+    tabGroup->addAction(lotteryShareAction);
+
+    assetDividendAction = new QAction(tr("Asset dividends"), this);
+    assetDividendAction->setStatusTip(tr("Pay holders of an asset from a snapshot"));
+    assetDividendAction->setCheckable(true);
+    assetDividendAction->setFont(font);
+    tabGroup->addAction(assetDividendAction);
+
+    myNodeAction = new QAction(tr("My node"), this);
+    myNodeAction->setStatusTip(tr("Listen address. Off by default."));
+    myNodeAction->setCheckable(true);
+    myNodeAction->setFont(font);
+    tabGroup->addAction(myNodeAction);
+
+    swapAction = new QAction(tr("&Market"), this);
+    swapAction->setStatusTip(tr("List assets and buy them with XFER. No copy-paste."));
+    swapAction->setCheckable(true);
+    swapAction->setFont(font);
+    tabGroup->addAction(swapAction);
+
     /** XCOIN END */
 
 #ifdef ENABLE_WALLET
@@ -446,6 +474,14 @@ void RavenGUI::createActions()
     connect(manageAssetAction, SIGNAL(triggered()), this, SLOT(gotoManageAssetsPage()));
     connect(restrictedAssetAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(restrictedAssetAction, SIGNAL(triggered()), this, SLOT(gotoRestrictedAssetsPage()));
+    connect(lotteryShareAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(lotteryShareAction, SIGNAL(triggered()), this, SLOT(gotoLotterySharePage()));
+    connect(assetDividendAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(assetDividendAction, SIGNAL(triggered()), this, SLOT(gotoAssetDividendPage()));
+    connect(myNodeAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(myNodeAction, SIGNAL(triggered()), this, SLOT(gotoMyNodePage()));
+    connect(swapAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(swapAction, SIGNAL(triggered()), this, SLOT(gotoSwapPage()));
     // TODO add messaging actions to go to messaging page when clicked
     // TODO add voting actions to go to voting page when clicked
 #endif // ENABLE_WALLET
@@ -587,6 +623,10 @@ void RavenGUI::createMenuBar()
         advanced->addAction(createAssetAction);
         advanced->addAction(transferAssetAction);
         advanced->addAction(manageAssetAction);
+        advanced->addAction(lotteryShareAction);
+        advanced->addAction(assetDividendAction);
+        advanced->addAction(myNodeAction);
+        advanced->addAction(swapAction);
         advanced->addSeparator();
         advanced->addAction(openRPCConsoleAction);
         advanced->addAction(openWalletRepairAction);
@@ -635,62 +675,66 @@ void RavenGUI::createToolBars()
 
         /** XCOIN END */
 
-        m_toolbar = new QToolBar();
-        m_toolbar->setStyle(style());
-        m_toolbar->setContextMenuPolicy(Qt::PreventContextMenu);
-        m_toolbar->setMovable(false);
-
-        if(IconsOnly) {
-            m_toolbar->setMaximumWidth(65);
-            m_toolbar->setToolButtonStyle(Qt::ToolButtonIconOnly);
-        }
-        else {
-            m_toolbar->setMinimumWidth(labelToolbar->width());
-            m_toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-        }
-        m_toolbar->addAction(overviewAction);
-        m_toolbar->addAction(receiveCoinsAction);
-        m_toolbar->addAction(sendCoinsAction);
-        m_toolbar->addAction(historyAction);
-        m_toolbar->addAction(createAssetAction);
-//        m_toolbar->addAction(messagingAction);
-//        m_toolbar->addAction(votingAction);
         restrictedAssetAction->setVisible(false);
         restrictedAssetAction->setToolTip(tr("Restricted assets were removed"));
 
-        QString openSansFontString = "font: normal 22pt \"Open Sans\";";
-        QString normalString = "font: normal 22pt \"Arial\";";
-        QString stringToUse = "";
+        toolbarWidget->setObjectName("xnavWrap");
+        toolbarWidget->setStyleSheet(XNavStyleSheet());
 
-#if !defined(Q_OS_MAC)
-        stringToUse = openSansFontString;
-#else
-        stringToUse = normalString;
-#endif
+        navTree = new QTreeWidget(toolbarWidget);
+        navTree->setObjectName("xnav");
+        navTree->setHeaderHidden(true);
+        navTree->setRootIsDecorated(true);
+        navTree->setIndentation(12);
+        navTree->setAnimated(true);
+        navTree->setColumnCount(1);
+        navTree->setFocusPolicy(Qt::NoFocus);
+        navTree->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+        if (IconsOnly)
+            navTree->setMaximumWidth(56);
+        else
+            navTree->setMinimumWidth(200);
 
-        /** XCOIN START */
-        QString tbStyleSheet = ".QToolBar {background-color : transparent; border-color: transparent; }  "
-                               ".QToolButton {background-color: transparent; border-color: transparent; width: 249px; color: %1; border: none;} "
-                               ".QToolButton:checked {background: none; background-color: none; selection-background-color: none; color: %2; border: none; font: %4} "
-                               ".QToolButton:hover {background: none; background-color: none; border: none; color: %3;} "
-                               ".QToolButton:disabled {color: gray;}";
+        QTreeWidgetItem* wallet = new QTreeWidgetItem(navTree, QStringList() << tr("WALLET"));
+        wallet->setFlags(wallet->flags() & ~Qt::ItemIsSelectable);
+        addNavLeaf(wallet, tr("Home"), "home");
+        addNavLeaf(wallet, tr("Receive"), "receive");
+        addNavLeaf(wallet, tr("Send"), "send");
+        addNavLeaf(wallet, tr("Activity"), "activity");
+        wallet->setExpanded(true);
 
-        m_toolbar->setStyleSheet(tbStyleSheet.arg(platformStyle->ToolBarNotSelectedTextColor().name(),
-                                                platformStyle->ToolBarSelectedTextColor().name(),
-                                                platformStyle->DarkOrangeColor().name(), stringToUse));
+        QTreeWidgetItem* assets = new QTreeWidgetItem(navTree, QStringList() << tr("ASSETS"));
+        assets->setFlags(assets->flags() & ~Qt::ItemIsSelectable);
+        addNavLeaf(assets, tr("Create"), "create");
+        addNavLeaf(assets, tr("Transfer"), "transfer");
+        addNavLeaf(assets, tr("Manage"), "manage");
+        addNavLeaf(assets, tr("Market"), "swap");
+        assets->setExpanded(true);
 
-        m_toolbar->setOrientation(Qt::Vertical);
-        m_toolbar->setIconSize(QSize(40, 40));
+        QTreeWidgetItem* rewards = new QTreeWidgetItem(navTree, QStringList() << tr("REWARDS"));
+        rewards->setFlags(rewards->flags() & ~Qt::ItemIsSelectable);
+        addNavLeaf(rewards, tr("Lottery share"), "lotteryshare");
+        addNavLeaf(rewards, tr("Asset dividends"), "dividends");
+        rewards->setExpanded(true);
 
-        QLayout* lay = m_toolbar->layout();
-        for(int i = 0; i < lay->count(); ++i)
-            lay->itemAt(i)->setAlignment(Qt::AlignLeft);
+        QTreeWidgetItem* node = new QTreeWidgetItem(navTree, QStringList() << tr("NODE"));
+        node->setFlags(node->flags() & ~Qt::ItemIsSelectable);
+        addNavLeaf(node, tr("My node"), "node");
+        node->setExpanded(false);
 
+        QTreeWidgetItem* advanced = new QTreeWidgetItem(navTree, QStringList() << tr("ADVANCED"));
+        advanced->setFlags(advanced->flags() & ~Qt::ItemIsSelectable);
+        addNavLeaf(advanced, tr("Balances (legacy)"), "balances");
+        addNavLeaf(advanced, tr("RPC console"), "rpc");
+        advanced->setExpanded(false);
+
+        connect(navTree, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(onNavItemClicked(QTreeWidgetItem*,int)));
         overviewAction->setChecked(true);
+        selectNav("home");
 
         QVBoxLayout* ravenLabelLayout = new QVBoxLayout(toolbarWidget);
         ravenLabelLayout->addWidget(labelToolbar);
-        ravenLabelLayout->addWidget(m_toolbar);
+        ravenLabelLayout->addWidget(navTree);
         ravenLabelLayout->setDirection(QBoxLayout::TopToBottom);
         ravenLabelLayout->addStretch(1);
 
@@ -792,18 +836,81 @@ void RavenGUI::createToolBars()
 
 void RavenGUI::updateIconsOnlyToolbar(bool IconsOnly)
 {
-    if(IconsOnly) {
+    if (labelToolbar)
         labelToolbar->setPixmap(QPixmap::fromImage(QImage(":/icons/xcointext")));
-        m_toolbar->setMaximumWidth(65);
-        m_toolbar->setToolButtonStyle(Qt::ToolButtonIconOnly);
-    }
-    else {
-        labelToolbar->setPixmap(QPixmap::fromImage(QImage(":/icons/xcointext")));
-        m_toolbar->setMinimumWidth(labelToolbar->width());
-        m_toolbar->setMaximumWidth(255);
-        m_toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);        
+    if (!navTree)
+        return;
+    if (IconsOnly) {
+        navTree->setMaximumWidth(56);
+        navTree->setMinimumWidth(56);
+    } else {
+        navTree->setMinimumWidth(200);
+        navTree->setMaximumWidth(280);
     }
 }
+
+QTreeWidgetItem* RavenGUI::addNavLeaf(QTreeWidgetItem* parent, const QString& label, const QString& id)
+{
+    QTreeWidgetItem* leaf = new QTreeWidgetItem(parent, QStringList() << label);
+    leaf->setData(0, Qt::UserRole, id);
+    return leaf;
+}
+
+void RavenGUI::selectNav(const QString& id)
+{
+    if (!navTree || id.isEmpty())
+        return;
+    navTree->blockSignals(true);
+    QTreeWidgetItemIterator it(navTree);
+    while (*it) {
+        if ((*it)->data(0, Qt::UserRole).toString() == id) {
+            navTree->setCurrentItem(*it);
+            if ((*it)->parent())
+                (*it)->parent()->setExpanded(true);
+            break;
+        }
+        ++it;
+    }
+    navTree->blockSignals(false);
+}
+
+#ifdef ENABLE_WALLET
+void RavenGUI::onNavItemClicked(QTreeWidgetItem* item, int column)
+{
+    Q_UNUSED(column);
+    if (!item)
+        return;
+    const QString id = item->data(0, Qt::UserRole).toString();
+    if (id.isEmpty())
+        return;
+    if (id == "home")
+        gotoOverviewPage();
+    else if (id == "receive")
+        gotoReceiveCoinsPage();
+    else if (id == "send")
+        gotoSendCoinsPage();
+    else if (id == "activity")
+        gotoHistoryPage();
+    else if (id == "create")
+        gotoCreateAssetsPage();
+    else if (id == "transfer")
+        gotoAssetsPage();
+    else if (id == "manage")
+        gotoManageAssetsPage();
+    else if (id == "lotteryshare")
+        gotoLotterySharePage();
+    else if (id == "dividends")
+        gotoAssetDividendPage();
+    else if (id == "node")
+        gotoMyNodePage();
+    else if (id == "swap")
+        gotoSwapPage();
+    else if (id == "balances")
+        gotoBalancesPage();
+    else if (id == "rpc")
+        showDebugWindowActivateConsole();
+}
+#endif // ENABLE_WALLET
 void RavenGUI::setClientModel(ClientModel *_clientModel)
 {
     this->clientModel = _clientModel;
@@ -928,6 +1035,14 @@ void RavenGUI::setWalletActionsEnabled(bool enabled)
     messagingAction->setEnabled(false);
     votingAction->setEnabled(false);
     restrictedAssetAction->setEnabled(false);
+    if (lotteryShareAction)
+        lotteryShareAction->setEnabled(enabled);
+    if (assetDividendAction)
+        assetDividendAction->setEnabled(enabled);
+    if (myNodeAction)
+        myNodeAction->setEnabled(enabled);
+    if (swapAction)
+        swapAction->setEnabled(enabled);
     /** XCOIN END */
 }
 
@@ -1048,29 +1163,34 @@ void RavenGUI::openClicked()
 void RavenGUI::gotoOverviewPage()
 {
     overviewAction->setChecked(true);
+    selectNav("home");
     if (walletFrame) walletFrame->gotoOverviewPage();
 }
 
 void RavenGUI::gotoBalancesPage()
 {
+    selectNav("balances");
     if (walletFrame) walletFrame->gotoBalancesPage();
 }
 
 void RavenGUI::gotoHistoryPage()
 {
     historyAction->setChecked(true);
+    selectNav("activity");
     if (walletFrame) walletFrame->gotoHistoryPage();
 }
 
 void RavenGUI::gotoReceiveCoinsPage()
 {
     receiveCoinsAction->setChecked(true);
+    selectNav("receive");
     if (walletFrame) walletFrame->gotoReceiveCoinsPage();
 }
 
 void RavenGUI::gotoSendCoinsPage(QString addr)
 {
     sendCoinsAction->setChecked(true);
+    selectNav("send");
     if (walletFrame) walletFrame->gotoSendCoinsPage(addr);
 }
 
@@ -1088,18 +1208,21 @@ void RavenGUI::gotoVerifyMessageTab(QString addr)
 void RavenGUI::gotoAssetsPage()
 {
     transferAssetAction->setChecked(true);
+    selectNav("transfer");
     if (walletFrame) walletFrame->gotoAssetsPage();
 };
 
 void RavenGUI::gotoCreateAssetsPage()
 {
     createAssetAction->setChecked(true);
+    selectNav("create");
     if (walletFrame) walletFrame->gotoCreateAssetsPage();
 };
 
 void RavenGUI::gotoManageAssetsPage()
 {
     manageAssetAction->setChecked(true);
+    selectNav("manage");
     if (walletFrame) walletFrame->gotoManageAssetsPage();
 };
 
@@ -1108,6 +1231,38 @@ void RavenGUI::gotoRestrictedAssetsPage()
     restrictedAssetAction->setChecked(true);
     if (walletFrame) walletFrame->gotoRestrictedAssetsPage();
 };
+
+void RavenGUI::gotoLotterySharePage()
+{
+    if (lotteryShareAction)
+        lotteryShareAction->setChecked(true);
+    selectNav("lotteryshare");
+    if (walletFrame) walletFrame->gotoLotterySharePage();
+}
+
+void RavenGUI::gotoAssetDividendPage()
+{
+    if (assetDividendAction)
+        assetDividendAction->setChecked(true);
+    selectNav("dividends");
+    if (walletFrame) walletFrame->gotoAssetDividendPage();
+}
+
+void RavenGUI::gotoMyNodePage()
+{
+    if (myNodeAction)
+        myNodeAction->setChecked(true);
+    selectNav("node");
+    if (walletFrame) walletFrame->gotoMyNodePage();
+}
+
+void RavenGUI::gotoSwapPage()
+{
+    if (swapAction)
+        swapAction->setChecked(true);
+    selectNav("swap");
+    if (walletFrame) walletFrame->gotoSwapPage();
+}
 /** XCOIN END */
 #endif // ENABLE_WALLET
 
@@ -1414,6 +1569,8 @@ void RavenGUI::checkAssets()
         createAssetAction->setDisabled(false);
         createAssetAction->setToolTip(tr("Create a sub or unique asset (quantity, units, IPFS). Main/root is Sign-in Claim only."));
         manageAssetAction->setDisabled(false);
+        if (assetDividendAction)
+            assetDividendAction->setDisabled(false);
         }
     else {
         transferAssetAction->setDisabled(true);
@@ -1421,6 +1578,8 @@ void RavenGUI::checkAssets()
         createAssetAction->setDisabled(true);
         createAssetAction->setToolTip(tr("Assets not yet active"));
         manageAssetAction->setDisabled(true);
+        if (assetDividendAction)
+            assetDividendAction->setDisabled(true);
         }
 
     restrictedAssetAction->setVisible(false);

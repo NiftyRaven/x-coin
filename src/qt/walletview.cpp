@@ -27,6 +27,10 @@
 #include "xhome.h"
 #include "xreceive.h"
 #include "xsend.h"
+#include "xrewardshare.h"
+#include "xrewarddividend.h"
+#include "xnodepage.h"
+#include "xswap.h"
 #include "rpcconsole.h"
 #include <validation.h>
 #include <univalue.h>
@@ -75,6 +79,10 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     xHome = new XHome(this);
     xReceive = new XReceive(this);
     xSend = new XSend(this);
+    xRewardShare = new XRewardShare(this);
+    xRewardDividend = new XRewardDividend(this);
+    xNodePage = new XNodePage(this);
+    xSwap = new XSwap(this);
 
     usedSendingAddressesPage = new AddressBookPage(platformStyle, AddressBookPage::ForEditing, AddressBookPage::SendingTab, this);
     usedReceivingAddressesPage = new AddressBookPage(platformStyle, AddressBookPage::ForEditing, AddressBookPage::ReceivingTab, this);
@@ -92,6 +100,10 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     addWidget(createAssetsPage);
     addWidget(manageAssetsPage);
     addWidget(restrictedAssetsPage);
+    addWidget(xRewardShare);
+    addWidget(xRewardDividend);
+    addWidget(xNodePage);
+    addWidget(xSwap);
     /** XCOIN END */
 
     // Clicking on a transaction on the overview pre-selects the transaction on the transaction history page
@@ -179,6 +191,8 @@ void WalletView::setClientModel(ClientModel *_clientModel)
     overviewPage->setClientModel(_clientModel);
     sendCoinsPage->setClientModel(_clientModel);
     xHome->setClientModel(_clientModel);
+    if (xNodePage)
+        xNodePage->setClientModel(_clientModel);
 }
 
 void WalletView::setWalletModel(WalletModel *_walletModel)
@@ -193,6 +207,8 @@ void WalletView::setWalletModel(WalletModel *_walletModel)
     xHome->setWalletModel(_walletModel);
     xReceive->setWalletModel(_walletModel);
     xSend->setWalletModel(_walletModel);
+    if (xSwap)
+        xSwap->setWalletModel(_walletModel);
     usedReceivingAddressesPage->setModel(_walletModel ? _walletModel->getAddressTableModel() : nullptr);
     usedSendingAddressesPage->setModel(_walletModel ? _walletModel->getAddressTableModel() : nullptr);
 
@@ -493,6 +509,34 @@ void WalletView::gotoManageAssetsPage()
 void WalletView::gotoRestrictedAssetsPage()
 {
     setCurrentWidget(restrictedAssetsPage);
+}
+
+void WalletView::gotoLotterySharePage()
+{
+    if (xRewardShare)
+        xRewardShare->refresh();
+    setCurrentWidget(xRewardShare);
+}
+
+void WalletView::gotoAssetDividendPage()
+{
+    if (xRewardDividend)
+        xRewardDividend->refresh();
+    setCurrentWidget(xRewardDividend);
+}
+
+void WalletView::gotoMyNodePage()
+{
+    if (xNodePage)
+        xNodePage->refresh();
+    setCurrentWidget(xNodePage);
+}
+
+void WalletView::gotoSwapPage()
+{
+    if (xSwap)
+        xSwap->refresh();
+    setCurrentWidget(xSwap);
 }
 
 static QString wrapRpcError(const std::string& message)

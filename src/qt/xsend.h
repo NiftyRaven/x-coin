@@ -15,7 +15,7 @@ class QLabel;
 class QLineEdit;
 class QPushButton;
 
-/** Send: paste address, amount, Send. No CLI. */
+/** Send: @handle or X address, amount, confirm, Send. */
 class XSend : public QWidget
 {
     Q_OBJECT

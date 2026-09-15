@@ -116,6 +116,7 @@
     </qresource>
     <qresource prefix="/darkstyle">
         <file alias="qss">res/darkstyle/darkstyle.qss</file>
+        <file alias="xpages">res/darkstyle/xpages.qss</file>
         <file alias="close">res/darkstyle/icon_close.png</file>
         <file alias="restore">res/darkstyle/icon_restore.png</file>
         <file alias="undock">res/darkstyle/icon_undock.png</file>

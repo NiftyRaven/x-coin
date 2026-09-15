@@ -33,6 +33,7 @@
 #include "utilmoneystr.h"
 #include "utilstrencodings.h"
 #include "lottery.h"
+#include "xmarket.h"
 #include "xsession.h"
 #include "assets/xaccount.h"
 #include "validationinterface.h"
@@ -1803,6 +1804,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                                                           xsession::SessionIsXVerified(), hbSig, attest));
             }
         }
+        xmarket::PushBook(pfrom, connman);
     }
 
     else if (!pfrom->fSuccessfullyConnected)
@@ -3039,6 +3041,15 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 connman->PushMessage(pto, relayMaker.Make(NetMsgType::XHB, nHbTime, script,
                                                           xHandle, xUserId, xVerified, vchSig, vchAttest));
             });
+        }
+    }
+
+    else if (strCommand == NetMsgType::XORD)
+    {
+        const int score = xmarket::ProcessXord(pfrom, vRecv, connman);
+        if (score > 0) {
+            LOCK(cs_main);
+            Misbehaving(pfrom->GetId(), score);
         }
     }
 
