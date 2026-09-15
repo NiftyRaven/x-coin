@@ -15,20 +15,25 @@ check. Subs and uniques are created **from that signed-in account’s
 main asset** (`NAME/CHILD`, `NAME#tag`) and require owning `NAME!`.
 Issuing under any other root is rejected.
 
-## GUI (1.0.9)
+## GUI
 
-Left-nav **Assets** opens the existing Ravencoin **Create Asset** form
-(`createassetdialog` / `issue` RPCs). There is no second asset engine.
+**Light 1.0.14** — left-nav **Assets** is the Create Asset form
+(`createassetdialog` / `issue` RPCs). Transfer is a Home / Advanced
+action. No Market.
 
-| Kind | GUI | Quantity | Metadata |
-| --- | --- | --- | --- |
-| Main / root | **Not** on this tab. Sign in, then **Claim my root asset**. | Protocol assigns 1 | — |
-| Sub `NAME/CHILD` | Assets tab → Sub | Quantity + units + reissuable | IPFS or txid hash |
-| Unique `NAME#tag` | Assets tab → Unique | Fixed **1** (units 0, not reissuable) | Same IPFS/txid options |
+**Heavy 1.0.15** — **ASSETS** in the left tree: Create, Transfer,
+Manage, **Market**. Create is the same form. There is no second asset
+engine.
 
-Typed MAIN/root names fail. Home **Issue sub** / **Issue unique** open
-this tab (same dialog). Transfer assets stays a separate Home / Advanced
-action.
+| Kind | Light | Heavy | Quantity | Metadata |
+| --- | --- | --- | --- | --- |
+| Main / root | Home **Claim my root asset** | Same | Protocol assigns 1 | — |
+| Sub `NAME/CHILD` | Assets → Sub | Assets → Create → Sub | Quantity + units + reissuable | IPFS or txid hash |
+| Unique `NAME#tag` | Assets → Unique | Assets → Create → Unique | Fixed **1** | Same IPFS/txid options |
+| Sell a bag | — | Assets → **Market** | One UTXO per row | Price in XFER |
+
+Typed MAIN/root names fail. Market is peer listings for XFER, not a
+DEX: [MARKET.md](MARKET.md).
 
 ```
 # GUI: Sign in with X, then Claim my root asset.
@@ -79,7 +84,11 @@ length **≤26 is never rejected** for length and is **never truncated**.
 5. Handles shorter than 3 characters are padded on the left with `X`
    (`ab` → `XAB`, `a` → `XXA`).
 6. If the result would exceed **32** characters, mapping **fails**
-   (no silent truncate). A 26-character handle always fits.
+   (no silent truncate). A 26-character handle always fits. A
+   **32**-character handle can **claim** the identity root (maps 1:1
+   when charset is valid). They cannot issue `NAME/CHILD` or
+   `NAME#tag` — the full name would exceed 33. Owner token `NAME!`
+   still fits (33).
 
 **Reserved** product names: `XFER`, `XCOIN`. Historical reserved roots
 from the imported engine are listed once in [FORK.md](FORK.md) and are
@@ -113,8 +122,8 @@ Subs still burn
 | Kind | Who | Burn | Notes |
 | --- | --- | --- | --- |
 | Main / root | Protocol on X-link only | **0 XFER** | Owner token `NAME!` + **1** circulating unit (`units=0`, not reissuable). |
-| Sub `NAME/CHILD` | Owner of `NAME!` | **100 XFER** | |
-| Unique `NAME#tag` | Owner of `NAME!` | **5 XFER** | |
+| Sub `NAME/CHILD` | Owner of `NAME!` | **100 XFER** | Needs room under 33. A 32-character root cannot issue children. |
+| Unique `NAME#tag` | Owner of `NAME!` | **5 XFER** | Same 33-character cap. |
 | Reissue | Owner, if reissuable | **100 XFER** | Identity roots are not reissuable. |
 | Restricted / qualifier / tag / freeze | — | — | **Removed.** No create, transfer, RPC, or activation. |
 

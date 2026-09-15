@@ -3,9 +3,10 @@
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
 
-**1.1 pool work was removed.** Current in-tree wallets are **1.0.11**
-([RELEASE-1.0.11.md](RELEASE-1.0.11.md)). Last shipped zip until that
-package workflow runs is **1.0.10**.
+**1.1 pool work was removed.** Current wallets are **Light 1.0.14**
+([RELEASE-1.0.14.md](RELEASE-1.0.14.md)) and **Heavy 1.0.15**
+([RELEASE-1.0.15.md](RELEASE-1.0.15.md)). Market is Heavy only:
+[MARKET.md](MARKET.md).
 Do not make the repository public until go-live ([GO-LIVE.md](GO-LIVE.md)).
 1.0 snapshot: [RELEASE-1.0.md](RELEASE-1.0.md).
 

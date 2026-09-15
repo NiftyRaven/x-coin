@@ -8,9 +8,12 @@ on main/test. Honest operators plus the checks below make *cheap*
 sabotage fail. A stolen attestor key, an eclipsed lone node, or a
 clique of **real** X Verified accounts can still hurt you.
 
-Downloads:
-[Releases v1.0.12](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.12).
-There are no public DNS seeds on purpose.
+Downloads: **Light 1.0.14**
+([v1.0.14](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.14))
+or **Heavy 1.0.15**
+([v1.0.15](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.15)).
+The lottery-law chapter below is what **1.0.12** closed. There are no
+public DNS seeds on purpose.
 
 ## What 1.0.12 closed
 

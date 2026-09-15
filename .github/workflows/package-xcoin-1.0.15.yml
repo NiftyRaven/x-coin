@@ -1,9 +1,7 @@
-name: Package X Coin 1.0.14 Light
+name: Package X Coin 1.0.15 Heavy
 
-# Light wallet only: host/guest share, original Home. No Market.
-# Package from 51623873 (last pre-Market 1.0.14). Do not dispatch
-# this against x-coin after 1.0.15 — that tree is Heavy.
-# Consensus unchanged from 1.0.13.
+# Heavy wallet: Market + tree nav + host/guest share. Consensus unchanged.
+# Dispatch against x-coin (or this branch) after merge.
 # Isolation smoke is fatal: a red smoke-isolation step fails the linux
 # job, so Package Linux never runs and the zip is not uploaded. Not the
 # 1.0.3 soft-continue.
@@ -14,9 +12,9 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: 'git ref to package (Light SHA, not x-coin after 1.0.15)'
+        description: 'git ref to package'
         required: true
-        default: '51623873b4770f2006202e5f00ba5902569e18e4'
+        default: 'x-coin'
 
 jobs:
   linux:
@@ -62,7 +60,9 @@ jobs:
           grep -q "What's new" src/qt/ravengui.cpp
           grep -q 'inviteguest' src/rpc/lottery.cpp
           test -f src/hostshare.cpp
-          if grep -n parasite src/hostshare.cpp src/hostshare.h src/rpc/lottery.cpp src/qt/xhome.cpp docs/LOTTERY.md docs/XSIGNIN.md docs/RELEASE-1.0.14.md; then
+          test -f src/xmarket.cpp
+          grep -q 'listmarket' src/rpc/market.cpp
+          if grep -n parasite src/hostshare.cpp src/hostshare.h src/rpc/lottery.cpp src/qt/xhome.cpp docs/LOTTERY.md docs/XSIGNIN.md docs/RELEASE-1.0.14.md docs/RELEASE-1.0.15.md docs/MARKET.md; then
             echo "do not use parasite in code or docs" >&2
             exit 1
           fi
@@ -76,24 +76,24 @@ jobs:
           contrib/xcoin/smoke-isolation.sh
 
       - name: Package Linux
-        run: VER=1.0.14 contrib/xcoin/package-linux.sh
+        run: VER=1.0.15 contrib/xcoin/package-linux.sh
 
       - name: Name release archive
         run: |
-          cp dist/xcoin-1.0.14-linux-x86_64.tar.gz dist/X-Coin-1.0.14-Linux-x86_64.tar.gz
-          tar -tzf dist/X-Coin-1.0.14-Linux-x86_64.tar.gz | head
-          test -n "$(tar -tzf dist/X-Coin-1.0.14-Linux-x86_64.tar.gz | grep '^xcoin-1.0.14-linux-x86_64/X Coin Practice Wallet$')"
-          test -n "$(tar -tzf dist/X-Coin-1.0.14-Linux-x86_64.tar.gz | grep '^xcoin-1.0.14-linux-x86_64/X Coin Wallet$')"
-          test -n "$(tar -tzf dist/X-Coin-1.0.14-Linux-x86_64.tar.gz | grep '^xcoin-1.0.14-linux-x86_64/xcoin.conf$')"
-          test -n "$(tar -tzf dist/X-Coin-1.0.14-Linux-x86_64.tar.gz | grep 'bin/xcoind$')"
-          tar -xOf dist/X-Coin-1.0.14-Linux-x86_64.tar.gz xcoin-1.0.14-linux-x86_64/xcoin.conf | grep -F 'addnode=172.191.195.221:38443'
-          tar -xOf dist/X-Coin-1.0.14-Linux-x86_64.tar.gz xcoin-1.0.14-linux-x86_64/xcoin.conf | grep -F 'xoauthclientid=N2hIbnNsTlR0TmR1WDZ6eWp2Qk06MTpjaQ'
+          cp dist/xcoin-1.0.15-linux-x86_64.tar.gz dist/X-Coin-1.0.15-Linux-x86_64.tar.gz
+          tar -tzf dist/X-Coin-1.0.15-Linux-x86_64.tar.gz | head
+          test -n "$(tar -tzf dist/X-Coin-1.0.15-Linux-x86_64.tar.gz | grep '^xcoin-1.0.15-linux-x86_64/X Coin Practice Wallet$')"
+          test -n "$(tar -tzf dist/X-Coin-1.0.15-Linux-x86_64.tar.gz | grep '^xcoin-1.0.15-linux-x86_64/X Coin Wallet$')"
+          test -n "$(tar -tzf dist/X-Coin-1.0.15-Linux-x86_64.tar.gz | grep '^xcoin-1.0.15-linux-x86_64/xcoin.conf$')"
+          test -n "$(tar -tzf dist/X-Coin-1.0.15-Linux-x86_64.tar.gz | grep 'bin/xcoind$')"
+          tar -xOf dist/X-Coin-1.0.15-Linux-x86_64.tar.gz xcoin-1.0.15-linux-x86_64/xcoin.conf | grep -F 'addnode=172.191.195.221:38443'
+          tar -xOf dist/X-Coin-1.0.15-Linux-x86_64.tar.gz xcoin-1.0.15-linux-x86_64/xcoin.conf | grep -F 'xoauthclientid=N2hIbnNsTlR0TmR1WDZ6eWp2Qk06MTpjaQ'
 
       - name: Upload Linux package
         uses: actions/upload-artifact@v4
         with:
-          name: X-Coin-1.0.14-Linux-x86_64
-          path: dist/X-Coin-1.0.14-Linux-x86_64.tar.gz
+          name: X-Coin-1.0.15-Linux-x86_64
+          path: dist/X-Coin-1.0.15-Linux-x86_64.tar.gz
           if-no-files-found: error
 
   windows:
@@ -232,22 +232,22 @@ jobs:
           make -C build-win CCACHE="$PREFIX/native/bin/ccache" -j$(nproc)
 
       - name: Package Windows
-        run: VER=1.0.14 contrib/xcoin/package-windows.sh
+        run: VER=1.0.15 contrib/xcoin/package-windows.sh
 
       - name: Name release archive
         run: |
-          cp dist/xcoin-1.0.14-win-x86_64.zip dist/X-Coin-1.0.14-Windows.zip
-          unzip -Z -1 dist/X-Coin-1.0.14-Windows.zip | head
-          unzip -Z -1 dist/X-Coin-1.0.14-Windows.zip | grep -q '^xcoin-1.0.14-win-x86_64/X Coin Practice Wallet.exe$'
-          unzip -Z -1 dist/X-Coin-1.0.14-Windows.zip | grep -q '^xcoin-1.0.14-win-x86_64/X Coin Wallet.exe$'
-          unzip -Z -1 dist/X-Coin-1.0.14-Windows.zip | grep -q '^xcoin-1.0.14-win-x86_64/xcoin.conf$'
-          unzip -Z -1 dist/X-Coin-1.0.14-Windows.zip | grep -q 'xcoind.exe$'
-          unzip -p dist/X-Coin-1.0.14-Windows.zip xcoin-1.0.14-win-x86_64/xcoin.conf | grep -F 'addnode=172.191.195.221:38443'
-          unzip -p dist/X-Coin-1.0.14-Windows.zip xcoin-1.0.14-win-x86_64/xcoin.conf | grep -F 'xoauthclientid=N2hIbnNsTlR0TmR1WDZ6eWp2Qk06MTpjaQ'
+          cp dist/xcoin-1.0.15-win-x86_64.zip dist/X-Coin-1.0.15-Windows.zip
+          unzip -Z -1 dist/X-Coin-1.0.15-Windows.zip | head
+          unzip -Z -1 dist/X-Coin-1.0.15-Windows.zip | grep -q '^xcoin-1.0.15-win-x86_64/X Coin Practice Wallet.exe$'
+          unzip -Z -1 dist/X-Coin-1.0.15-Windows.zip | grep -q '^xcoin-1.0.15-win-x86_64/X Coin Wallet.exe$'
+          unzip -Z -1 dist/X-Coin-1.0.15-Windows.zip | grep -q '^xcoin-1.0.15-win-x86_64/xcoin.conf$'
+          unzip -Z -1 dist/X-Coin-1.0.15-Windows.zip | grep -q 'xcoind.exe$'
+          unzip -p dist/X-Coin-1.0.15-Windows.zip xcoin-1.0.15-win-x86_64/xcoin.conf | grep -F 'addnode=172.191.195.221:38443'
+          unzip -p dist/X-Coin-1.0.15-Windows.zip xcoin-1.0.15-win-x86_64/xcoin.conf | grep -F 'xoauthclientid=N2hIbnNsTlR0TmR1WDZ6eWp2Qk06MTpjaQ'
 
       - name: Upload Windows package
         uses: actions/upload-artifact@v4
         with:
-          name: X-Coin-1.0.14-Windows
-          path: dist/X-Coin-1.0.14-Windows.zip
+          name: X-Coin-1.0.15-Windows
+          path: dist/X-Coin-1.0.15-Windows.zip
           if-no-files-found: error

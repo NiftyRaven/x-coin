@@ -1,53 +1,61 @@
 # X Coin 1.0 (private)
 
-**Current wallets: 1.0.11.** Lottery pools (`XPL1`, create / join / leave)
-were removed. This page is the 1.0 product snapshot. No pool sell.
+**Current wallets: Light 1.0.14 and Heavy 1.0.15.** Same chain.
+Light: [RELEASE-1.0.14.md](RELEASE-1.0.14.md). Heavy:
+[RELEASE-1.0.15.md](RELEASE-1.0.15.md). Market (Heavy only):
+[MARKET.md](MARKET.md). This page is the 1.0 product snapshot (pools
+already gone). Do not use 1.0.13 or older if you need Share lottery
+wins.
 
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
 
 Product version **1.0**. This is a **private** release. Do not make
-the repository public. The **1.0.0** Windows/Linux zips were
-launch-blocking (invisible create/restore choice, empty-wallet fee
-wall on the free root, Sign in with X asked users to paste a Client
-ID). Use **1.0.11** on
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.11)
-(`X-Coin-1.0.11-Windows.zip` and `X-Coin-1.0.11-Linux-x86_64.tar.gz`)
-after the package workflow is run. Until then the last shipped zips are
-**1.0.10**. Do not use **Code → Download ZIP**. Do not use 1.0.2–1.0.10.
-1.0.11 notes: [RELEASE-1.0.11.md](RELEASE-1.0.11.md). In-wallet What's
-new: [UPDATES.md](UPDATES.md).
+the repository public. **Light** is
+[v1.0.14](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.14).
+**Heavy** is
+[v1.0.15](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.15).
+Do not use **Code → Download ZIP**. Do not use 1.0.2–1.0.13.
+In-wallet What's new: [UPDATES.md](UPDATES.md).
 
 ## What shipped
 
 - **Desktop GUI** `xcoin-qt` — X theme (black / white / sharp X mark).
-  Home (this wallet linked to @handle, lottery, claim root,
-  Receive / Send / Activity / Transfer assets), left-nav **Assets**
-  (create sub/unique via `createassetdialog`; no MAIN),
-  Receive (address + Copy), Send (paste + amount + Send), Activity.
-  Same node/wallet as CLI. No CLI required for the happy path.
-  **This wallet + this X session = you** — another user cannot send
-  from inside your wallet. **12-word BIP39 create/restore is unchanged**
-  — Sign in with X does not replace the seed ([WALLET.md](WALLET.md)).
+  **Light 1.0.14:** Home buttons (Receive / Send / Assets / Share lottery
+  wins). **Heavy 1.0.15:** tree nav (WALLET / ASSETS / REWARDS / NODE /
+  ADVANCED) plus **Market**. Same node/wallet as CLI. No CLI required
+  for the happy path. **This wallet + this X session = you**. **12-word
+  BIP39 create/restore is unchanged** — Sign in with X does not replace
+  the seed ([WALLET.md](WALLET.md)).
 - **Linux and Windows folders** with two labeled starts: the real
   wallet and **Practice** (always `-regtest`, isolated datadir,
   window title says `[regtest]`).
 - **CLI** `xcoind` / `xcoin-cli` still work.
 - Handle → root mapping: X handles `[A-Za-z0-9_]` length 1–32; **26-character
   handles map 1:1** (no truncation). Root names max **32** characters.
+  A 32-character handle can claim the root; they cannot issue children.
 - Lottery among verified-X active nodes (no mining). No pools.
 - One free identity root per **signed-in** handle; user-created roots forbidden.
+- **Share lottery wins** (verified host → invited guests) is on both
+  Light and Heavy. **Market** (list bags for XFER) is Heavy only. Neither
+  is consensus.
 
 ## Install the GUI
 
-Do not compile. Download from
-[Releases](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.10)
-until 1.0.11 is packaged, unpack, and double-click the labeled start.
-Step-by-step: [README.md](../README.md).
+Do not compile. Download **Light** or **Heavy**, unpack, and
+double-click the labeled start. Step-by-step: [README.md](../README.md).
 
-- Linux: [X-Coin-1.0.10-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.10/X-Coin-1.0.10-Linux-x86_64.tar.gz) → **X Coin Wallet**
-- Windows: [X-Coin-1.0.10-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.10/X-Coin-1.0.10-Windows.zip) → **X Coin Wallet.exe**
-- Practice: **X Coin Practice Wallet** / **X Coin Practice Wallet.exe**
+Light:
+
+- Linux: [X-Coin-1.0.14-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.14/X-Coin-1.0.14-Linux-x86_64.tar.gz) → **X Coin Wallet**
+- Windows: [X-Coin-1.0.14-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.14/X-Coin-1.0.14-Windows.zip) → **X Coin Wallet.exe**
+
+Heavy:
+
+- Linux: [X-Coin-1.0.15-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.15/X-Coin-1.0.15-Linux-x86_64.tar.gz) → **X Coin Wallet**
+- Windows: [X-Coin-1.0.15-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.15/X-Coin-1.0.15-Windows.zip) → **X Coin Wallet.exe**
+
+Practice: **X Coin Practice Wallet** / **X Coin Practice Wallet.exe**
 
 Pack from a developer build: `contrib/xcoin/package-linux.sh` and
 `contrib/xcoin/package-windows.sh`.

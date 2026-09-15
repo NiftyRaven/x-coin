@@ -11,7 +11,8 @@ to open GitHub to read the notes.
 
 1. **This version.** Home shows a What's new card until you tap it (or
    OK). **Help → What's new** always opens the notes shipped in this
-   binary (`docs/RELEASE-1.0.11.md` / `xrelease::BundledNotes`).
+   binary (`docs/RELEASE-1.0.15.md` on Heavy / `xrelease::BundledNotes`).
+   Light 1.0.14 ships its own notes (`docs/RELEASE-1.0.14.md`).
 2. **A newer GitHub Release.** After the repo is public (or when
    `-xreleaseurl=` points at a reachable JSON feed), the wallet GETs
    the feed once at start. Home and the header show **New: vX.Y.Z —
@@ -24,7 +25,8 @@ No modal on top of the first-run 12-word setup.
 
 ## What is sent
 
-The GET is the feed URL only (`User-Agent: XCoin-Wallet/1.0.11`).
+The GET is the feed URL only (`User-Agent: XCoin-Wallet/1.0.15` on
+Heavy; Light 1.0.14 sends `XCoin-Wallet/1.0.14`).
 No `wallet.dat`, no seed, no `xsession`, no X tokens, no RPC cookie.
 
 Default feed:
@@ -32,8 +34,9 @@ Default feed:
 
 While this repository is **private**, unauthenticated GitHub API
 returns 404. The wallet stays quiet and still has What's new for the
-installed version. After go-live (repo public), running 1.0.11 wallets
-can show later tags.
+installed version. After go-live (repo public), running **Light 1.0.14**
+wallets can show **1.0.15 Heavy** as newer. Stay on Light: tap
+**Later**. Heavy is optional.
 
 Override: `-xreleaseurl=https://…` (GitHub array, `{releases:[…]}`,
 or one `{tag, notes, url}` object). Off: `-nocheckupdates`.

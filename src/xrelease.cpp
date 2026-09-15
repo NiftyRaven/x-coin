@@ -201,33 +201,43 @@ bool FindByTag(const std::vector<Release>& all, const std::string& tag, Release&
 std::string BundledNotes()
 {
     return
-        "X Coin 1.0.14\n"
+        "X Coin 1.0.15 Heavy\n"
         "\n"
-        "What changed in this wallet\n"
+        "This is the Heavy wallet. 1.0.14 Light is the simple Home wallet.\n"
+        "Same chain. Same protocol. Same data folder.\n"
         "\n"
-        "- Share lottery wins: an X Verified host can send a percent of\n"
-        "  each mature lottery payout equally among invited guests. Guests\n"
-        "  sign in with X and claim a root; they do not need a blue check\n"
-        "  and they never enter the hat.\n"
-        "- First enable writes assetindex=1 and asks for a restart so the\n"
-        "  wallet can look up guest root addresses. Consensus is unchanged.\n"
+        "- Market (Assets → Market): list a bag for XFER. Other Heavy\n"
+        "  wallets buy it. No copy-paste. Listings travel peer to peer.\n"
+        "  They are not a new chain. Light 1.0.14 ignores them and still\n"
+        "  confirms a completed buy.\n"
+        "- Tree nav: WALLET, ASSETS, REWARDS, NODE, ADVANCED. Home is the\n"
+        "  name card. Receive, Send, and Activity are under WALLET.\n"
+        "- Share lottery wins (Rewards → Lottery share): an X Verified\n"
+        "  host can send a percent of each mature lottery payout equally\n"
+        "  among invited guests. Guests sign in with X and claim a root;\n"
+        "  they do not need a blue check and they never enter the hat.\n"
+        "- First enable of sharing writes assetindex=1 in this data\n"
+        "  directory and asks for a restart so the wallet can look up\n"
+        "  guest root addresses. The zip does not ship that flag.\n"
+        "  Consensus is unchanged.\n"
         "- After a halving, guests get a percent of this wallet’s slice\n"
         "  (for example 20% of 1250), not of the whole block subsidy.\n"
         "- Sign in with X stays signed in until you close the wallet.\n"
         "\n"
-        "Download later wallets from GitHub Releases (not Code → Download ZIP).\n"
-        "Windows: X-Coin-1.0.14-Windows.zip → X Coin Wallet.exe\n"
-        "Linux: X-Coin-1.0.14-Linux-x86_64.tar.gz → X Coin Wallet\n";
+        "Stay on Light: download 1.0.14. Heavy: this 1.0.15 zip.\n"
+        "Download from GitHub Releases (not Code → Download ZIP).\n"
+        "Windows: X-Coin-1.0.15-Windows.zip → X Coin Wallet.exe\n"
+        "Linux: X-Coin-1.0.15-Linux-x86_64.tar.gz → X Coin Wallet\n";
 }
 
 std::string BundledName()
 {
-    return "X Coin 1.0.14 — Share lottery wins with guests";
+    return "X Coin 1.0.15 Heavy — Market and tree nav";
 }
 
 std::string BundledHtmlUrl()
 {
-    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.14";
+    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.15";
 }
 
 Release BundledRelease()
