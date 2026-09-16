@@ -236,6 +236,8 @@ std::string BundledNotes()
         "\n"
         "- Home is buttons first: Sign in with X, lottery, Receive, Send,\n"
         "  Activity, Transfer assets, Share lottery wins.\n"
+        "- Lottery shows live X Verified nodes, not the frozen draw set.\n"
+        "- Connected peers name the Master Seed Node vs public nodes.\n"
         "- No Market page. Heavy listings travel as xord; Light ignores them\n"
         "  and still confirms a completed buy.\n"
         "- Share lottery wins: an X Verified host can send a percent of each\n"
@@ -248,11 +250,14 @@ std::string BundledNotes()
         "Download from GitHub Releases (not Code → Download ZIP).\n";
 #else
     return
-        "X Coin 1.0.15 Heavy\n"
+        "X Coin 1.0.16 Heavy\n"
         "\n"
         "This is the Heavy wallet. Light is the simple Home wallet.\n"
         "Same chain. Same protocol. Same data folder.\n"
         "\n"
+        "- Lottery header and Home show live X Verified nodes, not the\n"
+        "  frozen draw set. Winners still use the slot freeze.\n"
+        "- Connected peers name the Master Seed Node vs public nodes.\n"
         "- Market (Assets → Market): list a bag for XFER. Other Heavy\n"
         "  wallets buy it. No copy-paste. Listings travel peer to peer.\n"
         "  They are not a new chain. Light ignores them and still\n"
@@ -274,8 +279,8 @@ std::string BundledNotes()
         "Stay on Light: download the Light zip. Heavy: this zip.\n"
         "They are parallel wallets, not a forced upgrade path.\n"
         "Download from GitHub Releases (not Code → Download ZIP).\n"
-        "Windows: X-Coin-1.0.15-Windows.zip → X Coin Wallet.exe\n"
-        "Linux: X-Coin-1.0.15-Linux-x86_64.tar.gz → X Coin Wallet\n";
+        "Windows: X-Coin-1.0.16-Windows.zip → X Coin Wallet.exe\n"
+        "Linux: X-Coin-1.0.16-Linux-x86_64.tar.gz → X Coin Wallet\n";
 #endif
 }
 
@@ -284,13 +289,17 @@ std::string BundledName()
 #ifdef XCOIN_LIGHT_WALLET
     return "X Coin " + RunningVersionString() + " Light — Home wallet";
 #else
-    return "X Coin 1.0.15 Heavy — Market and tree nav";
+    return "X Coin 1.0.16 Heavy — Market and tree nav";
 #endif
 }
 
 std::string BundledHtmlUrl()
 {
-    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.15";
+#ifdef XCOIN_LIGHT_WALLET
+    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light";
+#else
+    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16";
+#endif
 }
 
 Release BundledRelease()
