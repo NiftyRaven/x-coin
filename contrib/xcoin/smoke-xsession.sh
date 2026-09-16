@@ -279,19 +279,37 @@ echo "$MY" | grep -q ALICE
 
 echo "== headless xcoind keeps xsession.json across stop =="
 SESS_PATH="$DATADIR/regtest/xsession.json"
+PIDFILE="$DATADIR/regtest/xcoind.pid"
 test -f "$SESS_PATH"
+pid=""
+if [[ -f "$PIDFILE" ]]; then
+  pid="$(tr -d '[:space:]' < "$PIDFILE" || true)"
+fi
 "${CLI[@]}" stop >/dev/null
-for _ in $(seq 1 80); do
-  if ! "${CLI[@]}" getlotteryinfo >/dev/null 2>&1; then
-    if [[ ! -e "$DATADIR/regtest/.lock" ]]; then
-      sleep 0.4
-      break
+down=0
+for _ in $(seq 1 120); do
+  rpc_up=0
+  "${CLI[@]}" getlotteryinfo >/dev/null 2>&1 && rpc_up=1
+  alive=0
+  if [[ -n "$pid" ]] && kill -0 "$pid" 2>/dev/null; then
+    alive=1
+  elif [[ -f "$PIDFILE" ]]; then
+    cur="$(tr -d '[:space:]' < "$PIDFILE" || true)"
+    if [[ -n "$cur" ]] && kill -0 "$cur" 2>/dev/null; then
+      alive=1
     fi
+  fi
+  if [[ "$rpc_up" -eq 0 && "$alive" -eq 0 ]]; then
+    # .lock stays on disk after shutdown; the flock is released when the
+    # process exits. Wait for the pid to die, then a beat for destructors.
+    sleep 0.6
+    down=1
+    break
   fi
   sleep 0.25
 done
-if [[ -e "$DATADIR/regtest/.lock" ]]; then
-  echo "xcoind still holds $DATADIR/regtest/.lock after stop" >&2
+if [[ "$down" -ne 1 ]]; then
+  echo "xcoind did not exit after stop (pid ${pid:-unknown})" >&2
   tail -30 "$DATADIR/regtest/debug.log" >&2 || true
   exit 1
 fi
