@@ -3011,6 +3011,8 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 return true;
             }
         }
+        if (!attested && lottery::HasAttestation(id))
+            attested = true;
         if (attested || !lottery::RequireXAttestation()) {
             if (!lottery::GetRegistry().Heartbeat(script, now, xHandle, xUserId, xVerified)) {
                 LogPrint(BCLog::NET, "lottery xhb ignored (unverified, pinned mismatch, or sticky handle) handle=%s peer=%d\n",

@@ -169,6 +169,8 @@ bool ParseReleaseFeed(const std::string& json, std::vector<Release>& out, std::s
     return true;
 }
 
+static bool IsSameEdition(const Release& r);
+
 bool LatestNewer(const std::vector<Release>& all, Release& out, int running)
 {
     bool found = false;
@@ -178,12 +180,37 @@ bool LatestNewer(const std::vector<Release>& all, Release& out, int running)
             continue;
         if (r.version <= running)
             continue;
+        if (!IsSameEdition(r))
+            continue;
         if (!found || r.version > out.version) {
             out = r;
             found = true;
         }
     }
     return found;
+}
+
+std::string WalletEdition()
+{
+#ifdef XCOIN_LIGHT_WALLET
+    return "light";
+#else
+    return "heavy";
+#endif
+}
+
+static bool IsSameEdition(const Release& r)
+{
+    const bool namedHeavy = r.name.find("Heavy") != std::string::npos;
+    const bool namedLight = r.name.find("Light") != std::string::npos;
+    if (WalletEdition() == "heavy") {
+        if (namedLight && !namedHeavy)
+            return false;
+        return true;
+    }
+    if (namedHeavy && !namedLight)
+        return false;
+    return true;
 }
 
 bool FindByTag(const std::vector<Release>& all, const std::string& tag, Release& out)
@@ -200,34 +227,79 @@ bool FindByTag(const std::vector<Release>& all, const std::string& tag, Release&
 
 std::string BundledNotes()
 {
+#ifdef XCOIN_LIGHT_WALLET
     return
-        "X Coin 1.0.14\n"
+        "X Coin " + RunningVersionString() + " Light\n"
         "\n"
-        "What changed in this wallet\n"
+        "This is the Light wallet. Heavy is the tree-nav Market wallet.\n"
+        "Same chain. Same protocol. Same data folder.\n"
         "\n"
-        "- Share lottery wins: an X Verified host can send a percent of\n"
-        "  each mature lottery payout equally among invited guests. Guests\n"
-        "  sign in with X and claim a root; they do not need a blue check\n"
-        "  and they never enter the hat.\n"
-        "- First enable writes assetindex=1 and asks for a restart so the\n"
-        "  wallet can look up guest root addresses. Consensus is unchanged.\n"
+        "- Home is buttons first: Sign in with X, lottery, Receive, Send,\n"
+        "  Activity, Transfer assets, Share lottery wins.\n"
+        "- Lottery shows live X Verified nodes, not the frozen draw set.\n"
+        "- Connected peers name the Master Seed Node vs public nodes.\n"
+        "- No Market page. Heavy listings travel as xord; Light ignores them\n"
+        "  and still confirms a completed buy.\n"
+        "- Share lottery wins: an X Verified host can send a percent of each\n"
+        "  mature lottery payout equally among invited guests. Guests sign\n"
+        "  in with X and claim a root; they do not need a blue check and they\n"
+        "  never enter the hat.\n"
+        "- Sign in with X stays signed in until you close the wallet.\n"
+        "\n"
+        "Light and Heavy are parallel wallets, not a forced upgrade path.\n"
+        "Download from GitHub Releases (not Code → Download ZIP).\n";
+#else
+    return
+        "X Coin 1.0.16 Heavy\n"
+        "\n"
+        "This is the Heavy wallet. Light is the simple Home wallet.\n"
+        "Same chain. Same protocol. Same data folder.\n"
+        "\n"
+        "- Lottery header and Home show live X Verified nodes, not the\n"
+        "  frozen draw set. Winners still use the slot freeze.\n"
+        "- Connected peers name the Master Seed Node vs public nodes.\n"
+        "- Market (Assets → Market): list a bag for XFER. Other Heavy\n"
+        "  wallets buy it. No copy-paste. Listings travel peer to peer.\n"
+        "  They are not a new chain. Light ignores them and still\n"
+        "  confirms a completed buy.\n"
+        "- Tree nav: WALLET, ASSETS, REWARDS, NODE, ADVANCED. Home is the\n"
+        "  name card. Receive, Send, and Activity are under WALLET.\n"
+        "- Share lottery wins (Rewards → Lottery share): an X Verified\n"
+        "  host can send a percent of each mature lottery payout equally\n"
+        "  among invited guests. Guests sign in with X and claim a root;\n"
+        "  they do not need a blue check and they never enter the hat.\n"
+        "- First enable of sharing writes assetindex=1 in this data\n"
+        "  directory and asks for a restart so the wallet can look up\n"
+        "  guest root addresses. The zip does not ship that flag.\n"
+        "  Consensus is unchanged.\n"
         "- After a halving, guests get a percent of this wallet’s slice\n"
         "  (for example 20% of 1250), not of the whole block subsidy.\n"
         "- Sign in with X stays signed in until you close the wallet.\n"
         "\n"
-        "Download later wallets from GitHub Releases (not Code → Download ZIP).\n"
-        "Windows: X-Coin-1.0.14-Windows.zip → X Coin Wallet.exe\n"
-        "Linux: X-Coin-1.0.14-Linux-x86_64.tar.gz → X Coin Wallet\n";
+        "Stay on Light: download the Light zip. Heavy: this zip.\n"
+        "They are parallel wallets, not a forced upgrade path.\n"
+        "Download from GitHub Releases (not Code → Download ZIP).\n"
+        "Windows: X-Coin-1.0.16-Windows.zip → X Coin Wallet.exe\n"
+        "Linux: X-Coin-1.0.16-Linux-x86_64.tar.gz → X Coin Wallet\n";
+#endif
 }
 
 std::string BundledName()
 {
-    return "X Coin 1.0.14 — Share lottery wins with guests";
+#ifdef XCOIN_LIGHT_WALLET
+    return "X Coin " + RunningVersionString() + " Light — Home wallet";
+#else
+    return "X Coin 1.0.16 Heavy — Market and tree nav";
+#endif
 }
 
 std::string BundledHtmlUrl()
 {
-    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.14";
+#ifdef XCOIN_LIGHT_WALLET
+    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light";
+#else
+    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16";
+#endif
 }
 
 Release BundledRelease()

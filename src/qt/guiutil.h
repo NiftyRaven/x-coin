@@ -268,6 +268,9 @@ namespace GUIUtil
     bool HasPixmap(const QLabel* label);
     QImage GetImage(const QLabel* label);
 
+    /** Home / My node: Master Seed Node vs public peers. Empty if nSeed+nPublic==0. */
+    QString FormatXCoinPeerLine(int nLaunchSeed, int nPublic);
+
 } // namespace GUIUtil
 
 #endif // RAVEN_QT_GUIUTIL_H

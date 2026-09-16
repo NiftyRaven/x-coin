@@ -43,7 +43,7 @@ UniValue getlotteryinfo(const JSONRPCRequest& request)
             "  \"slot_seconds\": 60,          (numeric) seconds per slot\n"
             "  \"winner_count\": n,           (numeric) winners this slot (grows on halvings)\n"
             "  \"halving_interval\": n,       (numeric) heights per subsidy/winner step\n"
-            "  \"active_nodes\": n,           (numeric) X Verified nodes with a fresh heartbeat\n"
+            "  \"active_nodes\": n,           (numeric) live X Verified heartbeats (stamped on main/test)\n"
             "  \"local_id\": \"hex\",           (string) Hash160 of this node's payout script\n"
             "  \"local_xaccount\": \"handle\",  (string) linked X handle (empty if none)\n"
             "  \"local_xuserid\": n,          (numeric) optional numeric X user id\n"
@@ -94,7 +94,7 @@ UniValue getlotteryinfo(const JSONRPCRequest& request)
     ret.push_back(Pair("slot_seconds", (int64_t)lottery::SLOT_SECONDS));
     ret.push_back(Pair("winner_count", draw.winnerCount));
     ret.push_back(Pair("halving_interval", consensus.nSubsidyHalvingInterval));
-    ret.push_back(Pair("active_nodes", (int)draw.active.size()));
+    ret.push_back(Pair("active_nodes", (int)lottery::CountAttestedActive(now)));
     ret.push_back(Pair("local_id", lottery::GetRegistry().LocalId().GetHex()));
     ret.push_back(Pair("local_xaccount", localX.handle));
     ret.push_back(Pair("local_xuserid", (uint64_t)localX.userId));
@@ -252,7 +252,7 @@ UniValue registeractivenode(const JSONRPCRequest& request)
     ret.push_back(Pair("lastseen", now));
     ret.push_back(Pair("xaccount", x.handle));
     ret.push_back(Pair("xuserid", (uint64_t)x.userId));
-    ret.push_back(Pair("active_nodes", (int)lottery::GetRegistry().Count(now)));
+    ret.push_back(Pair("active_nodes", (int)lottery::CountAttestedActive(now)));
 #ifdef ENABLE_WALLET
     {
         std::string dest;

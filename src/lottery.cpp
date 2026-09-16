@@ -877,6 +877,42 @@ bool CheckXvaForIds(const std::vector<uint160>& ids, const CScript& script)
     return off == data.size();
 }
 
+static void CacheStampsFromXva(const CScript& script)
+{
+    if (script.empty() || script[0] != OP_RETURN)
+        return;
+    CScript::const_iterator pc = script.begin() + 1;
+    std::vector<unsigned char> data;
+    opcodetype opcode;
+    if (!script.GetOp(pc, opcode, data) || data.size() < 8)
+        return;
+    if (data[0] != (unsigned char)ATTEST_MAGIC[0] ||
+        data[1] != (unsigned char)ATTEST_MAGIC[1] ||
+        data[2] != (unsigned char)ATTEST_MAGIC[2] ||
+        data[3] != (unsigned char)ATTEST_MAGIC[3])
+        return;
+    uint32_t n = (uint32_t)data[4] | ((uint32_t)data[5] << 8) |
+                 ((uint32_t)data[6] << 16) | ((uint32_t)data[7] << 24);
+    if (n > 1024)
+        return;
+    size_t off = 8;
+    for (uint32_t i = 0; i < n; i++) {
+        if (off >= data.size())
+            return;
+        const unsigned hlen = data[off++];
+        if (hlen < 1 || hlen > MAX_X_HANDLE || off + hlen + 20 + 65 > data.size())
+            return;
+        const std::string handle(data.begin() + off, data.begin() + off + hlen);
+        off += hlen;
+        uint160 id;
+        memcpy(id.begin(), &data[off], 20);
+        off += 20;
+        std::vector<unsigned char> sig(data.begin() + off, data.begin() + off + 65);
+        off += 65;
+        StoreAttestation(id, handle, sig);
+    }
+}
+
 uint256 HeartbeatDigest(int64_t timestamp, const CScript& script,
                         const std::string& handle, uint64_t userId, bool xVerified)
 {
@@ -1177,6 +1213,19 @@ CScript Registry::ScriptFor(const uint160& id) const
 size_t Registry::Count(int64_t now) const
 {
     return ActiveIds(now).size();
+}
+
+size_t CountAttestedActive(int64_t now)
+{
+    const std::vector<ActiveNode> nodes = GetRegistry().ActiveNodes(now);
+    if (!RequireXAttestation())
+        return nodes.size();
+    size_t n = 0;
+    for (const auto& node : nodes) {
+        if (HasAttestation(node.id))
+            n++;
+    }
+    return n;
 }
 
 CScript LoadOrCreateLocalScript()
@@ -1592,6 +1641,8 @@ bool CheckLotteryCoinbase(const CBlock& block,
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-lottery-split", false,
                              strprintf("payout %u amount mismatch", (unsigned)i));
     }
+    if (foundXva)
+        CacheStampsFromXva(xvaScript);
     return true;
 }
 

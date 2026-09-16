@@ -20,6 +20,7 @@
 #include "txmempool.h"
 #include "ui_interface.h"
 #include "util.h"
+#include "utiltime.h"
 #include "warnings.h"
 #include "lottery.h"
 
@@ -73,6 +74,22 @@ int ClientModel::getNumConnections(unsigned int flags) const
     if(g_connman)
          return g_connman->GetNodeCount(connections);
     return 0;
+}
+
+void ClientModel::getPeerKinds(int& nLaunchSeed, int& nPublic) const
+{
+    nLaunchSeed = 0;
+    nPublic = 0;
+    if (!g_connman)
+        return;
+    std::vector<CNodeStats> vstats;
+    g_connman->GetNodeStats(vstats);
+    for (const CNodeStats& stats : vstats) {
+        if (IsLaunchSeedAddr(stats.addr))
+            nLaunchSeed++;
+        else
+            nPublic++;
+    }
 }
 
 int ClientModel::getNumBlocks() const
@@ -171,6 +188,7 @@ ClientModel::LotteryGuiInfo ClientModel::getLotteryGuiInfo() const
     const int nextHeight = tip ? tip->nHeight + 1 : 1;
     const uint256 prev = tip ? tip->GetBlockHash() : params.GenesisBlock().GetHash();
     const int64_t now = GetTime();
+    lottery::GetRegistry().HeartbeatLocal(now);
     CAmount subsidy = GetBlockSubsidy(nextHeight, consensus);
     lottery::Draw draw = lottery::ComputeDraw(nextHeight, prev,
                                               params.GenesisBlock().nTime,
@@ -181,7 +199,7 @@ ClientModel::LotteryGuiInfo ClientModel::getLotteryGuiInfo() const
     info.eligible = lottery::GetRegistry().LocalEligible();
     info.isWinner = lottery::IsWinner(lottery::GetRegistry().LocalId(), draw.winners);
     info.producerRunning = lottery::IsProducerRunning();
-    info.activeNodes = (int)draw.active.size();
+    info.activeNodes = (int)lottery::CountAttestedActive(now);
     info.winnerCount = draw.winnerCount;
     info.slot = draw.slot;
     info.height = nextHeight;

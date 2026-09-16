@@ -15,6 +15,7 @@
 #include "xrelease.h"
 #include "xreleasedialog.h"
 #include "xsession.h"
+#include "guiutil.h"
 #include "net.h"
 #include "util.h"
 
@@ -559,26 +560,25 @@ void XHome::refresh()
     if (listenPort <= 0)
         listenPort = GetParams().GetDefaultPort();
     const bool listening = fListen;
-    int nPeers = 0;
-    if (clientModel)
-        nPeers = clientModel->getNumConnections();
+      int nSeed = 0, nPublic = 0;
+      if (clientModel)
+          clientModel->getPeerKinds(nSeed, nPublic);
+      const int nPeers = nSeed + nPublic;
 
-    if (!clientModel) {
-        peersLabel->setText("Starting this node…");
-    } else if (nPeers <= 0 && !hasJoin) {
-        peersLabel->setText(
-            QString("You are the first node. Opening this wallet started it and it is listening on P2P port %1. "
-                    "Other wallets do not find you through GitHub.")
-                .arg(listenPort));
-    } else if (nPeers <= 0 && hasJoin) {
-        peersLabel->setText(
-            QString("This node is running. Connecting to the seed in this package (port %1)…")
-                .arg(listenPort));
-    } else if (nPeers == 1) {
-        peersLabel->setText("Connected to 1 peer");
-    } else {
-        peersLabel->setText(QString("Connected to %1 peers").arg(nPeers));
-    }
+      if (!clientModel) {
+          peersLabel->setText("Starting this node…");
+      } else if (nPeers <= 0 && !hasJoin) {
+          peersLabel->setText(
+              QString("You are the first node. Opening this wallet started it and it is listening on P2P port %1. "
+                      "Other wallets do not find you through GitHub.")
+                  .arg(listenPort));
+      } else if (nPeers <= 0 && hasJoin) {
+          peersLabel->setText(
+              QString("This node is running. Connecting to the seed in this package (port %1)…")
+                  .arg(listenPort));
+      } else {
+          peersLabel->setText(GUIUtil::FormatXCoinPeerLine(nSeed, nPublic));
+      }
 
     if (nodeStatusLabel) {
         QString listenLine;

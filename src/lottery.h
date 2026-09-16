@@ -170,6 +170,10 @@ private:
     XAccount localX;
 };
 
+/** Live heartbeats with a fresh TTL. On main/test, only seed-stamped ids.
+ *  The slot freeze in ActiveIdsForSlot is for the draw; wallets display this. */
+size_t CountAttestedActive(int64_t now);
+
 Registry& GetRegistry();
 Allowlist& GetAllowlist();
 

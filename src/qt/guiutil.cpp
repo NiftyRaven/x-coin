@@ -1072,5 +1072,19 @@ QImage GetImage(const QLabel* label)
 #endif
 }
 
+QString FormatXCoinPeerLine(int nLaunchSeed, int nPublic)
+{
+    if (nLaunchSeed <= 0 && nPublic <= 0)
+        return QString();
+    if (nLaunchSeed > 0 && nPublic <= 0)
+        return QString::fromUtf8("Connected to Master Seed Node");
+    if (nLaunchSeed > 0 && nPublic == 1)
+        return QString::fromUtf8("Connected to Master Seed Node + 1 public node");
+    if (nLaunchSeed > 0)
+        return QString("Connected to Master Seed Node + %1 public nodes").arg(nPublic);
+    if (nPublic == 1)
+        return QString::fromUtf8("Connected to 1 public node");
+    return QString("Connected to %1 public nodes").arg(nPublic);
+}
 
 } // namespace GUIUtil
