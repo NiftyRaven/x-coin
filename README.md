@@ -2,24 +2,24 @@
 
 Two wallets. **Same chain.** Same 12-word data folder. Pick one.
 
-| | **Light 1.0.14** | **Heavy 1.0.15** |
+| | **Light 1.0.16** | **Heavy 1.0.16** |
 | --- | --- | --- |
 | Feel | Simple Home buttons | Tree nav, more pages |
 | Share lottery wins | On Home | **Rewards → Lottery share** |
 | Market (list bags for XFER) | No | **Assets → Market** |
-| Zip | [v1.0.14](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.14) | [v1.0.15](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.15) |
+| Zip | [v1.0.16-light](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light) | [v1.0.16](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16) |
 
 Stay on **Light** if you want the original wallet. Use **Heavy** only if
 you want Market. Do **not** use **Code → Download ZIP**. Seed is lottery
 law. Do not run 1.0.13 or older if you need Share lottery wins.
 
-**Light (Windows):** [X-Coin-1.0.14-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.14/X-Coin-1.0.14-Windows.zip)
+**Light (Windows):** [X-Coin-1.0.16-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16-light/X-Coin-1.0.16-Windows.zip)
 
-**Light (Linux):** [X-Coin-1.0.14-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.14/X-Coin-1.0.14-Linux-x86_64.tar.gz)
+**Light (Linux):** [X-Coin-1.0.16-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16-light/X-Coin-1.0.16-Linux-x86_64.tar.gz)
 
-**Heavy (Windows):** [X-Coin-1.0.15-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.15/X-Coin-1.0.15-Windows.zip)
+**Heavy (Windows):** [X-Coin-1.0.16-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16/X-Coin-1.0.16-Windows.zip)
 
-**Heavy (Linux):** [X-Coin-1.0.15-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.15/X-Coin-1.0.15-Linux-x86_64.tar.gz)
+**Heavy (Linux):** [X-Coin-1.0.16-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16/X-Coin-1.0.16-Linux-x86_64.tar.gz)
 
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
@@ -33,7 +33,7 @@ on **Linux** and **Windows**.
 
 ### Windows, double-click
 
-1. Download [X-Coin-1.0.14-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.14/X-Coin-1.0.14-Windows.zip).
+1. Download [X-Coin-1.0.16-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16-light/X-Coin-1.0.16-Windows.zip).
 2. Right-click → Extract All.
 3. Open the folder that appears. **X Coin Wallet.exe** is in that first folder.
 4. Double-click **X Coin Wallet.exe**. The wallet window opens.
@@ -47,8 +47,8 @@ Wallet.exe** only. Do not open the real wallet until launch night.
 
 ### Linux, double-click
 
-1. Download [X-Coin-1.0.14-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.14/X-Coin-1.0.14-Linux-x86_64.tar.gz).
-2. Right-click → Extract, or run `tar -xzf X-Coin-1.0.14-Linux-x86_64.tar.gz`.
+1. Download [X-Coin-1.0.16-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16-light/X-Coin-1.0.16-Linux-x86_64.tar.gz).
+2. Right-click → Extract, or run `tar -xzf X-Coin-1.0.16-Linux-x86_64.tar.gz`.
 3. Open the folder that appears. **X Coin Wallet** is in that first folder.
 4. Double-click **X Coin Wallet**. The wallet window opens. You do not
    need a terminal.

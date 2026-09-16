@@ -55,11 +55,11 @@ this wallet ([UPDATES.md](UPDATES.md)).
 
 ## Pages
 
-**Light 1.0.14** — Home is buttons (Receive, Send, Activity, Transfer
+**Light 1.0.16** — Home is buttons (Receive, Send, Activity, Transfer
 assets, Share lottery wins). Left-nav Assets is Create. No Market.
-[RELEASE-1.0.14.md](RELEASE-1.0.14.md).
+[v1.0.16-light](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light).
 
-**Heavy 1.0.15** — tree nav, black / white pages. Home is the name card
+**Heavy 1.0.16** — tree nav, black / white pages. Home is the name card
 (Sign in with X, claim root, lottery). It is not a row of Receive /
 Send / Assets buttons.
 

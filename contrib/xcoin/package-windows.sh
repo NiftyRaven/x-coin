@@ -8,7 +8,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${OUT:-$ROOT/dist}"
-VER="${VER:-1.0.15}"
+VER="${VER:-1.0.16}"
 NAME="xcoin-${VER}-win-x86_64"
 STAGE="$OUT/$NAME"
 HOST="${MINGW_HOST:-x86_64-w64-mingw32}"
@@ -266,6 +266,7 @@ cp "$ROOT/README.md" "$STAGE/docs/" 2>/dev/null || true
 cp "$ROOT/docs/RELEASE-1.0.md" "$STAGE/docs/" 2>/dev/null || true
 cp "$ROOT/docs/RELEASE-1.0.14.md" "$STAGE/docs/" 2>/dev/null || true
 cp "$ROOT/docs/RELEASE-1.0.15.md" "$STAGE/docs/" 2>/dev/null || true
+cp "$ROOT/docs/RELEASE-1.0.16.md" "$STAGE/docs/" 2>/dev/null || true
 cp "$ROOT/docs/MARKET.md" "$STAGE/docs/" 2>/dev/null || true
 cp "$ROOT/whitepaper/XCOIN.md" "$STAGE/docs/WHITEPAPER.md" 2>/dev/null || true
 cp "$ROOT/doc/README_windows.txt" "$STAGE/docs/" 2>/dev/null || true
