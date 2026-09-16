@@ -10,6 +10,7 @@
 #include "util.h"
 #include "walletview.h"
 #include "xtheme.h"
+#include "guiutil.h"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -148,7 +149,10 @@ void XNodePage::refresh()
     if (listenPort <= 0)
         listenPort = GetParams().GetDefaultPort();
     const bool listening = fListen;
-    int nPeers = clientModel ? clientModel->getNumConnections() : 0;
+    int nSeed = 0, nPublic = 0;
+    if (clientModel)
+        clientModel->getPeerKinds(nSeed, nPublic);
+    const int nPeers = nSeed + nPublic;
 
     QString listenLine;
     if (listening)
@@ -162,10 +166,8 @@ void XNodePage::refresh()
         statusCard->setText(listenLine + "\nYou are the first node. This running wallet is the seed.");
     } else if (nPeers <= 0 && hasJoin) {
         statusCard->setText(listenLine + "\nConnecting to the seed in this package…");
-    } else if (nPeers == 1) {
-        statusCard->setText(listenLine + "\nConnected to 1 peer.");
     } else {
-        statusCard->setText(listenLine + QString("\nConnected to %1 peers.").arg(nPeers));
+        statusCard->setText(listenLine + "\n" + GUIUtil::FormatXCoinPeerLine(nSeed, nPublic) + ".");
     }
 
     if (shareChk && shareChk->isChecked())

@@ -151,6 +151,21 @@ static std::vector<CAddress> convertSeed6(const std::vector<SeedSpec6> &vSeedsIn
     return vSeedsOut;
 }
 
+bool IsLaunchSeedAddr(const CNetAddr& addr)
+{
+    if (!addr.IsValid())
+        return false;
+    const std::vector<SeedSpec6>& seeds = GetParams().FixedSeeds();
+    for (const auto& s : seeds) {
+        struct in6_addr ip;
+        memcpy(&ip, s.addr, sizeof(ip));
+        CNetAddr seed(ip);
+        if (seed == addr || seed.ToStringIP() == addr.ToStringIP())
+            return true;
+    }
+    return false;
+}
+
 // get best local address for a particular peer as a CAddress
 // Otherwise, return the unroutable 0.0.0.0 but filled in with
 // the normal parameters, since the IP may be changed to a useful

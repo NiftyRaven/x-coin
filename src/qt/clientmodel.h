@@ -50,6 +50,8 @@ public:
 
     //! Return number of connections, default is in- and outbound (total)
     int getNumConnections(unsigned int flags = CONNECTIONS_ALL) const;
+    /** Launch seed (fixed pnSeed) vs everyone else. */
+    void getPeerKinds(int& nLaunchSeed, int& nPublic) const;
     int getNumBlocks() const;
     int getHeaderTipHeight() const;
     int64_t getHeaderTipTime() const;

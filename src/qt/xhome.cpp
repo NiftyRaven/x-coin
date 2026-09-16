@@ -16,6 +16,7 @@
 #include "xreleasedialog.h"
 #include "xsession.h"
 #include "xtheme.h"
+#include "guiutil.h"
 #include "net.h"
 #include "util.h"
 
@@ -332,17 +333,18 @@ void XHome::refresh()
     const bool hasJoin = !gArgs.GetArgs("-addnode").empty()
         || !gArgs.GetArgs("-seednode").empty()
         || (!gArgs.GetArgs("-connect").empty() && gArgs.GetArg("-connect", "0") != "0");
-    int nPeers = clientModel ? clientModel->getNumConnections() : 0;
+    int nSeed = 0, nPublic = 0;
+    if (clientModel)
+        clientModel->getPeerKinds(nSeed, nPublic);
+    const int nPeers = nSeed + nPublic;
     if (!clientModel)
         peersLabel->setText("Starting this node…");
     else if (nPeers <= 0 && !hasJoin)
         peersLabel->setText("You are the first node.");
     else if (nPeers <= 0)
         peersLabel->setText("Connecting…");
-    else if (nPeers == 1)
-        peersLabel->setText("Connected to 1 peer");
     else
-        peersLabel->setText(QString("Connected to %1 peers").arg(nPeers));
+        peersLabel->setText(GUIUtil::FormatXCoinPeerLine(nSeed, nPublic));
 
     UniValue l;
     if (l.read(rpc("getlotteryinfo").toStdString()) && l.isObject() && !l.exists("error")) {

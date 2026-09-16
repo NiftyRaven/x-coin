@@ -34,9 +34,10 @@ Default feed:
 
 While this repository is **private**, unauthenticated GitHub API
 returns 404. The wallet stays quiet and still has What's new for the
-installed version. After go-live (repo public), running **Light 1.0.14**
-wallets can show **1.0.15 Heavy** as newer. Stay on Light: tap
-**Later**. Heavy is optional.
+installed version. After go-live (repo public), **Light does not treat
+Heavy as an upgrade** (and Heavy does not treat Light as one). They are
+parallel wallets. A Light zip whose notes say Light stays on the Light
+line; a Heavy zip stays on Heavy.
 
 Override: `-xreleaseurl=https://…` (GitHub array, `{releases:[…]}`,
 or one `{tag, notes, url}` object). Off: `-nocheckupdates`.
