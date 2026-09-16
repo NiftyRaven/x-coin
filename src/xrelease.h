@@ -41,8 +41,13 @@ bool ParseVersion(const std::string& tagOrVersion, int& out);
 /** GitHub array, {releases:[...]}, or one release object. */
 bool ParseReleaseFeed(const std::string& json, std::vector<Release>& out, std::string& err);
 
-/** Highest published non-draft/prerelease newer than `running`. */
+/** Highest published non-draft/prerelease newer than `running`.
+ *  Skips the other wallet edition (Light is not an upgrade to Heavy, and
+ *  Heavy is not an upgrade to Light). */
 bool LatestNewer(const std::vector<Release>& all, Release& out, int running = RunningVersion());
+
+/** "heavy" or "light". This tree ships Heavy unless built with XCOIN_LIGHT_WALLET. */
+std::string WalletEdition();
 
 bool FindByTag(const std::vector<Release>& all, const std::string& tag, Release& out);
 

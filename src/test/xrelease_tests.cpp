@@ -35,6 +35,7 @@ BOOST_AUTO_TEST_CASE(running_matches_configure)
     BOOST_CHECK(xrelease::BundledNotes().find("Market") != std::string::npos);
     BOOST_CHECK(xrelease::BundledNotes().find("Heavy") != std::string::npos);
     BOOST_CHECK(xrelease::BundledName().find("Heavy") != std::string::npos);
+    BOOST_CHECK_EQUAL(xrelease::WalletEdition(), "heavy");
 }
 
 BOOST_AUTO_TEST_CASE(parse_github_array_picks_newer)
@@ -83,6 +84,26 @@ BOOST_AUTO_TEST_CASE(skips_draft_and_prerelease)
     xrelease::Release newer;
     BOOST_CHECK(xrelease::LatestNewer(all, newer, 1001100));
     BOOST_CHECK_EQUAL(newer.tag, "v1.0.12");
+}
+
+BOOST_AUTO_TEST_CASE(skips_other_wallet_edition)
+{
+    const std::string json =
+        "["
+        "{\"tag_name\":\"v1.0.99\",\"name\":\"X Coin 1.0.99 Light\",\"body\":\"home buttons\","
+        "\"html_url\":\"https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.99\","
+        "\"draft\":false,\"prerelease\":false},"
+        "{\"tag_name\":\"v1.0.16\",\"name\":\"X Coin 1.0.16 Heavy\",\"body\":\"market\","
+        "\"html_url\":\"https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16\","
+        "\"draft\":false,\"prerelease\":false}"
+        "]";
+    std::vector<xrelease::Release> all;
+    std::string err;
+    BOOST_CHECK(xrelease::ParseReleaseFeed(json, all, err));
+    xrelease::Release newer;
+    BOOST_CHECK(xrelease::LatestNewer(all, newer, 1001500));
+    BOOST_CHECK_EQUAL(newer.tag, "v1.0.16");
+    BOOST_CHECK(newer.name.find("Heavy") != std::string::npos);
 }
 
 BOOST_AUTO_TEST_CASE(single_object_and_wrapped_and_not_found)

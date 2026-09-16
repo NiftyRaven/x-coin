@@ -13,6 +13,7 @@
 #include <chainparams.h>
 #include <miner.h>
 #include <validation.h>
+#include <utiltime.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -309,6 +310,23 @@ BOOST_AUTO_TEST_CASE(baked_seed_produce_does_not_need_session)
     lottery::SetBakedSeedForTest(false);
     BOOST_CHECK(!lottery::IsBakedSeed());
     BOOST_CHECK(!lottery::MayProduceBlock());
+}
+
+BOOST_AUTO_TEST_CASE(observer_live_count_includes_nodes_first_seen_this_slot)
+{
+    lottery::GetRegistry().Reset();
+    CKey aliceKey, bobKey;
+    aliceKey.MakeNewKey(true);
+    bobKey.MakeNewKey(true);
+    const int64_t now = GetTime();
+    BOOST_REQUIRE(now > lottery::SLOT_SECONDS);
+    const int64_t slot = lottery::SlotFromTime(now);
+    const int64_t slotStart = slot * lottery::SLOT_SECONDS;
+    BOOST_CHECK(lottery::GetRegistry().Heartbeat(P2PKHFromKey(aliceKey), slotStart - 5, "alice", 0, true));
+    BOOST_CHECK(lottery::GetRegistry().Heartbeat(P2PKHFromKey(bobKey), now, "bob", 0, true));
+    BOOST_CHECK_EQUAL(lottery::GetRegistry().ActiveIdsForSlot(slot).size(), 1U);
+    BOOST_CHECK_EQUAL(lottery::GetRegistry().Count(now), 2U);
+    BOOST_CHECK_EQUAL(lottery::CountAttestedActive(now), 2U);
 }
 
 BOOST_AUTO_TEST_CASE(baked_seed_block_sig_binds_height_and_set)
