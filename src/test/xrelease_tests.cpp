@@ -33,6 +33,7 @@ BOOST_AUTO_TEST_CASE(running_matches_configure)
     BOOST_CHECK(xrelease::BundledNotes().find("Share lottery wins") != std::string::npos);
     BOOST_CHECK(xrelease::BundledNotes().find("guest") != std::string::npos);
     BOOST_CHECK(xrelease::BundledNotes().find("Light") != std::string::npos);
+    BOOST_CHECK(xrelease::BundledNotes().find("What's new") != std::string::npos);
     BOOST_CHECK(xrelease::BundledName().find("Light") != std::string::npos);
     BOOST_CHECK_EQUAL(xrelease::WalletEdition(), "light");
 }

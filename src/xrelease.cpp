@@ -238,6 +238,7 @@ std::string BundledNotes()
         "  Activity, Transfer assets, Share lottery wins.\n"
         "- Lottery shows live X Verified nodes, not the frozen draw set.\n"
         "- Connected peers name the Master Seed Node vs public nodes.\n"
+        "- Help → What's new stays on Light. Heavy is a parallel zip.\n"
         "- No Market page. Heavy listings travel as xord; Light ignores them\n"
         "  and still confirms a completed buy.\n"
         "- Share lottery wins: an X Verified host can send a percent of each\n"

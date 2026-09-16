@@ -281,12 +281,20 @@ echo "== headless xcoind keeps xsession.json across stop =="
 SESS_PATH="$DATADIR/regtest/xsession.json"
 test -f "$SESS_PATH"
 "${CLI[@]}" stop >/dev/null
-for _ in $(seq 1 50); do
+for _ in $(seq 1 80); do
   if ! "${CLI[@]}" getlotteryinfo >/dev/null 2>&1; then
-    break
+    if [[ ! -e "$DATADIR/regtest/.lock" ]]; then
+      sleep 0.4
+      break
+    fi
   fi
-  sleep 0.2
+  sleep 0.25
 done
+if [[ -e "$DATADIR/regtest/.lock" ]]; then
+  echo "xcoind still holds $DATADIR/regtest/.lock after stop" >&2
+  tail -30 "$DATADIR/regtest/debug.log" >&2 || true
+  exit 1
+fi
 test -f "$SESS_PATH"
 "$XCOIND" -regtest -datadir="$DATADIR" -server -daemon -listen=0
 up=0
