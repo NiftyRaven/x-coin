@@ -3,9 +3,9 @@
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
 
-**1.1 pool work was removed.** Current wallets are **Light 1.0.14**
-([RELEASE-1.0.14.md](RELEASE-1.0.14.md)) and **Heavy 1.0.15**
-([RELEASE-1.0.15.md](RELEASE-1.0.15.md)). Market is Heavy only:
+**1.1 pool work was removed.** Current wallets are **Light 1.0.16**
+([v1.0.16-light](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light)) and **Heavy 1.0.17**
+([RELEASE-1.0.17.md](RELEASE-1.0.17.md)). Market is Heavy only:
 [MARKET.md](MARKET.md).
 Do not make the repository public until go-live ([GO-LIVE.md](GO-LIVE.md)).
 1.0 snapshot: [RELEASE-1.0.md](RELEASE-1.0.md).

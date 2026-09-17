@@ -7,6 +7,7 @@
 #define RAVEN_QT_ASKPASSPHRASEDIALOG_H
 
 #include <QDialog>
+#include <cstdint>
 
 class WalletModel;
 
@@ -34,12 +35,15 @@ public:
     void accept();
 
     void setModel(WalletModel *model);
+    /** Unlock-for-duration: seconds until relock. 0 = until Lock. -1 = temporary (send path). */
+    void setUnlockTimeout(int64_t seconds);
 
 private:
     Ui::AskPassphraseDialog *ui;
     Mode mode;
     WalletModel *model;
     bool fCapsLock;
+    int64_t nUnlockTimeout;
 
 private Q_SLOTS:
     void textChanged();

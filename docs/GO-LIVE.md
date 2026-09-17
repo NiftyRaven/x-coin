@@ -18,9 +18,9 @@ There are no public DNS seeds. Packaged `xcoin.conf` already has
 
 | Role | What to run |
 | --- | --- |
-| Baked seed | Headless Heavy `xcoind` (1.0.16, or the Market 1.0.15 binary already on the printer). Attestor key + X bearer. **No Sign-in.** Same datadir. No `-reindex`. |
+| Baked seed | Headless Heavy `xcoind` (1.0.16 or 1.0.17, or the Market 1.0.15 binary already on the printer). Attestor key + X bearer. **No Sign-in.** Same datadir. **No `-reindex`.** Do not touch the live seed VM. |
 | Light users | **1.0.16 Light** zip from [v1.0.16-light](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light). Sign in with X. Leave the window open. |
-| Heavy users | **1.0.16 Heavy** zip from [v1.0.16](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16). Sign in with X. Leave the window open. |
+| Heavy users | **1.0.17 Heavy** zip from [v1.0.17](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.17). Sign in with X. If the wallet is encrypted, Unlock on Home (duration, then passphrase) so heartbeat can run. |
 
 The seed is **not** a user’s double-clicked wallet. Do not Sign in on
 the seed. Do not put `xattestor.key` or the bearer in the zip.
@@ -28,9 +28,10 @@ the seed. Do not put `xattestor.key` or the bearer in the zip.
 Light 1.0.16 still prints lottery blocks if used as a seed. It does
 **not** relay Market listings (`xord`). Two Heavy wallets that only
 talk through a Light seed will not see each other’s book. Completed
-buys still move as normal transactions. Packaged `xcoin.conf` does
-**not** use `assetindex=1` (that flag is opt-in for Lottery share on a
-user wallet and forces a reindex).
+buys still move as normal transactions. Packaged `xcoin.conf` now sets
+`assetindex=1` (holder lookup for lottery share). It does **not** set
+`txindex=1`. An existing datadir that ran without the index needs a
+one-time reindex; **do not reindex the seed.**
 
 MAIN producer rule: at most **one block per wall-clock minute**.
 Catch-up may target an older lottery slot; the latch still holds.
@@ -38,9 +39,9 @@ There is **no** slot+120 abort.
 
 ## User path (launch night)
 
-1. Download **Light 1.0.16** or **Heavy 1.0.16** from Releases (not
-   1.0.15, not **Code → Download ZIP**). Light is the simple Home
-   wallet. Heavy adds Market and tree nav.
+1. Download **Light 1.0.16** or **Heavy 1.0.17** from Releases (not
+   1.0.16 Heavy, not **Code → Download ZIP**). Light is the simple Home
+   wallet. Heavy adds Market, tree nav, and Home unlock.
 2. Double-click **X Coin Wallet** / **X Coin Wallet.exe**.
 3. Sign in with X once. Claim the free root if you want the identity
    asset (blue check not required for the root; required for the hat).
@@ -61,7 +62,7 @@ non-empty hat.
 ## Related
 
 - Light 1.0.16: [v1.0.16-light](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light)
-- Heavy 1.0.16: [RELEASE-1.0.16.md](RELEASE-1.0.16.md)
+- Heavy 1.0.17: [RELEASE-1.0.17.md](RELEASE-1.0.17.md)
 - Market: [MARKET.md](MARKET.md)
 - Whitepaper: [../whitepaper/XCOIN.md](../whitepaper/XCOIN.md)
 - Lottery: [LOTTERY.md](LOTTERY.md)

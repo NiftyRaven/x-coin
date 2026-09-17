@@ -1087,4 +1087,15 @@ QString FormatXCoinPeerLine(int nLaunchSeed, int nPublic)
     return QString("Connected to %1 public nodes").arg(nPublic);
 }
 
+void styleDarkProgressDialog(QProgressDialog* dialog)
+{
+    if (!dialog)
+        return;
+    dialog->setStyleSheet(
+        "QProgressDialog { background-color: #000000; color: #ffffff; }"
+        "QLabel { color: #ffffff; background-color: #000000; }"
+        "QProgressBar { background-color: #000000; color: #ffffff; border: 1px solid #ffffff; text-align: center; min-height: 16px; }"
+        "QProgressBar::chunk { background-color: #ffffff; }");
+}
+
 } // namespace GUIUtil

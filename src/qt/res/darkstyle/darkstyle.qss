@@ -37,10 +37,17 @@ QMenu {
   background-color: #000000;
   border: 1px solid #ffffff;
   color: #ffffff;
+  padding: 4px 0;
 }
 QMenu::item {
-  padding: 6px 24px;
+  padding: 8px 18px;
+  min-height: 22px;
+  font-size: 13px;
   border: none;
+}
+QMenu::icon {
+  width: 16px;
+  height: 16px;
 }
 QMenu::item:disabled {
   color: #666666;
@@ -69,9 +76,27 @@ QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QDoubleSpinBox, QComboBox, QDate
   color: #ffffff;
   border: 1px solid #555555;
   border-radius: 0px;
-  padding: 4px;
+  padding: 6px 10px;
+  min-height: 22px;
   selection-background-color: #ffffff;
   selection-color: #000000;
+}
+QComboBox::drop-down {
+  border: none;
+  width: 22px;
+  background: #0a0a0a;
+}
+QComboBox QAbstractItemView {
+  background-color: #000000;
+  color: #ffffff;
+  selection-background-color: #ffffff;
+  selection-color: #000000;
+  border: 1px solid #ffffff;
+  outline: 0;
+}
+QComboBox QAbstractItemView::item {
+  min-height: 28px;
+  padding: 6px 12px;
 }
 QLineEdit:focus, QTextEdit:focus, QPlainTextEdit:focus {
   border: 1px solid #ffffff;

@@ -24,6 +24,7 @@
 #include <QApplication>
 #include <QCloseEvent>
 #include <QPainter>
+#include <QPalette>
 #include <QPen>
 #include <QRadialGradient>
 #include <QScreen>
@@ -75,6 +76,16 @@ SplashScreen::SplashScreen(const NetworkStyle* networkStyle)
     const int w = splashSize.width() / devicePixelRatio;
     const int h = splashSize.height() / devicePixelRatio;
     pixPaint.fillRect(QRect(QPoint(0, 0), QSize(w, h)), QColor(0, 0, 0));
+
+    // Splash is its own window; force the dark wallet palette even if
+    // the app stylesheet has not yet painted this widget.
+    QPalette pal = palette();
+    pal.setColor(QPalette::Window, QColor(0, 0, 0));
+    pal.setColor(QPalette::WindowText, QColor(255, 255, 255));
+    pal.setColor(QPalette::Text, QColor(255, 255, 255));
+    setPalette(pal);
+    setAutoFillBackground(true);
+    setStyleSheet("background-color: #000000; color: #ffffff;");
 
     // Sharp white X mark, left side.
     const int xPad = 48;
@@ -250,9 +261,13 @@ void SplashScreen::showMessage(const QString &message, int alignment, const QCol
 void SplashScreen::paintEvent(QPaintEvent *event)
 {
     QPainter painter(this);
+    painter.fillRect(rect(), QColor(0, 0, 0));
     painter.drawPixmap(0, 0, pixmap);
     QRect r = rect().adjusted(5, 5, -5, -5);
-    painter.setPen(curColor);
+    QColor text = curColor.isValid() ? curColor : QColor(255, 255, 255);
+    if (text.lightness() < 160)
+        text = QColor(255, 255, 255);
+    painter.setPen(text);
     painter.drawText(r, curAlignment, curMessage);
 }
 

@@ -254,15 +254,9 @@ RavenGUI::RavenGUI(const PlatformStyle *_platformStyle, const NetworkStyle *netw
     progressBar = new GUIUtil::ProgressBar();
     progressBar->setAlignment(Qt::AlignCenter);
     progressBar->setVisible(false);
-
-    // Override style sheet for progress bar for styles that have a segmented progress bar,
-    // as they make the text unreadable (workaround for issue #1071)
-    // See https://qt-project.org/doc/qt-4.8/gallery.html
-    QString curStyle = QApplication::style()->metaObject()->className();
-    if(curStyle == "QWindowsStyle" || curStyle == "QWindowsXPStyle")
-    {
-        progressBar->setStyleSheet("QProgressBar { background-color: #e8e8e8; border: 1px solid grey; border-radius: 7px; padding: 1px; text-align: center; } QProgressBar::chunk { background: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 0, stop: 0 #FF8000, stop: 1 orange); border-radius: 7px; margin: 0px; }");
-    }
+    progressBar->setStyleSheet(
+        "QProgressBar { background-color: #000000; color: #ffffff; border: 1px solid #ffffff; padding: 1px; text-align: center; }"
+        "QProgressBar::chunk { background: #ffffff; margin: 0px; }");
 
     statusBar()->addWidget(progressBarLabel);
     statusBar()->addWidget(progressBar);
@@ -617,19 +611,24 @@ void RavenGUI::createMenuBar()
     QMenu *advanced = appMenuBar->addMenu(tr("&Advanced"));
     if(walletFrame)
     {
-        QAction *balancesAction = new QAction(tr("&Balances (legacy)"), this);
-        connect(balancesAction, SIGNAL(triggered()), this, SLOT(gotoBalancesPage()));
-        advanced->addAction(balancesAction);
-        advanced->addAction(createAssetAction);
-        advanced->addAction(transferAssetAction);
-        advanced->addAction(manageAssetAction);
-        advanced->addAction(lotteryShareAction);
-        advanced->addAction(assetDividendAction);
-        advanced->addAction(myNodeAction);
-        advanced->addAction(swapAction);
+        // Menu rows must be plain text actions. Reusing the 22px ExtraLight
+        // tab actions makes this dropdown a mix of icon sizes and fonts.
+        auto addAdv = [this, advanced](const QString& text, const char* slot) {
+            QAction *a = new QAction(text, this);
+            connect(a, SIGNAL(triggered()), this, slot);
+            advanced->addAction(a);
+        };
+        addAdv(tr("&Balances (legacy)"), SLOT(gotoBalancesPage()));
+        addAdv(tr("&Create asset"), SLOT(gotoCreateAssetsPage()));
+        addAdv(tr("&Transfer assets"), SLOT(gotoAssetsPage()));
+        addAdv(tr("&Manage assets"), SLOT(gotoManageAssetsPage()));
+        addAdv(tr("&Lottery share"), SLOT(gotoLotterySharePage()));
+        addAdv(tr("Asset &dividends"), SLOT(gotoAssetDividendPage()));
+        addAdv(tr("&My node"), SLOT(gotoMyNodePage()));
+        addAdv(tr("Mar&ket"), SLOT(gotoSwapPage()));
         advanced->addSeparator();
-        advanced->addAction(openRPCConsoleAction);
-        advanced->addAction(openWalletRepairAction);
+        addAdv(tr("&RPC console"), SLOT(showDebugWindow()));
+        addAdv(tr("&Wallet repair"), SLOT(showWalletRepair()));
     }
 
     QMenu *help = appMenuBar->addMenu(tr("&Help"));
@@ -1730,6 +1729,7 @@ void RavenGUI::showProgress(const QString &title, int nProgress)
         progressDialog->setCancelButton(0);
         progressDialog->setAutoClose(false);
         progressDialog->setValue(0);
+        GUIUtil::styleDarkProgressDialog(progressDialog);
     }
     else if (nProgress == 100)
     {

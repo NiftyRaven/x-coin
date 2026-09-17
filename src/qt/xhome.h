@@ -51,6 +51,8 @@ private Q_SLOTS:
     void onOAuthStatus(const QString& message);
     void onReleaseNotes();
     void onReleaseLater();
+    void onUnlockWallet();
+    void onLockWallet();
 
 private:
     void applyTheme();
@@ -70,11 +72,15 @@ private:
     QLabel* assetLabel;
     QLabel* balanceLabel;
     QLabel* statusLabel;
+    QLabel* versionLabel;
+    QLabel* lockLabel;
     QPushButton* signInBtn;
     QPushButton* reLinkBtn;
     QPushButton* mockBtn;
     QPushButton* claimBtn;
     QPushButton* allowlistBtn;
+    QPushButton* unlockBtn;
+    QPushButton* lockBtn;
     QWidget* releasePanel;
     QLabel* releaseLabel;
     QPushButton* releaseNotesBtn;

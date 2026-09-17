@@ -45,6 +45,10 @@ User-wallet eligibility:
 2. That session is **X Verified** (`verified==true`, including `blue` /
    `business` / `government` check types X exposes).
 3. This wallet is running (local payout script + heartbeat to the seed).
+   An **encrypted** wallet that is **locked** does not heartbeat. Home
+   **Unlock wallet** (duration, then passphrase) restores heartbeat.
+   That is `walletpassphrase` with a timeout. Unencrypted wallets are
+   always unlocked.
 4. The seed stamped that payout (`getlotteryinfo.stamped_handles`).
 
 Local GUI “eligible” is (1)–(3). The draw is (4). The operator invite
