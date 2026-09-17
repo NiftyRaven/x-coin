@@ -1,0 +1,4 @@
+{
+  "name": "X Coin (XFER) wallet",
+  "install": "bash .cursor/install.sh"
+}
