@@ -251,37 +251,34 @@ std::string BundledNotes()
         "Download from GitHub Releases (not Code → Download ZIP).\n";
 #else
     return
-        "X Coin 1.0.16 Heavy\n"
+        "X Coin " + RunningVersionString() + " Heavy\n"
         "\n"
         "This is the Heavy wallet. Light is the simple Home wallet.\n"
         "Same chain. Same protocol. Same data folder.\n"
         "\n"
+        "- Sync / loading uses the dark wallet theme (not a white flash).\n"
+        "- Advanced menu items are one size. Home shows Unlock when the\n"
+        "  wallet is locked: pick a duration, then the passphrase. That is\n"
+        "  walletpassphrase with a timeout. Locking stops lottery heartbeat;\n"
+        "  unlocking restores it.\n"
+        "- Home and Help → About show this wallet version.\n"
+        "- Send clears the address and amount after a successful send.\n"
+        "- Packaged xcoin.conf sets assetindex=1 (holder lookup for lottery\n"
+        "  share). It does not turn on txindex or force an archival node.\n"
+        "  A datadir that already ran without the index needs a one-time\n"
+        "  reindex. New wallets index from the first block.\n"
         "- Lottery header and Home show live X Verified nodes, not the\n"
         "  frozen draw set. Winners still use the slot freeze.\n"
-        "- Connected peers name the Master Seed Node vs public nodes.\n"
         "- Market (Assets → Market): list a bag for XFER. Other Heavy\n"
         "  wallets buy it. No copy-paste. Listings travel peer to peer.\n"
-        "  They are not a new chain. Light ignores them and still\n"
-        "  confirms a completed buy.\n"
-        "- Tree nav: WALLET, ASSETS, REWARDS, NODE, ADVANCED. Home is the\n"
-        "  name card. Receive, Send, and Activity are under WALLET.\n"
-        "- Share lottery wins (Rewards → Lottery share): an X Verified\n"
-        "  host can send a percent of each mature lottery payout equally\n"
-        "  among invited guests. Guests sign in with X and claim a root;\n"
-        "  they do not need a blue check and they never enter the hat.\n"
-        "- First enable of sharing writes assetindex=1 in this data\n"
-        "  directory and asks for a restart so the wallet can look up\n"
-        "  guest root addresses. The zip does not ship that flag.\n"
-        "  Consensus is unchanged.\n"
-        "- After a halving, guests get a percent of this wallet’s slice\n"
-        "  (for example 20% of 1250), not of the whole block subsidy.\n"
+        "- Tree nav: WALLET, ASSETS, REWARDS, NODE, ADVANCED.\n"
         "- Sign in with X stays signed in until you close the wallet.\n"
         "\n"
         "Stay on Light: download the Light zip. Heavy: this zip.\n"
         "They are parallel wallets, not a forced upgrade path.\n"
         "Download from GitHub Releases (not Code → Download ZIP).\n"
-        "Windows: X-Coin-1.0.16-Windows.zip → X Coin Wallet.exe\n"
-        "Linux: X-Coin-1.0.16-Linux-x86_64.tar.gz → X Coin Wallet\n";
+        "Windows: X-Coin-" + RunningVersionString() + "-Windows.zip → X Coin Wallet.exe\n"
+        "Linux: X-Coin-" + RunningVersionString() + "-Linux-x86_64.tar.gz → X Coin Wallet\n";
 #endif
 }
 
@@ -290,7 +287,7 @@ std::string BundledName()
 #ifdef XCOIN_LIGHT_WALLET
     return "X Coin " + RunningVersionString() + " Light — Home wallet";
 #else
-    return "X Coin 1.0.16 Heavy — Market and tree nav";
+    return "X Coin " + RunningVersionString() + " Heavy — Market and tree nav";
 #endif
 }
 
@@ -299,7 +296,7 @@ std::string BundledHtmlUrl()
 #ifdef XCOIN_LIGHT_WALLET
     return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light";
 #else
-    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16";
+    return "https://github.com/NiftyRaven/x-coin/releases/tag/v" + RunningVersionString();
 #endif
 }
 

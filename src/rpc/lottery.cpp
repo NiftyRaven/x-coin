@@ -48,7 +48,7 @@ UniValue getlotteryinfo(const JSONRPCRequest& request)
             "  \"local_xaccount\": \"handle\",  (string) linked X handle (empty if none)\n"
             "  \"local_xuserid\": n,          (numeric) optional numeric X user id\n"
             "  \"local_x_verified\": true|false,(boolean) session users/me.verified (blue check)\n"
-            "  \"local_eligible\": true|false,(boolean) X Verified (blue check) + running wallet\n"
+            "  \"local_eligible\": true|false,(boolean) X Verified (blue check) + running unlocked wallet\n"
             "  \"attestation_required\": true|false, (boolean) main/test: XHB1 needs seed XVA1 stamps\n"
             "  \"local_attested\": true|false, (boolean) seed has stamped this payout as a live blue check\n"
             "  \"x_lookup\": true|false,       (boolean) this node calls X to check actual blue checks\n"

@@ -31,8 +31,10 @@ Each listed row is **one whole UTXO**. Send to yourself first if you
 only want to sell part of a bag. Root, `PARENT/SUB`, and `PARENT#unique`
 are all listable. Owner tokens (`NAME!`) and `~` names are not.
 
-Packaged `xcoin.conf` does **not** need `assetindex=1`. Market does not
-use that index. Do not add it to the zip (changing it forces a reindex).
+Packaged `xcoin.conf` sets `assetindex=1` (holder lookup for lottery
+share). Market does **not** use that index. The flag is an extra index,
+not `txindex=1` and not an archival node. A datadir that already ran
+without it needs a one-time reindex; new wallets index from genesis.
 
 ## How it works (not a fork)
 

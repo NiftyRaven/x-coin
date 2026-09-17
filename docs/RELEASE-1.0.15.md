@@ -1,5 +1,7 @@
 # X Coin 1.0.15 Heavy
 
+**Superseded by [1.0.17 Heavy](RELEASE-1.0.17.md).** Historical notes.
+
 **Heavy** wallet. Market + tree nav. Same chain as **1.0.14 Light**.
 
 User wallets **1.0.15 Heavy** from

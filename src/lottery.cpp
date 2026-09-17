@@ -64,6 +64,19 @@ struct AttestRow {
 static std::map<uint160, AttestRow> g_attest;
 static std::atomic<int64_t> g_seedNotifyUntil{0};
 static CWallet* FirstWalletOrNull();
+static bool WalletAllowsHeartbeat()
+{
+#ifdef ENABLE_WALLET
+    CWallet* w = FirstWalletOrNull();
+    if (!w)
+        return true;
+    if (!w->IsCrypted())
+        return true;
+    return !w->IsLocked();
+#else
+    return true;
+#endif
+}
 
 Registry& GetRegistry()
 {
@@ -975,6 +988,8 @@ bool VerifyHeartbeatSig(const CScript& script, int64_t timestamp,
 bool SignLocalHeartbeat(int64_t timestamp, std::vector<unsigned char>& sigOut)
 {
     sigOut.clear();
+    if (!WalletAllowsHeartbeat())
+        return false;
     const CScript script = GetRegistry().LocalScript();
     const XAccount x = GetRegistry().LocalXAccount();
     if (script.empty() || x.handle.empty())
@@ -1050,6 +1065,8 @@ bool Registry::LocalEligible() const
         x = localX;
     }
     if (!xsession::SessionIsXVerified())
+        return false;
+    if (!WalletAllowsHeartbeat())
         return false;
     return true;
 }
@@ -1137,6 +1154,8 @@ bool Registry::HeartbeatLocal(int64_t now)
     if (s.empty() || x.handle.empty())
         return false;
     if (!xsession::SessionIsXVerified())
+        return false;
+    if (!WalletAllowsHeartbeat())
         return false;
     if (RequireXAttestation()) {
         const uint160 id = IdFromScript(s);

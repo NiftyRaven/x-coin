@@ -33,6 +33,7 @@
 #include "wallet/walletdb.h" // for BackupWallet
 
 #include <stdint.h>
+#include <limits>
 
 #include <QDebug>
 #include <QMessageBox>
@@ -50,7 +51,8 @@ WalletModel::WalletModel(const PlatformStyle *platformStyle, CWallet *_wallet, O
     recentRequestsTableModel(0),
     cachedBalance(0), cachedUnconfirmedBalance(0), cachedImmatureBalance(0),
     cachedEncryptionStatus(Unencrypted),
-    cachedNumBlocks(0)
+    cachedNumBlocks(0),
+    relockTimer(0)
 {
     fHaveWatchOnly = wallet->HaveWatchOnly();
     fForceCheckBalanceChanged = false;
@@ -497,14 +499,54 @@ bool WalletModel::setWalletLocked(bool locked, const SecureString &passPhrase)
 {
     if(locked)
     {
-        // Lock
+        if (relockTimer)
+            relockTimer->stop();
+        if (wallet)
+            wallet->nRelockTime = 0;
         return wallet->Lock();
     }
     else
     {
-        // Unlock
         return wallet->Unlock(passPhrase);
     }
+}
+
+bool WalletModel::unlockFor(const SecureString &passPhrase, int64_t timeoutSeconds)
+{
+    if (!wallet->Unlock(passPhrase))
+        return false;
+    wallet->TopUpKeyPool();
+    if (timeoutSeconds > 0) {
+        wallet->nRelockTime = GetTime() + timeoutSeconds;
+        if (!relockTimer) {
+            relockTimer = new QTimer(this);
+            relockTimer->setSingleShot(true);
+            connect(relockTimer, SIGNAL(timeout()), this, SLOT(lockAfterTimeout()));
+        }
+        const qint64 msec = timeoutSeconds > (std::numeric_limits<int>::max() / 1000)
+            ? std::numeric_limits<int>::max()
+            : (qint64)timeoutSeconds * 1000;
+        relockTimer->start(msec);
+    } else {
+        wallet->nRelockTime = 0;
+        if (relockTimer)
+            relockTimer->stop();
+    }
+    updateStatus();
+    return true;
+}
+
+int64_t WalletModel::getUnlockUntil() const
+{
+    if (!wallet)
+        return 0;
+    return wallet->nRelockTime;
+}
+
+void WalletModel::lockAfterTimeout()
+{
+    setWalletLocked(true);
+    updateStatus();
 }
 
 bool WalletModel::changePassphrase(const SecureString &oldPass, const SecureString &newPass)

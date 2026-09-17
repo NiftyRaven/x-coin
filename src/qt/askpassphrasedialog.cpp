@@ -24,7 +24,8 @@ AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent) :
     ui(new Ui::AskPassphraseDialog),
     mode(_mode),
     model(0),
-    fCapsLock(false)
+    fCapsLock(false),
+    nUnlockTimeout(-1)
 {
     ui->setupUi(this);
 
@@ -50,7 +51,7 @@ AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent) :
             setWindowTitle(tr("Encrypt wallet"));
             break;
         case Unlock: // Ask passphrase
-            ui->warningLabel->setText(tr("This operation needs your wallet passphrase to unlock the wallet."));
+            ui->warningLabel->setText(tr("Enter the wallet passphrase to unlock. Unlocking also lets this node heartbeat for the lottery."));
             ui->passLabel2->hide();
             ui->passEdit2->hide();
             ui->passLabel3->hide();
@@ -85,6 +86,11 @@ AskPassphraseDialog::~AskPassphraseDialog()
 void AskPassphraseDialog::setModel(WalletModel *_model)
 {
     this->model = _model;
+}
+
+void AskPassphraseDialog::setUnlockTimeout(int64_t seconds)
+{
+    nUnlockTimeout = seconds;
 }
 
 void AskPassphraseDialog::accept()
@@ -153,7 +159,14 @@ void AskPassphraseDialog::accept()
         }
         } break;
     case Unlock:
-        if(!model->setWalletLocked(false, oldpass))
+        if (nUnlockTimeout >= 0) {
+            if (!model->unlockFor(oldpass, nUnlockTimeout)) {
+                QMessageBox::critical(this, tr("Wallet unlock failed"),
+                                      tr("The passphrase entered for the wallet decryption was incorrect."));
+            } else {
+                QDialog::accept();
+            }
+        } else if(!model->setWalletLocked(false, oldpass))
         {
             QMessageBox::critical(this, tr("Wallet unlock failed"),
                                   tr("The passphrase entered for the wallet decryption was incorrect."));

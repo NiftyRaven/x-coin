@@ -4,6 +4,7 @@
 
 #include "xhome.h"
 
+#include "askpassphrasedialog.h"
 #include "assets/xaccount.h"
 #include "chainparams.h"
 #include "walletview.h"
@@ -19,21 +20,100 @@
 #include "guiutil.h"
 #include "net.h"
 #include "util.h"
+#include "utiltime.h"
 
 #include <QFrame>
+#include <QButtonGroup>
+#include <QDialog>
+#include <QDialogButtonBox>
 #include <QHBoxLayout>
 #include <QInputDialog>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QPushButton>
+#include <QRadioButton>
 #include <QScrollArea>
 #include <QSettings>
+#include <QSpinBox>
 #include <QStyle>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QObject>
 
 #include <univalue.h>
+
+namespace {
+
+bool pickUnlockSeconds(QWidget* parent, int64_t* outSeconds)
+{
+    QDialog dlg(parent);
+    dlg.setWindowTitle(QStringLiteral("How long to stay unlocked"));
+    dlg.setMinimumWidth(420);
+    QVBoxLayout* lay = new QVBoxLayout(&dlg);
+    QLabel* hint = new QLabel(QStringLiteral(
+        "The wallet stays unlocked for this long, then locks itself. "
+        "Unlocking lets this node heartbeat for the lottery. Locking stops that."));
+    hint->setWordWrap(true);
+    lay->addWidget(hint);
+
+    QRadioButton* m5 = new QRadioButton(QStringLiteral("5 minutes"));
+    QRadioButton* m15 = new QRadioButton(QStringLiteral("15 minutes"));
+    QRadioButton* h1 = new QRadioButton(QStringLiteral("1 hour"));
+    QRadioButton* h8 = new QRadioButton(QStringLiteral("8 hours"));
+    QRadioButton* untilLock = new QRadioButton(QStringLiteral("Until I lock this wallet"));
+    QRadioButton* custom = new QRadioButton(QStringLiteral("Custom minutes"));
+    m15->setChecked(true);
+
+    QSpinBox* mins = new QSpinBox;
+    mins->setRange(1, 10080);
+    mins->setValue(30);
+    mins->setSuffix(QStringLiteral(" min"));
+    mins->setEnabled(false);
+
+    QButtonGroup* g = new QButtonGroup(&dlg);
+    g->addButton(m5);
+    g->addButton(m15);
+    g->addButton(h1);
+    g->addButton(h8);
+    g->addButton(untilLock);
+    g->addButton(custom);
+    lay->addWidget(m5);
+    lay->addWidget(m15);
+    lay->addWidget(h1);
+    lay->addWidget(h8);
+    lay->addWidget(untilLock);
+    QHBoxLayout* customRow = new QHBoxLayout;
+    customRow->addWidget(custom);
+    customRow->addWidget(mins);
+    customRow->addStretch(1);
+    lay->addLayout(customRow);
+
+    QObject::connect(custom, SIGNAL(toggled(bool)), mins, SLOT(setEnabled(bool)));
+
+    QDialogButtonBox* box = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel);
+    QObject::connect(box, SIGNAL(accepted()), &dlg, SLOT(accept()));
+    QObject::connect(box, SIGNAL(rejected()), &dlg, SLOT(reject()));
+    lay->addWidget(box);
+
+    if (dlg.exec() != QDialog::Accepted)
+        return false;
+    if (m5->isChecked())
+        *outSeconds = 5 * 60;
+    else if (m15->isChecked())
+        *outSeconds = 15 * 60;
+    else if (h1->isChecked())
+        *outSeconds = 60 * 60;
+    else if (h8->isChecked())
+        *outSeconds = 8 * 60 * 60;
+    else if (untilLock->isChecked())
+        *outSeconds = 0;
+    else
+        *outSeconds = (int64_t)mins->value() * 60;
+    return true;
+}
+
+} // namespace
 
 XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     : QWidget(parent)
@@ -46,6 +126,8 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     , mockBtn(0)
     , claimBtn(0)
     , allowlistBtn(0)
+    , unlockBtn(0)
+    , lockBtn(0)
     , releasePanel(0)
     , releaseLabel(0)
     , releaseNotesBtn(0)
@@ -80,6 +162,14 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     tag->setWordWrap(true);
     root->addWidget(tag);
 
+    versionLabel = new QLabel;
+    versionLabel->setObjectName("xversion");
+    versionLabel->setAlignment(Qt::AlignHCenter);
+    versionLabel->setText(QString("Wallet %1 %2")
+        .arg(QString::fromStdString(xrelease::RunningVersionString()))
+        .arg(QString::fromStdString(xrelease::WalletEdition())));
+    root->addWidget(versionLabel);
+
     releasePanel = new QWidget;
     QVBoxLayout* relLay = new QVBoxLayout(releasePanel);
     relLay->setContentsMargins(0, 0, 0, 0);
@@ -112,6 +202,28 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     balanceLabel->setObjectName("xbalance");
     balanceLabel->setWordWrap(true);
     root->addWidget(balanceLabel);
+
+    lockLabel = new QLabel;
+    lockLabel->setObjectName("xcard");
+    lockLabel->setWordWrap(true);
+    lockLabel->setVisible(false);
+    root->addWidget(lockLabel);
+
+    QHBoxLayout* lockRow = new QHBoxLayout;
+    unlockBtn = new QPushButton("Unlock wallet");
+    unlockBtn->setObjectName("xprimary");
+    unlockBtn->setMinimumHeight(48);
+    unlockBtn->setCursor(Qt::PointingHandCursor);
+    unlockBtn->setVisible(false);
+    lockBtn = new QPushButton("Lock wallet");
+    lockBtn->setObjectName("xghost");
+    lockBtn->setMinimumHeight(48);
+    lockBtn->setCursor(Qt::PointingHandCursor);
+    lockBtn->setVisible(false);
+    lockRow->addWidget(unlockBtn);
+    lockRow->addWidget(lockBtn);
+    lockRow->addStretch(1);
+    root->addLayout(lockRow);
 
     sessionLabel = new QLabel;
     sessionLabel->setObjectName("xunlinked");
@@ -210,6 +322,8 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     connect(oauth, SIGNAL(status(QString)), this, SLOT(onOAuthStatus(QString)));
     connect(releaseNotesBtn, SIGNAL(clicked()), this, SLOT(onReleaseNotes()));
     connect(releaseLaterBtn, SIGNAL(clicked()), this, SLOT(onReleaseLater()));
+    connect(unlockBtn, SIGNAL(clicked()), this, SLOT(onUnlockWallet()));
+    connect(lockBtn, SIGNAL(clicked()), this, SLOT(onLockWallet()));
 
     QTimer* t = new QTimer(this);
     connect(t, SIGNAL(timeout()), this, SLOT(refresh()));
@@ -238,7 +352,11 @@ void XHome::setClientModel(ClientModel* model)
 
 void XHome::setWalletModel(WalletModel* model)
 {
+    if (walletModel)
+        disconnect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(refresh()));
     walletModel = model;
+    if (walletModel)
+        connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(refresh()));
     refresh();
 }
 
@@ -330,6 +448,35 @@ void XHome::refresh()
         balanceLabel->setText("Open or create a wallet from File");
     }
 
+    const WalletModel::EncryptionStatus enc = walletModel
+        ? walletModel->getEncryptionStatus() : WalletModel::Unencrypted;
+    const bool showUnlock = (enc == WalletModel::Locked);
+    const bool showLock = (enc == WalletModel::Unlocked);
+    if (lockLabel) {
+        lockLabel->setVisible(showUnlock || showLock);
+        if (showUnlock) {
+            lockLabel->setText("Wallet locked. Unlock to send and to heartbeat for the lottery.");
+        } else if (showLock) {
+            const int64_t until = walletModel->getUnlockUntil();
+            if (until > 0) {
+                const int64_t left = until - GetTime();
+                if (left > 0) {
+                    const int64_t minsLeft = (left + 59) / 60;
+                    lockLabel->setText(QString("Wallet unlocked for about %1 more minute(s). Locking stops lottery heartbeat.")
+                        .arg(minsLeft));
+                } else {
+                    lockLabel->setText("Wallet unlocked. Locking stops lottery heartbeat.");
+                }
+            } else {
+                lockLabel->setText("Wallet unlocked until you lock it. Locking stops lottery heartbeat.");
+            }
+        }
+    }
+    if (unlockBtn)
+        unlockBtn->setVisible(showUnlock);
+    if (lockBtn)
+        lockBtn->setVisible(showLock);
+
     const bool hasJoin = !gArgs.GetArgs("-addnode").empty()
         || !gArgs.GetArgs("-seednode").empty()
         || (!gArgs.GetArgs("-connect").empty() && gArgs.GetArg("-connect", "0") != "0");
@@ -363,6 +510,8 @@ void XHome::refresh()
         if (elig)
             lotteryLabel->setText(QString("In this minute’s draw  ·  %1  ·  next block %2%3")
                 .arg(handle).arg(next).arg(extra));
+        else if (enc == WalletModel::Locked)
+            lotteryLabel->setText("Not in this draw. Unlock the wallet to heartbeat.");
         else if (!xv)
             lotteryLabel->setText("Not in this draw. Sign in with an X Verified account to enter.");
         else
@@ -546,4 +695,26 @@ void XHome::onReleaseLater()
         rel.setValue("xrelease/dismissedTag", QString::fromStdString(newer.tag));
     if (releasePanel)
         releasePanel->setVisible(false);
+}
+
+void XHome::onUnlockWallet()
+{
+    if (!walletModel || walletModel->getEncryptionStatus() != WalletModel::Locked)
+        return;
+    int64_t seconds = 0;
+    if (!pickUnlockSeconds(this, &seconds))
+        return;
+    AskPassphraseDialog dlg(AskPassphraseDialog::Unlock, this);
+    dlg.setModel(walletModel);
+    dlg.setUnlockTimeout(seconds);
+    dlg.exec();
+    refresh();
+}
+
+void XHome::onLockWallet()
+{
+    if (!walletModel || walletModel->getEncryptionStatus() != WalletModel::Unlocked)
+        return;
+    walletModel->setWalletLocked(true);
+    refresh();
 }

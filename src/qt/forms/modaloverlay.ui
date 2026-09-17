@@ -32,7 +32,7 @@
    <item>
     <widget class="QWidget" name="bgWidget" native="true">
      <property name="styleSheet">
-      <string notr="true">#bgWidget { background: rgba(0,0,0,220); }</string>
+      <string notr="true">#bgWidget { background: rgba(0,0,0,230); }</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayoutMain" stretch="1">
       <property name="leftMargin">
@@ -50,9 +50,11 @@
       <item>
        <widget class="QWidget" name="contentWidget" native="true">
         <property name="styleSheet">
-         <string notr="true">#contentWidget { background: #0a0a0a; border: 1px solid #ffffff; }
-
-QLabel { color: #ffffff;  }</string>
+         <string notr="true">#contentWidget { background: #0a0a0a; border: 1px solid #ffffff; color: #ffffff; }
+QLabel { color: #ffffff; background: transparent; }
+QProgressBar { background: #000000; color: #ffffff; border: 1px solid #ffffff; text-align: center; }
+QProgressBar::chunk { background: #ffffff; }
+QPushButton { background: #000000; color: #ffffff; border: 1px solid #ffffff; padding: 8px 16px; }</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayoutSub" stretch="1,0,0,0">
          <property name="spacing">

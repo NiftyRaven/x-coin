@@ -236,6 +236,10 @@ public:
     bool setWalletEncrypted(bool encrypted, const SecureString &passphrase);
     // Passphrase only needed when unlocking
     bool setWalletLocked(bool locked, const SecureString &passPhrase=SecureString());
+    /** GUI equivalent of walletpassphrase: unlock for timeoutSeconds (0 = until lock). */
+    bool unlockFor(const SecureString &passPhrase, int64_t timeoutSeconds);
+    /** nRelockTime (unix seconds), or 0 if locked / until lock. */
+    int64_t getUnlockUntil() const;
     bool changePassphrase(const SecureString &oldPass, const SecureString &newPass);
     // Wallet backup
     bool backupWallet(const QString &filename);
@@ -324,6 +328,7 @@ private:
     int cachedNumBlocks;
 
     QTimer *pollTimer;
+    QTimer *relockTimer;
 
     void subscribeToCoreSignals();
     void unsubscribeFromCoreSignals();
@@ -368,6 +373,8 @@ public Q_SLOTS:
     void updateWatchOnlyFlag(bool fHaveWatchonly);
     /* Current, immature or unconfirmed balance might have changed - emit 'balanceChanged' if so */
     void pollBalanceChanged();
+    /* Timed unlock expired (walletpassphrase timeout). */
+    void lockAfterTimeout();
 };
 
 #endif // RAVEN_QT_WALLETMODEL_H

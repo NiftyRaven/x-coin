@@ -1,5 +1,8 @@
 # X Coin 1.0.16 Heavy
 
+**Superseded by [1.0.17 Heavy](RELEASE-1.0.17.md).** Keep this page as
+the 1.0.16 notes. Consensus was unchanged.
+
 **Heavy** wallet. Same chain as **1.0.16 Light**. Consensus unchanged.
 
 User wallets **1.0.16 Heavy** from

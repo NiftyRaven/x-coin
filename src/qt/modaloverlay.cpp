@@ -24,6 +24,16 @@ layerIsVisible(false),
 userClosed(false)
 {
     ui->setupUi(this);
+    // Widget-local stylesheets replace the app dark theme for descendants.
+    // Spell the full dark palette here so the sync overlay is not white-on-white.
+    ui->bgWidget->setStyleSheet("#bgWidget { background: rgba(0,0,0,230); }");
+    ui->contentWidget->setStyleSheet(
+        "#contentWidget { background: #0a0a0a; border: 1px solid #ffffff; color: #ffffff; }"
+        "QLabel { color: #ffffff; background: transparent; }"
+        "QProgressBar { background: #000000; color: #ffffff; border: 1px solid #ffffff; text-align: center; min-height: 16px; }"
+        "QProgressBar::chunk { background: #ffffff; }"
+        "QPushButton { background: #000000; color: #ffffff; border: 1px solid #ffffff; padding: 8px 16px; }"
+        "QPushButton:hover { background: #ffffff; color: #000000; }");
     connect(ui->closeButton, SIGNAL(clicked()), this, SLOT(closeClicked()));
     if (parent) {
         parent->installEventFilter(this);

@@ -14,6 +14,7 @@
 #include <QMessageBox>
 #include <QObject>
 #include <QProgressBar>
+#include <QProgressDialog>
 #include <QString>
 #include <QTableView>
 #include <QLabel>
@@ -270,6 +271,9 @@ namespace GUIUtil
 
     /** Home / My node: Master Seed Node vs public peers. Empty if nSeed+nPublic==0. */
     QString FormatXCoinPeerLine(int nLaunchSeed, int nPublic);
+
+    /** Dark wallet theme for QProgressDialog (wallet load / rescan). */
+    void styleDarkProgressDialog(QProgressDialog* dialog);
 
 } // namespace GUIUtil
 
