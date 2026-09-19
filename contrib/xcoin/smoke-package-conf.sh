@@ -31,7 +31,7 @@ if grep -E '^[[:space:]]*addnode=' "$EMPTY_PKG/xcoin.conf"; then
   echo "shipped xcoin.conf must not contain an uncommented addnode" >&2
   exit 1
 fi
-if ! grep -E '^[[:space:]]*xoauthclientid=N2hIbnNsTlR0TmR1WDZ6eWp2Qk06MTpjaQ[[:space:]]*$' "$EMPTY_PKG/xcoin.conf"; then
+if ! grep -E '^[[:space:]]*xoauthclientid=MTZoYmdtX3JwbHEyNGlacHNEZ2o6MTpjaQ[[:space:]]*$' "$EMPTY_PKG/xcoin.conf"; then
   echo "shipped xcoin.conf must bake the operator Client ID" >&2
   exit 1
 fi

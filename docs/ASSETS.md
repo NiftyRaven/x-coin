@@ -21,7 +21,7 @@ Issuing under any other root is rejected.
 (`createassetdialog` / `issue` RPCs). Transfer is a Home / Advanced
 action. No Market.
 
-**Heavy 1.0.17** — **ASSETS** in the left tree: Create, Transfer,
+**Heavy 1.0.18** — **ASSETS** in the left tree: Create, Transfer,
 Manage, **Market**. Create is the same form. There is no second asset
 engine.
 

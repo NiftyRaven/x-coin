@@ -120,8 +120,9 @@ The node never pretends login succeeded without a real access token
 ## Operator only (developer portal)
 
 Users do **not** open developer.x.com and do **not** paste a Client
-ID. Packaged Light 1.0.14 and Heavy 1.0.15 `xcoin.conf` already have
-`xoauthclientid=` set.
+ID. Packaged `xcoin.conf` already has `xoauthclientid=` set. Heavy
+**1.0.18** rotates that public Client ID after the prior X app was
+suspended; 1.0.17 and older Sign in with X will not work.
 Empty Client ID → Sign in with X says the operator has not baked one;
 it does not fake success. There is no GUI paste box.
 

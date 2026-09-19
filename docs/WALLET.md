@@ -59,7 +59,7 @@ this wallet ([UPDATES.md](UPDATES.md)).
 assets, Share lottery wins). Left-nav Assets is Create. No Market.
 [v1.0.16-light](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light).
 
-**Heavy 1.0.17** — tree nav, black / white pages. Home is the name card
+**Heavy 1.0.18** — tree nav, black / white pages. Home is the name card
 (Sign in with X, claim root, lottery, version). When the wallet is
 encrypted and locked, Home shows **Unlock wallet**: pick a duration,
 then the passphrase (`walletpassphrase` timeout). Locking stops lottery
@@ -78,4 +78,4 @@ Receive always shows an address and QR; **Create new address** is one
 click. Send takes `@handle` or an `X…` address. Market:
 [MARKET.md](MARKET.md). Lottery share: [LOTTERY.md](LOTTERY.md)
 (wallet send, not consensus). Heavy notes:
-[RELEASE-1.0.17.md](RELEASE-1.0.17.md).
+[RELEASE-1.0.18.md](RELEASE-1.0.18.md).

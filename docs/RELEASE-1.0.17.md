@@ -1,5 +1,8 @@
 # X Coin 1.0.17 Heavy
 
+**Superseded by [1.0.18 Heavy](RELEASE-1.0.18.md).** Sign in with X
+on this zip uses the old Client ID (prior X app was suspended).
+
 **Heavy** wallet. Same chain as **1.0.16 Light**. Consensus unchanged.
 
 User wallets **1.0.17 Heavy** from

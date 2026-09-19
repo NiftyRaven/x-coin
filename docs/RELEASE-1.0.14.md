@@ -1,6 +1,6 @@
 # X Coin 1.0.14 Light
 
-**Superseded for Heavy users by [1.0.17 Heavy](RELEASE-1.0.17.md).** Current Light zip is [1.0.16 Light](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light). Historical notes.
+**Superseded for Heavy users by [1.0.18 Heavy](RELEASE-1.0.18.md).** Current Light zip is [1.0.16 Light](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light). Historical notes.
 
 **Light** wallet. Simple Home. No Market. No tree nav.
 

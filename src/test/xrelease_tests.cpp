@@ -27,11 +27,12 @@ BOOST_AUTO_TEST_CASE(parse_version_tags)
 
 BOOST_AUTO_TEST_CASE(running_matches_configure)
 {
-    BOOST_CHECK_EQUAL(xrelease::RunningVersionString(), "1.0.17");
-    BOOST_CHECK_EQUAL(xrelease::RunningTag(), "v1.0.17");
-    BOOST_CHECK_EQUAL(xrelease::RunningVersion(), 1001700);
+    BOOST_CHECK_EQUAL(xrelease::RunningVersionString(), "1.0.18");
+    BOOST_CHECK_EQUAL(xrelease::RunningTag(), "v1.0.18");
+    BOOST_CHECK_EQUAL(xrelease::RunningVersion(), 1001800);
     BOOST_CHECK(xrelease::BundledNotes().find("Unlock") != std::string::npos);
     BOOST_CHECK(xrelease::BundledNotes().find("assetindex") != std::string::npos);
+    BOOST_CHECK(xrelease::BundledNotes().find("Client ID") != std::string::npos);
     BOOST_CHECK(xrelease::BundledNotes().find("Market") != std::string::npos);
     BOOST_CHECK(xrelease::BundledNotes().find("Heavy") != std::string::npos);
     BOOST_CHECK(xrelease::BundledName().find("Heavy") != std::string::npos);

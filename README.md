@@ -2,25 +2,26 @@
 
 Two wallets. **Same chain.** Same 12-word data folder. Pick one.
 
-| | **Light 1.0.16** | **Heavy 1.0.17** |
+| | **Light 1.0.16** | **Heavy 1.0.18** |
 | --- | --- | --- |
 | Feel | Simple Home buttons | Tree nav, more pages |
 | Share lottery wins | On Home | **Rewards → Lottery share** |
 | Market (list bags for XFER) | No | **Assets → Market** |
-| Zip | [v1.0.16-light](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light) | [v1.0.17](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.17) |
+| Zip | [v1.0.16-light](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light) | [v1.0.18](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.18) |
 
 Stay on **Light** if you want the original wallet. Use **Heavy** only if
 you want Market. Do **not** use **Code → Download ZIP**. Seed is lottery
 law. Do not run 1.0.16 Heavy or older if you need Home unlock / dark
-sync / default `assetindex=1`.
+sync / default `assetindex=1`. Do not run 1.0.17 Heavy or older if you
+need Sign in with X (Client ID rotated).
 
 **Light (Windows):** [X-Coin-1.0.16-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16-light/X-Coin-1.0.16-Windows.zip)
 
 **Light (Linux):** [X-Coin-1.0.16-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16-light/X-Coin-1.0.16-Linux-x86_64.tar.gz)
 
-**Heavy (Windows):** [X-Coin-1.0.17-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.17/X-Coin-1.0.17-Windows.zip)
+**Heavy (Windows):** [X-Coin-1.0.18-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.18/X-Coin-1.0.18-Windows.zip)
 
-**Heavy (Linux):** [X-Coin-1.0.17-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.17/X-Coin-1.0.17-Linux-x86_64.tar.gz)
+**Heavy (Linux):** [X-Coin-1.0.18-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.18/X-Coin-1.0.18-Linux-x86_64.tar.gz)
 
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
