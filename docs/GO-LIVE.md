@@ -20,7 +20,7 @@ There are no public DNS seeds. Packaged `xcoin.conf` already has
 | --- | --- |
 | Baked seed | Headless Heavy `xcoind` (1.0.16 or 1.0.17, or the Market 1.0.15 binary already on the printer). Attestor key + X bearer. **No Sign-in.** Same datadir. **No `-reindex`.** Do not touch the live seed VM. |
 | Light users | **1.0.16 Light** zip from [v1.0.16-light](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light). Sign in with X. Leave the window open. |
-| Heavy users | **1.0.17 Heavy** zip from [v1.0.17](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.17). Sign in with X. If the wallet is encrypted, Unlock on Home (duration, then passphrase) so heartbeat can run. |
+| Heavy users | **1.0.18 Heavy** zip from [v1.0.18](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.18). Sign in with X (Client ID rotated; 1.0.17 and older will not work). If the wallet is encrypted, Unlock on Home (duration, then passphrase) so heartbeat can run. |
 
 The seed is **not** a user’s double-clicked wallet. Do not Sign in on
 the seed. Do not put `xattestor.key` or the bearer in the zip.
@@ -39,9 +39,11 @@ There is **no** slot+120 abort.
 
 ## User path (launch night)
 
-1. Download **Light 1.0.16** or **Heavy 1.0.17** from Releases (not
-   1.0.16 Heavy, not **Code → Download ZIP**). Light is the simple Home
-   wallet. Heavy adds Market, tree nav, and Home unlock.
+1. Download **Light 1.0.16** or **Heavy 1.0.18** from Releases (not
+   1.0.17 Heavy or older, not **Code → Download ZIP**). Light is the
+   simple Home wallet. Heavy adds Market, tree nav, and Home unlock.
+   Heavy 1.0.18 restores Sign in with X after the prior X app was
+   suspended.
 2. Double-click **X Coin Wallet** / **X Coin Wallet.exe**.
 3. Sign in with X once. Claim the free root if you want the identity
    asset (blue check not required for the root; required for the hat).
@@ -62,7 +64,7 @@ non-empty hat.
 ## Related
 
 - Light 1.0.16: [v1.0.16-light](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light)
-- Heavy 1.0.17: [RELEASE-1.0.17.md](RELEASE-1.0.17.md)
+- Heavy 1.0.18: [RELEASE-1.0.18.md](RELEASE-1.0.18.md)
 - Market: [MARKET.md](MARKET.md)
 - Whitepaper: [../whitepaper/XCOIN.md](../whitepaper/XCOIN.md)
 - Lottery: [LOTTERY.md](LOTTERY.md)

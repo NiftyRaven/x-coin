@@ -277,7 +277,7 @@ fi
 echo "== Package xcoin.conf has baked operator Client ID and no invented seed =="
 if python3 - "$ROOT/contrib/xcoin/xcoin.conf" <<'PY'
 import re, sys
-ALLOWED_CLIENT_ID = "N2hIbnNsTlR0TmR1WDZ6eWp2Qk06MTpjaQ"
+ALLOWED_CLIENT_ID = "MTZoYmdtX3JwbHEyNGlacHNEZ2o6MTpjaQ"
 text = open(sys.argv[1], encoding="utf-8").read()
 saw_client = False
 for i, line in enumerate(text.splitlines(), 1):

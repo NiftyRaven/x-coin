@@ -11,7 +11,7 @@ to open GitHub to read the notes.
 
 1. **This version.** Home shows a What's new card until you tap it (or
    OK). **Help → What's new** always opens the notes shipped in this
-   binary (`docs/RELEASE-1.0.17.md` on Heavy / `xrelease::BundledNotes`).
+   binary (`docs/RELEASE-1.0.18.md` on Heavy / `xrelease::BundledNotes`).
    Light 1.0.16 ships its own notes (`docs/RELEASE-1.0.16.md` on the Light
    tree).
 2. **A newer GitHub Release.** After the repo is public (or when
@@ -26,7 +26,7 @@ No modal on top of the first-run 12-word setup.
 
 ## What is sent
 
-The GET is the feed URL only (`User-Agent: XCoin-Wallet/1.0.17` on
+The GET is the feed URL only (`User-Agent: XCoin-Wallet/1.0.18` on
 Heavy; Light 1.0.16 sends `XCoin-Wallet/1.0.16`).
 No `wallet.dat`, no seed, no `xsession`, no X tokens, no RPC cookie.
 

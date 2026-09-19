@@ -273,6 +273,8 @@ std::string BundledNotes()
         "  wallets buy it. No copy-paste. Listings travel peer to peer.\n"
         "- Tree nav: WALLET, ASSETS, REWARDS, NODE, ADVANCED.\n"
         "- Sign in with X stays signed in until you close the wallet.\n"
+        "- Sign in with X Client ID was rotated after the prior X app\n"
+        "  was suspended. Upgrade this zip to restore Sign in with X.\n"
         "\n"
         "Stay on Light: download the Light zip. Heavy: this zip.\n"
         "They are parallel wallets, not a forced upgrade path.\n"

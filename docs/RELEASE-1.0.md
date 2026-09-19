@@ -1,11 +1,12 @@
 # X Coin 1.0 (private)
 
-**Current wallets: Light 1.0.16 and Heavy 1.0.17.** Same chain.
+**Current wallets: Light 1.0.16 and Heavy 1.0.18.** Same chain.
 Light: [v1.0.16-light](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light).
-Heavy: [RELEASE-1.0.17.md](RELEASE-1.0.17.md). Market (Heavy only):
+Heavy: [RELEASE-1.0.18.md](RELEASE-1.0.18.md). Market (Heavy only):
 [MARKET.md](MARKET.md). This page is the 1.0 product snapshot (pools
 already gone). Do not use 1.0.16 or older if you need Home unlock /
-dark sync / default `assetindex=1`.
+dark sync / default `assetindex=1`. Do not use 1.0.17 Heavy or older
+if you need Sign in with X (Client ID rotated).
 
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
@@ -14,15 +15,15 @@ Product version **1.0**. This is a **private** release. Do not make
 the repository public. **Light** is
 [v1.0.16-light](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light).
 **Heavy** is
-[v1.0.17](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.17)
-once published. Do not use **Code → Download ZIP**. Do not use 1.0.2–1.0.16
+[v1.0.18](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.18)
+once published. Do not use **Code → Download ZIP**. Do not use 1.0.2–1.0.17
 as current Heavy. In-wallet What's new: [UPDATES.md](UPDATES.md).
 
 ## What shipped
 
 - **Desktop GUI** `xcoin-qt` — X theme (black / white / sharp X mark).
   **Light 1.0.16:** Home buttons (Receive / Send / Assets / Share lottery
-  wins). **Heavy 1.0.17:** tree nav (WALLET / ASSETS / REWARDS / NODE /
+  wins). **Heavy 1.0.18:** tree nav (WALLET / ASSETS / REWARDS / NODE /
   ADVANCED) plus **Market**. Home shows **Unlock wallet** when encrypted
   and locked. Same node/wallet as CLI. No CLI required
   for the happy path. **This wallet + this X session = you**. **12-word
@@ -53,8 +54,8 @@ Light:
 
 Heavy:
 
-- Linux: [X-Coin-1.0.17-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.17/X-Coin-1.0.17-Linux-x86_64.tar.gz) → **X Coin Wallet**
-- Windows: [X-Coin-1.0.17-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.17/X-Coin-1.0.17-Windows.zip) → **X Coin Wallet.exe**
+- Linux: [X-Coin-1.0.18-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.18/X-Coin-1.0.18-Linux-x86_64.tar.gz) → **X Coin Wallet**
+- Windows: [X-Coin-1.0.18-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.18/X-Coin-1.0.18-Windows.zip) → **X Coin Wallet.exe**
 
 Practice: **X Coin Practice Wallet** / **X Coin Practice Wallet.exe**
 
