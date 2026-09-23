@@ -7,11 +7,11 @@ the files on GitHub Releases, not **Code → Download ZIP**.
 - [Windows Light](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16-light/X-Coin-1.0.16-Windows.zip) → **X Coin Wallet.exe**
 - [Linux Light](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16-light/X-Coin-1.0.16-Linux-x86_64.tar.gz) → **X Coin Wallet**
 
-**Heavy 1.0.18** (Market + tree nav). In-tree is Heavy:
-[v1.0.18](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.18)
+**Heavy 1.0.19** (Market + tree nav). In-tree is Heavy:
+[v1.0.19](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.19)
 
-- [Windows Heavy](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.18/X-Coin-1.0.18-Windows.zip) → **X Coin Wallet.exe**
-- [Linux Heavy](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.18/X-Coin-1.0.18-Linux-x86_64.tar.gz) → **X Coin Wallet**
+- [Windows Heavy](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.19/X-Coin-1.0.19-Windows.zip) → **X Coin Wallet.exe**
+- [Linux Heavy](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.19/X-Coin-1.0.19-Linux-x86_64.tar.gz) → **X Coin Wallet**
 
 Do not use 1.0.2–1.0.17 as current Heavy (1.0.17 Sign in with X
 uses the suspended X app Client ID). Light 1.0.16 still follows
