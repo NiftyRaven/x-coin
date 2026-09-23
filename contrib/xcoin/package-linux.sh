@@ -4,7 +4,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${OUT:-$ROOT/dist}"
-VER="${VER:-1.0.16}"
+VER="${VER:-1.0.18}"
 NAME="xcoin-${VER}-linux-x86_64"
 STAGE="$OUT/$NAME"
 
@@ -236,7 +236,7 @@ EOF
 
 cp "$ROOT/README.md" "$STAGE/docs/" 2>/dev/null || true
 cp "$ROOT/docs/RELEASE-1.0.md" "$STAGE/docs/" 2>/dev/null || true
-cp "$ROOT/docs/RELEASE-1.0.16.md" "$STAGE/docs/" 2>/dev/null || true
+cp "$ROOT/docs/RELEASE-1.0.18.md" "$STAGE/docs/" 2>/dev/null || true
 cp "$ROOT/docs/LOTTERY.md" "$STAGE/docs/" 2>/dev/null || true
 cp "$ROOT/docs/GO-LIVE.md" "$STAGE/docs/" 2>/dev/null || true
 cp "$ROOT/whitepaper/XCOIN.md" "$STAGE/docs/WHITEPAPER.md" 2>/dev/null || true

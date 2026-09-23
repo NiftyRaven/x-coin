@@ -238,10 +238,12 @@ void XOAuth::startLogin()
     q.addQueryItem("code_challenge_method", "S256");
     url.setQuery(q);
     Q_EMIT status(tr("Opening Sign in with X in your browser…"));
-    // Browser is about to hit X. Start the local cooldown now (success, cancel, or fail).
-    MarkOAuthAttempt();
-    if (!QDesktopServices::openUrl(url))
+    if (!QDesktopServices::openUrl(url)) {
         fail(tr("Could not open a browser. Open this URL:\n%1").arg(url.toString()));
+        return;
+    }
+    // Cooldown starts only after a browser actually opened.
+    MarkOAuthAttempt();
 }
 
 void XOAuth::onIncoming()

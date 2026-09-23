@@ -297,7 +297,7 @@ std::string BundledName()
 std::string BundledHtmlUrl()
 {
 #ifdef XCOIN_LIGHT_WALLET
-    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16-light";
+    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.18-light";
 #else
     return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16";
 #endif

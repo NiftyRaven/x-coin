@@ -711,6 +711,14 @@ void ArgsManager::ReadConfigFileFromPath(const fs::path& path, bool skipJoinPeer
             continue;
         if (skipJoinPeers && IsJoinPeerKey(strKey))
             continue;
+        if (packageSafe && strKey == "-xoauthclientid") {
+            // Shipped Client ID wins. A stale xoauthclientid= in ~/.xcoin/xcoin.conf
+            // must not keep Sign in with X on a dead X app.
+            mapArgs[strKey] = strValue;
+            mapMultiArgs[strKey].clear();
+            mapMultiArgs[strKey].push_back(strValue);
+            continue;
+        }
         if (mapArgs.count(strKey) == 0)
             mapArgs[strKey] = strValue;
         mapMultiArgs[strKey].push_back(strValue);
