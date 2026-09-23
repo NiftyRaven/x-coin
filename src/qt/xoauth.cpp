@@ -12,6 +12,8 @@
 
 #include <QDateTime>
 #include <QDesktopServices>
+#include <QProcess>
+#include <QProcessEnvironment>
 #include <QHostAddress>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
@@ -43,6 +45,41 @@ static QString RandomB64Url(int nbytes)
     std::vector<unsigned char> buf((size_t)nbytes);
     GetRandBytes(buf.data(), nbytes);
     return QString::fromStdString(Base64Url(buf.data(), buf.size()));
+}
+
+static bool OpenSignInUrl(const QUrl& url)
+{
+    const QString target = url.toString();
+    // The Linux launcher puts the bundled lib/ on LD_LIBRARY_PATH so xcoin-qt
+    // starts. xdg-open and kde-open inherit it and die on the old libstdc++.
+    // Drop that path for the browser helper only.
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    env.remove("LD_LIBRARY_PATH");
+    env.remove("LD_PRELOAD");
+
+    struct Helper { const char *program; bool gio; };
+    const Helper helpers[] = {
+        {"xdg-open", false},
+        {"/usr/bin/xdg-open", false},
+        {"gio", true},
+        {"kde-open", false},
+        {"kde-open5", false},
+        {"/usr/bin/kde-open", false},
+        {"firefox", false},
+        {"chromium", false},
+    };
+    for (const Helper& h : helpers) {
+        QProcess process;
+        process.setProcessEnvironment(env);
+        process.setProgram(QString::fromLatin1(h.program));
+        if (h.gio)
+            process.setArguments(QStringList() << "open" << target);
+        else
+            process.setArguments(QStringList() << target);
+        if (process.startDetached())
+            return true;
+    }
+    return QDesktopServices::openUrl(url);
 }
 
 static const char *kOAuthLastAttemptMs = "xoauthLastAttemptMs";
@@ -238,7 +275,7 @@ void XOAuth::startLogin()
     q.addQueryItem("code_challenge_method", "S256");
     url.setQuery(q);
     Q_EMIT status(tr("Opening Sign in with X in your browser…"));
-    if (!QDesktopServices::openUrl(url)) {
+    if (!OpenSignInUrl(url)) {
         fail(tr("Could not open a browser. Open this URL:\n%1").arg(url.toString()));
         return;
     }
