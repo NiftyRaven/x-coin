@@ -75,12 +75,15 @@ Same RPC as `xcoin-cli`. Send and receive work without a session:
 The node you talk to must have a **Sign in with X** session to:
 
 - `linkxaccount` (create the **main** asset — authentication only)
-- `issue` / `issueunique` / `reissue`
+- `issue` / `issueunique` / `reissue` (wallet mint under the signed-in main)
 
 **No session → no main asset.** `issue` of a new root is rejected.
-Subs and uniques are issued **under that signed-in account’s root**
-(`NAME!` ownership). Lottery still needs **X Verified** (blue check);
-claiming a root does not.
+Wallet `issue` / `issueunique` only mint under that signed-in account’s
+root. `sendrawtransaction` does not use that session gate: a root still
+needs `XID1`, and a sub or unique is accepted when the parent owner
+token is spent and transferred (consensus). That is how a host signed
+in as one account relays a vault-signed issue under another root.
+Lottery still needs **X Verified** (blue check); claiming a root does not.
 
 ```
 getwalletinfo

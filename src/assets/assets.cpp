@@ -3989,6 +3989,9 @@ bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const s
         error = std::make_pair(RPC_INVALID_PARAMETER, "Protocol X-account assignment can only create a main/root asset");
         return false;
     }
+    // Wallet issue / issueunique (and the Create Asset form) only.
+    // sendrawtransaction uses RejectRelayedNewAsset and must not apply
+    // this session gate to a vault-signed sub or unique.
     if (!fProtocolRoot && assetType != AssetType::ROOT) {
         std::string ownErr;
         if (!RequireIssueUnderOwnMain(assets[0].strName, ownErr)) {
