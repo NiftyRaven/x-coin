@@ -96,8 +96,10 @@ that node. The venue's hot wallet is its own
 
 A third-party **asset wallet** uses the same RPCs (`issue`, `issueunique`,
 `transfer`, `listmyassets`). It **cannot** mint a main/root: that exists
-only via `linkxaccount` after Sign in with X. Subs/uniques are issued
-under that session’s `NAME!`.
+only via `linkxaccount` after Sign in with X. Wallet `issue` /
+`issueunique` mint under that session’s `NAME!`. A relayed
+`sendrawtransaction` of a sub or unique does not use the node session;
+consensus still requires the parent owner token. See [ASSETS.md](ASSETS.md).
 
 ## Wrap path (out of scope)
 

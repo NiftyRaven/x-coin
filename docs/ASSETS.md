@@ -134,11 +134,38 @@ assets. Restricted-only RPCs and the Qt Restricted tab are gone.
 500-XFER root burn and accepts only a zero-burn root that includes `XID1`.
 
 Wallets without a Sign in with X session can **send and receive**.
-They cannot **claim a root or issue**. Authentication proves it is you
-and is the key to the free identity root. A node can still sync. Lottery
-needs a signed-in **X Verified** session (`users/me.verified`). Issue of
-a sub/unique also requires that session **and** ownership of the parent
-`NAME!`.
+They cannot **claim a root** or call wallet `issue` / `issueunique`.
+Authentication proves it is you and is the key to the free identity
+root. A node can still sync. Lottery needs a signed-in **X Verified**
+session (`users/me.verified`).
+
+## Relayed issue vs wallet issue
+
+Two different gates. Do not collapse them.
+
+| Path | Gate | What it allows |
+| --- | --- | --- |
+| `issue`, `issueunique`, Create Asset form | `RequireIssueUnderOwnMain` | Sub or unique only under the **signed-in** main (`LAUNCH_XFER/…` while the host session is `LAUNCH_XFER`). |
+| `sendrawtransaction` | `RejectRelayedNewAsset` | A root with no `XID1` is refused. A sub or unique is **not** checked against the node session. |
+
+Launch list-your-own is the second path. The vault signs an issue that spends the user’s parent owner token (`RAVENNIFTY!`) and returns it, for a child such as `RAVENNIFTY/TEST2`. The host is signed in as `LAUNCH_XFER` and only broadcasts that raw tx. `sendrawtransaction` must not treat the host session as the signer.
+
+Borrowing `RAVENNIFTY!` into the host wallet and calling `issue` still hits `RequireIssueUnderOwnMain`. That is not a substitute for the relay path.
+
+Consensus is unchanged. `VerifyNewAsset` / `VerifyNewUniqueAsset` still require the parent owner token to be transferred in the tx, and the input/output balance still requires that token to be spent. This change does not let anyone mint under a root they do not control.
+
+## Host daemon (xferchain.net Launch)
+
+This gate is in `xcoind`, not the website. After merge, rebuild and restart the Hetzner host daemon that serves `sendrawtransaction`. Same datadir. Do **not** `-reindex`. A web-only deploy does not clear LIST.
+
+```bash
+./autogen.sh
+./configure --with-gui=no --disable-bench --disable-tests --with-incompatible-bdb
+make -j$(nproc)
+# stop the running xcoind, install src/xcoind, start it on the same datadir
+```
+
+Use the same `./configure` flags that host was built with if they differ. The binary that must be replaced is `xcoind`.
 
 ## Smoke
 

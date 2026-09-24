@@ -26,7 +26,6 @@
 #include "txmempool.h"
 #include "uint256.h"
 #include "utilstrencodings.h"
-#include "xsession.h"
 #ifdef ENABLE_WALLET
 #include "wallet/rpcwallet.h"
 #include "wallet/wallet.h"
@@ -2095,32 +2094,12 @@ UniValue sendrawtransaction(const JSONRPCRequest& request)
     CTransactionRef tx(MakeTransactionRef(std::move(mtx)));
     const uint256& hashTx = tx->GetHash();
 
-#ifdef ENABLE_WALLET
-    if (tx->IsNewAsset() || tx->IsNewUniqueAsset()) {
-        CNewAsset asset;
-        std::string address;
-        const bool got = tx->IsNewUniqueAsset()
-            ? UniqueAssetFromTransaction(*tx, asset, address)
-            : AssetFromScript(tx->vout.back().scriptPubKey, asset, address);
-        if (got) {
-            AssetType itype;
-            IsAssetNameValid(asset.strName, itype);
-            if (itype == AssetType::ROOT) {
-                std::string xid;
-                if (!ParseXAccountAssignment(*tx, xid))
-                    throw JSONRPCError(RPC_INVALID_PARAMETER,
-                        "Users cannot create main assets. Sign in with X, then linkxaccount.");
-                // Do not RequireHandle here. That check belongs on the wallet
-                // that *builds* the claim. The baked seed has no session; a
-                // well-formed XID1 must still be injectable / relayable.
-            } else {
-                std::string oerr;
-                if (!RequireIssueUnderOwnMain(asset.strName, oerr))
-                    throw JSONRPCError(RPC_INVALID_PARAMETER, oerr);
-            }
-        }
-    }
-#endif
+    // Relayed raw issue. A root still needs XID1. A sub or unique does
+    // not use the node session (RequireIssueUnderOwnMain stays on wallet
+    // issue / issueunique). Consensus still requires the parent owner token.
+    std::string relayErr;
+    if (RejectRelayedNewAsset(*tx, relayErr))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, relayErr);
 
     CAmount nMaxRawTxFee = maxTxFee;
     if (!request.params[1].isNull() && request.params[1].get_bool())
