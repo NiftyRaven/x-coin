@@ -86,7 +86,7 @@ static const char *kOAuthLastAttemptMs = "xoauthLastAttemptMs";
 static const char *kOAuthCachedLinked = "xoauthCachedLinked";
 static const char *kOAuthCachedHandle = "xoauthCachedHandle";
 static const char *kOAuthCachedVerified = "xoauthCachedVerified";
-static const qint64 kOAuthCooldownMs = 60 * 60 * 1000;
+static const qint64 kOAuthCooldownMs = 5 * 60 * 1000;
 
 static void MarkOAuthAttempt()
 {
@@ -236,7 +236,7 @@ void XOAuth::startLogin()
     const qint64 left = cooldownRemainingMs();
     if (left > 0) {
         const qint64 mins = (left + 59999) / 60000;
-        fail(tr("Sign in with X is cooling down (~1 hour). Try again in about %1 min. "
+        fail(tr("Sign in with X is cooling down (~5 minutes). Try again in about %1 min. "
                 "This wallet does not keep calling X.")
                  .arg(mins < 1 ? 1 : mins));
         return;

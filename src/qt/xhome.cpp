@@ -915,7 +915,7 @@ void XHome::onCopyNodeAddress()
 void XHome::onSignIn()
 {
     if (XOAuth::cooldownRemainingMs() > 0) {
-        statusLabel->setText("Sign in with X is cooling down (~1 hour). This wallet does not keep calling X.");
+        statusLabel->setText("Sign in with X is cooling down (~5 minutes). This wallet does not keep calling X.");
         applyAuthButtons(xsession::HasValidSession());
         return;
     }
@@ -932,7 +932,7 @@ void XHome::onReLink()
         return;
     if (XOAuth::cooldownRemainingMs() > 0) {
         QMessageBox::information(this, "X-Coin",
-            "Wait about an hour between Sign in with X attempts. Failed or cancelled attempts count.");
+            "Wait about 5 minutes between Sign in with X attempts. Failed or cancelled attempts count.");
         applyAuthButtons(true);
         return;
     }

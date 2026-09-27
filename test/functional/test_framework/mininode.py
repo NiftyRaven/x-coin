@@ -274,9 +274,9 @@ class NodeConn(asyncore.dispatcher):
     }
 
     MAGIC_BYTES = {
-        "mainnet": b"\x52\x41\x56\x4e",  # mainnet
-        "testnet3": b"\x45\x50\x4f\x45",  # testnet3
-        "regtest": b"\x43\x52\x4f\x57",  # regtest
+        "mainnet": b"\x58\x46\x45\x52",  # XFER
+        "testnet3": b"\x58\x46\x54\x4e",  # XFTN
+        "regtest": b"\x58\x46\x52\x54",  # XFRT
     }
 
     def __init__(self, dstaddr, dstport, rpc, callback, net="regtest", services=NODE_NETWORK, send_version=True):
@@ -399,9 +399,10 @@ class NodeConn(asyncore.dispatcher):
                     t.deserialize(f)
                     self.got_message(t)
                 else:
-                    logger.warning("Received unknown command from %s:%d: '%s' %s" % (
-                        self.dstaddr, self.dstport, command, repr(msg)))
-                    raise ValueError(f"Unknown command: '{command}'")
+                    # Extensions such as lottery heartbeats are not part of
+                    # this test peer. Keep the connection up.
+                    logger.debug("Ignoring unknown command from %s:%d: '%s'" % (
+                        self.dstaddr, self.dstport, command))
         except Exception as e:
             logger.exception('got_data: %s', repr(e))
             raise
