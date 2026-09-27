@@ -51,7 +51,9 @@ class TestNode:
         self.coverage_dir = coverage_dir
         # Most callers will just need to add extra args to the standard list below. For those callers that need more flexibility, they can just set the args property directly.
         self.extra_args = extra_args
-        self.args = [self.binary, "-datadir=" + self.datadir, "-server", "-keypool=2", "-discover=0", "-rest", "-logtimemicros", "-debug", "-debugexclude=libevent", "-debugexclude=leveldb", "-bip44=1", "-mocktime=" + str(mocktime), "-uacomment=testnode%d" % i]
+        # Regtest coinbases include an active-set commitment. A per-node
+        # Sign-in mock lets generate() produce one. Ignored off regtest.
+        self.args = [self.binary, "-datadir=" + self.datadir, "-server", "-keypool=2", "-discover=0", "-rest", "-logtimemicros", "-debug", "-debugexclude=libevent", "-debugexclude=leveldb", "-bip44=1", "-mocktime=" + str(mocktime), "-uacomment=testnode%d" % i, "-xoauthmock=testnode%d:verified" % i]
 
         self.cli = TestNodeCLI(os.getenv("RAVENCLI", "xcoin-cli"), self.datadir)
 
