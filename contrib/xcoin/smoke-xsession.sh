@@ -9,6 +9,13 @@ XCLI="${XCLI:-$ROOT/src/xcoin-cli}"
 DATADIR="${DATADIR:-$ROOT/smoke-xsession-datadir}"
 CLI=("$XCLI" -regtest -datadir="$DATADIR")
 
+# Retry wait after Sign in with X is 5 minutes. Live GUI session exp stays 0
+# (not a wall-clock kick). Regtest mock still writes exp=GetTime()+365d.
+if ! grep -q 'kOAuthCooldownMs = 5 \* 60 \* 1000' "$ROOT/src/qt/xoauth.cpp"; then
+  echo "Sign in with X cooldown must be 5 minutes (kOAuthCooldownMs)" >&2
+  exit 1
+fi
+
 if [[ ! -x "$XCOIND" ]]; then
   echo "missing $XCOIND — build first" >&2
   exit 1

@@ -32,9 +32,10 @@ jobs:
           ./configure --without-gui --disable-bench --with-incompatible-bdb
           make -j$(nproc)
 
-      # The full `make check` binary reports many existing failures that
-      # are outside this backport. Gate on the orphan-map case and the
-      # release version case, which both pass.
+      # `make check` exits 2 on this tree before any new test runs:
+      # check-local looks for test/util/raven-util-test.py, which is not
+      # in the repo, and test/test_raven aborts with existing failures.
+      # Gate on the orphan-map case and the release version case.
       - name: Unit tests
         run: |
           src/test/test_raven --run_test=DoS_tests/DoS_maporphans_test --catch_system_errors=no

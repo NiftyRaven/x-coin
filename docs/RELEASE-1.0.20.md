@@ -2,6 +2,8 @@
 
 Network robustness improvements (backport of upstream Bitcoin Core PR #15644 "Make orphan processing interruptible"). Consensus unchanged.
 
+Sign in with X can be tried again after 5 minutes.
+
 **Heavy** wallet. Market and tree nav. Same chain as Light. Consensus unchanged.
 
 Do **not** use Code → Download ZIP.

@@ -75,7 +75,7 @@ A crash, kill, or power loss **without** a clean GUI quit may leave
 is not crash-proofed: no keepalive thread, no X token refresh, no
 second session framework.
 
-OAuth still has a local ~1 hour cooldown on deliberate Sign-in /
+OAuth still has a local 5 minute cooldown on deliberate Sign-in /
 Re-link clicks (success, cancel, or fail). That is not a session TTL.
 
 Regtest mock (`-xoauthmock` / `mockxsignin`) still writes a 365-day
@@ -135,7 +135,7 @@ invent a different id on launch night.
 ## Happy path (GUI, no terminal)
 
 1. Create / open wallet (first-run **12 secret words** — still required).
-2. **Sign in with X** (browser redirect; binds this node to your X account; does not replace the seed). The session lasts until a clean GUI quit deletes `xsession.json` (`exp` is not a kick). Home does **not** call `users/me` again while Linked. **Re-link** asks first and shares a local ~1 hour cooldown with failed or cancelled attempts. Home / **Help → What's new** show release notes in the wallet ([UPDATES.md](UPDATES.md)).
+2. **Sign in with X** (browser redirect; binds this node to your X account; does not replace the seed). The session lasts until a clean GUI quit deletes `xsession.json` (`exp` is not a kick). Home does **not** call `users/me` again while Linked. **Re-link** asks first and shares a local 5 minute cooldown with failed or cancelled attempts. Home / **Help → What's new** show release notes in the wallet ([UPDATES.md](UPDATES.md)).
 3. Home shows **this wallet linked to @handle**. There is no Client ID paste field.
 4. **Allowlist my handle** (optional operator invite list — not a blue check)
    then **Claim my root asset**. An empty wallet can claim that one free root
