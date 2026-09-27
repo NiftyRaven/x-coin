@@ -1,0 +1,48 @@
+name: Orphan processing tests
+
+# Build and run the unit tests plus the mempool/p2p functional tests,
+# including the orphan-processing regression, on this branch.
+
+on:
+  push:
+    branches:
+      - p2p/orphan-processing
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential autotools-dev automake autoconf libtool pkg-config \
+            libssl-dev libevent-dev bsdmainutils python3 \
+            libboost-system-dev libboost-filesystem-dev libboost-chrono-dev \
+            libboost-test-dev libboost-thread-dev libboost-program-options-dev \
+            libdb++-dev libminiupnpc-dev libzmq3-dev
+
+      - name: Build
+        run: |
+          ./autogen.sh
+          ./configure --without-gui --disable-bench --with-incompatible-bdb
+          make -j$(nproc)
+
+      - name: Unit tests
+        run: make -j$(nproc) check
+
+      - name: Functional tests
+        run: |
+          test/functional/test_runner.py --jobs=2 \
+            mempool_limit.py \
+            mempool_persist.py \
+            mempool_reorg.py \
+            feature_assets_mempool.py \
+            p2p_mempool.py \
+            p2p_leak_tx.py \
+            p2p_disconnect_ban.py \
+            p2p_orphan_processing.py

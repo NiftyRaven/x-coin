@@ -167,6 +167,7 @@ BASE_SCRIPTS= [
     'mempool_spend_coinbase.py',
     'feature_bip68_sequence.py',
     'p2p_mempool.py',
+    'p2p_orphan_processing.py',
     'rpc_named_arguments.py',
     'rpc_uptime.py',
     'rpc_assettransfer.py',
