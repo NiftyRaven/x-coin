@@ -577,7 +577,7 @@ void XHome::refresh()
 void XHome::onSignIn()
 {
     if (XOAuth::cooldownRemainingMs() > 0) {
-        statusLabel->setText("Sign in with X is cooling down (~1 hour).");
+        statusLabel->setText("Sign in with X is cooling down (~5 minutes).");
         applyAuthButtons(xsession::HasValidSession());
         return;
     }
@@ -593,7 +593,7 @@ void XHome::onReLink()
         return;
     if (XOAuth::cooldownRemainingMs() > 0) {
         QMessageBox::information(this, "X-Coin",
-            "Wait about an hour between Sign in with X attempts.");
+            "Wait about 5 minutes between Sign in with X attempts.");
         applyAuthButtons(true);
         return;
     }

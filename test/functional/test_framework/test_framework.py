@@ -385,7 +385,7 @@ class RavenTestFramework:
             # Create cache directories, run ravends:
             for i in range(MAX_NODES):
                 datadir = initialize_data_dir(self.options.cachedir, i)
-                args = [os.getenv("XCOIND", "xcoind"), "-server", "-keypool=1", "-datadir=" + datadir, "-discover=0"]
+                args = [os.getenv("XCOIND", "xcoind"), "-server", "-keypool=1", "-datadir=" + datadir, "-discover=0", "-xoauthmock=cache%d:verified" % i]
                 if i > 0:
                     args.append("-connect=127.0.0.1:" + str(p2p_port(0)))
                 self.nodes.append(

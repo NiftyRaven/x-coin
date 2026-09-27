@@ -9,6 +9,13 @@ XCLI="${XCLI:-$ROOT/src/xcoin-cli}"
 DATADIR="${DATADIR:-$ROOT/smoke-xsession-datadir}"
 CLI=("$XCLI" -regtest -datadir="$DATADIR")
 
+# Retry wait after Sign in with X is 5 minutes. Live GUI session exp stays 0
+# (not a wall-clock kick). Regtest mock still writes exp=GetTime()+365d.
+if ! grep -q 'kOAuthCooldownMs = 5 \* 60 \* 1000' "$ROOT/src/qt/xoauth.cpp"; then
+  echo "Sign in with X cooldown must be 5 minutes (kOAuthCooldownMs)" >&2
+  exit 1
+fi
+
 if [[ ! -x "$XCOIND" ]]; then
   echo "missing $XCOIND — build first" >&2
   exit 1
@@ -50,23 +57,23 @@ echo "$NOTES"
 echo "$NOTES" | python3 -c '
 import json,sys
 j=json.load(sys.stdin)
-if j.get("version") != "1.0.19" or j.get("tag") != "v1.0.19":
-    sys.exit("getreleasenotes must report this wallet as 1.0.19 (got %r)" % j)
+if j.get("version") != "1.0.20" or j.get("tag") != "v1.0.20":
+    sys.exit("getreleasenotes must report this wallet as 1.0.20 (got %r)" % j)
 notes = j.get("notes") or ""
 if "Unlock" not in notes and "assetindex" not in notes:
     sys.exit("bundled notes must mention Unlock or assetindex")
 if "What" not in notes and "new" not in notes.lower():
     sys.exit("bundled notes must mention What'\''s new")
 '
-FEED='[{"tag_name":"v1.0.20","name":"X Coin 1.0.20 Heavy","body":"Newer notes.","html_url":"https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.20","draft":false,"prerelease":false},{"tag_name":"v1.0.11","body":"this","draft":false,"prerelease":false}]'
+FEED='[{"tag_name":"v1.0.21","name":"X Coin 1.0.21 Heavy","body":"Newer notes.","html_url":"https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.21","draft":false,"prerelease":false},{"tag_name":"v1.0.11","body":"this","draft":false,"prerelease":false}]'
 PARSED="$("${CLI[@]}" getreleasenotes "$FEED")"
 echo "$PARSED"
 echo "$PARSED" | python3 -c '
 import json,sys
 j=json.load(sys.stdin)
 n=j.get("newer") or {}
-if n.get("tag") != "v1.0.20":
-    sys.exit("feed parse must pick v1.0.20 as newer (got %r)" % n)
+if n.get("tag") != "v1.0.21":
+    sys.exit("feed parse must pick v1.0.21 as newer (got %r)" % n)
 if "Newer notes" not in (n.get("notes") or ""):
     sys.exit("newer notes must come from the feed body")
 '
