@@ -34,9 +34,12 @@ INPUTS_PER_ORPHAN = 8
 
 class P2POrphanProcessingTest(RavenTestFramework):
     def set_test_params(self):
-        self.setup_clean_chain = False
+        # Clean chain: the shared cache miner does not pass a regtest
+        # Sign-in mock, so its coinbase has no active-set commitment.
+        self.setup_clean_chain = True
         self.num_nodes = 1
         self.extra_args = [[
+            "-xoauthmock=orphanpeer:verified",
             "-maxorphantx=200",
             "-par=1",
             "-limitdescendantcount=500",
@@ -100,6 +103,8 @@ class P2POrphanProcessingTest(RavenTestFramework):
 
     def run_test(self):
         node = self.nodes[0]
+        # One mature coinbase for the parent input.
+        node.generate(101)
         self.log.info("Building a parent and %d orphans (%d inputs each)" % (
             ORPHAN_COUNT, INPUTS_PER_ORPHAN))
         parent_hex, parent_txid, orphan_hexes, orphan_txids = self._make_parent_and_orphans(node)
