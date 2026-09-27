@@ -323,6 +323,40 @@ bool RequireIssueUnderOwnMain(const std::string& assetName, std::string& err)
     return true;
 }
 
+bool RejectRelayedNewAsset(const CTransaction& tx, std::string& err)
+{
+    err.clear();
+    // IsNewUniqueAsset indexes vout.back(); an empty tx is not an issue.
+    if (tx.vout.empty())
+        return false;
+    if (!tx.IsNewAsset() && !tx.IsNewUniqueAsset())
+        return false;
+
+    CNewAsset asset;
+    std::string address;
+    const bool got = tx.IsNewUniqueAsset()
+        ? UniqueAssetFromTransaction(tx, asset, address)
+        : AssetFromScript(tx.vout.back().scriptPubKey, asset, address);
+    if (!got)
+        return false;
+
+    AssetType itype = AssetType::INVALID;
+    IsAssetNameValid(asset.strName, itype);
+    // Sub, unique, and any other non-root: the vault (or whoever signed
+    // the raw tx) is the issuer. Do not consult the node session.
+    if (itype != AssetType::ROOT)
+        return false;
+
+    std::string xid;
+    if (!ParseXAccountAssignment(tx, xid)) {
+        err = "Users cannot create main assets. Sign in with X, then linkxaccount.";
+        return true;
+    }
+    // A well-formed XID1 root is relayable without a session on this node.
+    // Sign-in stays on the wallet that builds the claim.
+    return false;
+}
+
 bool CheckIfXAccountAssigned(const std::string& xId, std::string* assetName)
 {
     {
