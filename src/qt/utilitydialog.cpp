@@ -21,6 +21,7 @@
 #include "clientversion.h"
 #include "init.h"
 #include "util.h"
+#include "xrelease.h"
 
 #include <stdio.h>
 
@@ -38,7 +39,8 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, bool about) :
 {
     ui->setupUi(this);
 
-    QString version = tr(PACKAGE_NAME) + " " + tr("version") + " " + QString::fromStdString(FormatFullVersion());
+    QString version = tr("X Coin (XFER)") + " " + tr("version") + " " +
+        QString::fromStdString(xrelease::RunningVersionString());
     /* On x86 add a bit specifier to the version so that users can distinguish between
      * 32 and 64 bit builds. On other architectures, 32/64 bit may be more ambiguous.
      */
@@ -78,21 +80,57 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, bool about) :
         cursor.insertText(header);
         cursor.insertBlock();
 
-        std::string strUsage = HelpMessage(HMM_RAVEN_QT);
-        const bool showDebug = gArgs.GetBoolArg("-help-debug", false);
-        strUsage += HelpMessageGroup(tr("UI Options:").toStdString());
-        if (showDebug) {
-            strUsage += HelpMessageOpt("-allowselfsignedrootcertificates", strprintf("Allow self signed root certificates (default: %u)", DEFAULT_SELFSIGNED_ROOTCERTS));
-        }
-        strUsage += HelpMessageOpt("-choosedatadir", strprintf(tr("Choose data directory on startup (default: %u)").toStdString(), DEFAULT_CHOOSE_DATADIR));
-        strUsage += HelpMessageOpt("-lang=<lang>", tr("Set language, for example \"de_DE\" (default: system locale)").toStdString());
-        strUsage += HelpMessageOpt("-min", tr("Start minimized").toStdString());
-        strUsage += HelpMessageOpt("-rootcertificates=<file>", tr("Set SSL root certificates for payment request (default: -system-)").toStdString());
-        strUsage += HelpMessageOpt("-splash", strprintf(tr("Show splash screen on startup (default: %u)").toStdString(), DEFAULT_SPLASHSCREEN));
-        strUsage += HelpMessageOpt("-resetguisettings", tr("Reset all settings changed in the GUI").toStdString());
-        if (showDebug) {
-            strUsage += HelpMessageOpt("-uiplatform", strprintf("Select platform to customize UI for (one of windows, macosx, other; default: %s)", RavenGUI::DEFAULT_UIPLATFORM));
-        }
+        // Wallet-facing list. xcoind -help still prints the full node list.
+        std::string strUsage;
+        strUsage += HelpMessageGroup(_("Options:"));
+        strUsage += HelpMessageOpt("-?", _("Print this help message and exit"));
+        strUsage += HelpMessageOpt("-version", _("Print version and exit"));
+        strUsage += HelpMessageOpt("-datadir=<dir>", _("Specify data directory"));
+        strUsage += HelpMessageOpt("-conf=<file>", strprintf(_("Specify configuration file (default: %s)"), "xcoin.conf"));
+        strUsage += HelpMessageOpt("-choosedatadir", strprintf(_("Choose data directory on startup (default: %u)"), DEFAULT_CHOOSE_DATADIR));
+        strUsage += HelpMessageOpt("-lang=<lang>", _("Set language, for example \"de_DE\" (default: system locale)"));
+        strUsage += HelpMessageOpt("-min", _("Start minimized"));
+        strUsage += HelpMessageOpt("-splash", strprintf(_("Show splash screen on startup (default: %u)"), DEFAULT_SPLASHSCREEN));
+        strUsage += HelpMessageOpt("-resetguisettings", _("Reset all settings changed in the GUI"));
+
+        strUsage += HelpMessageGroup(_("Network:"));
+        strUsage += HelpMessageOpt("-regtest", _("Use the practice chain. X Coin Practice Wallet always sets this. Practice coins are not main XFER."));
+        strUsage += HelpMessageOpt("-testnet", _("Use the test chain"));
+        strUsage += HelpMessageOpt("-addnode=<ip>", _("Add a node to connect to and attempt to keep the connection open"));
+        strUsage += HelpMessageOpt("-connect=<ip>", _("Connect only to the specified node(s); -connect=0 disables automatic connections"));
+        strUsage += HelpMessageOpt("-packageconf=<file>", _("Read extra defaults from the package xcoin.conf (addnode, xoauthclientid). Default: xcoin.conf next to the wallet, or one folder up. Use -packageconf=0 to disable."));
+        strUsage += HelpMessageOpt("-port=<port>", _("Listen for connections on <port> (default: 38443, testnet: 48443, regtest: 28443)"));
+        strUsage += HelpMessageOpt("-listen", _("Accept connections from outside (default: 1 if no -proxy or -connect)"));
+        strUsage += HelpMessageOpt("-server", _("Accept command line and JSON-RPC commands"));
+
+        strUsage += HelpMessageGroup(_("Wallet:"));
+        strUsage += HelpMessageOpt("-wallet=<file>", _("Specify wallet file within the data directory (default: wallet.dat)"));
+        strUsage += HelpMessageOpt("-disablewallet", _("Do not load the wallet and disable wallet RPC calls"));
+        strUsage += HelpMessageOpt("-rescan", _("Rescan the blockchain for missing wallet transactions on startup"));
+        strUsage += HelpMessageOpt("-reindex", _("Rebuild chain state and block index from the blk*.dat files on disk"));
+        strUsage += HelpMessageOpt("-salvagewallet", _("Attempt to recover private keys from a corrupt wallet on startup"));
+        strUsage += HelpMessageOpt("-zapwallettxes=<mode>", _("Delete wallet transactions and recover them with -rescan on startup (1 = keep metadata, 2 = drop metadata)"));
+        strUsage += HelpMessageOpt("-paytxfee=<amt>", _("Fee (in XFER/kB) to add to transactions you send"));
+        strUsage += HelpMessageOpt("-upgradewallet", _("Upgrade wallet to latest format on startup"));
+
+        strUsage += HelpMessageGroup(_("Indexes:"));
+        strUsage += HelpMessageOpt("-txindex", _("Maintain a full transaction index, used by getrawtransaction (default: 0)"));
+        strUsage += HelpMessageOpt("-assetindex", _("Keep an index of assets, used by holder lookup (default: 0). Packaged xcoin.conf sets assetindex=1. Changing this requires -reindex."));
+
+        strUsage += HelpMessageGroup(_("Sign in with X:"));
+        strUsage += HelpMessageOpt("-xoauthclientid=<id>", _("Operator X OAuth client id baked into the packaged xcoin.conf. Callback http://127.0.0.1:18791/callback."));
+        strUsage += HelpMessageOpt("-xoauthcallbackport=<n>", _("Loopback callback port for Sign in with X (default: 18791)"));
+        strUsage += HelpMessageOpt("-xreleaseurl=<url>", _("HTTPS JSON feed for Help → What's new (default: the X Coin GitHub releases API). No wallet data is sent."));
+        strUsage += HelpMessageOpt("-nocheckupdates", _("Do not fetch the release feed when the wallet starts. Help → What's new still shows notes for this version."));
+
+        strUsage += HelpMessageGroup(_("RPC:"));
+        strUsage += HelpMessageOpt("-rpcuser=<user>", _("Username for JSON-RPC connections"));
+        strUsage += HelpMessageOpt("-rpcpassword=<pw>", _("Password for JSON-RPC connections"));
+        strUsage += HelpMessageOpt("-rpcport=<port>", _("Listen for JSON-RPC connections on <port> (default: 38442, testnet: 48442, regtest: 28442)"));
+        strUsage += HelpMessageOpt("-rpcallowip=<ip>", _("Allow JSON-RPC connections from the specified source. Can be specified multiple times"));
+
+        strUsage += HelpMessageGroup(_("More:"));
+        strUsage += HelpMessageOpt("-help", _("This page. For proxy, prune, debug log, and relay policy, run xcoind -help. Those options still work in this wallet."));
         QString coreOptions = QString::fromStdString(strUsage);
         text = version + "\n" + header + "\n" + coreOptions;
 

@@ -11,7 +11,7 @@
 
 #include "networkstyle.h"
 
-#include "clientversion.h"
+#include "xrelease.h"
 #include "init.h"
 #include "util.h"
 #include "ui_interface.h"
@@ -54,7 +54,7 @@ SplashScreen::SplashScreen(const NetworkStyle* networkStyle)
 
     // define text to place
     QString titleText       = tr(PACKAGE_NAME);
-    QString versionText     = QString("Version %1").arg(QString::fromStdString(FormatFullVersion()));
+    QString versionText     = QString("Version %1").arg(QString::fromStdString(xrelease::RunningVersionString()));
     QString copyrightText   = QStringLiteral("The X Coin developers");
     QString titleAddText    = networkStyle->getTitleAddText();
 

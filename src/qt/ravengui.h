@@ -131,6 +131,8 @@ private:
     QAction *showHelpMessageAction = nullptr;
     QAction *whatsNewAction = nullptr;
     QAction *checkUpdatesAction = nullptr;
+    QAction *websiteAction = nullptr;
+    QAction *discordAction = nullptr;
 
     /** XCOIN START */
     QAction *transferAssetAction = nullptr;
@@ -313,6 +315,10 @@ private Q_SLOTS:
     void showWalletRepair();
     /** Show help message dialog */
     void showHelpMessageClicked();
+    /** Open https://xferchain.net */
+    void openWebsiteClicked();
+    /** Open the community Discord */
+    void openDiscordClicked();
 #ifndef Q_OS_MAC
     /** Handle tray icon clicked */
     void trayIconActivated(QSystemTrayIcon::ActivationReason reason);
