@@ -246,6 +246,10 @@ std::string BundledNotes()
         "  in with X and claim a root; they do not need a blue check and they\n"
         "  never enter the hat.\n"
         "- Sign in with X stays signed in until you close the wallet.\n"
+        "- Help links to xferchain.net and the community Discord.\n"
+        "- A transaction can open on the X Coin explorer. A custom URL in\n"
+        "  Options → Display is kept.\n"
+        "- Re-link stays optional and uses the same 5 minute wait as Sign in.\n"
         "\n"
         "Light and Heavy are parallel wallets, not a forced upgrade path.\n"
         "Download from GitHub Releases (not Code → Download ZIP).\n";
@@ -297,7 +301,7 @@ std::string BundledName()
 std::string BundledHtmlUrl()
 {
 #ifdef XCOIN_LIGHT_WALLET
-    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.20-light";
+    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.21-light";
 #else
     return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16";
 #endif

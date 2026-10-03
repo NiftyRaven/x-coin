@@ -614,7 +614,7 @@
              <bool>true</bool>
             </property>
             <property name="text">
-             <string>Sub or unique only. Quantity, units, IPFS/txid, and reissuable work like Ravencoin Create Asset. Unique quantity is fixed at 1. Main/root is Sign-in Claim only — typed MAIN names fail.</string>
+             <string>Sub or unique only. Set quantity, units, an IPFS hash or txid, and whether it can be reissued. Unique quantity is fixed at 1. A main name is Sign-in Claim only — typed main names fail.</string>
             </property>
            </widget>
           </item>
@@ -1096,7 +1096,7 @@
                    <item>
                     <widget class="QLabel" name="labelCustomPerKilobyte">
                      <property name="toolTip">
-                      <string>If the custom fee is set to 1000 satoshis and the transaction is only 250 bytes, then &quot;per kilobyte&quot; only pays 250 satoshis in fee, while &quot;total at least&quot; pays 1000 satoshis. For transactions bigger than a kilobyte both pay by kilobyte.</string>
+                      <string>If the custom fee is set to 1000 xferons and the transaction is only 250 bytes, then &quot;per kilobyte&quot; only pays 250 xferons in fee, while &quot;total at least&quot; pays 1000 xferons. For transactions bigger than a kilobyte both pay by kilobyte.</string>
                      </property>
                      <property name="text">
                       <string>per kilobyte</string>

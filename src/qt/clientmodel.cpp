@@ -15,6 +15,7 @@
 #include "chainparams.h"
 #include "checkpoints.h"
 #include "clientversion.h"
+#include "xrelease.h"
 #include "validation.h"
 #include "net.h"
 #include "txmempool.h"
@@ -275,7 +276,7 @@ BanTableModel *ClientModel::getBanTableModel()
 
 QString ClientModel::formatFullVersion() const
 {
-    return QString::fromStdString(FormatFullVersion());
+    return QString::fromStdString(xrelease::RunningVersionString());
 }
 
 QString ClientModel::formatSubVersion() const
