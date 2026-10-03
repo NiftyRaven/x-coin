@@ -4,7 +4,7 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="${OUT:-$ROOT/dist}"
-VER="${VER:-1.0.20}"
+VER="${VER:-1.0.21}"
 NAME="xcoin-${VER}-linux-x86_64"
 STAGE="$OUT/$NAME"
 
@@ -185,8 +185,9 @@ Open this folder. Double-click one start:
 
 You do not compile anything. You do not open source code.
 
-The chain stays private until the September 12, 2026 window.
-There are no public DNS seeds and no explorer yet.
+Website: https://xferchain.net
+Explorer: https://explorer.xferchain.net
+Community: https://discord.gg/FP7mYtBpxm
 
 This folder's xcoin.conf is read automatically when you
 double-click. It already has addnode=172.191.195.221:38443
@@ -197,7 +198,7 @@ ID paste box.
 EOF
 
 cat > "$STAGE/README.txt" <<EOF
-X Coin (XFER) ${VER} — Linux x86_64 (private)
+X Coin (XFER) ${VER} — Linux x86_64
 Nifty Raven (@NFTRVN on X)
 
 WHICH FILE TO OPEN
@@ -222,10 +223,13 @@ X Coin Wallet starts with no -regtest. First run creates
 with X. Sign in with X is required to claim your free root.
 Lottery needs X Verified.
 
-UNTIL SEPTEMBER 12, 2026
-------------------------
-The chain stays private until that window. No public DNS seeds.
-No explorer. This folder's xcoin.conf is read automatically.
+LINKS
+-----
+Website: https://xferchain.net
+Explorer: https://explorer.xferchain.net
+Community: https://discord.gg/FP7mYtBpxm
+
+This folder's xcoin.conf is read automatically.
 If it contains addnode=<host>:38443, this wallet connects to
 that node. You do not edit a conf file. Sign in with X uses
 the operator Client ID in that same xcoin.conf (xoauthclientid=).
@@ -239,6 +243,7 @@ cp "$ROOT/docs/RELEASE-1.0.md" "$STAGE/docs/" 2>/dev/null || true
 cp "$ROOT/docs/RELEASE-1.0.14.md" "$STAGE/docs/" 2>/dev/null || true
 cp "$ROOT/docs/RELEASE-1.0.15.md" "$STAGE/docs/" 2>/dev/null || true
 cp "$ROOT/docs/RELEASE-1.0.20.md" "$STAGE/docs/" 2>/dev/null || true
+cp "$ROOT/docs/RELEASE-1.0.21.md" "$STAGE/docs/" 2>/dev/null || true
 cp "$ROOT/docs/RELEASE-1.0.16.md" "$STAGE/docs/" 2>/dev/null || true
 cp "$ROOT/docs/MARKET.md" "$STAGE/docs/" 2>/dev/null || true
 cp "$ROOT/docs/LOTTERY.md" "$STAGE/docs/" 2>/dev/null || true

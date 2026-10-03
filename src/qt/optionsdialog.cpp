@@ -109,7 +109,7 @@ OptionsDialog::OptionsDialog(QWidget *parent, bool enableWallet) :
         }
     }
 #if QT_VERSION >= 0x040700
-    ui->thirdPartyTxUrls->setPlaceholderText("https://example.com/tx/%s");
+    ui->thirdPartyTxUrls->setPlaceholderText(DEFAULT_THIRD_PARTY_BROWSERS);
     ui->ipfsUrl->setPlaceholderText(DEFAULT_IPFS_VIEWER);
 #endif
 

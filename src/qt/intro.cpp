@@ -124,12 +124,7 @@ Intro::Intro(QWidget *parent) :
     ui->welcomeLabel->setText(ui->welcomeLabel->text().arg(tr(PACKAGE_NAME)));
     ui->storageLabel->setText(ui->storageLabel->text().arg(tr(PACKAGE_NAME)));
 
-    ui->lblExplanation1->setText(ui->lblExplanation1->text()
-        .arg(tr(PACKAGE_NAME))
-        .arg(BLOCK_CHAIN_SIZE)
-        .arg(2018)
-        .arg(tr("X Coin"))
-    );
+    ui->lblExplanation1->setText(ui->lblExplanation1->text().arg(tr(PACKAGE_NAME)));
     ui->lblExplanation2->setText(ui->lblExplanation2->text().arg(tr(PACKAGE_NAME)));
 
     uint64_t pruneTarget = std::max<int64_t>(0, gArgs.GetArg("-prune", 0));

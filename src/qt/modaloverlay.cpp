@@ -6,7 +6,7 @@
 #include "modaloverlay.h"
 #include "ui_modaloverlay.h"
 
-#include <clientversion.h>
+#include "xrelease.h"
 #include "guiutil.h"
 
 #include "chainparams.h"
@@ -42,7 +42,7 @@ userClosed(false)
 
     blockProcessTime.clear();
     setVisible(false);
-    ui->versionLabel->setText(QString::fromStdString(FormatFullVersion()));
+    ui->versionLabel->setText(QString::fromStdString(xrelease::RunningVersionString()));
 }
 
 ModalOverlay::~ModalOverlay()

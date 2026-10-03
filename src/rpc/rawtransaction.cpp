@@ -122,7 +122,8 @@ UniValue getrawtransaction(const JSONRPCRequest& request)
             "\nNOTE: By default this function only works for mempool transactions. If the -txindex option is\n"
             "enabled, it also works for blockchain transactions.\n"
             "Observer / DEX listing nodes should run -txindex=1 so getrawtransaction can inspect any confirmed tx.\n"
-            "There is no in-tree block explorer; DEFAULT_THIRD_PARTY_BROWSERS is empty on purpose.\n"
+            "There is no in-tree block explorer. A confirmed transaction can be opened at\n"
+            "https://explorer.xferchain.net/#/tx/<txid> .\n"
             "DEPRECATED: for now, it also works for transactions with unspent outputs.\n"
 
             "\nReturn the raw transaction data.\n"
