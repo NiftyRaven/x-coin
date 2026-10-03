@@ -646,23 +646,18 @@ std::string HelpMessage(HelpMessageMode mode)
 std::string LicenseInfo()
 {
     const std::string URL_SOURCE_CODE = "<https://github.com/NiftyRaven/x-coin>";
-    const std::string URL_WEBSITE = "<https://github.com/NiftyRaven/x-coin>";
+    const std::string URL_WEBSITE = "<https://xferchain.net>";
+    const std::string URL_DISCORD = "<https://discord.gg/FP7mYtBpxm>";
 
-    return std::string("X Coin (XFER) 1.0\n") +
+    return CopyrightHolders(strprintf(_("Copyright (C) %i-%i"), 2009, COPYRIGHT_YEAR) + " ") + "\n" +
+           "\n" +
            "Nifty Raven (@NFTRVN on X)\n" +
            "Anonymous public identity — display name and handle only.\n" +
            "\n" +
-           CopyrightHolders(strprintf(_("Copyright (C) %i-%i"), 2009, COPYRIGHT_YEAR) + " ") + "\n" +
+           strprintf(_("Website: %s"), URL_WEBSITE) + "\n" +
+           strprintf(_("Community Discord: %s"), URL_DISCORD) + "\n" +
+           strprintf(_("Source code: %s"), URL_SOURCE_CODE) + "\n" +
            "\n" +
-           strprintf(_("Please contribute if you find %s useful. "
-                       "Visit %s for further information about the software."),
-               PACKAGE_NAME, URL_WEBSITE) +
-           "\n" +
-           strprintf(_("The source code is available from %s."),
-               URL_SOURCE_CODE) +
-           "\n" +
-           "\n" +
-           _("This is experimental software.") + "\n" +
            strprintf(_("Distributed under the MIT software license, see the accompanying file %s or %s"), "COPYING", "<https://opensource.org/licenses/MIT>") + "\n" +
            "\n" +
            strprintf(_("This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit %s and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard."), "<https://www.openssl.org>") +

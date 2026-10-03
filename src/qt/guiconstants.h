@@ -92,8 +92,10 @@ static const int MAX_URI_LENGTH = 255;
 #define QAPP_APP_NAME_DEFAULT "X Coin"
 #define QAPP_APP_NAME_TESTNET "X Coin-testnet"
 
-/* No public explorers for this private chain */
-#define DEFAULT_THIRD_PARTY_BROWSERS ""
+/* Default transaction context-menu link. %s is the txid.
+   A non-empty saved Options value is a user override and is kept.
+   An empty value is the previous unset default. */
+#define DEFAULT_THIRD_PARTY_BROWSERS "https://explorer.xferchain.net/#/tx/%s"
 
 /* Default IPFS viewer */
 #define DEFAULT_IPFS_VIEWER "https://ipfs.io/ipfs/%s"

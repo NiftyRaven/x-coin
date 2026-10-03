@@ -509,12 +509,21 @@ void RavenGUI::createActions()
     showHelpMessageAction->setMenuRole(QAction::NoRole);
     showHelpMessageAction->setStatusTip(tr("Show the %1 help message to get a list with possible X Coin command-line options").arg(tr(PACKAGE_NAME)));
 
+    websiteAction = new QAction(tr("X Coin &website"), this);
+    websiteAction->setStatusTip(tr("Open https://xferchain.net"));
+    websiteAction->setToolTip(tr("Open https://xferchain.net"));
+    discordAction = new QAction(tr("Community &Discord"), this);
+    discordAction->setStatusTip(tr("Open the X Coin community Discord"));
+    discordAction->setToolTip(tr("Open https://discord.gg/FP7mYtBpxm"));
+
     connect(quitAction, SIGNAL(triggered()), qApp, SLOT(quit()));
     connect(aboutAction, SIGNAL(triggered()), this, SLOT(aboutClicked()));
     connect(aboutQtAction, SIGNAL(triggered()), qApp, SLOT(aboutQt()));
     connect(optionsAction, SIGNAL(triggered()), this, SLOT(optionsClicked()));
     connect(toggleHideAction, SIGNAL(triggered()), this, SLOT(toggleHidden()));
     connect(showHelpMessageAction, SIGNAL(triggered()), this, SLOT(showHelpMessageClicked()));
+    connect(websiteAction, SIGNAL(triggered()), this, SLOT(openWebsiteClicked()));
+    connect(discordAction, SIGNAL(triggered()), this, SLOT(openDiscordClicked()));
     connect(whatsNewAction, SIGNAL(triggered()), this, SLOT(showWhatsNew()));
     connect(checkUpdatesAction, SIGNAL(triggered()), this, SLOT(checkForUpdates()));
     connect(openRPCConsoleAction, SIGNAL(triggered()), this, SLOT(showDebugWindow()));
@@ -601,6 +610,9 @@ void RavenGUI::createMenuBar()
         help->addAction(openRPCConsoleAction);
     }
     help->addAction(showHelpMessageAction);
+    help->addSeparator();
+    help->addAction(websiteAction);
+    help->addAction(discordAction);
     help->addSeparator();
     help->addAction(aboutAction);
     help->addAction(aboutQtAction);
@@ -1033,6 +1045,16 @@ void RavenGUI::showWalletRepair()
 void RavenGUI::showHelpMessageClicked()
 {
     helpMessageDialog->show();
+}
+
+void RavenGUI::openWebsiteClicked()
+{
+    QDesktopServices::openUrl(QUrl(QStringLiteral("https://xferchain.net")));
+}
+
+void RavenGUI::openDiscordClicked()
+{
+    QDesktopServices::openUrl(QUrl(QStringLiteral("https://discord.gg/FP7mYtBpxm")));
 }
 
 #ifdef ENABLE_WALLET
@@ -1828,7 +1850,7 @@ void RavenGUI::onReleaseFeedFinished(QNetworkReply *reply)
             pendingInteractiveCheck = false;
             QMessageBox::information(this, tr("Check for updates"),
                                      tr("Could not reach the release feed (%1).\n"
-                                        "While the GitHub repo is private the API 404s; Help → What's new still shows notes for this installed wallet.\n\n%2")
+                                        "Help → What's new still shows notes for this installed wallet.\n\n%2")
                                          .arg(QString::fromStdString(xrelease::FeedUrl()))
                                          .arg(err));
             showThisVersionNotes();
@@ -1874,7 +1896,7 @@ void RavenGUI::onReleaseFeedFinished(QNetworkReply *reply)
         } else {
             QMessageBox::information(this, tr("Check for updates"),
                                      tr("Could not read the release feed.\n"
-                                        "While the GitHub repo is private the API 404s; Help → What's new still shows notes for this installed wallet.\n\n%1")
+                                        "Help → What's new still shows notes for this installed wallet.\n\n%1")
                                          .arg(QString::fromStdString(xrelease::LastFetchError())));
             showThisVersionNotes();
         }

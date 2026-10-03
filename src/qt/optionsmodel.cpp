@@ -83,9 +83,17 @@ void OptionsModel::Init(bool resetSettings)
         settings.setValue("nDisplayCurrencyIndex", 0);
     nDisplayCurrencyIndex = settings.value("nDisplayCurrencyIndex", 0).toInt();
 
-    if (!settings.contains("strThirdPartyTxUrls"))
-        settings.setValue("strThirdPartyTxUrls", DEFAULT_THIRD_PARTY_BROWSERS);
-    strThirdPartyTxUrls = settings.value("strThirdPartyTxUrls", "").toString();
+    // New installs and the old empty default get the explorer URL.
+    // A non-empty saved value is a user override and is left alone.
+    // Clearing the field sets fThirdPartyTxUrlUserSet so it stays cleared.
+    const QString txUrlDefault = QString(DEFAULT_THIRD_PARTY_BROWSERS);
+    if (!settings.contains("strThirdPartyTxUrls")) {
+        settings.setValue("strThirdPartyTxUrls", txUrlDefault);
+    } else if (settings.value("strThirdPartyTxUrls").toString().trimmed().isEmpty()
+               && !settings.value("fThirdPartyTxUrlUserSet", false).toBool()) {
+        settings.setValue("strThirdPartyTxUrls", txUrlDefault);
+    }
+    strThirdPartyTxUrls = settings.value("strThirdPartyTxUrls", txUrlDefault).toString();
 
     if (!settings.contains("strIpfsUrl"))
         settings.setValue("strIpfsUrl", DEFAULT_IPFS_VIEWER);
@@ -426,6 +434,7 @@ bool OptionsModel::setData(const QModelIndex & index, const QVariant & value, in
             if (strThirdPartyTxUrls != value.toString()) {
                 strThirdPartyTxUrls = value.toString();
                 settings.setValue("strThirdPartyTxUrls", strThirdPartyTxUrls);
+                settings.setValue("fThirdPartyTxUrlUserSet", true);
                 setRestartRequired(true);
             }
             break;

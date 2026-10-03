@@ -637,7 +637,7 @@
          <item>
           <widget class="QValueComboBox" name="currencyUnitIndex">
            <property name="toolTip">
-            <string>Display unit for XFER (private release — no public market feed).</string>
+            <string>Label used when XFER amounts are shown.</string>
            </property>
           </widget>
          </item>
@@ -648,7 +648,7 @@
          <item>
           <widget class="QLabel" name="thirdPartyTxUrlsLabel">
            <property name="toolTip">
-            <string>Third party URLs (e.g. a block explorer) that appear in the transactions tab as context menu items. %s in the URL is replaced by transaction hash. Multiple URLs are separated by vertical bar |.</string>
+            <string>Third party URLs (for example https://explorer.xferchain.net/#/tx/%s) that appear in the transactions tab as context menu items. %s in the URL is replaced by the transaction id. Multiple URLs are separated by a vertical bar |.</string>
            </property>
            <property name="text">
             <string>&amp;Third party transaction URLs</string>
@@ -661,7 +661,7 @@
          <item>
           <widget class="QLineEdit" name="thirdPartyTxUrls">
            <property name="toolTip">
-            <string>Third party URLs (e.g. a block explorer) that appear in the transactions tab as context menu items. %s in the URL is replaced by transaction hash. Multiple URLs are separated by vertical bar |.</string>
+            <string>Third party URLs (for example https://explorer.xferchain.net/#/tx/%s) that appear in the transactions tab as context menu items. %s in the URL is replaced by the transaction id. Multiple URLs are separated by a vertical bar |.</string>
            </property>
           </widget>
          </item>
