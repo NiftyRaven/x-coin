@@ -99,7 +99,7 @@ void SetCoinControlEnabled(OptionsModel* options, bool enabled)
     options->setData(options->index(OptionsModel::CoinControlFeatures), enabled);
 }
 
-bool CoinControlEnabled(const WalletModel* model)
+bool CoinControlEnabled(WalletModel* model)
 {
     return model && model->getOptionsModel() && model->getOptionsModel()->getCoinControlFeatures();
 }
