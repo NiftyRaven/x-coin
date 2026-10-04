@@ -30,7 +30,7 @@ QString ResolveDestination(const QString& in, QString* displayName, QString* err
 
 /** Existing coin-control option. Does not add a second selection rule. */
 void SetCoinControlEnabled(OptionsModel* options, bool enabled);
-bool CoinControlEnabled(const WalletModel* model);
+bool CoinControlEnabled(WalletModel* model);
 QString CoinSelectionText(bool enabled);
 
 void ChooseCoins(QWidget* parent, const PlatformStyle* platformStyle, WalletModel* model);
