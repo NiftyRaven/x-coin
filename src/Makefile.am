@@ -272,6 +272,7 @@ libraven_server_a_SOURCES = \
   hostshare.cpp \
   xlookup.cpp \
   xrelease.cpp \
+  xprice.cpp \
   xsession.cpp \
   net.cpp \
   net_processing.cpp \

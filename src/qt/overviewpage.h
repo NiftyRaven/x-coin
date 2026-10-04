@@ -14,12 +14,19 @@
 #include <QLabel>
 #include <memory>
 
+class QShowEvent;
+
 class ClientModel;
 class TransactionFilterProxy;
 class TxViewDelegate;
 class PlatformStyle;
 class WalletModel;
 class AssetFilterProxy;
+class XPriceClient;
+
+class QCheckBox;
+class QLineEdit;
+class QPushButton;
 
 class AssetViewDelegate;
 
@@ -47,6 +54,11 @@ public:
 
     bool eventFilter(QObject *object, QEvent *event);
     void openIPFSForAsset(const QModelIndex &index);
+    /** Drop the balances-page recipient, amount, and coin summary. */
+    void clearSendForm();
+
+protected:
+    void showEvent(QShowEvent* event);
 
 public Q_SLOTS:
             void setBalance(const CAmount& balance, const CAmount& unconfirmedBalance, const CAmount& immatureBalance,
@@ -86,7 +98,16 @@ private:
     QLabel *lotteryTitle;
     QLabel *lotteryStatus;
     QLabel *lotteryDetail;
-
+    QLabel *usdtLabel;
+    QLabel *assetEmpty;
+    QLabel *coinSummary;
+    QLabel *sendStatus;
+    QLineEdit *sendDest;
+    QLineEdit *sendAmount;
+    QCheckBox *coinControlCheck;
+    QPushButton *chooseCoinsBtn;
+    XPriceClient *priceClient;
+    const PlatformStyle *balanceStyle;
 
 private Q_SLOTS:
     void updateDisplayUnit();
@@ -97,6 +118,15 @@ private Q_SLOTS:
     void handleOutOfSyncWarningClicks();
     void assetSearchChanged();
     void updateLottery();
+    void updateUsdt();
+    void updateAssetEmpty();
+    void onBalanceSend();
+    void onChooseCoins();
+    void onCoinControlToggled(bool checked);
+    void syncCoinControl();
+
+    void applyChrome();
+    void buildSendCard();
 };
 
 #endif // RAVEN_QT_OVERVIEWPAGE_H

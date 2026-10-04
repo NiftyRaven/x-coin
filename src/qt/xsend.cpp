@@ -4,53 +4,16 @@
 
 #include "xsend.h"
 
-#include "hostshare.h"
 #include "optionsmodel.h"
 #include "ravenunits.h"
 #include "walletmodel.h"
 #include "walletview.h"
+#include "xcoinsend.h"
 #include "xsession.h"
 #include "xtheme.h"
 
-static bool looksLikeHandle(const QString& s)
-{
-    QString t = s.trimmed();
-    if (t.startsWith(QLatin1Char('@')))
-        return true;
-    if (t.size() >= 26 && t.startsWith(QLatin1Char('X')))
-        return false;
-    if (t.size() >= 1 && t.size() <= 32) {
-        for (int i = 0; i < t.size(); ++i) {
-            const QChar c = t.at(i);
-            if (!c.isLetterOrNumber() && c != QLatin1Char('_'))
-                return false;
-        }
-        return true;
-    }
-    return false;
-}
-
-static QString resolveDestination(const QString& in, QString* displayName, QString* errOut)
-{
-    const QString t = in.trimmed();
-    if (!looksLikeHandle(t))
-        return t;
-    std::string asset, addr, err;
-    if (!hostshare::ResolveHolder(t.toStdString(), asset, addr, err) || addr.empty()) {
-        if (errOut)
-            *errOut = err.empty() ? QString("That name has not claimed a root yet.") : QString::fromStdString(err);
-        return QString();
-    }
-    if (displayName) {
-        QString h = t;
-        if (h.startsWith(QLatin1Char('@')))
-            h = h.mid(1);
-        *displayName = QLatin1Char('@') + h;
-    }
-    return QString::fromStdString(addr);
-}
-
 #include <QApplication>
+#include <QCheckBox>
 #include <QClipboard>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -59,10 +22,14 @@ static QString resolveDestination(const QString& in, QString* displayName, QStri
 #include <QPushButton>
 #include <QVBoxLayout>
 
-XSend::XSend(WalletView* walletViewIn, QWidget* parent)
+XSend::XSend(WalletView* walletViewIn, const PlatformStyle* platformStyleIn, QWidget* parent)
     : QWidget(parent)
     , walletView(walletViewIn)
+    , platformStyle(platformStyleIn)
     , walletModel(0)
+    , coinControlCheck(0)
+    , chooseCoinsBtn(0)
+    , coinSummary(0)
 {
     applyTheme();
     QVBoxLayout* root = new QVBoxLayout(this);
@@ -98,6 +65,23 @@ XSend::XSend(WalletView* walletViewIn, QWidget* parent)
     amountEdit->setPlaceholderText("Amount (XFER)");
     root->addWidget(amountEdit);
 
+    coinControlCheck = new QCheckBox("Coin control");
+    coinControlCheck->setObjectName("xcheck");
+    coinControlCheck->setCursor(Qt::PointingHandCursor);
+    root->addWidget(coinControlCheck);
+
+    chooseCoinsBtn = new QPushButton("Choose coins");
+    chooseCoinsBtn->setObjectName("xghost");
+    chooseCoinsBtn->setCursor(Qt::PointingHandCursor);
+    chooseCoinsBtn->setVisible(false);
+    root->addWidget(chooseCoinsBtn);
+
+    coinSummary = new QLabel;
+    coinSummary->setObjectName("xhint");
+    coinSummary->setWordWrap(true);
+    coinSummary->setVisible(false);
+    root->addWidget(coinSummary);
+
     QPushButton* send = new QPushButton("Send");
     send->setObjectName("xprimary");
     send->setMinimumHeight(48);
@@ -112,6 +96,8 @@ XSend::XSend(WalletView* walletViewIn, QWidget* parent)
 
     connect(paste, SIGNAL(clicked()), this, SLOT(onPaste()));
     connect(send, SIGNAL(clicked()), this, SLOT(onSend()));
+    connect(coinControlCheck, SIGNAL(toggled(bool)), this, SLOT(onCoinControlToggled(bool)));
+    connect(chooseCoinsBtn, SIGNAL(clicked()), this, SLOT(onChooseCoins()));
 }
 
 void XSend::applyTheme()
@@ -122,6 +108,11 @@ void XSend::applyTheme()
 void XSend::setWalletModel(WalletModel* model)
 {
     walletModel = model;
+    if (walletModel && walletModel->getOptionsModel()) {
+        connect(walletModel->getOptionsModel(), SIGNAL(coinControlFeaturesChanged(bool)),
+                this, SLOT(syncCoinControl()));
+    }
+    syncCoinControl();
     refresh();
 }
 
@@ -130,8 +121,18 @@ void XSend::setAddress(const QString& addr)
     addrEdit->setText(addr);
 }
 
+void XSend::clearForm()
+{
+    addrEdit->clear();
+    amountEdit->clear();
+    if (statusLabel)
+        statusLabel->clear();
+    syncCoinControl();
+}
+
 void XSend::refresh()
 {
+    syncCoinControl();
     if (xsession::HasValidSession()) {
         const QString handle = QString::fromStdString(xsession::SignedInHandle());
         tagLabel->setText(QString("Sending from the wallet linked to @%1. Paste @handle or an X address.")
@@ -153,15 +154,43 @@ void XSend::refresh()
     }
 }
 
-QString XSend::rpc(const QString& method, const QStringList& args) const
-{
-    if (!walletView) return QString();
-    return walletView->callRpc(method, args);
-}
-
 void XSend::onPaste()
 {
     addrEdit->setText(QApplication::clipboard()->text().trimmed());
+}
+
+void XSend::syncCoinControl()
+{
+    const bool on = xcoinsend::CoinControlEnabled(walletModel);
+    if (coinControlCheck) {
+        coinControlCheck->blockSignals(true);
+        coinControlCheck->setChecked(on);
+        coinControlCheck->blockSignals(false);
+    }
+    if (chooseCoinsBtn)
+        chooseCoinsBtn->setVisible(on);
+    if (coinSummary) {
+        coinSummary->setVisible(on);
+        coinSummary->setText(xcoinsend::CoinSelectionText(on));
+    }
+}
+
+void XSend::onCoinControlToggled(bool checked)
+{
+    if (!walletModel || !walletModel->getOptionsModel()) {
+        syncCoinControl();
+        return;
+    }
+    xcoinsend::SetCoinControlEnabled(walletModel->getOptionsModel(), checked);
+    syncCoinControl();
+    if (checked)
+        onChooseCoins();
+}
+
+void XSend::onChooseCoins()
+{
+    xcoinsend::ChooseCoins(this, platformStyle, walletModel);
+    syncCoinControl();
 }
 
 void XSend::onSend()
@@ -169,33 +198,34 @@ void XSend::onSend()
     const QString dest = addrEdit->text().trimmed();
     const QString amt = amountEdit->text().trimmed();
     if (dest.isEmpty() || amt.isEmpty()) {
-        QMessageBox::information(this, "X-Coin", "Enter a name or address, and an amount.");
+        QMessageBox::information(this, "X Coin", "Enter a name or address, and an amount.");
         return;
     }
     QString displayName;
     QString resolveErr;
-    const QString resolved = resolveDestination(dest, &displayName, &resolveErr);
+    const QString resolved = xcoinsend::ResolveDestination(dest, &displayName, &resolveErr);
     if (resolved.isEmpty()) {
         const QString msg = resolveErr.isEmpty() ? QString("Could not resolve that name.") : resolveErr;
         statusLabel->setText(msg);
-        QMessageBox::warning(this, "X-Coin", msg);
+        QMessageBox::warning(this, "X Coin", msg);
         return;
     }
-    const QString who = displayName.isEmpty() ? resolved : (displayName + "\n" + resolved);
-    if (QMessageBox::question(this, "X-Coin",
-            QString("Send %1 XFER to\n%2?").arg(amt).arg(who),
-            QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes)
+    const bool coinControl = xcoinsend::CoinControlEnabled(walletModel);
+    const xcoinsend::Outcome outcome = xcoinsend::SendResolved(this, walletModel, resolved, displayName, amt, coinControl);
+    if (outcome.result == xcoinsend::Cancelled)
         return;
-    bool ok = false;
-    const QString out = WalletView::humanRpc(rpc("sendtoaddress", QStringList() << resolved << amt), &ok);
-    if (ok) {
-        statusLabel->setText(QString("Sent.\n%1").arg(out));
-        addrEdit->clear();
-        amountEdit->clear();
+    if (outcome.result == xcoinsend::Sent) {
+        if (walletView)
+            walletView->clearSendDrafts();
+        else
+            clearForm();
+        statusLabel->setText(outcome.message.isEmpty()
+            ? QStringLiteral("Sent.")
+            : QStringLiteral("Sent.\n%1").arg(outcome.message));
         refresh();
         return;
     }
-    const QString msg = out.isEmpty() ? QStringLiteral("Send failed.") : out;
+    const QString msg = outcome.message.isEmpty() ? QStringLiteral("Send failed.") : outcome.message;
     statusLabel->setText(msg);
-    QMessageBox::warning(this, "X-Coin", msg);
+    QMessageBox::warning(this, "X Coin", msg);
 }

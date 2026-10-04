@@ -19,12 +19,22 @@
 #include "walletmodel.h"
 #include "assetrecord.h"
 #include "lottery.h"
+#include "xprice.h"
+#include "xpriceclient.h"
+#include "xcoinsend.h"
+#include "walletview.h"
 
 #include <QAbstractItemDelegate>
 #include <QDateTime>
 #include <QPainter>
 #include <QDesktopServices>
 #include <QMouseEvent>
+#include <QCheckBox>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QMessageBox>
+#include <QShowEvent>
+#include <QSizePolicy>
 #include <validation.h>
 #include <utiltime.h>
 
@@ -45,6 +55,15 @@
 #define QTversionPreFiveEleven
 #endif
 
+static int TextWidth(const QFontMetrics& fm, const QString& text)
+{
+#if defined(QTversionPreFiveEleven)
+    return fm.width(text);
+#else
+    return fm.horizontalAdvance(text);
+#endif
+}
+
 class TxViewDelegate : public QAbstractItemDelegate
 {
     Q_OBJECT
@@ -53,100 +72,82 @@ public:
         QAbstractItemDelegate(parent), unit(RavenUnits::RVN),
         platformStyle(_platformStyle)
     {
-
     }
 
     inline void paint(QPainter *painter, const QStyleOptionViewItem &option,
                       const QModelIndex &index ) const
     {
         painter->save();
+        painter->setRenderHint(QPainter::Antialiasing, true);
 
-        QIcon icon = qvariant_cast<QIcon>(index.data(TransactionTableModel::RawDecorationRole));
-        QRect mainRect = option.rect;
-        QRect decorationRect(mainRect.topLeft(), QSize(DECORATION_SIZE, DECORATION_SIZE));
-        int xspace = DECORATION_SIZE + 8;
-        int ypad = 6;
-        int halfheight = (mainRect.height() - 2*ypad)/2;
-        QRect amountRect(mainRect.left() + xspace, mainRect.top()+ypad, mainRect.width() - xspace, halfheight);
-        QRect addressRect(mainRect.left() + xspace, mainRect.top()+ypad+halfheight, mainRect.width() - xspace, halfheight);
+        const bool dark = darkModeEnabled;
+        const QColor text = dark ? QColor("#fafafa") : QColor("#18181b");
+        const QColor muted = dark ? QColor("#a1a1aa") : QColor("#71717a");
+        const QColor line = dark ? QColor("#27272a") : QColor("#e4e4e7");
+        const QColor negative = dark ? QColor("#f87171") : QColor("#b91c1c");
+        const QColor pending = dark ? QColor("#d4d4d8") : QColor("#52525b");
 
-        if (darkModeEnabled)
-            icon = platformStyle->SingleColorIcon(icon, COLOR_TOOLBAR_NOT_SELECTED_TEXT);
-        else
-            icon = platformStyle->SingleColorIcon(icon, COLOR_LABELS);
-        icon.paint(painter, decorationRect);
+        QRect row = option.rect.adjusted(4, 2, -8, -2);
+        painter->setPen(QPen(line, 1));
+        painter->drawLine(row.bottomLeft(), row.bottomRight());
 
         QDateTime date = index.data(TransactionTableModel::DateRole).toDateTime();
         QString address = index.data(Qt::DisplayRole).toString();
         qint64 amount = index.data(TransactionTableModel::AmountRole).toLongLong();
         bool confirmed = index.data(TransactionTableModel::ConfirmedRole).toBool();
-        QVariant value = index.data(Qt::ForegroundRole);
-        QColor foreground = platformStyle->TextColor();
-        if(value.canConvert<QBrush>())
-        {
-            QBrush brush = qvariant_cast<QBrush>(value);
-            foreground = brush.color();
-        }
-
         QString amountText = index.data(TransactionTableModel::FormattedAmountRole).toString();
-        if(!confirmed)
-        {
-            amountText = QString("[") + amountText + QString("]");
-        }
-
-        painter->setFont(GUIUtil::getSubLabelFont());
-        // Concatenate the strings if needed before painting
-        #ifndef QTversionPreFiveEleven
-    		GUIUtil::concatenate(painter, address, painter->fontMetrics().horizontalAdvance(amountText), addressRect.left(), addressRect.right());
-		#else
-    		GUIUtil::concatenate(painter, address, painter->fontMetrics().width(amountText), addressRect.left(), addressRect.right());
-		#endif
-        painter->setPen(foreground);
-        QRect boundingRect;
-        painter->drawText(addressRect, Qt::AlignLeft|Qt::AlignVCenter, address, &boundingRect);
-
-        if (index.data(TransactionTableModel::WatchonlyRole).toBool())
-        {
-            QIcon iconWatchonly = qvariant_cast<QIcon>(index.data(TransactionTableModel::WatchonlyDecorationRole));
-            QRect watchonlyRect(boundingRect.right() + 5, mainRect.top()+ypad+halfheight, 16, halfheight);
-            iconWatchonly.paint(painter, watchonlyRect);
-        }
-
-        if(amount < 0)
-        {
-            foreground = COLOR_NEGATIVE;
-        }
-        else if(!confirmed)
-        {
-            foreground = COLOR_UNCONFIRMED;
-        }
-        else
-        {
-            foreground = platformStyle->TextColor();
-        }
-
-        painter->setPen(foreground);
-        painter->drawText(addressRect, Qt::AlignRight|Qt::AlignVCenter, amountText);
-
         QString assetName = index.data(TransactionTableModel::AssetNameRole).toString();
+        if (!confirmed)
+            amountText = QString("Pending  ") + amountText;
 
-        // Concatenate the strings if needed before painting
-        #ifndef QTversionPreFiveEleven
-    		GUIUtil::concatenate(painter, assetName, painter->fontMetrics().horizontalAdvance(GUIUtil::dateTimeStr(date)), amountRect.left(), amountRect.right());
-    	#else
-    		GUIUtil::concatenate(painter, assetName, painter->fontMetrics().width(GUIUtil::dateTimeStr(date)), amountRect.left(), amountRect.right());
-    	#endif
-    	painter->drawText(amountRect, Qt::AlignRight|Qt::AlignVCenter, assetName);
+        QColor amountColor = text;
+        if (amount < 0)
+            amountColor = negative;
+        else if (!confirmed)
+            amountColor = pending;
 
-        painter->setPen(platformStyle->TextColor());
-        painter->drawText(amountRect, Qt::AlignLeft|Qt::AlignVCenter, GUIUtil::dateTimeStr(date));
+        QFont dateFont = GUIUtil::getSubLabelFont();
+        dateFont.setPixelSize(12);
+        QFont amountFont = GUIUtil::getSubLabelFont();
+        amountFont.setPixelSize(14);
+        amountFont.setWeight(QFont::DemiBold);
+        QFont addrFont = GUIUtil::getSubLabelFont();
+        addrFont.setPixelSize(13);
+
+        const int pad = 8;
+        QRect top(row.left() + pad, row.top() + 6, row.width() - pad * 2, row.height() / 2 - 2);
+        QRect bottom(row.left() + pad, row.center().y() - 2, row.width() - pad * 2, row.height() / 2 - 4);
+
+        painter->setFont(amountFont);
+        const int amountWidth = TextWidth(painter->fontMetrics(), amountText);
+        painter->setPen(amountColor);
+        painter->drawText(top, Qt::AlignRight | Qt::AlignVCenter, amountText);
+
+        painter->setFont(dateFont);
+        painter->setPen(muted);
+        painter->drawText(QRect(top.left(), top.top(), top.width() - amountWidth - 12, top.height()),
+                          Qt::AlignLeft | Qt::AlignVCenter, GUIUtil::dateTimeStr(date));
+
+        QString meta = assetName;
+        painter->setFont(addrFont);
+        const int metaWidth = meta.isEmpty() ? 0 : TextWidth(painter->fontMetrics(), meta) + 12;
+        QString shown = painter->fontMetrics().elidedText(address, Qt::ElideMiddle, qMax(40, bottom.width() - metaWidth));
+        painter->setPen(text);
+        painter->drawText(QRect(bottom.left(), bottom.top(), bottom.width() - metaWidth, bottom.height()),
+                          Qt::AlignLeft | Qt::AlignVCenter, shown);
+        if (!meta.isEmpty()) {
+            painter->setPen(muted);
+            painter->drawText(bottom, Qt::AlignRight | Qt::AlignVCenter, meta);
+        }
 
         painter->restore();
     }
 
     inline QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
     {
-        return QSize(DECORATION_SIZE, DECORATION_SIZE);
+        Q_UNUSED(option);
+        Q_UNUSED(index);
+        return QSize(280, 58);
     }
 
     int unit;
@@ -162,144 +163,92 @@ public:
             QAbstractItemDelegate(parent), unit(RavenUnits::RVN),
             platformStyle(_platformStyle)
     {
-
     }
 
     inline void paint(QPainter *painter, const QStyleOptionViewItem &option,
                       const QModelIndex &index ) const
     {
         painter->save();
+        painter->setRenderHint(QPainter::Antialiasing, true);
 
-        /** Get the icon for the administrator of the asset */
-        QPixmap pixmap = qvariant_cast<QPixmap>(index.data(Qt::DecorationRole));
-        QPixmap ipfspixmap = qvariant_cast<QPixmap>(index.data(AssetTableModel::AssetIPFSHashDecorationRole));
+        const bool dark = darkModeEnabled;
+        const QColor card = dark ? QColor("#161616") : QColor("#fafafa");
+        const QColor border = dark ? QColor("#2e2e2e") : QColor("#e4e4e7");
+        const QColor text = dark ? QColor("#fafafa") : QColor("#18181b");
+        const QColor muted = dark ? QColor("#a1a1aa") : QColor("#71717a");
 
-        bool admin = index.data(AssetTableModel::AdministratorRole).toBool();
-
-        /** Need to know the heigh to the pixmap. If it is 0 we don't we dont own this asset so dont have room for the icon */
-        int nIconSize = admin ? pixmap.height() : 0;
-        int nIPFSIconSize = ipfspixmap.height();
-        int extraNameSpacing = 12;
-        if (nIconSize)
-            extraNameSpacing = 0;
-
-        /** Get basic padding and half height */
-        QRect mainRect = option.rect;
-        int xspace = nIconSize + 32;
-        int ypad = 2;
-
-        // Create the gradient rect to draw the gradient over
-        QRect gradientRect = mainRect;
-        gradientRect.setTop(gradientRect.top() + 2);
-        gradientRect.setBottom(gradientRect.bottom() - 2);
-        gradientRect.setRight(gradientRect.right() - 20);
-
-        int halfheight = (gradientRect.height() - 2*ypad)/2;
-
-        /** Create the three main rectangles  (Icon, Name, Amount) */
-        QRect assetAdministratorRect(QPoint(20, gradientRect.top() + halfheight/2 - 3*ypad), QSize(nIconSize, nIconSize));
-        QRect assetNameRect(gradientRect.left() + xspace - extraNameSpacing, gradientRect.top()+ypad+(halfheight/2), gradientRect.width() - xspace, halfheight + ypad);
-        QRect amountRect(gradientRect.left() + xspace, gradientRect.top()+ypad+(halfheight/2), gradientRect.width() - xspace - 24, halfheight);
-        QRect ipfsLinkRect(QPoint(gradientRect.right() - nIconSize/2, gradientRect.top() + halfheight/1.5), QSize(nIconSize/2, nIconSize/2));
-
-        // Create the gradient for the asset items
-        QLinearGradient gradient(mainRect.topLeft(), mainRect.bottomRight());
-
-        // Select the color of the gradient
-        if (admin) {
-            if (darkModeEnabled) {
-                gradient.setColorAt(0, COLOR_ADMIN_CARD_DARK);
-                gradient.setColorAt(1, COLOR_ADMIN_CARD_DARK);
-            } else {
-                gradient.setColorAt(0, COLOR_DARK_ORANGE);
-                gradient.setColorAt(1, COLOR_LIGHT_ORANGE);
-            }
-        } else {
-            if (darkModeEnabled) {
-                gradient.setColorAt(0, COLOR_REGULAR_CARD_LIGHT_BLUE_DARK_MODE);
-                gradient.setColorAt(1, COLOR_REGULAR_CARD_DARK_BLUE_DARK_MODE);
-            } else {
-                gradient.setColorAt(0, COLOR_LIGHT_BLUE);
-                gradient.setColorAt(1, COLOR_DARK_BLUE);
-            }
-        }
-
-        // Using 4 are the radius because the pixels are solid
+        QRect cardRect = option.rect.adjusted(2, 4, -10, -4);
         QPainterPath path;
-        path.addRoundedRect(gradientRect, 4, 4);
-
-        // Paint the card (white hairline so names read on the black X theme)
-        painter->setRenderHint(QPainter::Antialiasing);
-        painter->fillPath(path, gradient);
-        QPen cardPen(COLOR_WHITE);
-        cardPen.setWidth(1);
-        painter->setPen(cardPen);
+        path.addRoundedRect(cardRect, 10, 10);
+        painter->fillPath(path, card);
+        painter->setPen(QPen(border, 1));
         painter->drawPath(path);
 
-        /** Draw asset administrator icon */
-        if (nIconSize)
-            painter->drawPixmap(assetAdministratorRect, pixmap);
+        const QString name = index.data(AssetTableModel::AssetNameRole).toString();
+        const QString amountText = index.data(AssetTableModel::FormattedAmountRole).toString();
+        const bool admin = index.data(AssetTableModel::AdministratorRole).toBool();
+        const QString ipfs = index.data(AssetTableModel::AssetIPFSHashRole).toString();
 
-        if (nIPFSIconSize)
-            painter->drawPixmap(ipfsLinkRect, ipfspixmap);
+        QString meta;
+        if (admin)
+            meta = QStringLiteral("Admin");
+        if (ipfs.startsWith(QLatin1String("Qm"))) {
+            if (!meta.isEmpty())
+                meta += QStringLiteral("  ·  ");
+            meta += QStringLiteral("IPFS");
+        }
 
-        /** Create the font that is used for painting the asset name */
-        QFont nameFont;
-#if !defined(Q_OS_MAC)
-        nameFont.setFamily("Open Sans");
-#endif
-        nameFont.setPixelSize(18);
-        nameFont.setWeight(QFont::Weight::Normal);
-        nameFont.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, -0.4);
-
-        /** Create the font that is used for painting the asset amount */
         QFont amountFont;
 #if !defined(Q_OS_MAC)
         amountFont.setFamily("Open Sans");
 #endif
         amountFont.setPixelSize(14);
-        amountFont.setWeight(QFont::Weight::Normal);
-        amountFont.setLetterSpacing(QFont::SpacingType::AbsoluteSpacing, -0.3);
+        amountFont.setWeight(QFont::DemiBold);
 
-        /** Get the name and formatted amount from the data */
-        QString name = index.data(AssetTableModel::AssetNameRole).toString();
-        QString amountText = index.data(AssetTableModel::FormattedAmountRole).toString();
+        QFont nameFont;
+#if !defined(Q_OS_MAC)
+        nameFont.setFamily("Open Sans");
+#endif
+        nameFont.setPixelSize(15);
+        nameFont.setWeight(QFont::Medium);
 
-        // Setup the pens
-        QColor textColor = COLOR_WHITE;
-        if (darkModeEnabled)
-            textColor = COLOR_TOOLBAR_SELECTED_TEXT_DARK_MODE;
-
-        QPen penName(textColor);
-
-        /** Start Concatenation of Asset Name */
-        // Get the width in pixels that the amount takes up (because they are different font,
-        // we need to do this before we call the concatenate function
         painter->setFont(amountFont);
-        #ifndef QTversionPreFiveEleven
-        	int amount_width = painter->fontMetrics().horizontalAdvance(amountText);
-		#else
-			int amount_width = painter->fontMetrics().width(amountText);
-		#endif
-        // Set the painter for the font used for the asset name, so that the concatenate function estimated width correctly
+        const int amountWidth = TextWidth(painter->fontMetrics(), amountText);
+        const int left = cardRect.left() + 16;
+        const int rightPad = 16;
+        const int nameWidth = qMax(40, cardRect.width() - 32 - amountWidth - 16);
+
+        painter->setPen(text);
+        painter->drawText(QRect(cardRect.right() - rightPad - amountWidth, cardRect.top(), amountWidth, cardRect.height()),
+                          Qt::AlignRight | Qt::AlignVCenter, amountText);
+
         painter->setFont(nameFont);
-
-        GUIUtil::concatenate(painter, name, amount_width, assetNameRect.left(), amountRect.right());
-
-        /** Paint the asset name */
-        painter->setPen(penName);
-        painter->drawText(assetNameRect, Qt::AlignLeft|Qt::AlignVCenter, name);
-
-        /** Paint the amount */
-        painter->setFont(amountFont);
-        painter->drawText(amountRect, Qt::AlignRight|Qt::AlignVCenter, amountText);
+        const QString shown = painter->fontMetrics().elidedText(name, Qt::ElideRight, nameWidth);
+        if (meta.isEmpty()) {
+            painter->setPen(text);
+            painter->drawText(QRect(left, cardRect.top(), nameWidth, cardRect.height()),
+                              Qt::AlignLeft | Qt::AlignVCenter, shown);
+        } else {
+            painter->setPen(text);
+            painter->drawText(QRect(left, cardRect.top() + 6, nameWidth, cardRect.height() / 2),
+                              Qt::AlignLeft | Qt::AlignVCenter, shown);
+            QFont metaFont = nameFont;
+            metaFont.setPixelSize(11);
+            metaFont.setWeight(QFont::Normal);
+            painter->setFont(metaFont);
+            painter->setPen(muted);
+            painter->drawText(QRect(left, cardRect.center().y() - 2, nameWidth, cardRect.height() / 2),
+                              Qt::AlignLeft | Qt::AlignVCenter, meta);
+        }
 
         painter->restore();
     }
 
     inline QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
     {
-        return QSize(42, 42);
+        Q_UNUSED(option);
+        Q_UNUSED(index);
+        return QSize(280, 58);
     }
 
     int unit;
@@ -322,7 +271,20 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     currentWatchUnconfBalance(-1),
     currentWatchImmatureBalance(-1),
     txdelegate(new TxViewDelegate(platformStyle, this)),
-    assetdelegate(new AssetViewDelegate(platformStyle, this))
+    assetdelegate(new AssetViewDelegate(platformStyle, this)),
+    lotteryTitle(0),
+    lotteryStatus(0),
+    lotteryDetail(0),
+    usdtLabel(0),
+    assetEmpty(0),
+    coinSummary(0),
+    sendStatus(0),
+    sendDest(0),
+    sendAmount(0),
+    coinControlCheck(0),
+    chooseCoinsBtn(0),
+    priceClient(0),
+    balanceStyle(platformStyle)
 {
     ui->setupUi(this);
 
@@ -357,14 +319,17 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
 
     // Recent transactions
     ui->listTransactions->setItemDelegate(txdelegate);
-    ui->listTransactions->setIconSize(QSize(DECORATION_SIZE, DECORATION_SIZE));
-    ui->listTransactions->setMinimumHeight(NUM_ITEMS * (DECORATION_SIZE + 2));
+    ui->listTransactions->setIconSize(QSize(0, 0));
+    ui->listTransactions->setMinimumHeight(160);
+    ui->listTransactions->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    ui->listTransactions->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->listTransactions->setAttribute(Qt::WA_MacShowFocusRect, false);
 
     /** Create the list of assets */
     ui->listAssets->setItemDelegate(assetdelegate);
-    ui->listAssets->setIconSize(QSize(42, 42));
-    ui->listAssets->setMinimumHeight(5 * (42 + 2));
+    ui->listAssets->setIconSize(QSize(0, 0));
+    ui->listAssets->setMinimumHeight(120);
+    ui->listAssets->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->listAssets->viewport()->setAutoFillBackground(false);
 
     // Delay before filtering assetes in ms
@@ -386,26 +351,25 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     connect(ui->labelAssetStatus, SIGNAL(clicked()), this, SLOT(handleOutOfSyncWarningClicks()));
     connect(ui->labelTransactionsStatus, SIGNAL(clicked()), this, SLOT(handleOutOfSyncWarningClicks()));
 
-    /** Set the overview page background colors, and the frames colors and padding */
-    ui->assetFrame->setStyleSheet(QString(".QFrame {background-color: %1; padding-top: 10px; padding-right: 5px;}").arg(platformStyle->WidgetBackGroundColor().name()));
-    ui->frame->setStyleSheet(QString(".QFrame {background-color: %1; padding-bottom: 10px; padding-right: 5px;}").arg(platformStyle->WidgetBackGroundColor().name()));
-    ui->frame_2->setStyleSheet(QString(".QFrame {background-color: %1; padding-left: 5px;}").arg(platformStyle->WidgetBackGroundColor().name()));
+    usdtLabel = new QLabel(ui->frame);
+    usdtLabel->setObjectName("usdtLabel");
+    usdtLabel->setWordWrap(true);
+    usdtLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    usdtLabel->hide();
+    ui->verticalLayout_4->addWidget(usdtLabel);
 
-    /** Create the shadow effects on the frames */
-    ui->assetFrame->setGraphicsEffect(GUIUtil::getShadowEffect());
-    ui->frame->setGraphicsEffect(GUIUtil::getShadowEffect());
-    ui->frame_2->setGraphicsEffect(GUIUtil::getShadowEffect());
+    assetEmpty = new QLabel(ui->assetFrame);
+    assetEmpty->setObjectName("assetEmpty");
+    assetEmpty->setAlignment(Qt::AlignCenter);
+    assetEmpty->setWordWrap(true);
+    assetEmpty->setMinimumHeight(72);
+    assetEmpty->hide();
+    ui->verticalLayout_5->addWidget(assetEmpty);
 
-    /** Update the labels colors */
-    ui->assetBalanceLabel->setStyleSheet(STRING_LABEL_COLOR);
-    ui->rvnBalancesLabel->setStyleSheet(STRING_LABEL_COLOR);
-    ui->labelBalanceText->setStyleSheet(STRING_LABEL_COLOR);
-    ui->labelPendingText->setStyleSheet(STRING_LABEL_COLOR);
-    ui->labelImmatureText->setStyleSheet(STRING_LABEL_COLOR);
-    ui->labelTotalText->setStyleSheet(STRING_LABEL_COLOR);
-    ui->labelSpendable->setStyleSheet(STRING_LABEL_COLOR);
-    ui->labelWatchonly->setStyleSheet(STRING_LABEL_COLOR);
-    ui->recentTransactionsLabel->setStyleSheet(STRING_LABEL_COLOR);
+    buildSendCard();
+
+    priceClient = new XPriceClient(this);
+    priceClient->setOnUpdate([this]() { updateUsdt(); });
 
     /** Update the labels font */
     ui->rvnBalancesLabel->setFont(GUIUtil::getTopLabelFont());
@@ -428,16 +392,9 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     ui->labelTotal->setFont(GUIUtil::getTopLabelFontBolded());
     ui->labelWatchTotal->setFont(GUIUtil::getTopLabelFontBolded());
 
-    /** Create the search bar for assets */
     ui->assetSearch->setAttribute(Qt::WA_MacShowFocusRect, 0);
-    ui->assetSearch->setStyleSheet(QString(".QLineEdit {border: 1px solid %1; border-radius: 5px;}").arg(COLOR_LABELS.name()));
     ui->assetSearch->setAlignment(Qt::AlignVCenter);
-    QFont font = ui->assetSearch->font();
-    font.setPointSize(12);
-    ui->assetSearch->setFont(font);
-
-    QFontMetrics fm = QFontMetrics(ui->assetSearch->font());
-    ui->assetSearch->setFixedHeight(fm.height()+ 5);
+    ui->assetSearch->setClearButtonEnabled(true);
 
     // Trigger the call to show the assets table if assets are active
     showAssets();
@@ -473,7 +430,8 @@ OverviewPage::OverviewPage(const PlatformStyle *platformStyle, QWidget *parent) 
     contextMenu->addSeparator();
     contextMenu->addAction(copyNameAction);
     contextMenu->addAction(copyAmountAction);
-    // context menu signals
+
+    applyChrome();
 }
 
 bool OverviewPage::eventFilter(QObject *object, QEvent *event)
@@ -600,15 +558,10 @@ void OverviewPage::setBalance(const CAmount& balance, const CAmount& unconfirmed
     ui->labelWatchImmature->setText(RavenUnits::formatWithUnit(unit, watchImmatureBalance, false, RavenUnits::separatorAlways));
     ui->labelWatchTotal->setText(RavenUnits::formatWithUnit(unit, watchOnlyBalance + watchUnconfBalance + watchImmatureBalance, false, RavenUnits::separatorAlways));
 
-    // only show immature (newly won lottery) balance if it's non-zero, so as not to complicate things
-    // for users who have not won
-    bool showImmature = immatureBalance != 0;
-    bool showWatchOnlyImmature = watchImmatureBalance != 0;
-
-    // for symmetry reasons also show immature label when the watch-only one is shown
-    ui->labelImmature->setVisible(showImmature || showWatchOnlyImmature);
-    ui->labelImmatureText->setVisible(showImmature || showWatchOnlyImmature);
-    ui->labelWatchImmature->setVisible(showWatchOnlyImmature); // show watch-only immature balance
+    ui->labelImmature->setVisible(true);
+    ui->labelImmatureText->setVisible(true);
+    ui->labelWatchImmature->setVisible(watchImmatureBalance != 0);
+    updateUsdt();
 }
 
 // show/hide watch-only labels
@@ -662,6 +615,11 @@ void OverviewPage::setWalletModel(WalletModel *model)
         assetFilter->sort(AssetTableModel::Name, Qt::AscendingOrder);
         ui->listAssets->setModel(assetFilter.get());
         ui->listAssets->setAutoFillBackground(false);
+        connect(assetFilter.get(), SIGNAL(rowsInserted(QModelIndex,int,int)), this, SLOT(updateAssetEmpty()));
+        connect(assetFilter.get(), SIGNAL(rowsRemoved(QModelIndex,int,int)), this, SLOT(updateAssetEmpty()));
+        connect(assetFilter.get(), SIGNAL(modelReset()), this, SLOT(updateAssetEmpty()));
+        connect(assetFilter.get(), SIGNAL(layoutChanged()), this, SLOT(updateAssetEmpty()));
+        updateAssetEmpty();
 
         ui->assetVerticalSpaceWidget->setStyleSheet("background-color: transparent");
         ui->assetVerticalSpaceWidget2->setStyleSheet("background-color: transparent");
@@ -673,6 +631,8 @@ void OverviewPage::setWalletModel(WalletModel *model)
         connect(model, SIGNAL(balanceChanged(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)), this, SLOT(setBalance(CAmount,CAmount,CAmount,CAmount,CAmount,CAmount)));
 
         connect(model->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(updateDisplayUnit()));
+        connect(model->getOptionsModel(), SIGNAL(coinControlFeaturesChanged(bool)), this, SLOT(syncCoinControl()));
+        syncCoinControl();
 
         updateWatchOnlyLabels(model->haveWatchOnly());
         connect(model, SIGNAL(notifyWatchonlyChanged(bool)), this, SLOT(updateWatchOnlyLabels(bool)));
@@ -747,7 +707,7 @@ void OverviewPage::updateLottery()
     } else {
         lotteryStatus->setText(tr("Not eligible · %1").arg(handle));
     }
-    QString win = info.isWinner ? tr("this slot: winner") : tr("this slot: watching");
+    QString win = info.isWinner ? tr("this slot: winner") : tr("watching");
     lotteryDetail->setText(tr("Height %1 · slot %2 · %3 active · %4 winner(s) · %5")
                                .arg(info.height)
                                .arg(info.slot)
@@ -761,6 +721,7 @@ void OverviewPage::assetSearchChanged()
     if (!assetFilter)
         return;
     assetFilter->setAssetNameContains(ui->assetSearch->text());
+    updateAssetEmpty();
 }
 
 void OverviewPage::openIPFSForAsset(const QModelIndex &index)
@@ -784,4 +745,384 @@ void OverviewPage::openIPFSForAsset(const QModelIndex &index)
         QDesktopServices::openUrl(ipfsurl);
         }
     }
+}
+
+void OverviewPage::showEvent(QShowEvent* event)
+{
+    QWidget::showEvent(event);
+    syncCoinControl();
+    updateUsdt();
+    updateAssetEmpty();
+}
+
+void OverviewPage::applyChrome()
+{
+    const bool dark = darkModeEnabled;
+    const QString page = dark ? QStringLiteral("#000000") : QStringLiteral("#f4f4f5");
+    const QString card = dark ? QStringLiteral("#111111") : QStringLiteral("#ffffff");
+    const QString border = dark ? QStringLiteral("#2a2a2a") : QStringLiteral("#e4e4e7");
+    const QString text = dark ? QStringLiteral("#fafafa") : QStringLiteral("#18181b");
+    const QString muted = dark ? QStringLiteral("#a1a1aa") : QStringLiteral("#71717a");
+    const QString field = dark ? QStringLiteral("#0a0a0a") : QStringLiteral("#ffffff");
+    const QString handle = dark ? QStringLiteral("#3f3f46") : QStringLiteral("#d4d4d8");
+    const QString btnBg = dark ? QStringLiteral("#fafafa") : QStringLiteral("#18181b");
+    const QString btnFg = dark ? QStringLiteral("#18181b") : QStringLiteral("#fafafa");
+
+    setStyleSheet(QStringLiteral("QWidget#OverviewPage { background-color: %1; }").arg(page));
+
+    auto cardCss = [&](const char* name) {
+        return QStringLiteral(
+            "QFrame#%1 { background-color: %2; border: 1px solid %3; border-radius: 14px; }")
+            .arg(QLatin1String(name), card, border);
+    };
+
+    ui->frame->setGraphicsEffect(nullptr);
+    ui->frame_2->setGraphicsEffect(nullptr);
+    ui->assetFrame->setGraphicsEffect(nullptr);
+    ui->frame->setAutoFillBackground(false);
+    ui->frame_2->setAutoFillBackground(false);
+    ui->assetFrame->setAutoFillBackground(false);
+    ui->frame->setStyleSheet(cardCss("frame"));
+    ui->frame_2->setStyleSheet(cardCss("frame_2"));
+    ui->assetFrame->setStyleSheet(cardCss("assetFrame"));
+    ui->frame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+    ui->assetFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    ui->frame_2->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+
+    ui->horizontalLayout->setSpacing(16);
+    ui->horizontalLayout->setContentsMargins(24, 20, 24, 20);
+    ui->verticalLayout_2->setSpacing(14);
+    ui->verticalLayout_4->setContentsMargins(18, 16, 18, 16);
+    ui->verticalLayout_4->setSpacing(8);
+    ui->verticalLayout_5->setContentsMargins(18, 16, 14, 16);
+    ui->verticalLayout_5->setSpacing(10);
+    ui->gridLayout_2->setContentsMargins(18, 16, 12, 16);
+
+    ui->line->hide();
+    ui->line_2->hide();
+    ui->assetBalanceLine->hide();
+    ui->line_3->hide();
+
+    const QString strong = QStringLiteral("color: %1; background: transparent; border: none;").arg(text);
+    const QString quiet = QStringLiteral("color: %1; background: transparent; border: none;").arg(muted);
+    ui->rvnBalancesLabel->setStyleSheet(strong);
+    ui->assetBalanceLabel->setStyleSheet(strong);
+    ui->recentTransactionsLabel->setStyleSheet(strong);
+    ui->labelTotalText->setStyleSheet(strong);
+    ui->labelTotal->setStyleSheet(strong);
+    ui->labelWatchTotal->setStyleSheet(strong);
+    ui->labelBalance->setStyleSheet(strong);
+    ui->labelUnconfirmed->setStyleSheet(strong);
+    ui->labelImmature->setStyleSheet(strong);
+    ui->labelWatchAvailable->setStyleSheet(strong);
+    ui->labelWatchPending->setStyleSheet(strong);
+    ui->labelWatchImmature->setStyleSheet(strong);
+    ui->labelBalanceText->setStyleSheet(quiet);
+    ui->labelPendingText->setStyleSheet(quiet);
+    ui->labelImmatureText->setStyleSheet(quiet);
+    ui->labelSpendable->setStyleSheet(quiet);
+    ui->labelWatchonly->setStyleSheet(quiet);
+    if (usdtLabel)
+        usdtLabel->setStyleSheet(quiet);
+    if (assetEmpty)
+        assetEmpty->setStyleSheet(quiet);
+
+    QFont section = ui->rvnBalancesLabel->font();
+    section.setPixelSize(15);
+    section.setWeight(QFont::DemiBold);
+    ui->rvnBalancesLabel->setFont(section);
+    ui->assetBalanceLabel->setFont(section);
+    ui->recentTransactionsLabel->setFont(section);
+
+    QFont caption = ui->labelBalanceText->font();
+    caption.setPixelSize(13);
+    ui->labelBalanceText->setFont(caption);
+    ui->labelPendingText->setFont(caption);
+    ui->labelImmatureText->setFont(caption);
+    ui->labelSpendable->setFont(caption);
+    ui->labelWatchonly->setFont(caption);
+    ui->labelTotalText->setFont(caption);
+
+    QFont amount = ui->labelBalance->font();
+    amount.setPixelSize(14);
+    ui->labelBalance->setFont(amount);
+    ui->labelUnconfirmed->setFont(amount);
+    ui->labelImmature->setFont(amount);
+    ui->labelWatchAvailable->setFont(amount);
+    ui->labelWatchPending->setFont(amount);
+    ui->labelWatchImmature->setFont(amount);
+
+    QFont totalFont = ui->labelTotal->font();
+    totalFont.setPixelSize(18);
+    totalFont.setWeight(QFont::DemiBold);
+    ui->labelTotal->setFont(totalFont);
+    ui->labelWatchTotal->setFont(totalFont);
+
+    if (usdtLabel) {
+        QFont usdtFont = caption;
+        usdtFont.setPixelSize(13);
+        usdtLabel->setFont(usdtFont);
+    }
+
+    QFrame* lotteryFrame = findChild<QFrame*>(QStringLiteral("lotteryFrame"));
+    if (lotteryFrame) {
+        lotteryFrame->setGraphicsEffect(nullptr);
+        lotteryFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+        lotteryFrame->setStyleSheet(QStringLiteral(
+            "QFrame#lotteryFrame { background-color: transparent; border: none; }"));
+    }
+    if (lotteryTitle) {
+        QFont lotteryFont = caption;
+        lotteryFont.setPixelSize(12);
+        lotteryFont.setWeight(QFont::Medium);
+        lotteryTitle->setFont(lotteryFont);
+        lotteryTitle->setStyleSheet(quiet);
+    }
+    if (lotteryStatus) {
+        lotteryStatus->setFont(caption);
+        lotteryStatus->setStyleSheet(strong);
+    }
+    if (lotteryDetail) {
+        QFont detail = caption;
+        detail.setPixelSize(12);
+        lotteryDetail->setFont(detail);
+        lotteryDetail->setStyleSheet(quiet);
+    }
+
+    const QString listCss = QStringLiteral(
+        "QListView { background: transparent; border: none; color: %1; outline: none; }"
+        "QListView::item { background: transparent; border: none; }"
+        "QListView::item:selected { background: transparent; color: %1; }"
+        "QScrollBar:vertical { background: transparent; width: 8px; margin: 4px 0; border: none; }"
+        "QScrollBar::handle:vertical { background: %2; min-height: 28px; border-radius: 4px; }"
+        "QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; background: transparent; }"
+        "QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }")
+        .arg(text, handle);
+    ui->listAssets->setStyleSheet(listCss);
+    ui->listTransactions->setStyleSheet(listCss);
+
+    const QString editCss = QStringLiteral(
+        "QLineEdit { background: %1; color: %2; border: 1px solid %3; border-radius: 8px; padding: 8px 10px; }"
+        "QLineEdit:focus { border: 1px solid %4; }")
+        .arg(field, text, border, muted);
+    ui->assetSearch->setStyleSheet(editCss);
+    ui->assetSearch->setMinimumHeight(36);
+    if (sendDest)
+        sendDest->setStyleSheet(editCss);
+    if (sendAmount)
+        sendAmount->setStyleSheet(editCss);
+
+    QFrame* sendCard = findChild<QFrame*>(QStringLiteral("balanceSendCard"));
+    if (sendCard) {
+        sendCard->setStyleSheet(QStringLiteral(
+            "QFrame#balanceSendCard { background-color: %1; border: 1px solid %2; border-radius: 14px; }")
+            .arg(card, border));
+        sendCard->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+    }
+    if (QLabel* sendTitle = findChild<QLabel*>(QStringLiteral("balanceSendTitle"))) {
+        sendTitle->setFont(section);
+        sendTitle->setStyleSheet(strong);
+    }
+    if (coinControlCheck) {
+        coinControlCheck->setStyleSheet(QStringLiteral(
+            "QCheckBox { color: %1; background: transparent; spacing: 8px; }"
+            "QCheckBox::indicator { width: 16px; height: 16px; border: 1px solid %2; border-radius: 4px; background: %3; }"
+            "QCheckBox::indicator:checked { background: %1; border-color: %1; }")
+            .arg(text, border, field));
+    }
+    if (chooseCoinsBtn) {
+        chooseCoinsBtn->setStyleSheet(QStringLiteral(
+            "QPushButton { background: transparent; color: %1; border: 1px solid %2; border-radius: 8px; padding: 8px 12px; }"
+            "QPushButton:hover { border-color: %1; }")
+            .arg(text, border));
+    }
+    if (QPushButton* sendBtn = findChild<QPushButton*>(QStringLiteral("balanceSendBtn"))) {
+        sendBtn->setStyleSheet(QStringLiteral(
+            "QPushButton#balanceSendBtn { background: %1; color: %2; border: none; border-radius: 8px; padding: 10px 14px; }"
+            "QPushButton#balanceSendBtn:hover { background: %3; }")
+            .arg(btnBg, btnFg, muted));
+    }
+    if (coinSummary)
+        coinSummary->setStyleSheet(quiet);
+    if (sendStatus)
+        sendStatus->setStyleSheet(quiet);
+}
+
+void OverviewPage::buildSendCard()
+{
+    QFrame* card = new QFrame(this);
+    card->setObjectName(QStringLiteral("balanceSendCard"));
+    QVBoxLayout* lay = new QVBoxLayout(card);
+    lay->setContentsMargins(18, 16, 18, 16);
+    lay->setSpacing(8);
+
+    QLabel* title = new QLabel(tr("Send XFER"), card);
+    title->setObjectName(QStringLiteral("balanceSendTitle"));
+    lay->addWidget(title);
+
+    sendDest = new QLineEdit(card);
+    sendDest->setPlaceholderText(tr("@handle or X address"));
+    lay->addWidget(sendDest);
+
+    sendAmount = new QLineEdit(card);
+    sendAmount->setPlaceholderText(tr("Amount (XFER)"));
+    lay->addWidget(sendAmount);
+
+    coinControlCheck = new QCheckBox(tr("Coin control"), card);
+    coinControlCheck->setCursor(Qt::PointingHandCursor);
+    lay->addWidget(coinControlCheck);
+
+    chooseCoinsBtn = new QPushButton(tr("Choose coins"), card);
+    chooseCoinsBtn->setCursor(Qt::PointingHandCursor);
+    chooseCoinsBtn->setVisible(false);
+    lay->addWidget(chooseCoinsBtn);
+
+    coinSummary = new QLabel(card);
+    coinSummary->setWordWrap(true);
+    coinSummary->setVisible(false);
+    lay->addWidget(coinSummary);
+
+    QPushButton* send = new QPushButton(tr("Send"), card);
+    send->setObjectName(QStringLiteral("balanceSendBtn"));
+    send->setCursor(Qt::PointingHandCursor);
+    send->setMinimumHeight(40);
+    lay->addWidget(send);
+
+    sendStatus = new QLabel(card);
+    sendStatus->setWordWrap(true);
+    lay->addWidget(sendStatus);
+
+    connect(send, SIGNAL(clicked()), this, SLOT(onBalanceSend()));
+    connect(coinControlCheck, SIGNAL(toggled(bool)), this, SLOT(onCoinControlToggled(bool)));
+    connect(chooseCoinsBtn, SIGNAL(clicked()), this, SLOT(onChooseCoins()));
+
+    ui->verticalLayout_2->insertWidget(2, card);
+}
+
+void OverviewPage::clearSendForm()
+{
+    if (sendDest)
+        sendDest->clear();
+    if (sendAmount)
+        sendAmount->clear();
+    if (sendStatus)
+        sendStatus->clear();
+    syncCoinControl();
+}
+
+void OverviewPage::updateUsdt()
+{
+    if (!usdtLabel)
+        return;
+    if (!priceClient || !priceClient->hasPrice()
+        || currentBalance < 0 || currentUnconfirmedBalance < 0 || currentImmatureBalance < 0) {
+        usdtLabel->hide();
+        return;
+    }
+    const double px = priceClient->lastPrice();
+    const CAmount total = currentBalance + currentUnconfirmedBalance + currentImmatureBalance;
+    const double xfer = static_cast<double>(total) / static_cast<double>(COIN);
+    const double usdt = xfer * px;
+    usdtLabel->setText(tr("XFER/USDT  %1\nWallet total  %2 USDT")
+        .arg(QString::fromStdString(xprice::FormatPrice(px)))
+        .arg(QString::fromStdString(xprice::FormatUsdt(usdt))));
+    usdtLabel->show();
+}
+
+void OverviewPage::updateAssetEmpty()
+{
+    if (!assetEmpty)
+        return;
+    if (!assetFilter) {
+        assetEmpty->hide();
+        return;
+    }
+    const bool filtering = ui->assetSearch && !ui->assetSearch->text().trimmed().isEmpty();
+    if (assetFilter->rowCount() > 0) {
+        assetEmpty->hide();
+        ui->listAssets->show();
+        return;
+    }
+    ui->listAssets->hide();
+    assetEmpty->setText(filtering
+        ? tr("No assets match that search.")
+        : tr("No assets in this wallet yet."));
+    assetEmpty->show();
+}
+
+void OverviewPage::syncCoinControl()
+{
+    const bool on = xcoinsend::CoinControlEnabled(walletModel);
+    if (coinControlCheck) {
+        coinControlCheck->blockSignals(true);
+        coinControlCheck->setChecked(on);
+        coinControlCheck->blockSignals(false);
+    }
+    if (chooseCoinsBtn)
+        chooseCoinsBtn->setVisible(on);
+    if (coinSummary) {
+        coinSummary->setVisible(on);
+        coinSummary->setText(xcoinsend::CoinSelectionText(on));
+    }
+}
+
+void OverviewPage::onCoinControlToggled(bool checked)
+{
+    if (!walletModel || !walletModel->getOptionsModel()) {
+        syncCoinControl();
+        return;
+    }
+    xcoinsend::SetCoinControlEnabled(walletModel->getOptionsModel(), checked);
+    syncCoinControl();
+    if (checked)
+        onChooseCoins();
+}
+
+void OverviewPage::onChooseCoins()
+{
+    xcoinsend::ChooseCoins(this, balanceStyle, walletModel);
+    syncCoinControl();
+}
+
+void OverviewPage::onBalanceSend()
+{
+    if (!sendDest || !sendAmount)
+        return;
+    const QString dest = sendDest->text().trimmed();
+    const QString amt = sendAmount->text().trimmed();
+    if (dest.isEmpty() || amt.isEmpty()) {
+        QMessageBox::information(this, tr("X Coin"), tr("Enter a name or address, and an amount."));
+        return;
+    }
+    QString displayName;
+    QString resolveErr;
+    const QString resolved = xcoinsend::ResolveDestination(dest, &displayName, &resolveErr);
+    if (resolved.isEmpty()) {
+        const QString msg = resolveErr.isEmpty() ? tr("Could not resolve that name.") : resolveErr;
+        if (sendStatus)
+            sendStatus->setText(msg);
+        QMessageBox::warning(this, tr("X Coin"), msg);
+        return;
+    }
+    const bool coinControl = xcoinsend::CoinControlEnabled(walletModel);
+    const xcoinsend::Outcome outcome = xcoinsend::SendResolved(this, walletModel, resolved, displayName, amt, coinControl);
+    if (outcome.result == xcoinsend::Cancelled)
+        return;
+    if (outcome.result == xcoinsend::Sent) {
+        WalletView* view = qobject_cast<WalletView*>(parentWidget());
+        if (view)
+            view->clearSendDrafts();
+        else
+            clearSendForm();
+        if (sendStatus) {
+            sendStatus->setText(outcome.message.isEmpty()
+                ? tr("Sent.")
+                : tr("Sent.\n%1").arg(outcome.message));
+        }
+        return;
+    }
+    const QString msg = outcome.message.isEmpty() ? tr("Send failed.") : outcome.message;
+    if (sendStatus)
+        sendStatus->setText(msg);
+    QMessageBox::warning(this, tr("X Coin"), msg);
 }
