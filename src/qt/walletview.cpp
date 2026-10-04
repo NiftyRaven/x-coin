@@ -28,6 +28,7 @@
 #include "xreceive.h"
 #include "xsend.h"
 #include "coincontroldialog.h"
+#include "wallet/coincontrol.h"
 #include "xrewardshare.h"
 #include "xrewarddividend.h"
 #include "xnodepage.h"
