@@ -6,7 +6,7 @@ Download the wallets from GitHub Releases, not **Code → Download ZIP**.
 - [Windows Light](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16-light/X-Coin-1.0.16-Windows.zip) → **X Coin Wallet.exe**
 - [Linux Light](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16-light/X-Coin-1.0.16-Linux-x86_64.tar.gz) → **X Coin Wallet**
 
-**Heavy 1.0.21** (Market + tree nav). In-tree is Heavy:
+**Heavy 1.0.21** (Market + tree nav) is the published zip. In-tree source is Heavy 1.0.22 and is not packaged in this tree.
 [v1.0.21](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.21)
 
 - [Windows Heavy](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.21/X-Coin-1.0.21-Windows.zip) → **X Coin Wallet.exe**

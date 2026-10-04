@@ -23,6 +23,8 @@ need Sign in with X (Client ID rotated).
 
 **Heavy (Linux):** [X-Coin-1.0.21-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.21/X-Coin-1.0.21-Linux-x86_64.tar.gz)
 
+In-tree Heavy reports **1.0.22**. That build is not packaged here; the zips above stay 1.0.21.
+
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
 

@@ -23,6 +23,7 @@
 #include "utiltime.h"
 
 #include <QFrame>
+#include <QPixmap>
 #include <QButtonGroup>
 #include <QDialog>
 #include <QDialogButtonBox>
@@ -146,9 +147,17 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     root->setContentsMargins(40, 28, 40, 36);
     root->setSpacing(16);
 
-    heroTitle = new QLabel("X");
+    heroTitle = new QLabel;
     heroTitle->setObjectName("xhero");
     heroTitle->setAlignment(Qt::AlignHCenter);
+    const QPixmap mark(QStringLiteral(":/icons/xferlogo"));
+    if (!mark.isNull()) {
+        heroTitle->setPixmap(mark.scaledToHeight(156, Qt::SmoothTransformation));
+        heroTitle->setStyleSheet(QStringLiteral(
+            "QLabel#xhero { background: transparent; border: none; font-size: 12px; letter-spacing: 0px; }"));
+    } else {
+        heroTitle->setText(QStringLiteral("X"));
+    }
     root->addWidget(heroTitle);
 
     QLabel* word = new QLabel("X-COIN");

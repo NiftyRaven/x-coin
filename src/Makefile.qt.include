@@ -292,6 +292,8 @@ RAVEN_QT_H = \
   qt/xreleasedialog.h \
   qt/xreceive.h \
   qt/xsend.h \
+  qt/xcoinsend.h \
+  qt/xpriceclient.h \
   qt/xrewardshare.h \
   qt/xrewarddividend.h \
   qt/xnodepage.h \
@@ -315,6 +317,7 @@ RES_ICONS = \
   qt/res/icons/xcoin.ico \
   qt/res/icons/xcoin_testnet.ico \
   qt/res/icons/xcoin.png \
+  qt/res/icons/xferlogo.png \
   qt/res/icons/chevron.png \
   qt/res/icons/clock1.png \
   qt/res/icons/clock2.png \
@@ -484,6 +487,8 @@ RAVEN_QT_WALLET_CPP = \
   qt/xreleasedialog.cpp \
   qt/xreceive.cpp \
   qt/xsend.cpp \
+  qt/xcoinsend.cpp \
+  qt/xpriceclient.cpp \
   qt/xtheme.cpp \
   qt/xrewardshare.cpp \
   qt/xrewarddividend.cpp \

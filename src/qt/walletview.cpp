@@ -27,6 +27,7 @@
 #include "xhome.h"
 #include "xreceive.h"
 #include "xsend.h"
+#include "coincontroldialog.h"
 #include "xrewardshare.h"
 #include "xrewarddividend.h"
 #include "xnodepage.h"
@@ -78,7 +79,7 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     restrictedAssetsPage = new RestrictedAssetsDialog(platformStyle);
     xHome = new XHome(this);
     xReceive = new XReceive(this);
-    xSend = new XSend(this);
+    xSend = new XSend(this, platformStyle);
     xRewardShare = new XRewardShare(this);
     xRewardDividend = new XRewardDividend(this);
     xNodePage = new XNodePage(this);
@@ -321,6 +322,18 @@ void WalletView::gotoSendCoinsPage(QString addr)
 
     if (!addr.isEmpty())
         sendCoinsPage->setAddress(addr);
+}
+
+void WalletView::clearSendDrafts()
+{
+    if (CoinControlDialog::coinControl)
+        CoinControlDialog::coinControl->UnSelectAll();
+    if (xSend)
+        xSend->clearForm();
+    if (overviewPage)
+        overviewPage->clearSendForm();
+    if (sendCoinsPage)
+        sendCoinsPage->clear();
 }
 
 void WalletView::gotoSignMessageTab(QString addr)

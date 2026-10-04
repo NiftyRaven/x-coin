@@ -10,6 +10,7 @@
 #include "ravenunits.h"
 #include "clientmodel.h"
 #include "coincontroldialog.h"
+#include "walletview.h"
 #include "guiutil.h"
 #include "optionsmodel.h"
 #include "platformstyle.h"
@@ -476,9 +477,14 @@ void SendCoinsDialog::on_sendButton_clicked()
 
     if (sendStatus.status == WalletModel::OK)
     {
-        accept();
-        CoinControlDialog::coinControl->UnSelectAll();
-        coinControlUpdateLabels();
+        WalletView* view = qobject_cast<WalletView*>(parentWidget());
+        if (view)
+            view->clearSendDrafts();
+        else {
+            accept();
+            CoinControlDialog::coinControl->UnSelectAll();
+            coinControlUpdateLabels();
+        }
     }
     fNewRecipientAllowed = true;
 }
@@ -488,7 +494,15 @@ void SendCoinsDialog::clear()
     // Remove entries until only one left
     while(ui->entries->count())
     {
-        ui->entries->takeAt(0)->widget()->deleteLater();
+        QWidget* w = ui->entries->takeAt(0)->widget();
+        if (w) {
+            w->hide();
+            w->deleteLater();
+        }
+    }
+    if (ui->lineEditCoinControlChange) {
+        ui->lineEditCoinControlChange->clear();
+        ui->checkBoxCoinControlChange->setChecked(false);
     }
     addEntry();
 
@@ -516,7 +530,8 @@ SendCoinsEntry *SendCoinsDialog::addEntry()
 
     // Focus the field, so that entry can start immediately
     entry->clear();
-    entry->setFocus();
+    if (isVisible())
+        entry->setFocus();
     ui->scrollAreaWidgetContents->resize(ui->scrollAreaWidgetContents->sizeHint());
     qApp->processEvents();
     QScrollBar* bar = ui->scrollArea->verticalScrollBar();

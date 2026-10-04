@@ -8,9 +8,11 @@
 #include <QWidget>
 #include <QString>
 
+class PlatformStyle;
 class WalletModel;
 class WalletView;
 
+class QCheckBox;
 class QLabel;
 class QLineEdit;
 class QPushButton;
@@ -21,23 +23,31 @@ class XSend : public QWidget
     Q_OBJECT
 
 public:
-    explicit XSend(WalletView* walletView, QWidget* parent = 0);
+    explicit XSend(WalletView* walletView, const PlatformStyle* platformStyle, QWidget* parent = 0);
     void setWalletModel(WalletModel* walletModel);
     void setAddress(const QString& addr);
     void refresh();
+    /** Drop recipient, amount, and coin-control draft. */
+    void clearForm();
 
 private Q_SLOTS:
     void onSend();
     void onPaste();
+    void onChooseCoins();
+    void onCoinControlToggled(bool checked);
+    void syncCoinControl();
 
 private:
     void applyTheme();
-    QString rpc(const QString& method, const QStringList& args = QStringList()) const;
 
     WalletView* walletView;
+    const PlatformStyle* platformStyle;
     WalletModel* walletModel;
     QLineEdit* addrEdit;
     QLineEdit* amountEdit;
+    QCheckBox* coinControlCheck;
+    QPushButton* chooseCoinsBtn;
+    QLabel* coinSummary;
     QLabel* tagLabel;
     QLabel* statusLabel;
     QLabel* balanceLabel;
