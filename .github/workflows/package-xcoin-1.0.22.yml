@@ -262,3 +262,129 @@ jobs:
           name: X-Coin-1.0.22-Windows
           path: dist/X-Coin-1.0.22-Windows.zip
           if-no-files-found: error
+
+  # Authenticode via Azure Artifact Signing (formerly Trusted Signing). Runs only when the
+  # AZURE_TENANT_ID / AZURE_CLIENT_ID / AZURE_CLIENT_SECRET secrets and the AZURE_SIGNING_ENDPOINT /
+  # AZURE_SIGNING_ACCOUNT / AZURE_SIGNING_PROFILE variables are all set; otherwise the unsigned zip stays as built.
+  sign-windows:
+    needs: windows
+    runs-on: windows-2025
+    timeout-minutes: 30
+    steps:
+      - name: Check signing config
+        id: cfg
+        shell: bash
+        env:
+          TENANT: ${{ secrets.AZURE_TENANT_ID }}
+          CLIENT: ${{ secrets.AZURE_CLIENT_ID }}
+          SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          ENDPOINT: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+          ACCOUNT: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+          PROFILE: ${{ vars.AZURE_SIGNING_PROFILE }}
+        run: |
+          if [ -n "$TENANT" ] && [ -n "$CLIENT" ] && [ -n "$SECRET" ] && [ -n "$ENDPOINT" ] && [ -n "$ACCOUNT" ] && [ -n "$PROFILE" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Signing skipped: Azure signing secrets/variables not set. The Windows zip stays unsigned."
+          fi
+
+      - name: Download Windows package
+        if: steps.cfg.outputs.enabled == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: X-Coin-1.0.22-Windows
+          path: dist
+
+      - name: Unpack
+        if: steps.cfg.outputs.enabled == 'true'
+        shell: pwsh
+        run: Expand-Archive dist/X-Coin-1.0.22-Windows.zip -DestinationPath dist
+
+      - name: Sign programs
+        if: steps.cfg.outputs.enabled == 'true'
+        uses: azure/artifact-signing-action@v2
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ vars.AZURE_SIGNING_ENDPOINT }}
+          signing-account-name: ${{ vars.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ vars.AZURE_SIGNING_PROFILE }}
+          files: |
+            ${{ github.workspace }}\dist\xcoin-1.0.22-win-x86_64\xcoin-qt.exe
+            ${{ github.workspace }}\dist\xcoin-1.0.22-win-x86_64\xcoind.exe
+            ${{ github.workspace }}\dist\xcoin-1.0.22-win-x86_64\xcoin-cli.exe
+            ${{ github.workspace }}\dist\xcoin-1.0.22-win-x86_64\X Coin Wallet.exe
+            ${{ github.workspace }}\dist\xcoin-1.0.22-win-x86_64\X Coin Practice Wallet.exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+          exclude-workload-identity-credential: true
+          exclude-managed-identity-credential: true
+          exclude-shared-token-cache-credential: true
+          exclude-visual-studio-credential: true
+          exclude-visual-studio-code-credential: true
+          exclude-azure-cli-credential: true
+          exclude-azure-powershell-credential: true
+          exclude-azure-developer-cli-credential: true
+          exclude-interactive-browser-credential: true
+
+      - name: Verify signatures and re-zip
+        if: steps.cfg.outputs.enabled == 'true'
+        shell: pwsh
+        run: |
+          $dir = "dist/xcoin-1.0.22-win-x86_64"
+          foreach ($f in "xcoin-qt.exe", "xcoind.exe", "xcoin-cli.exe", "X Coin Wallet.exe", "X Coin Practice Wallet.exe") {
+            $s = Get-AuthenticodeSignature (Join-Path $dir $f)
+            "$f $($s.Status) $($s.SignerCertificate.Subject)"
+            if ($s.Status -ne "Valid") { throw "$f is not validly signed" }
+          }
+          Remove-Item dist/X-Coin-1.0.22-Windows.zip
+          Push-Location dist
+          7z a -tzip -mx=9 X-Coin-1.0.22-Windows.zip xcoin-1.0.22-win-x86_64 | Out-Null
+          Pop-Location
+
+      - name: Replace Windows package with the signed zip
+        if: steps.cfg.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: X-Coin-1.0.22-Windows
+          path: dist/X-Coin-1.0.22-Windows.zip
+          if-no-files-found: error
+          overwrite: true
+
+  # SHA256SUMS for the release: each archive plus the programs inside it. Attach it with the zips.
+  sha256sums:
+    needs: [linux, windows, sign-windows]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+          fetch-depth: 1
+          sparse-checkout: contrib/xcoin
+
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          pattern: X-Coin-1.0.22-*
+          path: dist
+          merge-multiple: true
+
+      - name: Write SHA256SUMS
+        run: |
+          contrib/xcoin/sha256sums.sh dist
+          grep -q '  X-Coin-1.0.22-Windows.zip$' dist/SHA256SUMS
+          grep -q '  X-Coin-1.0.22-Linux-x86_64.tar.gz$' dist/SHA256SUMS
+          grep -q '/xcoin-qt.exe$' dist/SHA256SUMS
+          grep -q '/bin/xcoin-qt$' dist/SHA256SUMS
+
+      - name: Upload SHA256SUMS
+        uses: actions/upload-artifact@v4
+        with:
+          name: X-Coin-1.0.22-SHA256SUMS
+          path: dist/SHA256SUMS
+          if-no-files-found: error
