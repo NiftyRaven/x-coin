@@ -68,8 +68,20 @@ bool LoadXAccountAssignments();
 
 /** Top-level root of NAME, NAME/CHILD, or NAME#tag. Empty if the name is invalid. */
 std::string TopLevelRootName(const std::string& assetName);
-/** Session required. Subs/uniques must sit under this handle’s assigned main asset. */
+/** Session required. Subs/uniques must sit under this handle’s assigned main asset.
+ *  Wallet issue / issueunique only. Do not call this from sendrawtransaction. */
 bool RequireIssueUnderOwnMain(const std::string& assetName, std::string& err);
+
+/**
+ * Policy for a relayed raw new-asset tx (sendrawtransaction).
+ * Returns true when the relay must be refused before it hits the mempool.
+ *
+ * A root with no XID1 assignment is refused. A sub or unique is allowed
+ * through and this does not call RequireIssueUnderOwnMain. The node
+ * session is not the signer of a relayed tx. Consensus still requires
+ * the parent owner token to be spent and transferred.
+ */
+bool RejectRelayedNewAsset(const CTransaction& tx, std::string& err);
 
 #ifdef ENABLE_WALLET
 /** Call on a successful X-link. Idempotent. dest empty → new wallet address. */
