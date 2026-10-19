@@ -487,6 +487,7 @@ bool XOAuth::finishFromUsersMe(const QByteArray& body, QString& err)
     // exp=0 is HMAC input meaning "no wall-clock kick" (LoadSession does
     // not treat exp as a live-session TTL).
     const int64_t exp = 0;
+    // Full replace of any restored xsession.json. The access token is not written.
     if (!xsession::SaveSession(me.userId, me.username, exp, e, me.verified, me.verifiedType)) {
         err = QString::fromStdString(e);
         return false;

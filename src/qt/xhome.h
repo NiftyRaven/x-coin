@@ -64,6 +64,8 @@ private:
     ClientModel* clientModel;
     WalletModel* walletModel;
     XOAuth* oauth;
+    /** Set only by Claim when the in-memory X token is missing. Sign in alone does not claim. */
+    bool claimAfterSignIn;
 
     QLabel* heroTitle;
     QLabel* peersLabel;
