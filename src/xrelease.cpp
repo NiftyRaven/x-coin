@@ -234,6 +234,11 @@ std::string BundledNotes()
         "This is the Light wallet. Heavy is the tree-nav Market wallet.\n"
         "Same chain. Same protocol. Same data folder.\n"
         "\n"
+        "Claiming a name needs Sign in with X. The wallet asks the name\n"
+        "signer for a proof and attaches it. If that signer is unreachable,\n"
+        "only new claims pause. Coins, Launch, and existing names are\n"
+        "unaffected. Older wallets still send and receive.\n"
+        "\n"
         "- Home is buttons first: Sign in with X, lottery, Receive, Send,\n"
         "  Activity, Transfer assets, Share lottery wins.\n"
         "- Lottery shows live X Verified nodes, not the frozen draw set.\n"
@@ -301,7 +306,7 @@ std::string BundledName()
 std::string BundledHtmlUrl()
 {
 #ifdef XCOIN_LIGHT_WALLET
-    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.21-light";
+    return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.23-light";
 #else
     return "https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.16";
 #endif

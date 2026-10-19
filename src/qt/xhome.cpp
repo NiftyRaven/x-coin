@@ -973,6 +973,8 @@ void XHome::onAllowlistMe()
 
 void XHome::onClaim()
 {
+    if (statusLabel)
+        statusLabel->setText("Claiming…");
     showRpcOutcome(rpc("linkxaccount"), "Root asset claimed");
     refresh();
 }
