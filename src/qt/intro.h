@@ -33,6 +33,9 @@ public:
     QString getDataDirectory();
     void setDataDirectory(const QString &dataDir);
 
+    /** Call once, immediately after command-line parsing, before any other code sets -datadir. */
+    static void RememberCommandLineDataDir();
+
     /**
      * Determine data directory. Let the user choose if the current one doesn't exist.
      *

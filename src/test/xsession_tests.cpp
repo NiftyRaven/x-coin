@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <test/test_raven.h>
+#include <datadir_choice.h>
 #include <xsession.h>
 #include <xoauth_cooldown.h>
 #include <xoauth_token.h>
@@ -202,6 +203,31 @@ BOOST_AUTO_TEST_CASE(bearer_survives_async_users_me)
     xsession::ClearSession();
     BOOST_CHECK(xsession::ClaimBearer().empty());
     BOOST_CHECK(!xsession::HasValidSession());
+}
+
+BOOST_AUTO_TEST_CASE(saved_datadir_wins_without_command_line)
+{
+    const std::string osDefault = "C:\\Users\\a\\AppData\\Roaming\\XCoin";
+    const std::string saved = "D:\\testxcoin";
+
+    const DataDirChoice normal = ChooseStartupDataDir(false, "", saved, osDefault);
+    BOOST_CHECK(!normal.commandLineWins);
+    BOOST_CHECK(normal.setDataDirArg);
+    BOOST_CHECK_EQUAL(normal.path, saved);
+
+    const DataDirChoice cmdline = ChooseStartupDataDir(true, saved, osDefault, osDefault);
+    BOOST_CHECK(cmdline.commandLineWins);
+    BOOST_CHECK(!cmdline.setDataDirArg);
+    BOOST_CHECK_EQUAL(cmdline.path, saved);
+
+    const DataDirChoice unset = ChooseStartupDataDir(false, "", "", osDefault);
+    BOOST_CHECK(!unset.commandLineWins);
+    BOOST_CHECK(!unset.setDataDirArg);
+    BOOST_CHECK_EQUAL(unset.path, osDefault);
+
+    const DataDirChoice alreadyDefault = ChooseStartupDataDir(false, "", osDefault, osDefault);
+    BOOST_CHECK(!alreadyDefault.setDataDirArg);
+    BOOST_CHECK_EQUAL(alreadyDefault.path, osDefault);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
