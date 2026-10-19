@@ -15,6 +15,7 @@ class XOAuth;
 
 class QLabel;
 class QPushButton;
+class QTimer;
 class QWidget;
 
 /** Name-card Home: identity, balance, lottery, claim. */
@@ -46,6 +47,7 @@ private Q_SLOTS:
     void onMockSignIn();
     void onAllowlistMe();
     void onClaim();
+    void onQueuedClaimSignIn();
     void onOAuthSuccess(const QString& username, const QString& userId);
     void onOAuthFailed(const QString& error);
     void onOAuthStatus(const QString& message);
@@ -66,6 +68,7 @@ private:
     XOAuth* oauth;
     /** Set only by Claim when the in-memory X token is missing. Sign in alone does not claim. */
     bool claimAfterSignIn;
+    QTimer* claimSignInTimer;
 
     QLabel* heroTitle;
     QLabel* peersLabel;

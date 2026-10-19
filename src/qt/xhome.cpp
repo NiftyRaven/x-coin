@@ -22,6 +22,7 @@
 #include "util.h"
 #include "utiltime.h"
 
+#include <QApplication>
 #include <QFrame>
 #include <QPixmap>
 #include <QButtonGroup>
@@ -114,6 +115,28 @@ bool pickUnlockSeconds(QWidget* parent, int64_t* outSeconds)
     return true;
 }
 
+QString cooldownMessage(qint64 leftMs)
+{
+    qint64 secs = (leftMs + 999) / 1000;
+    if (secs < 1)
+        secs = 1;
+    return QString("Sign in with X is cooling down. %1 seconds left.").arg(secs);
+}
+
+void bringWalletForward(QWidget* page)
+{
+    QWidget* top = page ? page->window() : nullptr;
+    if (!top)
+        return;
+    if (top->isMinimized())
+        top->showNormal();
+    if (top->isHidden())
+        top->show();
+    top->raise();
+    top->activateWindow();
+    QApplication::alert(top, 10000);
+}
+
 } // namespace
 
 XHome::XHome(WalletView* walletViewIn, QWidget* parent)
@@ -123,6 +146,7 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     , walletModel(0)
     , oauth(new XOAuth(this))
     , claimAfterSignIn(false)
+    , claimSignInTimer(new QTimer(this))
     , signInBtn(0)
     , reLinkBtn(0)
     , mockBtn(0)
@@ -262,7 +286,7 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     authRow->addWidget(mockBtn);
     root->addLayout(authRow);
 
-    QLabel* credHint = new QLabel("Sign in with X opens your browser. Come back here when it finishes.");
+    QLabel* credHint = new QLabel("Sign in with X opens your browser. This wallet waits about 5 minutes. Come back here when it finishes.");
     credHint->setObjectName("xhint");
     credHint->setWordWrap(true);
     root->addWidget(credHint);
@@ -334,6 +358,8 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     connect(releaseLaterBtn, SIGNAL(clicked()), this, SLOT(onReleaseLater()));
     connect(unlockBtn, SIGNAL(clicked()), this, SLOT(onUnlockWallet()));
     connect(lockBtn, SIGNAL(clicked()), this, SLOT(onLockWallet()));
+    claimSignInTimer->setSingleShot(true);
+    connect(claimSignInTimer, SIGNAL(timeout()), this, SLOT(onQueuedClaimSignIn()));
 
     QTimer* t = new QTimer(this);
     connect(t, SIGNAL(timeout()), this, SLOT(refresh()));
@@ -403,9 +429,10 @@ void XHome::applyAuthButtons(bool signedIn)
         return;
     const qint64 left = XOAuth::cooldownRemainingMs();
     const bool cooling = left > 0;
-    qint64 mins = cooling ? (left + 59999) / 60000 : 0;
-    if (cooling && mins < 1)
-        mins = 1;
+    qint64 secs = cooling ? (left + 999) / 1000 : 0;
+    if (cooling && secs < 1)
+        secs = 1;
+    const bool waiting = oauth && oauth->loginPending();
 
     // A restored xsession.json has no access token. Claim needs a live sign-in.
     const bool needsClaimSignIn = signedIn && xsession::ClaimBearer().empty() && XClaimProofShouldAttach();
@@ -413,15 +440,25 @@ void XHome::applyAuthButtons(bool signedIn)
         signInBtn->setVisible(false);
         signInBtn->setEnabled(false);
         reLinkBtn->setVisible(true);
-        reLinkBtn->setEnabled(!cooling);
-        reLinkBtn->setText(cooling ? QString("Re-link in ~%1 min").arg(mins) : QString("Re-link"));
+        reLinkBtn->setEnabled(true);
+        if (waiting)
+            reLinkBtn->setText("Waiting for X…");
+        else if (cooling)
+            reLinkBtn->setText(QString("Re-link (%1s)").arg(secs));
+        else
+            reLinkBtn->setText("Re-link");
     } else {
         reLinkBtn->setVisible(false);
         reLinkBtn->setEnabled(false);
         reLinkBtn->setText("Re-link");
         signInBtn->setVisible(true);
-        signInBtn->setEnabled(!cooling);
-        signInBtn->setText(cooling ? QString("Sign in with X (~%1 min)").arg(mins) : QString("Sign in with X"));
+        signInBtn->setEnabled(true);
+        if (waiting)
+            signInBtn->setText("Waiting for X…");
+        else if (cooling)
+            signInBtn->setText(QString("Sign in with X (%1s)").arg(secs));
+        else
+            signInBtn->setText("Sign in with X");
     }
 }
 
@@ -594,9 +631,12 @@ void XHome::refresh()
 
 void XHome::onSignIn()
 {
-    if (XOAuth::cooldownRemainingMs() > 0) {
-        statusLabel->setText("Sign in with X is cooling down (~5 minutes).");
+    const qint64 left = XOAuth::cooldownRemainingMs();
+    if (left > 0) {
+        const QString msg = cooldownMessage(left);
+        statusLabel->setText(msg);
         applyAuthButtons(xsession::HasValidSession());
+        QMessageBox::information(this, "X-Coin", msg);
         return;
     }
     statusLabel->setText("Opening X in your browser…");
@@ -609,9 +649,10 @@ void XHome::onReLink()
             "Re-link this wallet with X? This uses X API credits.",
             QMessageBox::Yes | QMessageBox::No, QMessageBox::No) != QMessageBox::Yes)
         return;
-    if (XOAuth::cooldownRemainingMs() > 0) {
-        QMessageBox::information(this, "X-Coin",
-            "Wait about 5 minutes between Sign in with X attempts.");
+    const qint64 left = XOAuth::cooldownRemainingMs();
+    if (left > 0) {
+        const QString msg = cooldownMessage(left);
+        QMessageBox::information(this, "X-Coin", msg);
         applyAuthButtons(true);
         return;
     }
@@ -650,31 +691,77 @@ void XHome::onAllowlistMe()
 
 void XHome::onClaim()
 {
-    // Restored sessions have no access token. Sign in, then claim once it is set.
+    // A live bearer claims immediately. No second browser sign-in.
     // Regtest stays unproofed, so a practice mock sign-in still claims directly.
     if (xsession::ClaimBearer().empty() && XClaimProofShouldAttach()) {
-        if (XOAuth::cooldownRemainingMs() > 0) {
-            claimAfterSignIn = false;
-            onSignIn();
+        claimAfterSignIn = true;
+        if (oauth && oauth->loginPending()) {
+            const QString msg = QString("finish signing in in your browser. This wallet is listening on %1.")
+                                    .arg(XOAuth::CallbackUri());
+            if (statusLabel)
+                statusLabel->setText(msg);
+            QMessageBox::information(this, "X-Coin", msg);
             return;
         }
-        claimAfterSignIn = true;
+        const qint64 left = XOAuth::cooldownRemainingMs();
+        if (left > 0) {
+            const QString msg = cooldownMessage(left);
+            if (statusLabel)
+                statusLabel->setText(msg);
+            applyAuthButtons(xsession::HasValidSession());
+            if (claimSignInTimer)
+                claimSignInTimer->start((int)left);
+            QMessageBox::information(this, "X-Coin", msg);
+            return;
+        }
         onSignIn();
         return;
     }
     claimAfterSignIn = false;
+    if (claimSignInTimer)
+        claimSignInTimer->stop();
     if (statusLabel)
         statusLabel->setText("Claiming…");
     showRpcOutcome(rpc("linkxaccount"), "Name claimed");
     refresh();
 }
 
+void XHome::onQueuedClaimSignIn()
+{
+    if (!claimAfterSignIn)
+        return;
+    if (!xsession::ClaimBearer().empty() || !XClaimProofShouldAttach()) {
+        claimAfterSignIn = false;
+        return;
+    }
+    if (oauth && oauth->loginPending())
+        return;
+    const qint64 left = XOAuth::cooldownRemainingMs();
+    if (left > 0) {
+        if (claimSignInTimer)
+            claimSignInTimer->start((int)left);
+        return;
+    }
+    onSignIn();
+}
+
 void XHome::onOAuthSuccess(const QString& username, const QString& userId)
 {
     Q_UNUSED(userId);
+    if (claimSignInTimer)
+        claimSignInTimer->stop();
     const bool continueClaim = claimAfterSignIn;
     claimAfterSignIn = false;
-    // finishFromUsersMe already overwrote xsession.json and set the new token.
+    bringWalletForward(this);
+    const QString msg = QString("Signed in as @%1, click Claim my name").arg(username);
+    if (statusLabel) {
+        statusLabel->setObjectName("xhint");
+        statusLabel->style()->unpolish(statusLabel);
+        statusLabel->style()->polish(statusLabel);
+        statusLabel->setText(msg);
+    }
+    // refresh enables Claim as soon as the session and bearer are set.
+    refresh();
     if (continueClaim && !xsession::ClaimBearer().empty()) {
         if (statusLabel)
             statusLabel->setText("Claiming…");
@@ -682,12 +769,13 @@ void XHome::onOAuthSuccess(const QString& username, const QString& userId)
         refresh();
         return;
     }
-    statusLabel->setText(QString("This wallet is now linked to @%1.").arg(username));
-    refresh();
+    QMessageBox::information(this, "X-Coin", msg);
 }
 
 void XHome::onOAuthFailed(const QString& error)
 {
+    if (claimSignInTimer)
+        claimSignInTimer->stop();
     claimAfterSignIn = false;
     statusLabel->setObjectName("xstatuserr");
     statusLabel->style()->unpolish(statusLabel);

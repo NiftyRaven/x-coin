@@ -4,6 +4,8 @@
 
 #include <test/test_raven.h>
 #include <xsession.h>
+#include <xoauth_cooldown.h>
+#include <xoauth_token.h>
 #include <lottery.h>
 #include <chainparamsbase.h>
 #include <utiltime.h>
@@ -152,6 +154,53 @@ BOOST_AUTO_TEST_CASE(wall_clock_exp_does_not_kick_live_session)
     SetMockTime(0);
     xsession::ClearSession();
     BOOST_CHECK(!xsession::LoadSession(s, err));
+    BOOST_CHECK(!xsession::HasValidSession());
+}
+
+BOOST_AUTO_TEST_CASE(oauth_cooldown_is_one_minute_login_wait_is_five)
+{
+    BOOST_CHECK_EQUAL(XOAUTH_COOLDOWN_MS, 60 * 1000);
+    BOOST_CHECK_EQUAL(XOAUTH_LOGIN_WAIT_MS, 5 * 60 * 1000);
+    BOOST_CHECK_EQUAL(XOAuthCooldownRemainingMs(1000, 0), 0);
+    BOOST_CHECK_EQUAL(XOAuthCooldownRemainingMs(1000, 2000), 0);
+    BOOST_CHECK_EQUAL(XOAuthCooldownRemainingMs(5000, 1000, 10000), 6000);
+    BOOST_CHECK_EQUAL(XOAuthCooldownRemainingMs(11000, 1000, 10000), 0);
+    BOOST_CHECK_EQUAL(XOAuthCooldownRemainingMs(1000 + 59999, 1000), 1);
+    BOOST_CHECK_EQUAL(XOAuthCooldownRemainingMs(1000 + 60000, 1000), 0);
+}
+
+BOOST_AUTO_TEST_CASE(bearer_survives_async_users_me)
+{
+    xsession::ClearSession();
+    XOAuthUsersMeHandoff handoff;
+    handoff.onTokenResponse("live-token");
+    // users/me is already in flight with this header. The hold must still match.
+    BOOST_CHECK_EQUAL(handoff.sentToUsersMe, "live-token");
+    BOOST_CHECK(handoff.holdSurvivesUsersMe());
+
+    std::string bearer;
+    std::string err;
+    BOOST_CHECK(XOAuthBearerAfterUsersMe(handoff, bearer, err));
+    BOOST_CHECK_EQUAL(bearer, "live-token");
+    xsession::SetClaimBearer(bearer);
+    BOOST_CHECK_EQUAL(xsession::ClaimBearer(), "live-token");
+
+    BOOST_CHECK(xsession::SaveSession("42", "the_xhrist", 0, err, false, ""));
+    xsession::Session s;
+    BOOST_CHECK(xsession::LoadSession(s, err));
+    BOOST_CHECK_EQUAL(s.username, "the_xhrist");
+    // SaveSession + LoadSession must not drop the in-memory claim token.
+    BOOST_CHECK_EQUAL(xsession::ClaimBearer(), "live-token");
+
+    // The 1.0.24 bug cleared the member before users/me returned.
+    handoff.clear();
+    BOOST_CHECK(!handoff.holdSurvivesUsersMe());
+    BOOST_CHECK(!XOAuthBearerAfterUsersMe(handoff, bearer, err));
+    BOOST_CHECK(err.find("access token") != std::string::npos);
+    BOOST_CHECK(bearer.empty());
+
+    xsession::ClearSession();
+    BOOST_CHECK(xsession::ClaimBearer().empty());
     BOOST_CHECK(!xsession::HasValidSession());
 }
 
