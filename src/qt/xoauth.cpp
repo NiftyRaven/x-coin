@@ -6,8 +6,10 @@
 
 #include "crypto/sha256.h"
 #include "random.h"
+#include "support/cleanse.h"
 #include "util.h"
 #include "utilstrencodings.h"
+#include "xoauth_cooldown.h"
 #include "xsession.h"
 
 #include <QDateTime>
@@ -86,7 +88,13 @@ static const char *kOAuthLastAttemptMs = "xoauthLastAttemptMs";
 static const char *kOAuthCachedLinked = "xoauthCachedLinked";
 static const char *kOAuthCachedHandle = "xoauthCachedHandle";
 static const char *kOAuthCachedVerified = "xoauthCachedVerified";
-static const qint64 kOAuthCooldownMs = 5 * 60 * 1000;
+
+static void CleanseStdString(std::string& s)
+{
+    if (!s.empty())
+        memory_cleanse(&s[0], s.size());
+    s.clear();
+}
 
 static void MarkOAuthAttempt()
 {
@@ -106,17 +114,22 @@ static void CacheLinkedFromUsersMe(const QString& handle, bool verified)
 XOAuth::XOAuth(QObject *parent) :
     QObject(parent),
     server(new QTcpServer(this)),
+    ipv6Server(new QTcpServer(this)),
+    loginWait(new QTimer(this)),
     nam(new QNetworkAccessManager(this)),
     callbackConsumed(false)
 {
     connect(server, SIGNAL(newConnection()), this, SLOT(onIncoming()));
+    connect(ipv6Server, SIGNAL(newConnection()), this, SLOT(onIncoming()));
+    loginWait->setSingleShot(true);
+    connect(loginWait, SIGNAL(timeout()), this, SLOT(onLoginWaitTimeout()));
 }
 
 XOAuth::~XOAuth()
 {
+    stopLoginWait();
+    closeListeners();
     wipeSecrets();
-    if (server->isListening())
-        server->close();
 }
 
 QString XOAuth::ClientId()
@@ -139,19 +152,19 @@ QString XOAuth::CallbackUri()
 
 qint64 XOAuth::CooldownMs()
 {
-    return kOAuthCooldownMs;
+    return XOAUTH_COOLDOWN_MS;
+}
+
+qint64 XOAuth::LoginWaitMs()
+{
+    return XOAUTH_LOGIN_WAIT_MS;
 }
 
 qint64 XOAuth::cooldownRemainingMs()
 {
     QSettings settings;
     const qint64 last = settings.value(kOAuthLastAttemptMs, 0).toLongLong();
-    if (last <= 0)
-        return 0;
-    const qint64 elapsed = QDateTime::currentMSecsSinceEpoch() - last;
-    if (elapsed >= kOAuthCooldownMs)
-        return 0;
-    return kOAuthCooldownMs - elapsed;
+    return XOAuthCooldownRemainingMs(QDateTime::currentMSecsSinceEpoch(), last, XOAUTH_COOLDOWN_MS);
 }
 
 bool XOAuth::cachedLinked()
@@ -215,8 +228,29 @@ bool XOAuth::SaveClientId(const QString& clientId, QString& err)
 
 void XOAuth::fail(const QString& e)
 {
+    stopLoginWait();
+    closeListeners();
     wipeSecrets();
     Q_EMIT failed(e);
+}
+
+void XOAuth::closeListeners()
+{
+    if (server && server->isListening())
+        server->close();
+    if (ipv6Server && ipv6Server->isListening())
+        ipv6Server->close();
+}
+
+void XOAuth::stopLoginWait()
+{
+    if (loginWait)
+        loginWait->stop();
+}
+
+bool XOAuth::loginPending() const
+{
+    return (server && server->isListening()) || (ipv6Server && ipv6Server->isListening());
 }
 
 void XOAuth::wipeSecrets()
@@ -227,18 +261,17 @@ void XOAuth::wipeSecrets()
     state.clear();
     pendingCode.fill(QChar('0'));
     pendingCode.clear();
-    accessToken.fill(QChar('0'));
-    accessToken.clear();
+    CleanseStdString(tokenHold.held);
+    CleanseStdString(tokenHold.sentToUsersMe);
 }
 
 void XOAuth::startLogin()
 {
     const qint64 left = cooldownRemainingMs();
     if (left > 0) {
-        const qint64 mins = (left + 59999) / 60000;
-        fail(tr("Sign in with X is cooling down (~5 minutes). Try again in about %1 min. "
-                "This wallet does not keep calling X.")
-                 .arg(mins < 1 ? 1 : mins));
+        const qint64 secs = (left + 999) / 1000;
+        fail(tr("Sign in with X is cooling down. %1 seconds left.")
+                 .arg(secs < 1 ? qint64(1) : secs));
         return;
     }
     const QString client = ClientId();
@@ -257,12 +290,16 @@ void XOAuth::startLogin()
     const QString challenge = QString::fromStdString(Base64Url(hash, sizeof(hash)));
 
     callbackConsumed = false;
-    if (server->isListening())
-        server->close();
-    if (!server->listen(QHostAddress::LocalHost, (quint16)CallbackPort())) {
+    stopLoginWait();
+    closeListeners();
+    const quint16 port = (quint16)CallbackPort();
+    // redirect_uri is exactly http://127.0.0.1:<port>/callback. That bind must succeed.
+    if (!server->listen(QHostAddress(QStringLiteral("127.0.0.1")), port)) {
         fail(tr("Cannot bind http://127.0.0.1:%1/callback — pick another -xoauthcallbackport=").arg(CallbackPort()));
         return;
     }
+    // Best effort so a localhost / ::1 redirect still reaches this wallet.
+    ipv6Server->listen(QHostAddress::LocalHostIPv6, port);
 
     QUrl url("https://twitter.com/i/oauth2/authorize");
     QUrlQuery q;
@@ -274,18 +311,24 @@ void XOAuth::startLogin()
     q.addQueryItem("code_challenge", challenge);
     q.addQueryItem("code_challenge_method", "S256");
     url.setQuery(q);
-    Q_EMIT status(tr("Opening Sign in with X in your browser…"));
+    const QString waiting = tr("Waiting for Sign in with X. finish signing in in your browser. Listening on %1 for about 5 minutes.")
+                                .arg(CallbackUri());
+    Q_EMIT status(waiting);
+    loginWait->start((int)XOAUTH_LOGIN_WAIT_MS);
     if (!OpenSignInUrl(url)) {
+        // Opening the browser failed. Do not stamp a cooldown; the user can retry now.
         fail(tr("Could not open a browser. Open this URL:\n%1").arg(url.toString()));
         return;
     }
-    // Cooldown starts only after a browser helper actually launched.
-    MarkOAuthAttempt();
+    Q_EMIT status(waiting);
 }
 
 void XOAuth::onIncoming()
 {
-    QTcpSocket *sock = server->nextPendingConnection();
+    QTcpServer *srv = qobject_cast<QTcpServer*>(sender());
+    if (!srv)
+        return;
+    QTcpSocket *sock = srv->nextPendingConnection();
     if (!sock)
         return;
     sock->setParent(this);
@@ -312,8 +355,16 @@ void XOAuth::onCallbackTimeout()
     sock->setProperty("xoauthDone", true);
     sock->disconnectFromHost();
     sock->deleteLater();
+    // Idle socket only. A human login can take minutes; do not wipe PKCE or close the listener.
+}
+
+void XOAuth::onLoginWaitTimeout()
+{
+    if (callbackConsumed)
+        return;
     MarkOAuthAttempt();
-    fail(tr("Sign in with X timed out waiting for the browser callback."));
+    fail(tr("Sign in with X timed out. The browser did not return to %1 within 5 minutes.")
+             .arg(CallbackUri()));
 }
 
 void XOAuth::processCallbackSocket(QTcpSocket *sock)
@@ -336,7 +387,8 @@ void XOAuth::processCallbackSocket(QTcpSocket *sock)
     const QString htmlOk =
         "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n"
         "<html><body style=\"background:#000;color:#fff;font-family:sans-serif;padding:40px\">"
-        "<h1>X Coin</h1><p>Signed in. You can close this tab and return to the wallet.</p></body></html>";
+        "<h1>X Coin</h1><p>Signed in to X Coin wallet. You can close this tab and return to the wallet.</p>"
+        "<script>window.close();</script></body></html>";
     const QString htmlErr =
         "HTTP/1.1 400 Bad Request\r\nContent-Type: text/plain\r\nConnection: close\r\n\r\n"
         "X Coin OAuth callback error\n";
@@ -384,7 +436,10 @@ void XOAuth::processCallbackSocket(QTcpSocket *sock)
     callbackConsumed = true;
     sock->write(htmlOk.toUtf8());
     closeSock();
-    server->close();
+    // Stop the 5-minute wait before the token exchange so it cannot wipe the bearer mid-flight.
+    // A successful callback does not start the cooldown.
+    stopLoginWait();
+    closeListeners();
     exchangeCode(code);
     pendingCode.clear();
 }
@@ -431,19 +486,19 @@ void XOAuth::onTokenFinished()
     int q1 = s.indexOf('"', colon + 1);
     int q2 = s.indexOf('"', q1 + 1);
     if (q1 < 0 || q2 < 0) {
+        MarkOAuthAttempt();
         fail(tr("Could not parse access_token"));
         return;
     }
-    accessToken = s.mid(q1 + 1, q2 - q1 - 1);
-    if (accessToken.isEmpty()) {
+    const QString parsed = s.mid(q1 + 1, q2 - q1 - 1);
+    if (parsed.isEmpty()) {
+        MarkOAuthAttempt();
         fail(tr("Empty access token — login did not succeed"));
         return;
     }
-    const QString token = accessToken;
-    fetchMe(token);
-    // Access token is RAM-only. Never write it to disk or logs.
-    wipeSecrets();
-    accessToken.clear();
+    // users/me is async. Keep this hold until that call returns.
+    tokenHold.onTokenResponse(parsed.toStdString());
+    fetchMe(QString::fromStdString(tokenHold.sentToUsersMe));
 }
 
 void XOAuth::fetchMe(const QString& token)
@@ -471,8 +526,10 @@ void XOAuth::onMeFinished()
         return;
     }
     QString err;
-    if (!finishFromUsersMe(reply->readAll(), err))
+    if (!finishFromUsersMe(reply->readAll(), err)) {
+        MarkOAuthAttempt();
         fail(err);
+    }
 }
 
 bool XOAuth::finishFromUsersMe(const QByteArray& body, QString& err)
@@ -494,7 +551,16 @@ bool XOAuth::finishFromUsersMe(const QByteArray& body, QString& err)
     }
     xsession::BindLotteryFromSession();
     CacheLinkedFromUsersMe(QString::fromStdString(me.username), me.verified);
-    xsession::SetClaimBearer(accessToken.toStdString());
+    std::string bearer;
+    std::string bearerErr;
+    if (!XOAuthBearerAfterUsersMe(tokenHold, bearer, bearerErr)) {
+        err = QString::fromStdString(bearerErr);
+        return false;
+    }
+    // Copy into the claim bearer before any cleanse. SaveSession does not touch it.
+    xsession::SetClaimBearer(bearer);
+    bearer.assign(bearer.size(), '\0');
+    bearer.clear();
     wipeSecrets();
     Q_EMIT signedIn(QString::fromStdString(me.username), QString());
     return true;

@@ -9,12 +9,50 @@ XCLI="${XCLI:-$ROOT/src/xcoin-cli}"
 DATADIR="${DATADIR:-$ROOT/smoke-xsession-datadir}"
 CLI=("$XCLI" -regtest -datadir="$DATADIR")
 
-# Retry wait after Sign in with X is 5 minutes. Live GUI session exp stays 0
-# (not a wall-clock kick). Regtest mock still writes exp=GetTime()+365d.
-if ! grep -q 'kOAuthCooldownMs = 5 \* 60 \* 1000' "$ROOT/src/qt/xoauth.cpp"; then
-  echo "Sign in with X cooldown must be 5 minutes (kOAuthCooldownMs)" >&2
+# Failed or abandoned Sign in waits 1 minute. The loopback listener stays up
+# 5 minutes. A successful sign-in does not stamp the cooldown.
+# Live GUI session exp stays 0 (not a wall-clock kick). Regtest mock still
+# writes exp=GetTime()+365d.
+if ! grep -q 'XOAUTH_COOLDOWN_MS = 60 \* 1000' "$ROOT/src/xoauth_cooldown.h"; then
+  echo "Sign in with X cooldown must be 1 minute (XOAUTH_COOLDOWN_MS)" >&2
   exit 1
 fi
+if ! grep -q 'XOAUTH_LOGIN_WAIT_MS = 5 \* 60 \* 1000' "$ROOT/src/xoauth_cooldown.h"; then
+  echo "Sign in with X listener must stay up 5 minutes (XOAUTH_LOGIN_WAIT_MS)" >&2
+  exit 1
+fi
+if ! grep -q 'Signed in to X Coin wallet. You can close this tab and return to the wallet.' "$ROOT/src/qt/xoauth.cpp"; then
+  echo "callback page must tell the user they can close the tab" >&2
+  exit 1
+fi
+if ! grep -q 'window.close' "$ROOT/src/qt/xoauth.cpp"; then
+  echo "callback page must try window.close()" >&2
+  exit 1
+fi
+if ! grep -q 'Signed in as @%1, click Claim my name' "$ROOT/src/qt/xhome.cpp"; then
+  echo "wallet must tell the user to click Claim my name after sign-in" >&2
+  exit 1
+fi
+python3 - <<PY
+import pathlib
+text = pathlib.Path("$ROOT/src/qt/xoauth.cpp").read_text()
+start = text.find("void XOAuth::onTokenFinished()")
+end = text.find("void XOAuth::fetchMe")
+body = text[start:end]
+if "wipeSecrets" in body or "tokenHold.clear" in body:
+    raise SystemExit("onTokenFinished must not clear the access token before users/me returns")
+if "onTokenResponse" not in body:
+    raise SystemExit("onTokenFinished must keep the token on the users/me handoff")
+fin = text.find("bool XOAuth::finishFromUsersMe")
+nxt = text.find("bool XOAuth::mockSignIn")
+fin_body = text[fin:nxt]
+if "SetClaimBearer" not in fin_body or "XOAuthBearerAfterUsersMe" not in fin_body:
+    raise SystemExit("finishFromUsersMe must store the held bearer")
+if fin_body.find("SetClaimBearer") > fin_body.find("wipeSecrets"):
+    raise SystemExit("SetClaimBearer must run before wipeSecrets")
+if "MarkOAuthAttempt" in fin_body:
+    raise SystemExit("a successful users/me must not start the cooldown")
+PY
 
 if [[ ! -x "$XCOIND" ]]; then
   echo "missing $XCOIND — build first" >&2
@@ -57,23 +95,23 @@ echo "$NOTES"
 echo "$NOTES" | python3 -c '
 import json,sys
 j=json.load(sys.stdin)
-if j.get("version") != "1.0.24" or j.get("tag") != "v1.0.24":
-    sys.exit("getreleasenotes must report this wallet as 1.0.24 (got %r)" % j)
+if j.get("version") != "1.0.25" or j.get("tag") != "v1.0.25":
+    sys.exit("getreleasenotes must report this wallet as 1.0.25 (got %r)" % j)
 notes = j.get("notes") or ""
 if "Unlock" not in notes and "assetindex" not in notes:
     sys.exit("bundled notes must mention Unlock or assetindex")
 if "What" not in notes and "new" not in notes.lower():
     sys.exit("bundled notes must mention What'\''s new")
 '
-FEED='[{"tag_name":"v1.0.25","name":"X Coin 1.0.25 Heavy","body":"Newer notes.","html_url":"https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.25","draft":false,"prerelease":false},{"tag_name":"v1.0.11","body":"this","draft":false,"prerelease":false}]'
+FEED='[{"tag_name":"v1.0.26","name":"X Coin 1.0.26 Heavy","body":"Newer notes.","html_url":"https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.26","draft":false,"prerelease":false},{"tag_name":"v1.0.11","body":"this","draft":false,"prerelease":false}]'
 PARSED="$("${CLI[@]}" getreleasenotes "$FEED")"
 echo "$PARSED"
 echo "$PARSED" | python3 -c '
 import json,sys
 j=json.load(sys.stdin)
 n=j.get("newer") or {}
-if n.get("tag") != "v1.0.25":
-    sys.exit("feed parse must pick v1.0.25 as newer (got %r)" % n)
+if n.get("tag") != "v1.0.26":
+    sys.exit("feed parse must pick v1.0.26 as newer (got %r)" % n)
 if "Newer notes" not in (n.get("notes") or ""):
     sys.exit("newer notes must come from the feed body")
 '
