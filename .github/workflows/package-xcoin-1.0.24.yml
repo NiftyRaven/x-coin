@@ -15,6 +15,13 @@ on:
         description: 'git ref to package'
         required: true
         default: 'x-coin'
+  # workflow_dispatch is 403 for the app token. Pushing this file on x-coin
+  # starts the same jobs and checks out the merged 1.0.24 commit.
+  push:
+    branches:
+      - x-coin
+    paths:
+      - '.github/workflows/package-xcoin-1.0.24.yml'
 
 jobs:
   linux:
@@ -24,7 +31,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.ref || github.ref }}
+          ref: ${{ github.event_name == 'push' && 'ae79a0c82c16afc202cb0f03508ed607d1c3165f' || github.event.inputs.ref || github.ref }}
           fetch-depth: 1
 
       - name: Install deps
@@ -118,7 +125,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.ref || github.ref }}
+          ref: ${{ github.event_name == 'push' && 'ae79a0c82c16afc202cb0f03508ed607d1c3165f' || github.event.inputs.ref || github.ref }}
           fetch-depth: 1
 
       - name: Install mingw
@@ -369,7 +376,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.ref || github.ref }}
+          ref: ${{ github.event_name == 'push' && 'ae79a0c82c16afc202cb0f03508ed607d1c3165f' || github.event.inputs.ref || github.ref }}
           fetch-depth: 1
           sparse-checkout: contrib/xcoin
 
