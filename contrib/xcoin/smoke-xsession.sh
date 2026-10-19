@@ -57,7 +57,7 @@ echo "$NOTES"
 echo "$NOTES" | python3 -c '
 import json,sys
 j=json.load(sys.stdin)
-if j.get("version") != "1.0.23" or j.get("tag") != "v1.0.24":
+if j.get("version") != "1.0.23" or j.get("tag") != "v1.0.23":
     sys.exit("getreleasenotes must report this wallet as 1.0.23 (got %r)" % j)
 notes = j.get("notes") or ""
 if "Unlock" not in notes and "assetindex" not in notes:
