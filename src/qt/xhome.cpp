@@ -122,6 +122,7 @@ XHome::XHome(WalletView* walletViewIn, QWidget* parent)
     , clientModel(0)
     , walletModel(0)
     , oauth(new XOAuth(this))
+    , claimAfterSignIn(false)
     , signInBtn(0)
     , reLinkBtn(0)
     , mockBtn(0)
@@ -406,7 +407,9 @@ void XHome::applyAuthButtons(bool signedIn)
     if (cooling && mins < 1)
         mins = 1;
 
-    if (signedIn) {
+    // A restored xsession.json has no access token. Claim needs a live sign-in.
+    const bool needsClaimSignIn = signedIn && xsession::ClaimBearer().empty() && XClaimProofShouldAttach();
+    if (signedIn && !needsClaimSignIn) {
         signInBtn->setVisible(false);
         signInBtn->setEnabled(false);
         reLinkBtn->setVisible(true);
@@ -438,8 +441,14 @@ void XHome::refresh()
         } else {
             verifiedLine = QString("X Verified: no. Lottery chance is zero.");
         }
-        sessionLabel->setObjectName("xlinked");
-        sessionLabel->setText(QString("@%1\n%2").arg(handle).arg(verifiedLine));
+        const bool needsClaimSignIn = xsession::ClaimBearer().empty() && XClaimProofShouldAttach();
+        if (needsClaimSignIn) {
+            sessionLabel->setObjectName("xunlinked");
+            sessionLabel->setText(QString("@%1\nSign in with X to claim").arg(handle));
+        } else {
+            sessionLabel->setObjectName("xlinked");
+            sessionLabel->setText(QString("@%1\n%2").arg(handle).arg(verifiedLine));
+        }
     } else {
         sessionLabel->setObjectName("xunlinked");
         sessionLabel->setText(
@@ -641,6 +650,19 @@ void XHome::onAllowlistMe()
 
 void XHome::onClaim()
 {
+    // Restored sessions have no access token. Sign in, then claim once it is set.
+    // Regtest stays unproofed, so a practice mock sign-in still claims directly.
+    if (xsession::ClaimBearer().empty() && XClaimProofShouldAttach()) {
+        if (XOAuth::cooldownRemainingMs() > 0) {
+            claimAfterSignIn = false;
+            onSignIn();
+            return;
+        }
+        claimAfterSignIn = true;
+        onSignIn();
+        return;
+    }
+    claimAfterSignIn = false;
     if (statusLabel)
         statusLabel->setText("Claiming…");
     showRpcOutcome(rpc("linkxaccount"), "Name claimed");
@@ -650,12 +672,23 @@ void XHome::onClaim()
 void XHome::onOAuthSuccess(const QString& username, const QString& userId)
 {
     Q_UNUSED(userId);
+    const bool continueClaim = claimAfterSignIn;
+    claimAfterSignIn = false;
+    // finishFromUsersMe already overwrote xsession.json and set the new token.
+    if (continueClaim && !xsession::ClaimBearer().empty()) {
+        if (statusLabel)
+            statusLabel->setText("Claiming…");
+        showRpcOutcome(rpc("linkxaccount"), "Name claimed");
+        refresh();
+        return;
+    }
     statusLabel->setText(QString("This wallet is now linked to @%1.").arg(username));
     refresh();
 }
 
 void XHome::onOAuthFailed(const QString& error)
 {
+    claimAfterSignIn = false;
     statusLabel->setObjectName("xstatuserr");
     statusLabel->style()->unpolish(statusLabel);
     statusLabel->style()->polish(statusLabel);

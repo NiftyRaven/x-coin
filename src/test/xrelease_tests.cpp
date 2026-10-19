@@ -27,9 +27,9 @@ BOOST_AUTO_TEST_CASE(parse_version_tags)
 
 BOOST_AUTO_TEST_CASE(running_matches_configure)
 {
-    BOOST_CHECK_EQUAL(xrelease::RunningVersionString(), "1.0.23");
-    BOOST_CHECK_EQUAL(xrelease::RunningTag(), "v1.0.23");
-    BOOST_CHECK_EQUAL(xrelease::RunningVersion(), 1002300);
+    BOOST_CHECK_EQUAL(xrelease::RunningVersionString(), "1.0.24");
+    BOOST_CHECK_EQUAL(xrelease::RunningTag(), "v1.0.24");
+    BOOST_CHECK_EQUAL(xrelease::RunningVersion(), 1002400);
     BOOST_CHECK(xrelease::BundledNotes().find("Unlock") != std::string::npos);
     BOOST_CHECK(xrelease::BundledNotes().find("assetindex") != std::string::npos);
     BOOST_CHECK(xrelease::BundledNotes().find("Client ID") != std::string::npos);
