@@ -604,6 +604,9 @@ int main(int argc, char *argv[])
     /// 1. Parse command-line options. These take precedence over anything else.
     // Command-line options take precedence:
     gArgs.ParseParameters(argc, argv);
+    // Record -datadir before anything else can set it. pickDataDirectory
+    // honors only this command-line value; the saved strDataDir wins otherwise.
+    Intro::RememberCommandLineDataDir();
 
     // Do not refer to data directory yet, this can be overridden by Intro::pickDataDirectory
 

@@ -11,6 +11,8 @@
 #include "intro.h"
 #include "ui_intro.h"
 
+#include "datadir_choice.h"
+#include "guiconstants.h"
 #include "guiutil.h"
 
 #include "util.h"
@@ -20,6 +22,9 @@
 #include <QMessageBox>
 
 #include <cmath>
+
+/** True only when the user passed -datadir on the command line. */
+static bool fDataDirFromCommandLine = false;
 
 static const uint64_t GB_BYTES = 1000000000LL;
 /* Minimum free space (in GB) needed for data directory */
@@ -182,13 +187,25 @@ QString Intro::getDefaultDataDirectory()
     return GUIUtil::boostPathToQString(GetDefaultDataDir());
 }
 
+void Intro::RememberCommandLineDataDir()
+{
+    fDataDirFromCommandLine = !gArgs.GetArg("-datadir", "").empty();
+}
+
 bool Intro::pickDataDirectory()
 {
-    QSettings settings;
-    /* If data directory provided on command line, no need to look at settings
-       or show a picking dialog */
-    if(!gArgs.GetArg("-datadir", "").empty())
+    /* Always the same registry key 1.0.8–1.0.24 wrote:
+       HKCU\Software\X Coin\X Coin  (Linux: ~/.config/X Coin/X Coin.conf).
+       Do not follow a later or earlier application name. */
+    QSettings settings(QSettings::NativeFormat, QSettings::UserScope,
+                       QString::fromLatin1(QAPP_ORG_NAME),
+                       QString::fromLatin1(QAPP_APP_NAME_DEFAULT));
+    /* Command-line -datadir wins. A -datadir that appeared after parsing
+       must not hide the saved folder (that is the 1.0.25 miss). */
+    if (fDataDirFromCommandLine) {
+        ClearDatadirCache();
         return true;
+    }
     /* 1) Default data directory for operating system */
     QString dataDir = getDefaultDataDirectory();
     /* 2) Allow QSettings to override default dir */
@@ -224,10 +241,16 @@ bool Intro::pickDataDirectory()
     }
     /* Only override -datadir if different from the default, to make it possible to
      * override -datadir in the xcoin.conf file in the default data directory
-     * (to be consistent with xcoind behavior)
+     * (to be consistent with xcoind behavior).
+     * ForceSetArg: a -datadir that was not on the command line must not win
+     * over the saved folder. ClearDatadirCache: GetDataDir keeps the first
+     * path it saw, which in 1.0.25 was the fresh default folder.
      */
-    if(dataDir != getDefaultDataDirectory())
-        gArgs.SoftSetArg("-datadir", GUIUtil::qstringToBoostPath(dataDir).string()); // use OS locale for path setting
+    const DataDirChoice choice = ChooseStartupDataDir(
+        false, "", dataDir.toStdString(), getDefaultDataDirectory().toStdString());
+    if (choice.setDataDirArg)
+        gArgs.ForceSetArg("-datadir", GUIUtil::qstringToBoostPath(dataDir).string()); // use OS locale for path setting
+    ClearDatadirCache();
     return true;
 }
 
