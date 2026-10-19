@@ -1,7 +1,7 @@
 name: Package X Coin 1.0.23 Light
 
 # Light wallet only: host/guest share, original Home. No Market.
-# Package from branch x-coin-light-1.0.23 (Light 1.0.23 wallet polish).
+# Package from branch projects/light-wallet-1-0-23-bea3 (Light 1.0.23).
 # Do not dispatch this against x-coin — that tree is Heavy.
 # Isolation smoke is fatal: a red smoke-isolation step fails the linux
 # job, so Package Linux never runs and the zip is not uploaded. Not the
@@ -15,7 +15,7 @@ on:
       ref:
         description: 'git ref to package (Light branch, not x-coin)'
         required: true
-        default: 'x-coin-light-1.0.23'
+        default: 'projects/light-wallet-1-0-23-bea3'
 
 jobs:
   linux:
