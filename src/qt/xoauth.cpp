@@ -493,6 +493,7 @@ bool XOAuth::finishFromUsersMe(const QByteArray& body, QString& err)
     }
     xsession::BindLotteryFromSession();
     CacheLinkedFromUsersMe(QString::fromStdString(me.username), me.verified);
+    xsession::SetClaimBearer(accessToken.toStdString());
     wipeSecrets();
     Q_EMIT signedIn(QString::fromStdString(me.username), QString());
     return true;

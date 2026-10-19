@@ -296,6 +296,8 @@ void BlockAssembler::addZeroFeeIdentityClaims()
             continue;
         if (!IsXAccountIdentityClaim(iter->GetTx()))
             continue;
+        if (XClaimProofBlocksInclusion(iter->GetTx()))
+            continue;
         if (!TestPackage(iter->GetTxSize(), iter->GetSigOpCost()))
             continue;
         if (!IsFinalTx(iter->GetTx(), nHeight, nLockTimeCutoff))
@@ -467,6 +469,25 @@ void BlockAssembler::addPackageTxs(int &nPackagesSelected, int &nDescendantsUpda
 
         onlyUnconfirmed(ancestors);
         ancestors.insert(iter);
+
+        // Defense in depth: an unproofed identity claim must not ride in
+        // through the fee-ordered package path when enforcement is on.
+        bool proofBlocked = false;
+        for (CTxMemPool::txiter a : ancestors) {
+            if (XClaimProofBlocksInclusion(a->GetTx())) {
+                proofBlocked = true;
+                break;
+            }
+        }
+        if (proofBlocked) {
+            if (fUsingModified) {
+                mapModifiedTx.get<ancestor_score>().erase(modit);
+                failedTx.insert(iter);
+            } else {
+                failedTx.insert(iter);
+            }
+            continue;
+        }
 
         // Test if all tx's are Final
         if (!TestPackageTransactions(ancestors)) {

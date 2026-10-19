@@ -718,6 +718,13 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
 
         CAmount mempoolRejectFee = pool.GetMinFee(gArgs.GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000).GetFee(nSize);
         const bool fIdentityClaim = IsXAccountIdentityClaim(tx);
+        // Policy only. DoS score 0 so a missing site proof does not ban the peer.
+        // Block connect is unchanged: this node still accepts blocks other nodes consider valid.
+        if (fIdentityClaim && XClaimProofEnforced()) {
+            std::string proofErr;
+            if (!CheckXClaimProof(tx, GetTime(), proofErr))
+                return state.DoS(0, false, REJECT_NONSTANDARD, proofErr);
+        }
         if (!bypass_limits && !fIdentityClaim && mempoolRejectFee > 0 && nModifiedFees < mempoolRejectFee) {
             return state.DoS(0, false, REJECT_INSUFFICIENTFEE, "mempool min fee not met", false, strprintf("%d < %d", nFees, mempoolRejectFee));
         }
