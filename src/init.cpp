@@ -45,9 +45,11 @@
 #include "ui_interface.h"
 #include "util.h"
 #include "utilmoneystr.h"
+#include "utilstrencodings.h"
 #include "validationinterface.h"
 #include "assets/assets.h"
 #include "assets/assetdb.h"
+#include "assets/xaccount.h"
 #include "assets/snapshotrequestdb.h"
 #ifdef ENABLE_WALLET
 #include "wallet/init.h"
@@ -612,6 +614,8 @@ std::string HelpMessage(HelpMessageMode mode)
     strUsage += HelpMessageOpt("-xallowlist=<file>", _("Load the operator invite / payout-pin list (not X Verified). Cannot exclude a verified wallet from the lottery"));
     strUsage += HelpMessageOpt("-xlookupbearer=<token>", _("Seed only. X API app bearer used to check that a handle is a live blue check. Or set XCOIN_X_BEARER. Never put this in the user wallet package. Seed does not Sign in."));
     strUsage += HelpMessageOpt("-xattestorkey=<file>", _("Seed only. Private key that stamps blue-check eligibility and signs XSD1 (default: datadir/xattestor.key). Must match the baked consensus pubkey. No Sign-in on the seed."));
+    strUsage += HelpMessageOpt("-xclaimproofpubkey=<id:hex>", _("Policy only. Repeatable, or a comma list. Each entry is a key id 0-255, a colon, and a 33-byte compressed pubkey (66 hex chars). When at least one key is set, the mempool and lottery block assembler reject an X identity claim whose XPF1 proof is missing, signed by an unknown key, expired, or bound to a different address, handle, or root. Empty leaves enforcement off. A structurally valid XPF1 is exempt from the datacarrier size limit up to 160 bytes either way. Does not change block validity. 1.0.19 and 1.0.20 peers do not relay the larger claim."));
+    strUsage += HelpMessageOpt("-xclaimproofurls=<url>", _("Comma list of XPF1 signer URLs the wallet tries, in order, after Sign in with X. Mainnet default is https://xferchain.net/api/x/claim-proof then http://172.191.195.221:38445/claim-proof. An explicit empty value disables fetch. Regtest and testnet default to empty, so local claims stay unproofed. If every signer is unreachable, only new claims pause."));
     strUsage += HelpMessageOpt("-xverified=<handle>", _("Add a handle to the operator invite list (repeatable; handle or handle:userid). This is not X Verified"));
     strUsage += HelpMessageOpt("-xreleaseurl=<url>", _("HTTPS JSON feed of GitHub-style releases for in-wallet What's new (default: api.github.com/repos/NiftyRaven/x-coin/releases). No wallet data is sent."));
     strUsage += HelpMessageOpt("-nocheckupdates", _("Do not fetch the release feed on GUI start. Help → What's new still shows notes for this version."));
@@ -1279,6 +1283,19 @@ bool AppInitParameterInteraction()
             }
         }
     }
+
+    {
+        std::string xclaimErr;
+        if (!SetXClaimProofPubkeys(gArgs.GetArgs("-xclaimproofpubkey"), xclaimErr))
+            return InitError(xclaimErr);
+        if (XClaimProofPubs().empty())
+            LogPrintf("xclaim: identity-claim proof enforcement off\n");
+        else {
+            LogPrintf("xclaim: identity-claim proof enforcement on (%u keys)\n", (unsigned)XClaimProofPubs().size());
+            for (const auto& kv : XClaimProofPubs())
+                LogPrintf("xclaim: signer pubkey id %u %s\n", (unsigned)kv.first, HexStr(kv.second.begin(), kv.second.end()));
+        }
+    }
     return true;
 }
 
@@ -1315,6 +1332,12 @@ bool AppInitSanityChecks()
     RandomInit();
     ECC_Start();
     globalVerifyHandle.reset(new ECCVerifyHandle());
+
+    {
+        std::string xclaimErr;
+        if (!XClaimProofPubReady(xclaimErr))
+            return InitError(xclaimErr);
+    }
 
     // Sanity check
     if (!InitSanityCheck())

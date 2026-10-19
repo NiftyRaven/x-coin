@@ -60,6 +60,13 @@ bool HasValidSession();
 void ClearSession();
 
 /**
+ * X OAuth access token, process RAM only. Used to authenticate
+ * POST /api/x/claim-proof. Never written to disk or logs. Cleared with the session.
+ */
+void SetClaimBearer(const std::string& token);
+std::string ClaimBearer();
+
+/**
  * Parse X API GET /2/users/me JSON.
  * Request user.fields=verified,verified_type. Example:
  * {"data":{"id":"...","username":"...","verified":true,"verified_type":"blue"}}

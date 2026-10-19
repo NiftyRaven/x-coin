@@ -11,6 +11,7 @@
 #include "fs.h"
 #include "lottery.h"
 #include "random.h"
+#include "support/cleanse.h"
 #include "sync.h"
 #include "util.h"
 #include "utilstrencodings.h"
@@ -31,6 +32,7 @@
 namespace xsession {
 
 static CCriticalSection cs_xsession;
+static std::string g_claimBearer;
 
 static std::string AsciiLower(const std::string& in)
 {
@@ -255,6 +257,23 @@ void ClearSession()
 {
     LOCK(cs_xsession);
     fs::remove(SessionPath());
+    if (!g_claimBearer.empty())
+        memory_cleanse(&g_claimBearer[0], g_claimBearer.size());
+    g_claimBearer.clear();
+}
+
+void SetClaimBearer(const std::string& token)
+{
+    LOCK(cs_xsession);
+    if (!g_claimBearer.empty())
+        memory_cleanse(&g_claimBearer[0], g_claimBearer.size());
+    g_claimBearer = token;
+}
+
+std::string ClaimBearer()
+{
+    LOCK(cs_xsession);
+    return g_claimBearer;
 }
 
 static bool ParseVerifiedField(const UniValue& data, bool& verified, std::string& verifiedType)

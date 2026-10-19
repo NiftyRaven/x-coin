@@ -123,11 +123,16 @@ bool IsStandardTx(const CTransaction& tx, std::string& reason, const bool witnes
 
     unsigned int nDataOut = 0;
     unsigned int nAssetDataOut = 0;
-    txnouttype whichType;
+    txnouttype whichType = TX_NONSTANDARD;
     for (const CTxOut& txout : tx.vout) {
         if (!::IsStandard(txout.scriptPubKey, whichType, witnessEnabled)) {
-            reason = "scriptpubkey";
-            return false;
+            // Identity claims with a structurally valid XPF1 are larger than
+            // MAX_OP_RETURN_RELAY. Relay them (policy only, hard cap 160).
+            if (!(whichType == TX_NULL_DATA && XClaimDatacarrierExempt(tx, txout.scriptPubKey))) {
+                reason = "scriptpubkey";
+                return false;
+            }
+            whichType = TX_NULL_DATA;
         }
 
         if (whichType == TX_NULL_DATA)

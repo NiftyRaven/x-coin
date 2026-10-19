@@ -5,6 +5,8 @@ This is the simple Home wallet. Heavy (Market + tree nav) is a parallel
 zip, not an upgrade. Do not run 1.0.13 or older if you need Share
 lottery wins. Seed is lottery law. Do **not** use **Code → Download ZIP**.
 
+In-tree Light reports **1.0.23**. The package workflow builds that zip. The links below stay on the published 1.0.21 Light release until that artifact is attached.
+
 - Windows: [X-Coin-1.0.21-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.21-light/X-Coin-1.0.21-Windows.zip)
 - Linux: [X-Coin-1.0.21-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.21-light/X-Coin-1.0.21-Linux-x86_64.tar.gz)
 

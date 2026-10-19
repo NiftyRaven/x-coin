@@ -3865,7 +3865,7 @@ std::string EncodeIPFS(std::string decoded){
 
 #ifdef ENABLE_WALLET
 /** Identity root: dummy vin unique per X handle, 0 XFER, 0 fee. Not a premine. */
-static bool CreateZeroFeeIdentityRootTransaction(CWallet* pwallet, const CNewAsset& asset, const std::string& address, const std::string& xHandle, CWalletTx& wtxNew, CAmount& nFeeRequired, std::pair<int, std::string>& error)
+static bool CreateZeroFeeIdentityRootTransaction(CWallet* pwallet, const CNewAsset& asset, const std::string& address, const std::string& xHandle, CWalletTx& wtxNew, CAmount& nFeeRequired, std::pair<int, std::string>& error, const std::vector<unsigned char>* xclaimProof)
 {
     nFeeRequired = 0;
     std::string handle;
@@ -3890,7 +3890,10 @@ static bool CreateZeroFeeIdentityRootTransaction(CWallet* pwallet, const CNewAss
     dummy.nSequence = CTxIn::SEQUENCE_FINAL;
     txNew.vin.push_back(dummy);
 
-    txNew.vout.push_back(CTxOut(0, MakeXAccountAssignmentScript(handle)));
+    if (xclaimProof && !xclaimProof->empty())
+        txNew.vout.push_back(CTxOut(0, MakeXAccountAssignmentScriptWithProof(handle, *xclaimProof)));
+    else
+        txNew.vout.push_back(CTxOut(0, MakeXAccountAssignmentScript(handle)));
 
     CScript ownerScript = GetScriptForDestination(dest);
     asset.ConstructOwnerTransaction(ownerScript);
@@ -3914,14 +3917,14 @@ static bool CreateZeroFeeIdentityRootTransaction(CWallet* pwallet, const CNewAss
     return true;
 }
 
-bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const CNewAsset& asset, const std::string& address, std::pair<int, std::string>& error, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRequired, std::string* verifier_string, const std::string* protocolXAccount)
+bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const CNewAsset& asset, const std::string& address, std::pair<int, std::string>& error, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRequired, std::string* verifier_string, const std::string* protocolXAccount, const std::vector<unsigned char>* xclaimProof)
 {
     std::vector<CNewAsset> assets;
     assets.push_back(asset);
-    return CreateAssetTransaction(pwallet, coinControl, assets, address, error, wtxNew, reservekey, nFeeRequired, verifier_string, protocolXAccount);
+    return CreateAssetTransaction(pwallet, coinControl, assets, address, error, wtxNew, reservekey, nFeeRequired, verifier_string, protocolXAccount, xclaimProof);
 }
 
-bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const std::vector<CNewAsset> assets, const std::string& address, std::pair<int, std::string>& error, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRequired, std::string* verifier_string, const std::string* protocolXAccount)
+bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const std::vector<CNewAsset> assets, const std::string& address, std::pair<int, std::string>& error, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRequired, std::string* verifier_string, const std::string* protocolXAccount, const std::vector<unsigned char>* xclaimProof)
 {
     const bool fProtocolRoot = protocolXAccount && !protocolXAccount->empty();
     std::string change_address = EncodeDestination(coinControl.destChange);
@@ -4007,7 +4010,7 @@ bool CreateAssetTransaction(CWallet* pwallet, CCoinControl& coinControl, const s
             return false;
         }
         LOCK2(cs_main, pwallet->cs_wallet);
-        return CreateZeroFeeIdentityRootTransaction(pwallet, assets[0], address, *protocolXAccount, wtxNew, nFeeRequired, error);
+        return CreateZeroFeeIdentityRootTransaction(pwallet, assets[0], address, *protocolXAccount, wtxNew, nFeeRequired, error, xclaimProof);
     }
 
     // Assign the correct burn amount and the correct burn address depending on the type of asset issuance that is happening

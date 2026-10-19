@@ -1,0 +1,12 @@
+{
+  "tag": "xcoin-xpf-v1",
+  "version": 1,
+  "keyId": 1,
+  "handle": "nftrvn",
+  "userId": 42,
+  "hash160": "00112233445566778899aabbccddeeff00112233",
+  "root": "NFTRVN",
+  "expiry": 1700000000,
+  "digest": "361f294d626307afb91212e39f67807f3557a049638d7e2d6969292cbdc8166c",
+  "note": "SHA256d of tag || u8 len+handle || userId u64 LE || hash160 || u8 len+root || expiry u32 LE || keyId u8. digest hex is hash byte 0 first, not uint256 GetHex. No private key."
+}
