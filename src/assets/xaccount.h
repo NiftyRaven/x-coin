@@ -11,8 +11,13 @@
 
 #include "amount.h"
 #include "primitives/transaction.h"
+#include "pubkey.h"
+#include "uint256.h"
 
+#include <cstdint>
+#include <map>
 #include <string>
+#include <vector>
 
 class CScript;
 class CAssetsCache;
@@ -36,6 +41,80 @@ bool DeriveMainAssetName(const std::string& xHandleOrId, std::string& outName, s
 CScript MakeXAccountAssignmentScript(const std::string& xId);
 bool ParseXAccountAssignmentScript(const CScript& script, std::string& xId);
 bool ParseXAccountAssignment(const CTransaction& tx, std::string& xId);
+
+/**
+ * Site proof (XPF1) on an identity claim. Policy only: the second push of the
+ * same OP_RETURN. ParseXAccountAssignmentScript still reads only the first
+ * push, so 1.0.17–1.0.22 nodes parse the claim the same way. Not consensus.
+ *
+ * Payload: "XPF1" | ver u8=1 | keyId u8 | userId u64 LE | expiry u32 LE | sig 65.
+ * Digest: SHA256d("xcoin-xpf-v1" || u8 len+handle || userId u64 LE ||
+ * hash160 of the P2PKH that receives the root and owner outputs ||
+ * u8 len+root name || expiry u32 LE || keyId u8).
+ * Any configured signer pubkey may verify. Enforcement is off when none are set.
+ */
+static const unsigned char XCLAIM_PROOF_VERSION = 1;
+static const unsigned int XCLAIM_PROOF_PAYLOAD_SIZE = 4 + 1 + 1 + 8 + 4 + 65;
+static const int64_t XCLAIM_PROOF_MAX_FUTURE = 3600;
+/** Hard cap for a structurally valid XPF1 script. Above MAX_OP_RETURN_RELAY. */
+static const unsigned int MAX_XCLAIM_DATACARRIER_BYTES = 160;
+
+struct XClaimProof {
+    uint8_t keyId;
+    uint64_t userId;
+    uint32_t expiry;
+    std::vector<unsigned char> sig;
+
+    XClaimProof() : keyId(0), userId(0), expiry(0) {}
+};
+
+bool BuildXClaimProofPayload(uint8_t keyId, uint64_t userId, uint32_t expiry, const std::vector<unsigned char>& sig, std::vector<unsigned char>& out);
+CScript MakeXAccountAssignmentScriptWithProof(const std::string& xId, const std::vector<unsigned char>& proofPayload);
+/** True when the XID1 output carries a structurally valid XPF1 second push. */
+bool ParseXClaimProof(const CTransaction& tx, XClaimProof& proof);
+uint256 XClaimProofDigest(const std::string& handle, uint64_t userId, const uint160& addrHash, const std::string& root, uint32_t expiry, uint8_t keyId);
+/**
+ * Reasons: xclaim-proof-missing, xclaim-proof-bad-sig, xclaim-proof-expired,
+ * xclaim-proof-mismatch. Expiry must be > now and <= now+3600.
+ * Unknown key id and a bad signature are both xclaim-proof-bad-sig.
+ * Uses the configured signer set. Enforcement off skips this in the mempool.
+ */
+bool CheckXClaimProof(const CTransaction& tx, int64_t now, std::string& err);
+
+/** Empty -xclaimproofpubkey means enforcement is off. */
+bool XClaimProofEnforced();
+const std::map<uint8_t, CPubKey>& XClaimProofPubs();
+/**
+ * Each entry is "id:66hex" or a comma list of those. Repeatable.
+ * Duplicate id is an error. Empty list turns enforcement off.
+ * Format only: curve check is XClaimProofPubReady, after ECC_Start.
+ */
+bool SetXClaimProofPubkeys(const std::vector<std::string>& specs, std::string& err);
+/** Call after ECC_Start. Rejects an off-curve signer pubkey. */
+bool XClaimProofPubReady(std::string& err);
+void SetXClaimProofPubsForTest(const std::map<uint8_t, CPubKey>& pubs);
+/**
+ * Signer URL list. Explicit -xclaimproofurls (including empty) wins.
+ * Unset on mainnet defaults to the live site, then the seed standby port.
+ * Unset on regtest and testnet is empty, so local claims stay unproofed.
+ */
+std::vector<std::string> XClaimProofUrls();
+/** True when a new identity claim must carry XPF1 before broadcast. */
+bool XClaimProofShouldAttach();
+typedef bool (*XClaimHttpPostFn)(const std::string& url, const std::string& bearer, const std::string& body, int& httpStatus, std::string& response, std::string& err);
+void SetXClaimHttpPostForTest(XClaimHttpPostFn fn);
+/** Parse a signer JSON body into an XPF1 payload. No network. */
+bool XClaimProofFromSignerJson(const std::string& json, const std::string& handle, uint64_t userId, const std::string& address, const std::string& root, int64_t now, std::vector<unsigned char>& payload, std::string& err);
+/** POST the claim fields to the URL list and attach a proof. Does not broadcast. */
+bool FetchXClaimProof(const std::string& handle, uint64_t userId, const std::string& address, const std::string& root, std::vector<unsigned char>& payload, std::string& err);
+/** Policy: skip this tx in the block template when enforcement rejects it. */
+bool XClaimProofBlocksInclusion(const CTransaction& tx);
+/** True when an oversized null-data script is an identity claim with structural XPF1. */
+bool XClaimDatacarrierExempt(const CTransaction& tx, const CScript& scriptPubKey);
+/** Shown when the signer cannot be reached. Coins, Launch, and existing names keep working. */
+const char* XClaimSignerUnreachableMessage();
+const char* XClaimSignInAgainMessage();
+std::string FormatXClaimWalletError(const std::string& raw);
 
 /**
  * Zero-fee identity-root claims cannot use an empty vin (BIP144 treats
