@@ -1,12 +1,12 @@
 Download the wallets from GitHub Releases, not **Code → Download ZIP**.
 
-**Heavy 1.0.26** (Market + tree nav) is the only wallet offered.
-[v1.0.26](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.26)
+**Heavy 1.0.27** (Market + tree nav) is the only wallet offered.
+[v1.0.27](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.27)
 
-- [Windows Heavy](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.26/X-Coin-1.0.26-Windows.zip) → **X Coin Wallet.exe**
-- [Linux Heavy](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.26/X-Coin-1.0.26-Linux-x86_64.tar.gz) → **X Coin Wallet**
+- [Windows Heavy](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.27/X-Coin-1.0.27-Windows.zip) → **X Coin Wallet.exe**
+- [Linux Heavy](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.27/X-Coin-1.0.27-Linux-x86_64.tar.gz) → **X Coin Wallet**
 
-Claiming a name needs Heavy 1.0.26 and Sign in with X. Light and older
+Claiming a name needs Heavy 1.0.27 and Sign in with X. Light and older
 wallets are no longer supported.
 
 Practice starts are labeled **X Coin Practice Wallet** and always pass

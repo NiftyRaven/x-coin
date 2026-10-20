@@ -1,14 +1,14 @@
 # X Coin (XFER)
 
-**Heavy 1.0.26** is the only wallet offered. Claiming a name needs Heavy
-1.0.26 and Sign in with X. Light and older wallets are no longer supported.
+**Heavy 1.0.27** is the only wallet offered. Claiming a name needs Heavy
+1.0.27 and Sign in with X. Light and older wallets are no longer supported.
 Do **not** use **Code → Download ZIP**.
 
-**Heavy (Windows):** [X-Coin-1.0.26-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.26/X-Coin-1.0.26-Windows.zip)
+**Heavy (Windows):** [X-Coin-1.0.27-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.27/X-Coin-1.0.27-Windows.zip)
 
-**Heavy (Linux):** [X-Coin-1.0.26-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.26/X-Coin-1.0.26-Linux-x86_64.tar.gz)
+**Heavy (Linux):** [X-Coin-1.0.27-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.27/X-Coin-1.0.27-Linux-x86_64.tar.gz)
 
-Release: [v1.0.26](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.26). SHA-256 for every file: [SHA256SUMS](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.26/SHA256SUMS).
+Release: [v1.0.27](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.27). SHA-256 for every file: [SHA256SUMS](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.27/SHA256SUMS).
 
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
@@ -22,7 +22,7 @@ on **Linux** and **Windows**.
 
 ### Windows, double-click
 
-1. Download [X-Coin-1.0.26-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.26/X-Coin-1.0.26-Windows.zip).
+1. Download [X-Coin-1.0.27-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.27/X-Coin-1.0.27-Windows.zip).
 2. Right-click → Extract All.
 3. Open the folder that appears. **X Coin Wallet.exe** is in that first folder.
 4. Double-click **X Coin Wallet.exe**. The wallet window opens.
@@ -36,8 +36,8 @@ Wallet.exe** only. Do not open the real wallet until launch night.
 
 ### Linux, double-click
 
-1. Download [X-Coin-1.0.26-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.26/X-Coin-1.0.26-Linux-x86_64.tar.gz).
-2. Right-click → Extract, or run `tar -xzf X-Coin-1.0.26-Linux-x86_64.tar.gz`.
+1. Download [X-Coin-1.0.27-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.27/X-Coin-1.0.27-Linux-x86_64.tar.gz).
+2. Right-click → Extract, or run `tar -xzf X-Coin-1.0.27-Linux-x86_64.tar.gz`.
 3. Open the folder that appears. **X Coin Wallet** is in that first folder.
 4. Double-click **X Coin Wallet**. The wallet window opens. You do not
    need a terminal.
@@ -133,7 +133,7 @@ receive work without Sign in with X (normal wallet). Sign in with
 X is required to claim your **one free root**. Lottery additionally
 needs **X Verified** (blue check).
 
-**Heavy 1.0.26** — left tree:
+**Heavy 1.0.27** — left tree:
 
 | | |
 | --- | --- |
@@ -152,7 +152,7 @@ A typed handle is not Verified X and cannot claim someone else's root.
 First run still asks for a **12-word BIP39 seed** (create or restore).
 Sign in with X is a separate identity proof on this node.
 
-Heavy notes: [docs/RELEASE-1.0.26.md](docs/RELEASE-1.0.26.md).
+Heavy notes: [docs/RELEASE-1.0.27.md](docs/RELEASE-1.0.27.md).
 Market: [docs/MARKET.md](docs/MARKET.md).
 Operator Client ID for live login (not a user paste field; one line in
 the `xcoin.conf` shipped in the Windows and Linux folders):
