@@ -36,6 +36,7 @@ class XSwap;
 QT_BEGIN_NAMESPACE
 class QModelIndex;
 class QProgressDialog;
+class QScrollArea;
 QT_END_NAMESPACE
 
 /*
@@ -77,6 +78,7 @@ private:
     WalletModel *walletModel;
 
     OverviewPage *overviewPage;
+    QScrollArea *overviewScroll;
     QWidget *transactionsPage;
     ReceiveCoinsDialog *receiveCoinsPage;
     SendCoinsDialog *sendCoinsPage;

@@ -35,6 +35,8 @@
 #include <QMessageBox>
 #include <QShowEvent>
 #include <QSizePolicy>
+#include <QFontMetrics>
+#include <QList>
 #include <validation.h>
 #include <utiltime.h>
 
@@ -785,7 +787,9 @@ void OverviewPage::applyChrome()
     ui->frame->setStyleSheet(cardCss("frame"));
     ui->frame_2->setStyleSheet(cardCss("frame_2"));
     ui->assetFrame->setStyleSheet(cardCss("assetFrame"));
-    ui->frame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+    // Minimum, not Maximum: Maximum lets the asset list steal height and
+    // squash these cards below their text. That is the overlap at 125%+.
+    ui->frame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
     ui->assetFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
     ui->frame_2->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
 
@@ -867,9 +871,13 @@ void OverviewPage::applyChrome()
     QFrame* lotteryFrame = findChild<QFrame*>(QStringLiteral("lotteryFrame"));
     if (lotteryFrame) {
         lotteryFrame->setGraphicsEffect(nullptr);
-        lotteryFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+        lotteryFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
         lotteryFrame->setStyleSheet(QStringLiteral(
             "QFrame#lotteryFrame { background-color: transparent; border: none; }"));
+        // Same inset as the balance card, so the heading does not draw
+        // past that card's left edge. Negative letter-spacing needs the room.
+        if (QLayout* lotteryLay = lotteryFrame->layout())
+            lotteryLay->setContentsMargins(18, 6, 18, 6);
     }
     if (lotteryTitle) {
         QFont lotteryFont = caption;
@@ -906,7 +914,9 @@ void OverviewPage::applyChrome()
         "QLineEdit:focus { border: 1px solid %4; }")
         .arg(field, text, border, muted);
     ui->assetSearch->setStyleSheet(editCss);
-    ui->assetSearch->setMinimumHeight(36);
+    // The form caps this at 30px. A larger font or 125%+ scale then clips the text.
+    ui->assetSearch->setMaximumHeight(QWIDGETSIZE_MAX);
+    ui->assetSearch->setMinimumHeight(qMax(36, QFontMetrics(ui->assetSearch->font()).height() + 16));
     if (sendDest)
         sendDest->setStyleSheet(editCss);
     if (sendAmount)
@@ -917,7 +927,7 @@ void OverviewPage::applyChrome()
         sendCard->setStyleSheet(QStringLiteral(
             "QFrame#balanceSendCard { background-color: %1; border: 1px solid %2; border-radius: 14px; }")
             .arg(card, border));
-        sendCard->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+        sendCard->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
     }
     if (QLabel* sendTitle = findChild<QLabel*>(QStringLiteral("balanceSendTitle"))) {
         sendTitle->setFont(section);
@@ -946,6 +956,34 @@ void OverviewPage::applyChrome()
         coinSummary->setStyleSheet(quiet);
     if (sendStatus)
         sendStatus->setStyleSheet(quiet);
+
+    // One line of text is the floor. Maximum-policy cards were shrinking
+    // these below the font, which clips the balance rows and stacks Send.
+    auto keepLine = [](QWidget* w) {
+        if (!w)
+            return;
+        const int line = QFontMetrics(w->font()).lineSpacing() + 4;
+        if (w->minimumHeight() < line)
+            w->setMinimumHeight(line);
+        QSizePolicy pol = w->sizePolicy();
+        pol.setVerticalPolicy(QSizePolicy::Minimum);
+        w->setSizePolicy(pol);
+    };
+    const QList<QWidget*> lines = {
+        ui->rvnBalancesLabel, ui->labelBalanceText, ui->labelPendingText, ui->labelImmatureText,
+        ui->labelTotalText, ui->labelSpendable, ui->labelWatchonly,
+        ui->labelBalance, ui->labelUnconfirmed, ui->labelImmature, ui->labelTotal,
+        ui->labelWatchAvailable, ui->labelWatchPending, ui->labelWatchImmature, ui->labelWatchTotal,
+        lotteryTitle, lotteryStatus, lotteryDetail, usdtLabel,
+        findChild<QLabel*>(QStringLiteral("balanceSendTitle")),
+        sendDest, sendAmount, coinControlCheck, chooseCoinsBtn, coinSummary, sendStatus
+    };
+    for (QWidget* w : lines)
+        keepLine(w);
+    if (QPushButton* sendBtn = findChild<QPushButton*>(QStringLiteral("balanceSendBtn"))) {
+        const int line = QFontMetrics(sendBtn->font()).lineSpacing() + 20;
+        sendBtn->setMinimumHeight(qMax(40, line));
+    }
 }
 
 void OverviewPage::buildSendCard()

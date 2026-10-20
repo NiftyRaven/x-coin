@@ -42,6 +42,8 @@
 #include <QAction>
 #include <QActionGroup>
 #include <QFileDialog>
+#include <QScrollArea>
+#include <QSizePolicy>
 #include <QHBoxLayout>
 #include <QProgressDialog>
 #include <QPushButton>
@@ -56,6 +58,13 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
 {
     // Create tabs
     overviewPage = new OverviewPage(platformStyle);
+    overviewPage->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Minimum);
+    overviewScroll = new QScrollArea(this);
+    overviewScroll->setObjectName(QStringLiteral("overviewScroll"));
+    overviewScroll->setFrameShape(QFrame::NoFrame);
+    overviewScroll->setWidgetResizable(true);
+    overviewScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    overviewScroll->setWidget(overviewPage);
 
     transactionsPage = new QWidget(this);
     QVBoxLayout *vbox = new QVBoxLayout();
@@ -92,7 +101,7 @@ WalletView::WalletView(const PlatformStyle *_platformStyle, QWidget *parent):
     addWidget(xHome);
     addWidget(xReceive);
     addWidget(xSend);
-    addWidget(overviewPage);
+    addWidget(overviewScroll);
     addWidget(transactionsPage);
     addWidget(receiveCoinsPage);
     addWidget(sendCoinsPage);
@@ -296,7 +305,7 @@ void WalletView::gotoOverviewPage()
 
 void WalletView::gotoBalancesPage()
 {
-    setCurrentWidget(overviewPage);
+    setCurrentWidget(overviewScroll);
     Q_EMIT checkAssets();
 }
 
