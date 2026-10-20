@@ -1,29 +1,14 @@
 # X Coin (XFER)
 
-Two wallets. **Same chain.** Same 12-word data folder. Pick one.
-
-| | **Light 1.0.20** | **Heavy 1.0.26** |
-| --- | --- | --- |
-| Feel | Simple Home buttons | Tree nav, more pages |
-| Share lottery wins | On Home | **Rewards → Lottery share** |
-| Market (list bags for XFER) | No | **Assets → Market** |
-| Zip | [v1.0.20-light](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.20-light) | [v1.0.26](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.26) |
-
-Stay on **Light** if you want the original wallet. Use **Heavy** only if
-you want Market. Do **not** use **Code → Download ZIP**. Seed is lottery
-law. Do not run 1.0.16 Heavy or older if you need Home unlock / dark
-sync / default `assetindex=1`. Do not run 1.0.17 Heavy or older if you
-need Sign in with X (Client ID rotated).
-
-**Light (Windows):** [X-Coin-1.0.16-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16-light/X-Coin-1.0.16-Windows.zip)
-
-**Light (Linux):** [X-Coin-1.0.16-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16-light/X-Coin-1.0.16-Linux-x86_64.tar.gz)
+**Heavy 1.0.26** is the only wallet offered. Claiming a name needs Heavy
+1.0.26 and Sign in with X. Light and older wallets are no longer supported.
+Do **not** use **Code → Download ZIP**.
 
 **Heavy (Windows):** [X-Coin-1.0.26-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.26/X-Coin-1.0.26-Windows.zip)
 
 **Heavy (Linux):** [X-Coin-1.0.26-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.26/X-Coin-1.0.26-Linux-x86_64.tar.gz)
 
-Heavy 1.0.26 is the published zip. SHA-256 for every file: [SHA256SUMS](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.26/SHA256SUMS).
+Release: [v1.0.26](https://github.com/NiftyRaven/x-coin/releases/tag/v1.0.26). SHA-256 for every file: [SHA256SUMS](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.26/SHA256SUMS).
 
 **Nifty Raven** (@NFTRVN on X)  
 Anonymous public identity — display name and handle only.
@@ -37,7 +22,7 @@ on **Linux** and **Windows**.
 
 ### Windows, double-click
 
-1. Download [X-Coin-1.0.16-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16-light/X-Coin-1.0.16-Windows.zip).
+1. Download [X-Coin-1.0.26-Windows.zip](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.26/X-Coin-1.0.26-Windows.zip).
 2. Right-click → Extract All.
 3. Open the folder that appears. **X Coin Wallet.exe** is in that first folder.
 4. Double-click **X Coin Wallet.exe**. The wallet window opens.
@@ -51,8 +36,8 @@ Wallet.exe** only. Do not open the real wallet until launch night.
 
 ### Linux, double-click
 
-1. Download [X-Coin-1.0.16-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.16-light/X-Coin-1.0.16-Linux-x86_64.tar.gz).
-2. Right-click → Extract, or run `tar -xzf X-Coin-1.0.16-Linux-x86_64.tar.gz`.
+1. Download [X-Coin-1.0.26-Linux-x86_64.tar.gz](https://github.com/NiftyRaven/x-coin/releases/download/v1.0.26/X-Coin-1.0.26-Linux-x86_64.tar.gz).
+2. Right-click → Extract, or run `tar -xzf X-Coin-1.0.26-Linux-x86_64.tar.gz`.
 3. Open the folder that appears. **X Coin Wallet** is in that first folder.
 4. Double-click **X Coin Wallet**. The wallet window opens. You do not
    need a terminal.
@@ -148,11 +133,7 @@ receive work without Sign in with X (normal wallet). Sign in with
 X is required to claim your **one free root**. Lottery additionally
 needs **X Verified** (blue check).
 
-**Light 1.0.14** — Home is buttons first: Sign in with X, lottery,
-Receive, Send, Activity, Transfer assets, Share lottery wins. Left-nav
-**Assets** is Create (sub / unique). No Market.
-
-**Heavy 1.0.15** — left tree:
+**Heavy 1.0.26** — left tree:
 
 | | |
 | --- | --- |
@@ -164,16 +145,14 @@ Receive, Send, Activity, Transfer assets, Share lottery wins. Left-nav
 
 Home is the name card. Receive always shows an address and QR. Send
 takes `@handle` or an `X…` address. **Assets → Market** lists a bag
-for XFER; other Heavy wallets buy it. Light ignores those listings and
-still confirms the buy.
+for XFER; other Heavy wallets buy it.
 
 A typed handle is not Verified X and cannot claim someone else's root.
 
 First run still asks for a **12-word BIP39 seed** (create or restore).
 Sign in with X is a separate identity proof on this node.
 
-Light notes: [docs/RELEASE-1.0.14.md](docs/RELEASE-1.0.14.md).
-Heavy notes: [docs/RELEASE-1.0.15.md](docs/RELEASE-1.0.15.md).
+Heavy notes: [docs/RELEASE-1.0.26.md](docs/RELEASE-1.0.26.md).
 Market: [docs/MARKET.md](docs/MARKET.md).
 Operator Client ID for live login (not a user paste field; one line in
 the `xcoin.conf` shipped in the Windows and Linux folders):
