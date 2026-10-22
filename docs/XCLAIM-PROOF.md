@@ -140,6 +140,8 @@ python3 contrib/xcoin/xclaim-signer.py \
 
 The script decrypts into memory, checks the caller's X access token with `GET https://api.twitter.com/2/users/me`, rate-limits, and signs key id 2. It does not start or stop `xcoind`. Stop the script and close port 38445 when the live signer is back. Shred any accidental plaintext.
 
+Each request writes one line to stdout. When the process runs under systemd, that stdout is in the journal (`journalctl -u <unit>`). The line matches the x-coin-web field order, with a UTC timestamp after the prefix: `XCLAIM: 2026-10-22T19:11:05.006Z route=/claim-proof handle=<h> address=<a> result=ok error=- status=200 durationMs=6`. A missing handle or address, or a value that is not a handle or a wallet address, is `-`. The line does not include tokens, cookies, OAuth codes, signatures, passphrases, or key material.
+
 Needs `coincurve` (`pip install --user coincurve`) for the recoverable signature. `--self-check src/test/data/xpf1-vector.json` checks the digest with no key.
 
 ## 6. Rollback order
