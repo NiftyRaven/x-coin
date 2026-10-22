@@ -3,6 +3,11 @@
 # Does not start or stop xcoind. Decrypts an openssl ciphertext into memory
 # only. Never prints the private key.
 #
+# One stdout line per request (journald reads that stream under systemd):
+#   XCLAIM: <time> route=<path> handle=<h> address=<a> result=ok|error error=<code> status=<n> durationMs=<ms>
+# Never put tokens, cookies, OAuth codes, signatures, passphrases, or key
+# material on that line. Query strings are dropped before the route is logged.
+#
 #   openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -in key.hex -out key.hex.enc
 #
 # Default bind is 127.0.0.1. Use --bind 0.0.0.0 only while the live signer
@@ -13,6 +18,7 @@ import getpass
 import hashlib
 import json
 import os
+import re
 import struct
 import subprocess
 import sys
@@ -147,12 +153,171 @@ def users_me(bearer, mock):
     return str(data.get("id") or ""), str(data.get("username") or "").lower()
 
 
+# Same fields as the x-coin-web line, plus a UTC timestamp after the prefix.
+#   XCLAIM: 2026-10-22T19:11:05.006Z route=/claim-proof handle=<h> address=<a> result=ok error=- status=200 durationMs=6
+_LOG_LOCK = threading.Lock()
+_HANDLE_RE = re.compile(r"[a-z0-9_]{1,15}\Z")
+_ADDRESS_RE = re.compile(r"[1-9A-HJ-NP-Za-km-z]{26,35}\Z")
+_ROUTE_RE = re.compile(r"/(?:[A-Za-z0-9_-]{1,24})(?:/[A-Za-z0-9_-]{1,24}){0,4}\Z")
+_ERROR_RE = re.compile(r"[a-z0-9-]{1,32}\Z")
+_TS_RE = re.compile(r"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z\Z")
+_STATUS_ERROR = {
+    400: "bad-request",
+    401: "sign-in-again",
+    403: "mismatch",
+    404: "not-found",
+    408: "timeout",
+    414: "bad-request",
+    429: "rate-limited",
+    431: "bad-request",
+    500: "internal",
+    501: "method",
+    505: "bad-request",
+}
+
+
+def xclaim_timestamp(now=None):
+    if now is None:
+        now = time.time()
+    seconds = int(now)
+    millis = int((now - seconds) * 1000)
+    if millis >= 1000:
+        seconds += 1
+        millis = 0
+    return time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(seconds)) + ".%03dZ" % millis
+
+
+def xclaim_log_handle(handle):
+    if not isinstance(handle, str):
+        return "-"
+    text = handle.strip().lower()
+    if _HANDLE_RE.fullmatch(text):
+        return text
+    return "-"
+
+
+def xclaim_log_address(address):
+    # Wallet addresses only. A 64-hex key, a WIF, or a token pasted into
+    # this field must not be written. Missing stays "-".
+    if not isinstance(address, str):
+        return "-"
+    text = address.strip()
+    if not text:
+        return "-"
+    if _ADDRESS_RE.fullmatch(text):
+        return text
+    return "-"
+
+
+def xclaim_log_route(path):
+    if not isinstance(path, str) or not path:
+        return "-"
+    route = path.split("?", 1)[0].split("#", 1)[0]
+    if _ROUTE_RE.fullmatch(route):
+        return route
+    return "-"
+
+
+def xclaim_log_error(error, result):
+    if result == "ok":
+        return "-"
+    if not isinstance(error, str):
+        return "error"
+    text = error.strip()
+    if _ERROR_RE.fullmatch(text):
+        return text
+    return "error"
+
+
+def format_xclaim_log(route, handle, address, result, error, status, duration_ms, now=None):
+    result_s = "ok" if result == "ok" else "error"
+    try:
+        status_i = int(status)
+    except (TypeError, ValueError):
+        status_i = 0
+    try:
+        duration_i = int(duration_ms)
+    except (TypeError, ValueError):
+        duration_i = 0
+    if duration_i < 0:
+        duration_i = 0
+    ts = now if isinstance(now, str) and _TS_RE.fullmatch(now) else xclaim_timestamp()
+    return (
+        "XCLAIM: %s route=%s handle=%s address=%s result=%s error=%s status=%d durationMs=%d"
+        % (
+            ts,
+            xclaim_log_route(route),
+            xclaim_log_handle(handle),
+            xclaim_log_address(address),
+            result_s,
+            xclaim_log_error(error, result_s),
+            status_i,
+            duration_i,
+        )
+    )
+
+
+def write_xclaim_log(route, handle, address, result, error, status, duration_ms):
+    line = format_xclaim_log(route, handle, address, result, error, status, duration_ms) + "\n"
+    with _LOG_LOCK:
+        sys.stdout.write(line)
+        sys.stdout.flush()
+
+
 def make_handler(key32, key_id, limiter, mock):
     class Handler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.0"
 
         def log_message(self, fmt, *args):
-            sys.stderr.write("xclaim-signer %s\n" % (fmt % args))
+            # The default line repeats the request target. A query string can
+            # carry an OAuth code, so the only per-request line is write_xclaim_log.
+            return
+
+        def handle_one_request(self):
+            self._xclaim_logged = False
+            self._xclaim_started = time.monotonic()
+            self._xclaim_status = None
+            self._log_handle = ""
+            self._log_address = ""
+            try:
+                super().handle_one_request()
+            finally:
+                raw = getattr(self, "raw_requestline", b"") or b""
+                if raw.strip() and not self._xclaim_logged:
+                    status = self._xclaim_status
+                    if status is None:
+                        status = 408
+                        error = "timeout"
+                        result = "error"
+                    else:
+                        error = _STATUS_ERROR.get(int(status), "error")
+                        result = "ok" if int(status) < 400 else "error"
+                        if result == "ok":
+                            error = "-"
+                    self._emit_log(result, error, status)
+
+        def send_response(self, code, message=None):
+            self._xclaim_status = int(code)
+            super().send_response(code, message)
+
+        def _emit_log(self, result, error, status):
+            if getattr(self, "_xclaim_logged", False):
+                return
+            self._xclaim_logged = True
+            started = getattr(self, "_xclaim_started", None)
+            if started is None:
+                duration_ms = 0
+            else:
+                duration_ms = int((time.monotonic() - started) * 1000)
+            write_xclaim_log(
+                getattr(self, "path", "") or "",
+                getattr(self, "_log_handle", "") or "",
+                getattr(self, "_log_address", "") or "",
+                result,
+                error,
+                status,
+                duration_ms,
+            )
 
         def _send(self, code, obj):
             raw = json.dumps(obj).encode()
@@ -162,33 +327,45 @@ def make_handler(key32, key_id, limiter, mock):
             self.end_headers()
             self.wfile.write(raw)
 
-        def do_POST(self):
-            if self.path.split("?", 1)[0] not in ("/claim-proof", "/api/x/claim-proof"):
+        def _claim_proof(self):
+            route = self.path.split("?", 1)[0]
+            if route not in ("/claim-proof", "/api/x/claim-proof"):
                 self._send(404, {"ok": False, "error": "not-found"})
-                return
+                return 404, "not-found"
             ip = self.client_address[0]
             if not limiter.allow("ip:" + ip, 30, 60):
                 self._send(429, {"ok": False, "error": "rate-limited"})
-                return
-            n = int(self.headers.get("Content-Length") or "0")
+                return 429, "rate-limited"
+            try:
+                n = int(self.headers.get("Content-Length") or "0")
+            except (TypeError, ValueError):
+                self._send(400, {"ok": False, "error": "bad-body"})
+                return 400, "bad-body"
             if n <= 0 or n > 4096:
                 self._send(400, {"ok": False, "error": "bad-body"})
-                return
+                return 400, "bad-body"
             try:
                 req = json.loads(self.rfile.read(n).decode())
             except Exception:
                 self._send(400, {"ok": False, "error": "bad-json"})
-                return
+                return 400, "bad-json"
+            if not isinstance(req, dict):
+                self._send(400, {"ok": False, "error": "bad-json"})
+                return 400, "bad-json"
+            handle_v = req.get("handle")
+            address_v = req.get("address")
+            self._log_handle = handle_v if isinstance(handle_v, str) else ""
+            self._log_address = address_v if isinstance(address_v, str) else ""
             auth = self.headers.get("Authorization") or ""
             if not auth.startswith("Bearer ") or len(auth) < 12:
                 self._send(401, {"ok": False, "error": "sign-in-again"})
-                return
+                return 401, "sign-in-again"
             bearer = auth[7:].strip()
             try:
                 uid, username = users_me(bearer, mock)
             except Exception:
                 self._send(401, {"ok": False, "error": "sign-in-again"})
-                return
+                return 401, "sign-in-again"
             handle = str(req.get("handle") or "").lower()
             root = str(req.get("root") or "")
             address = str(req.get("address") or "")
@@ -196,22 +373,22 @@ def make_handler(key32, key_id, limiter, mock):
                 req_uid = int(req.get("userId"))
             except Exception:
                 self._send(400, {"ok": False, "error": "bad-user"})
-                return
+                return 400, "bad-user"
             if not uid or username != handle or str(req_uid) != uid:
                 self._send(403, {"ok": False, "error": "mismatch"})
-                return
+                return 403, "mismatch"
             if not limiter.allow("user:" + uid, 10, 60):
                 self._send(429, {"ok": False, "error": "rate-limited"})
-                return
+                return 429, "rate-limited"
             try:
                 h160 = b58_hash160(address)
             except Exception:
                 self._send(400, {"ok": False, "error": "bad-address"})
-                return
+                return 400, "bad-address"
             expiry = int(time.time()) + EXPIRY_TTL
             if expiry - int(time.time()) > MAX_FUTURE:
                 self._send(500, {"ok": False, "error": "expiry"})
-                return
+                return 500, "expiry"
             sig = sign_compact(key32, digest(handle, req_uid, h160, root, expiry, key_id))
             self._send(200, {
                 "ok": True,
@@ -223,6 +400,25 @@ def make_handler(key32, key_id, limiter, mock):
                 "root": root,
                 "address": address,
             })
+            return 200, "-"
+
+        def do_POST(self):
+            status = 500
+            error = "internal"
+            try:
+                status, error = self._claim_proof()
+            except Exception:
+                if self._xclaim_status is None:
+                    try:
+                        self._send(500, {"ok": False, "error": "internal"})
+                    except Exception:
+                        status = 500
+                        error = "internal"
+                status = self._xclaim_status if self._xclaim_status is not None else 500
+                error = "internal"
+            finally:
+                result = "ok" if status == 200 and error == "-" else "error"
+                self._emit_log(result, "-" if result == "ok" else error, status)
 
     return Handler
 
