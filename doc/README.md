@@ -35,8 +35,7 @@ sudo apt install build-essential libtool autotools-dev automake pkg-config \
 ```
 
 BDB 5.3 is accepted with `--with-incompatible-bdb`. A wallet is required to
-produce lottery blocks. Man pages under `doc/man/` and files under
-`doc/release-notes/` are imported stubs (old version strings and raven.org
+produce lottery blocks. Man pages under `doc/man/` are imported stubs (old version strings and raven.org
 URLs); use `--help` / `--version` on the binaries and
 [docs/RELEASE-1.0.md](../docs/RELEASE-1.0.md),
 [docs/RELEASE-1.0.14.md](../docs/RELEASE-1.0.14.md) (Light), and
