@@ -62,5 +62,28 @@ Consensus rules, header/PoW validation (X16R genesis, KawPoW header checks), cha
 ### Phase 8 — (LATER / OPTIONAL) BDB 4.8 → descriptor (SQLite) wallets
 - Requires migration tool (`migratewallet`), backward-compat docs, extensive tests on wallet copies. Not part of this release unless owner requests.
 
+### Phase H — Hat payout change (CONSENSUS, HIGH RISK, owner-confirmed for this release)
+**Rule (owner-confirmed):**
+- Verified winner: full 5,000 XFER subsidy + the entire bonus pot.
+- Unverified winner: 25% (1,250) paid to the winner, 10% (500) added to an **uncapped** bonus pot carried to the next verified winner, 65% (3,250) **provably burned**.
+- Pot total shown live on the Hat page.
+
+**Where it lives (audit of d0d2039):** in **core consensus**, not in the bot or the web site.
+- Draw + payout: `src/lottery.cpp` `ComputeDraw()` / `SplitReward()` / `ApplyCoinbasePayouts()` (called from `src/miner.cpp:180`).
+- Validation: `src/lottery.cpp` `CheckLotteryCoinbase()` (called from `src/validation.cpp:4342`), plus `CheckBlockTime` (validation.cpp:4224).
+- Eligibility / verified: `xsession::SessionIsXVerified()` and `xlookup::VERIFIED` (X blue check from `GET /2/users/me`), signed heartbeats carrying a `xVerified` byte (`HeartbeatDigest`, lottery.cpp ~930–985), XVA commitment output (`MakeXvaCommitment`), `-xverified` / `verified-x-accounts.txt` (operator invite list, explicitly NOT X Verified), `src/hostshare.cpp`.
+- Web (Hat page) only displays; Xferion bot is not authoritative for payouts.
+
+**Therefore:** a hard fork. Requirements:
+1. **Height-gated rule** `nHatSplitHeight` in `chainparams.cpp` (mainnet/testnet/regtest each); old rules byte-identical below the height.
+2. **Verified flag must be consensus-visible**: each winner's verified status must be committed in the coinbase (existing XVA commitment / signed heartbeat verified byte, seed-signed XSD1) so every node validates the split without calling the X API. Validators never call X.
+3. **Burn**: an output to a provably unspendable script (`OP_RETURN` with the burned value, or a known no-key script); `gettxoutsetinfo`/supply reporting must account for it. Add an RPC `gethatinfo` (pot, total burned).
+4. **Pot state**: deterministic from chain only: either a dedicated pot output carried forward each block (anyone-can-verify) or a value recomputed from coinbase history and stored in the block index / chainstate with reorg undo. No off-chain state.
+5. `CheckLotteryCoinbase` enforces exact amounts (1,250 / 500 pot / 3,250 burn; verified = subsidy + pot, pot reset to 0); fees stay with winner 0 as today unless owner decides otherwise. Halving: percentages apply to the current subsidy.
+6. **Anti-sybil**: unverified wallets are cheap to create, so the 25% unverified share must not make farming many unverified wallets pay off; keep one-entry-per-X-account for verified, rate-limit/cap unverified entries per IP/peer, keep invite-list ACL separate from verification, and log verification source per draw. The seed node attests verification; this is a trust point that should be documented.
+- Files: `src/lottery.{h,cpp}`, `src/validation.cpp`, `src/miner.cpp`, `src/chainparams.{h,cpp}`, `src/rpc/` (new `gethatinfo`), `src/qt/` (Hat display), tests `src/test/lottery_tests.cpp`, `test/functional/feature_hat_split.py`; web Hat page reads `gethatinfo`.
+- Risk: **HIGH** (consensus, block reward, supply). Gate: standard gate + **regtest then testnet first**, fork-across-height tests (blocks below the height validate with old rules, above with new), reorg across the pot changes, old-node vs new-node behaviour documented, mainnet sync-from-genesis equal up to the current tip, **all node operators must upgrade before the activation height**. Ships as its own commit series, reviewed separately from cleanup phases.
+- Audit log: node logs each draw (height, winner, verified, paid, pot before/after, burned) to `debug.log` + RPC history.
+
 ## Open item
-- "Include this update talked about earlier" — awaiting owner confirmation which update (likely the 25/10/65 "Hat" split change). If it is a consensus change it gets its **own phase with activation height**, separate gate, and the sync-from-genesis check must still match up to the activation height. Not started until confirmed.
+- Resolved 2026-11-02: the "update talked about earlier" is the Hat 25/10/65 change → Phase H. Recommended order: cleanup phases 0–2 first, Phase H developed in parallel on its own branch, merged before Phase 7 packaging.
